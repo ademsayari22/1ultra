@@ -51,3 +51,14 @@ test('runtime paths cannot overlap business records', () => {
   assert.equal(Policy.runtimeAllowed('/home/adem/1ultra','/home/adem/1ultra/runs/station-runtime'),true);
   assert.equal(Policy.runtimeAllowed('/tmp/fixture','/tmp/fixture/runtime'),true);
 });
+test('only a deliberate 1Ultra launch uses the real runtime; isolated callers keep their own workspace and port', () => {
+  const scratch = () => '/tmp/1ultra-runtime-scratch';
+  assert.equal(Policy.resolveRuntime({ ULTRA_ROOT: '/home/adem/1ultra' }, '/home/adem/1ultra', scratch), '/home/adem/1ultra/runs/station-runtime');
+  assert.equal(Policy.resolveRuntime({ ULTRA_ROOT: '/r', ULTRA_RUNTIME: '/tmp/a', STARNET_WORKSPACES: '/tmp/b' }, '/r', scratch), '/tmp/a');
+  assert.equal(Policy.resolveRuntime({ SKYNET_WORKSPACES: '/tmp/t1/ws' }, '/home/adem/1ultra', scratch), '/tmp/t1/ws');
+  assert.equal(Policy.resolveRuntime({ STARNET_WORKSPACES: '/tmp/t2/ws', ULTRA_ROOT: '/home/adem/1ultra' }, '/home/adem/1ultra', scratch), '/tmp/t2/ws');
+  assert.equal(Policy.resolveRuntime({}, '/home/adem/1ultra', scratch), '/tmp/1ultra-runtime-scratch');
+  assert.equal(Policy.resolvePort({ SKYNET_PORT: '9123' }), '9123');
+  assert.equal(Policy.resolvePort({ ULTRA_PORT: '8550', STARNET_PORT: '9' }), '8550');
+  assert.equal(Policy.resolvePort({}), '8541');
+});

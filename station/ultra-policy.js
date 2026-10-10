@@ -71,14 +71,25 @@ function makeGate(limit = () => 2) { const desks = new Set(); return {
   enter(desk) { if (desks.has(desk)) throw new Error('This desk already has an active job.'); const max = limit(); if (desks.size >= max) throw new Error('Only ' + max + ' preparation workers may run.'); desks.add(desk); },
   leave(desk) { desks.delete(desk); }, active() { return [...desks]; }
 }; }
+// The owner's runtime (runs/station-runtime) is used only by a deliberate 1Ultra launch (ULTRA_ROOT set by scripts/station.py
+// and the fixture checks). An explicit workspace (ULTRA_RUNTIME, or Starnet's own STARNET_/SKYNET_WORKSPACES used by its tests)
+// wins; any other start gets a scratch runtime, so a stray `node sidecar/index.js` can never write the owner's station files.
+function resolveRuntime(env, root, makeScratch) {
+  const path = require('node:path');
+  const explicit = env.ULTRA_RUNTIME || env.STARNET_WORKSPACES || env.SKYNET_WORKSPACES;
+  if (explicit) return path.resolve(explicit);
+  return env.ULTRA_ROOT ? path.join(root, 'runs', 'station-runtime') : makeScratch();
+}
+function resolvePort(env) { return String(env.ULTRA_PORT || env.STARNET_PORT || env.SKYNET_PORT || '8541'); }
 function runtimeAllowed(root, runtime) {
   const path = require('node:path');
   if (runtime === path.join(root, 'runs', 'station-runtime')) return true;
   return runtime.startsWith('/tmp/') && (runtime === path.join(root, 'runtime') && root.startsWith('/tmp/') || !runtime.startsWith(root + path.sep));
 }
 function install(runtime) {
+  const port = resolvePort(process.env);
   for (const key of Object.keys(process.env)) if (/^(STARNET|SKYNET)_/.test(key)) delete process.env[key];
-  Object.assign(process.env, { STARNET_WORKSPACES: runtime, STARNET_PORT: process.env.ULTRA_PORT || '8541',
+  Object.assign(process.env, { STARNET_WORKSPACES: runtime, STARNET_PORT: port,
     STARNET_LIVE_PRICES: '0', STARNET_QUEST_REFRESH: '0', STARNET_CRON_ENABLED: '0', STARNET_NIGHTSHIFT_ENABLED: '0',
     STARNET_SKILL_REVIEW: '0', STARNET_APP_VERSION: '1Ultra-local', STARNET_BUILD_DESCRIBE: '54899e5+1ultra' });
   // Phase 1: no outbound connection of any kind. Later phases allow specific hosts per switch.
@@ -88,4 +99,4 @@ function install(runtime) {
   const cp = require('node:child_process');
   for (const method of ['spawn', 'spawnSync', 'exec', 'execSync', 'execFile', 'execFileSync', 'fork']) cp[method] = deny;
 }
-module.exports = { ROUTE_CLASSES, classifyPath, routeKey, gate, routeGate, preGate, makeGate, runtimeAllowed, install, assertModelAllowed: deny };
+module.exports = { ROUTE_CLASSES, classifyPath, routeKey, gate, routeGate, preGate, makeGate, resolveRuntime, resolvePort, runtimeAllowed, install, assertModelAllowed: deny };

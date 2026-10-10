@@ -12,7 +12,7 @@ const registry=require('./sidecar/providers/registry.js');
 const connectorCatalog=require('./sidecar/mcp/catalog.js');
 const stateSchema=require('./ultra-state.js');
 const root=fs.realpathSync(process.env.ULTRA_ROOT||path.resolve(__dirname,'..'));
-const runtime=path.resolve(process.env.ULTRA_RUNTIME||path.join(root,'runs','station-runtime'));
+const runtime=path.resolve(policy.resolveRuntime(process.env,root,()=>fs.mkdtempSync(path.join(require('node:os').tmpdir(),'1ultra-runtime-'))));
 if(!policy.runtimeAllowed(root,runtime))throw new Error('Use runs/station-runtime or a dedicated /tmp fixture runtime; business directories are refused.');
 fs.mkdirSync(runtime,{recursive:true});
 const realRuntime=fs.realpathSync(runtime);
