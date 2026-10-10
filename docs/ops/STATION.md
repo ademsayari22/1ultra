@@ -8,7 +8,9 @@ Requires Python 3.10+ and Node.js 20+. Install pinned dependencies once with `cd
 
 - `/` is the Starnet station (1Ultra build). **WORK → CAMPAIGN** opens the Tunisia campaign; **SYSTEM → SWITCHES** shows what agents may use.
 - `/campaign/` is the campaign page on its own. `/classic/` is the original Python interface. For a separate standard-library fallback, run `python3 scripts/station.py --classic --port 8542`.
-- Phase 1: every switch that reaches a model, the network or a schedule is off and not yet available. Only the worker limit and the spend cap can change.
+- Switches you can turn on now: **lead.codex** (then sign in: model dock → GPT / CODEX → Sign in with ChatGPT, and pick GPT 6.1 SOL · XHIGH) and **tools.web** (public web search and reading for agents; private network addresses stay blocked). Crew switches arrive with FreeLLMAPI.
+- One emergency stop: the 1Ultra stop halts Starnet too, Starnet's E-STOP sets the 1Ultra stop, and Starnet's RESUME clears both.
+- Agents can never read or write the 1Ultra project folder (only their own station runtime), and it cannot be added as a project.
 
 ## Find leads and convince a buyer
 
@@ -71,13 +73,13 @@ The consulting receivable remains archived, billing facts stay deferred, and exi
 
 ## Source and checks
 
-Upstream: https://github.com/androoAGI/starnet at the revision in `station/UPSTREAM.json` (currently `54899e5`, v0.13.2). Display branding is rewritten to 1Ultra only in prose and HTML text. A brand word joined by `-` or `/` (the `X-StarNet-Token` header, data paths) or standing alone as a code value (the `STARNET_` environment filter, provider labels, OAuth client names) keeps its upstream spelling, because those strings are functional. Four page patches relabel the brand marks. `LICENSE` and `NOTICE.md` are byte-identical to upstream. Starnet art is not imported; `station/frontend/assets/` holds only 1Ultra-owned files. 1Ultra-owned files: `station/ultra-*.js`, `station/ultra-patches.json`, `station/frontend/campaign/`, `station/frontend/ultra-window.js`, `station/frontend/ultra-brand.css`, `station/frontend/assets/`. Upstream fast-test results and the reason for each failure are in `docs/ops/STATION_UPSTREAM_TESTS.md`. The update to `54899e5` needed no boot patches beyond the listed `station/ultra-patches.json` entries; Starnet's startup browser-install probe logs one refused (fail-open) call.
+Upstream: https://github.com/androoAGI/starnet at the revision in `station/UPSTREAM.json` (currently `54899e5`, v0.13.2). Display branding is rewritten to 1Ultra only in prose and HTML text. A brand word joined by `-` or `/` (the `X-StarNet-Token` header, data paths) or standing alone as a code value (the `STARNET_` environment filter, provider labels) keeps its upstream spelling, because those strings are functional. What third parties see says 1Ultra: the OpenRouter `X-Title` and referer, the image tool's `User-Agent`, the MCP OAuth client name and the MCP client info (`name-*` patches). Four page patches relabel the brand marks. `LICENSE` and `NOTICE.md` are byte-identical to upstream. Starnet art is not imported; `station/frontend/assets/` holds only 1Ultra-owned files. 1Ultra-owned files: `station/ultra-*.js`, `station/ultra-patches.json`, `station/frontend/campaign/`, `station/frontend/ultra-window.js`, `station/frontend/ultra-brand.css`, `station/frontend/assets/`. Upstream fast-test results and the reason for each failure are in `docs/ops/STATION_UPSTREAM_TESTS.md`. The update to `54899e5` needed no boot patches beyond the listed `station/ultra-patches.json` entries; Starnet's startup browser-install probe logs one refused (fail-open) call.
 
 ```sh
 python3 scripts/check_station.py
 python3 -m unittest discover -s tests -v
 python3 scripts/station_smoke.py
-node --test tests/station-policy.test.cjs tests/station-state.test.cjs tests/station-workflows.test.cjs tests/station-experience.test.cjs tests/station-ui-smoke.cjs tests/station-switches.test.cjs tests/station-seed.test.cjs
+node --test tests/station-*.test.cjs tests/station-ui-smoke.cjs
 ```
 
 The repeatable browser checks use temporary copied records and require an already installed Playwright package and browser executable. They perform no installation:

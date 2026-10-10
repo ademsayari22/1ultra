@@ -117,7 +117,7 @@
     "id": "route-registry",
     "file": "sidecar/index.js",
     "find": "function dispatchRoute(req, res) {\n",
-    "replace": "ultraHost.registerRoutes(ROUTES);\nultraHost.registerStationHalt(() => { handleHalt(null, { writeHead() {}, end() {} }); try { killAll(runStopHandles); } catch (_) {} });\nfunction dispatchRoute(req, res) {\n"
+    "replace": "ultraHost.registerRoutes(ROUTES);\nultraHost.registerStationHalt(() => { handleHalt(null, { writeHead() {}, end() {} }); try { killAll(runStopHandles); } catch (e) { failNote('ultra.station-halt.killAll', e); } });\nfunction dispatchRoute(req, res) {\n"
   },
   {
     "id": "route-gate",

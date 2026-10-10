@@ -11471,7 +11471,7 @@ const ROUTES = [
 ];
 
 ultraHost.registerRoutes(ROUTES);
-ultraHost.registerStationHalt(() => { handleHalt(null, { writeHead() {}, end() {} }); try { killAll(runStopHandles); } catch (_) {} });
+ultraHost.registerStationHalt(() => { handleHalt(null, { writeHead() {}, end() {} }); try { killAll(runStopHandles); } catch (e) { failNote('ultra.station-halt.killAll', e); } });
 function dispatchRoute(req, res) {
   const url = req.url || '';
   const bare = url.split('?')[0];
