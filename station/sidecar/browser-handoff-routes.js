@@ -22,7 +22,7 @@
 'use strict';
 const { note: failNote } = require('./failopen.js');
 
-const LIST_FILE = '1Ultra-signins.json';
+const LIST_FILE = 'StarNet-signins.json';
 const MAX_SITES = 60;
 const MAX_EVENTS = 64;
 

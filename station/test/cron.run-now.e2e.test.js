@@ -164,7 +164,7 @@ async function readNdjson(res) {
   try {
     const token = await bootToken(B, B);
     A.ok(token.length >= 32, 'got a session API token');
-    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     const create = await fetch(B + '/api/cron', {
       method: 'POST',
       headers,

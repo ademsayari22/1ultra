@@ -87,7 +87,7 @@ const tick=()=>new Promise(r=>setImmediate(r));
   assert.equal(h3.gets.length,2,'a failed settle re-reads /api/budget/status');
   assert.match(h3.node('#budget-msg').textContent,/could not be saved/,'the server reason stays on screen');
   assert.equal(h3.node('#budget-unsettled').children.length,1,'the dropped run is no longer offered for a second booking');
-  assert.match(h3.node('#budget-spend').textContent,/Restart 1Ultra/,'the spend line shows the write-error copy');
+  assert.match(h3.node('#budget-spend').textContent,/Restart StarNet/,'the spend line shows the write-error copy');
   // a 404 (settled elsewhere / gone) repaints the same way
   server=st;
   const h4=harness(()=>server,(u)=>{if(u==='/api/budget/settle'){server=settledReply;return {error:'that run has no unsettled spend',code:'not_unsettled'};}return st;},u=>u!=='/api/budget/settle');
@@ -95,7 +95,7 @@ const tick=()=>new Promise(r=>setImmediate(r));
   h4.node('#budget-unsettled').children[0].children[3].click();await tick();await tick();
   assert.equal(h4.gets.length,2);assert.equal(h4.node('#budget-unsettled').children.length,0);assert.match(h4.node('#budget-msg').textContent,/no unsettled spend/);
  }
- for(const [acc,re,not] of [[{complete:true,durable:false,writeError:'ENOSPC'},/Restart 1Ultra/,/Settle/],[{complete:false,durable:true,readError:'SPEND_RECEIPT_CONFLICT'},/could not be read/,/Settle/]]){
+ for(const [acc,re,not] of [[{complete:true,durable:false,writeError:'ENOSPC'},/Restart StarNet/,/Settle/],[{complete:false,durable:true,readError:'SPEND_RECEIPT_CONFLICT'},/could not be read/,/Settle/]]){
   const {node}=harness({caps:{perRun:0,perAgent:0,perDay:25,global:0},saved:{},envDefaults:{perRun:0,perAgent:0,perDay:25,global:0},spentToday:null,accounting:acc,unsettled:[]});await tick();
   assert.match(node('#budget-spend').textContent,/unavailable/);assert.match(node('#budget-spend').textContent,re);assert.doesNotMatch(node('#budget-spend').textContent,not);
   assert.equal(node('#budget-unsettled').children.length,0);

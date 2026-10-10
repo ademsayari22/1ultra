@@ -18,7 +18,7 @@ const ISO = '2026-07-07T12:00:00.000Z';
 const clock = { nowIso: () => ISO };
 const SHA = 'a'.repeat(40);
 const TREE = 'd'.repeat(40);
-const ARTIFACT = { path: 'C:/Program Files/1Ultra/1Ultra.exe', sha256: 'b'.repeat(64), size: 123456 };
+const ARTIFACT = { path: 'C:/Program Files/StarNet/StarNet.exe', sha256: 'b'.repeat(64), size: 123456 };
 const RUNTIME_EXECUTABLE = { sha256: ARTIFACT.sha256, size: ARTIFACT.size };
 const EVIDENCE = { path: 'qa/installed/run/probe.json', sha256: 'c'.repeat(64), size: 321 };
 const OFFICIAL_EVIDENCE = { schemaVersion: 1, candidateCommit: SHA, sourceTree: TREE, artifact: { sha256: ARTIFACT.sha256, size: ARTIFACT.size } };
@@ -119,7 +119,7 @@ const GREEN_PROBE = {
 };
 
 /* ---- A0. SMOKE_PROBE auth-header contract (regression for ledger finding 4d9992d9) ----
-   The in-page probe MUST authenticate with X-1Ultra-Token — the ONLY scheme the sidecar accepts (Authorization is
+   The in-page probe MUST authenticate with X-StarNet-Token — the ONLY scheme the sidecar accepts (Authorization is
    rejected as "forbidden token") AND the only auth header in its CORS Access-Control-Allow-Headers. On the packaged
    desktop build the page origin (http://tauri.localhost) differs from the sidecar (http://127.0.0.1:<port>), so every
    /api/* call is cross-origin: a stray Authorization header makes the OPTIONS preflight request a header the sidecar
@@ -128,7 +128,7 @@ const GREEN_PROBE = {
    dev/headless never preflights, which is why this only ever surfaced on the installed exe. The probe is a string
    eval'd in a real browser, so this guards its source directly (it can't be exercised headlessly). */
 {
-  A.ok(/X-1Ultra-Token/.test(SMOKE_PROBE), 'SMOKE_PROBE authenticates with the X-1Ultra-Token header (sidecar auth + CORS allow-list)');
+  A.ok(/X-StarNet-Token/.test(SMOKE_PROBE), 'SMOKE_PROBE authenticates with the X-StarNet-Token header (sidecar auth + CORS allow-list)');
   A.ok(!/Authorization/i.test(SMOKE_PROBE), 'SMOKE_PROBE sends NO Authorization header (it trips the packaged build cross-origin preflight)');
   A.ok(!/Bearer/.test(SMOKE_PROBE), 'SMOKE_PROBE uses NO Bearer scheme (the sidecar rejects Bearer as forbidden token)');
   A.ok(/starnet_build_info/.test(SMOKE_PROBE), 'SMOKE_PROBE obtains source identity from the running Tauri binary');

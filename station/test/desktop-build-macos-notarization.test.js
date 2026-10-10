@@ -55,7 +55,7 @@ A.eq(v090Fixture.doc.version, 6, 'installed journey uses the save version shippe
 A.eq(v090Fixture.doc.agent.name, 'NOVA-090-INTEL', 'installed fixture carries an observable prior-station identity');
 A.ok(/set app_file to POSIX file[\s\S]*?tell application "Finder" to open app_file/.test(installedScript),
   'installed verifier asks Finder/LaunchServices to open the copied app');
-A.ok(/\.local\/share\/1Ultra\/workspaces/.test(installedScript)
+A.ok(/\.local\/share\/StarNet\/workspaces/.test(installedScript)
   && /Library\/Application Support\/ai\.skynet\.harness\/workspaces/.test(installedScript),
   'installed verifier reproduces the v0.9.0 manual-sidecar to desktop shelf split');
 A.ok(/source_hash_after[\s\S]*?source_hash_before/.test(installedScript),

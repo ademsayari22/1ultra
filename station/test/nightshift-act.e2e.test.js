@@ -166,7 +166,7 @@ async function recommendations(B, headers) {
   try {
     const token = await bootToken(B, B);
     A.ok(token.length >= 32, 'got a session API token');
-    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     const now = Date.now();
     const beliefs = hotBeliefs(now);
 

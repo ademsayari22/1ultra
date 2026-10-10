@@ -38,7 +38,7 @@ A.ok(/const n = FreshStart\.clearBrowserState\(\);[\s\S]*?location\.reload\(\)/.
 A.ok(/catch \(error\) \{[\s\S]*?setStatus\('nothing was cleared — '/.test(browserBranch), 'a failed clear says nothing was cleared and re-enables the exits');
 A.ok(!/resetDesktop|starnet_start_fresh|core\.invoke/.test(browserBranch), 'the browser branch never calls the native shell');
 
-/* ---- genuine unit: the clear this branch reuses removes only 1Ultra-owned keys ---- */
+/* ---- genuine unit: the clear this branch reuses removes only StarNet-owned keys ---- */
 function storage(seed) {
   const map = new Map(Object.entries(seed || {}));
   return { get length() { return map.size; }, key(i) { return Array.from(map.keys())[i] || null; }, getItem(k) { return map.has(k) ? map.get(k) : null; }, removeItem(k) { map.delete(k); }, snapshot() { return Object.fromEntries(map); } };

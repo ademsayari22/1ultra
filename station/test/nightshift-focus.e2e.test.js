@@ -167,7 +167,7 @@ async function stop(child) {
   const B = 'http://' + HOST + ':' + port;
   try {
     const token = await bootToken(B, B);
-    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
 
     await fetch(B + '/api/workshop/grant', { method: 'POST', headers, body: JSON.stringify({ agentId: 'agent', on: true }) });
     await fetch(B + '/api/autonomy/posture', { method: 'POST', headers, body: JSON.stringify({ posture: { initiative: 'leash', reach: 'sandbox', leashPerDay: 12 }, beliefs: hotBeliefs(now) }) });
@@ -273,7 +273,7 @@ async function stop(child) {
     const restarted = await boot(port, env, 0);
     child = restarted.child;
     const token2 = await bootToken(B, B);
-    const headers2 = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token2, Origin: B };
+    const headers2 = { 'Content-Type': 'application/json', 'X-StarNet-Token': token2, Origin: B };
     const afterRestart = await (await fetch(B + '/api/nightshift/focus', { headers: headers2 })).json();
     A.eq(afterRestart.steer, null, 'the cleared steer remains cleared after a real sidecar restart');
     A.eq(afterRestart.focus && afterRestart.focus.ref, repo, 'restart preserves only the valid post-clear derived focus');
@@ -289,7 +289,7 @@ async function stop(child) {
     const restartedAgain = await boot(port, env, 0);
     child = restartedAgain.child;
     const token3 = await bootToken(B, B);
-    const headers3 = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token3, Origin: B };
+    const headers3 = { 'Content-Type': 'application/json', 'X-StarNet-Token': token3, Origin: B };
     const afterThreadRestart = await (await fetch(B + '/api/nightshift/focus', { headers: headers3 })).json();
     A.eq(afterThreadRestart.steer, null, 'a cleared thread steer stays cleared through restart');
     A.ok(!afterThreadRestart.focus || afterThreadRestart.focus.source !== 'steer', 'restart preserves only fresh derived focus/null after thread clear');
@@ -319,7 +319,7 @@ async function stop(child) {
     const restartedAfterWriteFailure = await boot(port, env, 0);
     child = restartedAfterWriteFailure.child;
     const token4 = await bootToken(B, B);
-    const headers4 = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token4, Origin: B };
+    const headers4 = { 'Content-Type': 'application/json', 'X-StarNet-Token': token4, Origin: B };
     const afterWriteFailureRestart = await (await fetch(B + '/api/nightshift/focus', { headers: headers4 })).json();
     A.eq(afterWriteFailureRestart.steer && afterWriteFailureRestart.steer.ref, 'goal', 'restart preserves the last proven steer after failed writes');
     A.ok(!(afterWriteFailureRestart.avoid || []).some(e => e && e.ref === 'goal'), 'restart confirms the failed off-limits directive never became durable');

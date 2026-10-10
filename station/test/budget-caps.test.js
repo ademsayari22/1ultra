@@ -150,7 +150,7 @@ const ENV = { perRun: 3, perAgent: 5, perDay: 40, global: 100 };   // a fully-go
   A.ok(/environment default/.test(station), 'the panel badges an unsaved cap as the default, so $25 never reads as something the user set');
 }
 
-// ---- issue #53: a 1Ultra-credit run never reserves the whole wallet by default ------------------------------
+// ---- issue #53: a StarNet-credit run never reserves the whole wallet by default ------------------------------
 // Before: no per-run cap in force -> admission reserved the ENTIRE balance, which is also the loop's per-run
 // ceiling, so one prompt could spend a fresh $10 top-up. Now: min(managed default, balance); a positive cap the
 // user (or a delegating caller) chose is honoured verbatim. The live proof is test/managed-run-cap.e2e.test.js.

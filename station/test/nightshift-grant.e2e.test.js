@@ -54,7 +54,7 @@ function wsRecord(ws) { try { return JSON.parse(fs.readFileSync(path.join(ws, 'a
   let B = 'http://' + HOST + ':' + port;
   try {
     let token = await bootToken(B, B);
-    let headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    let headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
 
     // ===== 1. a BELOW-build dial write does NOT grant (reach observe → buildsUnattended false). =====
     let j = await setPosture(B, headers, 'leash', 'observe');
@@ -86,7 +86,7 @@ function wsRecord(ws) { try { return JSON.parse(fs.readFileSync(path.join(ws, 'a
     ({ child, port } = await boot(port + 1, env, 20));
     B = 'http://' + HOST + ':' + port;
     token = await bootToken(B, B);
-    headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     st = await status(B, headers);
     A.eq(st.workshopGranted, true, 'the auto-grant survives a restart');
     A.eq(st.buildMode, 'build', 'build mode survives a restart');

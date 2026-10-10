@@ -31,7 +31,7 @@ const { SidecarFixture } = require('./helpers/sidecar-fixture.js');
   let apiToken = '';
   const j = async (m, p, body) => {
     const headers = { 'Content-Type': 'application/json' };
-    if (apiToken) headers['X-1Ultra-Token'] = apiToken;
+    if (apiToken) headers['X-StarNet-Token'] = apiToken;
     const r = await fetch(B + p, { method: m, headers, body: body ? JSON.stringify(body) : undefined });
     const t = await r.text(); let v; try { v = JSON.parse(t); } catch (_) { v = t; }
     return { status: r.status, body: v };
@@ -99,7 +99,7 @@ const { SidecarFixture } = require('./helpers/sidecar-fixture.js');
     const B2 = fixture.baseUrl;
     const tok2 = fixture.token;
     const jj = async (m, p, body) => {
-      const headers = { 'Content-Type': 'application/json' }; if (tok2) headers['X-1Ultra-Token'] = tok2;
+      const headers = { 'Content-Type': 'application/json' }; if (tok2) headers['X-StarNet-Token'] = tok2;
       const r = await fetch(B2 + p, { method: m, headers, body: body ? JSON.stringify(body) : undefined });
       const t = await r.text(); let v; try { v = JSON.parse(t); } catch (_) { v = t; }
       return { status: r.status, body: v };
@@ -153,7 +153,7 @@ const { SidecarFixture } = require('./helpers/sidecar-fixture.js');
     const BF = fault.baseUrl;
     const tokF = fault.token;
     const jf = async (m, p, body) => {
-      const headers = { 'Content-Type': 'application/json' }; if (tokF) headers['X-1Ultra-Token'] = tokF;
+      const headers = { 'Content-Type': 'application/json' }; if (tokF) headers['X-StarNet-Token'] = tokF;
       const r = await fetch(BF + p, { method: m, headers, body: body ? JSON.stringify(body) : undefined });
       const t = await r.text(); let v; try { v = JSON.parse(t); } catch (_) { v = t; }
       return { status: r.status, body: v };
@@ -187,7 +187,7 @@ const { SidecarFixture } = require('./helpers/sidecar-fixture.js');
     const BD = deleteFault.baseUrl;
     const tokD = deleteFault.token;
     const jd = async (m, p, body) => {
-      const headers = { 'Content-Type': 'application/json' }; if (tokD) headers['X-1Ultra-Token'] = tokD;
+      const headers = { 'Content-Type': 'application/json' }; if (tokD) headers['X-StarNet-Token'] = tokD;
       const r = await fetch(BD + p, { method: m, headers, body: body ? JSON.stringify(body) : undefined });
       const t = await r.text(); let v; try { v = JSON.parse(t); } catch (_) { v = t; }
       return { status: r.status, body: v };

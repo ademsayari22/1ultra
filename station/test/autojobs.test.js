@@ -45,7 +45,7 @@ const dir = J.buildProposalDirective({
   existingJobs: ['Morning brief'],
   max: 3
 });
-A.ok(/ship 1Ultra/.test(dir) && /manual standups/.test(dir) && /write a book/.test(dir), 'the directive hands the model the real beliefs to ground on');
+A.ok(/ship StarNet/.test(dir) && /manual standups/.test(dir) && /write a book/.test(dir), 'the directive hands the model the real beliefs to ground on');
 A.ok(/GROUNDED|ground it/i.test(dir), 'the directive demands grounding');
 A.ok(/no tools|NO web|NO file writes|NO sending|without|unattended/i.test(dir), 'the directive constrains to the achievable-unattended (reason/draft) envelope');
 A.ok(/Morning brief/.test(dir), 'the directive tells it not to duplicate existing routines');

@@ -24,7 +24,7 @@ async function tokenFromIndex(base) {
 
     const getNoToken = await fetch(B + '/api/budget/status', { headers: { Origin: B } });
     A.eq(getNoToken.status, 403, 'sensitive GET without token -> 403');
-    const getWithToken = await fetch(B + '/api/budget/status', { headers: { Origin: B, 'X-1Ultra-Token': browserToken } });
+    const getWithToken = await fetch(B + '/api/budget/status', { headers: { Origin: B, 'X-StarNet-Token': browserToken } });
     A.eq(getWithToken.status, 200, 'browser token authorizes sensitive GET');
     A.eq(getWithToken.headers.get('access-control-allow-origin'), B, 'browser CORS still mirrors the trusted loopback origin');
 
@@ -34,7 +34,7 @@ async function tokenFromIndex(base) {
     A.eq(sessionPostBrowser.status, 403, 'loopback browser pages cannot mint a fresh session token');
     const tokenedSession = await fetch(B + '/api/session', {
       method: 'POST',
-      headers: { Origin: B, 'X-1Ultra-Token': browserToken }
+      headers: { Origin: B, 'X-StarNet-Token': browserToken }
     });
     A.eq(tokenedSession.status, 200, 'browser token authorizes session liveness check');
     A.eq((await tokenedSession.json()).token, undefined, 'tokened session never returns the API token');
@@ -42,7 +42,7 @@ async function tokenFromIndex(base) {
     const tauriOrigin = 'http://tauri.localhost';
     const tauriSessionNoToken = await fetch(B + '/api/session', { method: 'POST', headers: { Origin: tauriOrigin } });
     A.eq(tauriSessionNoToken.status, 403, 'Tauri app origin still needs the boot token for /api/session');
-    const tauriGet = await fetch(B + '/api/budget/status', { headers: { Origin: tauriOrigin, 'X-1Ultra-Token': browserToken } });
+    const tauriGet = await fetch(B + '/api/budget/status', { headers: { Origin: tauriOrigin, 'X-StarNet-Token': browserToken } });
     A.eq(tauriGet.status, 200, 'Tauri trusted origin with boot token authorizes sensitive GET');
     A.eq(tauriGet.headers.get('access-control-allow-origin'), tauriOrigin, 'Tauri CORS still mirrors the app origin');
 
@@ -51,7 +51,7 @@ async function tokenFromIndex(base) {
     const filePath = '/api/file?agent=agent&path=' + encodeURIComponent('reports/active.html');
     const fileNoToken = await fetch(B + filePath);
     A.eq(fileNoToken.status, 403, 'workspace deliverable GET without token -> 403');
-    const fileWithToken = await fetch(B + filePath, { headers: { Origin: B, 'X-1Ultra-Token': browserToken } });
+    const fileWithToken = await fetch(B + filePath, { headers: { Origin: B, 'X-StarNet-Token': browserToken } });
     A.eq(fileWithToken.status, 200, 'header token authorizes media/file deliverable fetches');
     A.ok(/\bsandbox\b/.test(fileWithToken.headers.get('content-security-policy') || ''), 'deliverables are served under a CSP sandbox');
     A.ok(!fileWithToken.headers.get('content-security-policy').includes('allow-scripts'), 'deliverable sandbox does not allow scripts');
@@ -62,7 +62,7 @@ async function tokenFromIndex(base) {
        inside those roots, but must REFUSE (never stat) arbitrary absolute system paths so a token-holder can't
        enumerate the filesystem. ws is the WORKSPACES root here, so it (and a folder under it) must stat; a real
        system path outside HOME/WORKSPACES must come back exists:false + reason:'outside-allowed-roots'. */
-    const dirstat = async (p) => { const r = await fetch(B + '/api/fs/dirstat?path=' + encodeURIComponent(p), { headers: { Origin: B, 'X-1Ultra-Token': browserToken } }); return { status: r.status, j: await r.json().catch(() => ({})) }; };
+    const dirstat = async (p) => { const r = await fetch(B + '/api/fs/dirstat?path=' + encodeURIComponent(p), { headers: { Origin: B, 'X-StarNet-Token': browserToken } }); return { status: r.status, j: await r.json().catch(() => ({})) }; };
     const dsRoot = await dirstat(ws);
     A.ok(dsRoot.status === 200 && dsRoot.j.exists === true && dsRoot.j.isDir === true && dsRoot.j.reason == null, 'dirstat stats the WORKSPACES root (inside a jail root)');
     const subDir = path.join(ws, 'keep-here'); fs.mkdirSync(subDir, { recursive: true });

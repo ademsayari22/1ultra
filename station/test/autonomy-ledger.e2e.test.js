@@ -82,7 +82,7 @@ async function drainNdjson(res) { await res.text(); }   // consume the Run Now s
     ({ child, port } = await boot(8960 + (process.pid % 30), env, 20));
     const B = 'http://' + HOST + ':' + port;
     const token = await bootToken(B, B);
-    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
 
     // an empty ledger is 200 {entries:[]} (a genuinely-empty log, not an error).
     const empty = await fetch(B + '/api/autonomy/ledger', { headers });
@@ -126,7 +126,7 @@ async function drainNdjson(res) { await res.text(); }   // consume the Run Now s
     ({ child, port } = await boot(port + 1, env, 20));
     const B2 = 'http://' + HOST + ':' + port;
     const token2 = await bootToken(B2, B2);
-    const restarted = await fetch(B2 + '/api/autonomy/ledger', { headers: { 'X-1Ultra-Token': token2, Origin: B2 } });
+    const restarted = await fetch(B2 + '/api/autonomy/ledger', { headers: { 'X-StarNet-Token': token2, Origin: B2 } });
     A.eq(restarted.status, 200, 'ledger route responds after restart');
     const survived = (await restarted.json()).entries;
     A.ok(survived.some(e => e.kind === 'fire' && e.jobId === job.id), 'the fire decision SURVIVED a sidecar restart (durable)');

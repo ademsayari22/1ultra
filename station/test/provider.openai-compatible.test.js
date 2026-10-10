@@ -385,7 +385,7 @@ module.exports = (async () => {
   }
 
   /* ---- routed-catalog id on a vendor endpoint gets a way back ----
-     A vendor API 400ing "invalid model ID" for a slash-prefixed id means a 1ULTRA/OpenRouter catalog id
+     A vendor API 400ing "invalid model ID" for a slash-prefixed id means a STARNET/OpenRouter catalog id
      (e.g. openai/gpt-…) reached a direct vendor endpoint — the provider/model pair crossed. The bare vendor
      message is a dead end; the error must name the mismatch and the fix (switch provider in the picker). ---- */
   {

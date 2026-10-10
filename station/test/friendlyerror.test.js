@@ -188,7 +188,7 @@ for (const raw of [
   A.ok(!/undefined/.test(v.userMessage), 'the fallback copy never leaks "undefined"');
 }
 
-// ---- EL-11 FIX 2: sidecar 403 (stale X-1Ultra-Token after crash+respawn) => the RELOAD door, never the key door ----
+// ---- EL-11 FIX 2: sidecar 403 (stale X-StarNet-Token after crash+respawn) => the RELOAD door, never the key door ----
 {
   // the exact shape Harness.chat throws after the body-preserving fix (body: "forbidden token")
   const v = friendlyError(new Error('sidecar HTTP 403 — forbidden token'));
@@ -348,7 +348,7 @@ for (const raw of [
     A.eq(v.kind, 'provider_server_error', raw + ' is the PROVIDER\'s server fault (delegate path)');
     A.eq(kindFromRaw(raw.toLowerCase(), null), 'provider_server_error', raw + ' — BROWSER ladder agrees');
     A.eq(v.retryable, true, raw + ' is retryable (load spikes pass)');
-    A.ok(!/local .*service|starnet service/i.test(v.userMessage) || /1Ultra itself is fine/i.test(v.userMessage),
+    A.ok(!/local .*service|starnet service/i.test(v.userMessage) || /StarNet itself is fine/i.test(v.userMessage),
       raw + ' must NEVER blame the local service');
     A.ok(/provider/i.test(v.userMessage), raw + ' names the provider\'s servers');
     A.ok(/fine/i.test(v.userMessage), raw + ' reassures the user their install is healthy');
@@ -434,7 +434,7 @@ for (const raw of [
   A.ok(/earlier run stopped before 1Ultra recorded what it spent/.test(interrupted.userMessage) && /Settle that run in SETTINGS › SPENDING LIMITS/.test(interrupted.userMessage),
     'the interrupted cause names the run and the SETTLE fix (got: ' + interrupted.userMessage + ')');
   const unsaved = friendlyError('Spend history could not be saved to disk, so the spending limits you set can’t be checked. Restart 1Ultra to recover it.');
-  A.ok(/Restart 1Ultra/.test(unsaved.userMessage) && !/Settle/.test(unsaved.userMessage), 'a failed save says restart, never settle (got: ' + unsaved.userMessage + ')');
+  A.ok(/Restart StarNet/.test(unsaved.userMessage) && !/Settle/.test(unsaved.userMessage), 'a failed save says restart, never settle (got: ' + unsaved.userMessage + ')');
   const unread = friendlyError('Spend history could not be read, so the spending limits you set can’t be checked. See SETTINGS › SPENDING LIMITS.');
   A.eq(unread.userMessage, KINDS.spend_unknown.msg, 'an unreadable record gets the cause-neutral headline');
   A.ok(/spend history is unknown/.test(KINDS.spend_unknown.msg), 'the fallback headline says spend history is unknown');

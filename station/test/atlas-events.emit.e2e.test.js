@@ -157,7 +157,7 @@ async function waitUntil(fn, ms, label) { const deadline = Date.now() + ms; whil
     // First DM never claims a remote-control bot. Pair this test's owner via the authenticated local route.
     const pair = await (await fetch(B + '/api/channels/telegram/owner/pair', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+      headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
       body: '{}'
     })).json();
     A.ok(/^[-A-Z0-9]{11}$/.test(String(pair.code || '')), 'owner pairing issued a code');
@@ -190,7 +190,7 @@ async function waitUntil(fn, ms, label) { const deadline = Date.now() + ms; whil
     // ================= workshop.decided =================
     // the 'later' decision is emit-only telemetry — no manifest/disk needed. POST decide {later} → event on the bus.
     const decide = await fetch(B + '/api/workshop/decide', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
       body: JSON.stringify({ agentId: 'agent', runId: 'run-coverage', decision: 'later' })
     });
     const decideBody = await decide.json();

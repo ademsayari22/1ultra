@@ -69,7 +69,7 @@ async function boot(workspaces, extraEnv) {
   const B = () => 'http://' + HOST + ':' + port;
   let apiToken = await bootToken(B(), B());
   const j = async (m, p, body) => {
-    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': apiToken };
+    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': apiToken };
     const r = await fetch(B() + p, { method: m, headers, body: body ? JSON.stringify(body) : undefined });
     const t = await r.text(); let v; try { v = JSON.parse(t); } catch (_) { v = t; }
     return { status: r.status, body: v };
@@ -134,7 +134,7 @@ async function boot(workspaces, extraEnv) {
     const b2 = await boot(ws2);
     try {
       const tok = await bootToken('http://' + HOST + ':' + b2.port, 'http://' + HOST + ':' + b2.port);
-      const r = await fetch('http://' + HOST + ':' + b2.port + '/api/cron', { headers: { 'X-1Ultra-Token': tok } });
+      const r = await fetch('http://' + HOST + ':' + b2.port + '/api/cron', { headers: { 'X-StarNet-Token': tok } });
       const v = await r.json();
       A.eq(v.degraded, null, 'a healthy (absent) store is degraded:null');
     } finally {

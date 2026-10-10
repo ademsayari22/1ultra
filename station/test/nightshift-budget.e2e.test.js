@@ -53,7 +53,7 @@ function kill(child) { return new Promise(r => { try { child.on('exit', () => r(
 // raise the autonomy dial (arms the shift + clears the posture gate), let the 1ms away threshold elapse, read status.
 async function armAndStatus(B) {
   const token = await bootToken(B, B);
-  const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+  const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
   const arm = await (await fetch(B + '/api/autonomy/posture', { method: 'POST', headers, body: JSON.stringify({ posture: { initiative: 'leash', reach: 'observe', leashPerDay: 3 } }) })).json();
   A.ok(arm.ok === true && arm.nightshiftArmed === true, 'raising the dial arms the night shift');
   await sleep(40);   // let the 1ms away threshold elapse so the pure gates get PAST 'present' → the precheck runs
@@ -131,7 +131,7 @@ async function armAndStatus(B) {
       A.eq(s.beatsUsedToday, 0, 'the unproven safety gate spends no leash');
       await sleep(80); // let the real server-owned tick persist at least one decline
       const token = await bootToken(B, B);
-      const headers = { 'X-1Ultra-Token': token, Origin: B };
+      const headers = { 'X-StarNet-Token': token, Origin: B };
       const body = await (await fetch(B + '/api/autonomy/ledger', { headers })).json();
       const decline = (body.entries || []).find(e => e.source === 'nightshift' && e.kind === 'decline' && e.binding === 'precheck-error');
       A.ok(decline && decline.detail && decline.detail.preSpend === true, 'the real sidecar ledger records the failed inspection as a pre-spend decline');

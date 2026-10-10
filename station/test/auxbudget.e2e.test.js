@@ -66,7 +66,7 @@ function startMock() {
 
 async function driveRun(B, token, agentId, text) {
   const r = await fetch(B + '/api/run', {
-    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
     body: JSON.stringify({ key: 'sk-or-v1-auxbudget-fake', model: 'test/model', agentId, isTask: true, messages: [{ role: 'user', content: text }] })
   });
   const rd = r.body.getReader(); while (true) { const { done } = await rd.read(); if (done) break; }   // drain to run end

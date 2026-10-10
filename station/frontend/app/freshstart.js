@@ -7,7 +7,7 @@
 
 const FreshStart = (() => {
   // Dot namespaces hold station state. The underscore namespace is the original arcade store and
-  // is still 1Ultra-owned; leaving it behind contradicts "completely fresh".
+  // is still StarNet-owned; leaving it behind contradicts "completely fresh".
   const PREFIXES = ['starnet.', 'skynet.', 'starnet_', 'skynet_'];
 
   function ownedKey(key) {

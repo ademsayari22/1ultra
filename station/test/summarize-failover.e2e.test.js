@@ -153,7 +153,7 @@ function stopChild(child) {
     messages.push({ role: 'user', content: 'Fail over, inspect once, compact, then finish.' });
     const response = await fetch(base + '/api/run', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: base },
+      headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: base },
       body: JSON.stringify({
         key: 'KEYA', keyPool: ['KEYB'], model: 'compact/model',
         agentId: 'summarize-failover', isTask: true, messages

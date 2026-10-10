@@ -142,7 +142,7 @@ async function waitUntil(fn, ms, label) {
       const body = JSON.stringify({ message });
       const ts = String(Date.now()), nonce = 'nonce_' + crypto.randomBytes(12).toString('hex');
       const r = await fetch(B + '/api/channels/webhook/telegram', { method: 'POST', body, headers: {
-        'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B,
+        'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B,
         'x-starnet-timestamp': ts, 'x-starnet-nonce': nonce,
         'x-starnet-signature': crypto.createHmac('sha256', SECRET).update(ts + '.' + nonce + '.' + body).digest('hex')
       } });
@@ -155,7 +155,7 @@ async function waitUntil(fn, ms, label) {
     const early = await relay({ chatId: '7777', userId: '7777', text: 'hello, I am the owner now', chatType: 'dm' });
     A.eq(early.status, 403, 'an UNPAIRED bot admits no relay DM (a relay cannot claim ownership)');
 
-    const pair = await (await fetch(B + '/api/channels/telegram/owner/pair', { method: 'POST', headers: { 'X-1Ultra-Token': token, Origin: B, 'Content-Type': 'application/json' }, body: '{}' })).json();
+    const pair = await (await fetch(B + '/api/channels/telegram/owner/pair', { method: 'POST', headers: { 'X-StarNet-Token': token, Origin: B, 'Content-Type': 'application/json' }, body: '{}' })).json();
     A.ok(pair && /^[-A-Z0-9]{11}$/.test(String(pair.code || '')), 'local owner pairing issued a one-time code');
     tg.pushText(4242, 99, '/pair ' + pair.code);
     await waitUntil(() => tg.sends.some(s => String(s.chat_id) === '4242' && /Owner paired/i.test(String(s.text || ''))), 8000, 'owner-pair acknowledgement');

@@ -162,8 +162,8 @@ async function readNdjson(res) {
   const reads = () => mcp.calls.filter(c => c.msg && c.msg.method === 'tools/call' && c.msg.params && c.msg.params.name === 'search_messages');
   try {
     const token = await bootToken(B, B);
-    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
-    const get = (u) => fetch(B + u, { headers: { 'X-1Ultra-Token': token, Origin: B } }).then(r => r.json());
+    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    const get = (u) => fetch(B + u, { headers: { 'X-StarNet-Token': token, Origin: B } }).then(r => r.json());
     const upsert = await fetch(B + '/api/connectors', { method: 'POST', headers, body: JSON.stringify({ id: 'demo', label: 'Demo MCP', transport: 'http', url: mcp.url, token: 'mcp-secret-token' }) });
     A.eq((await upsert.json()).toolCount, 2, 'both connector tools discovered');
 

@@ -439,7 +439,7 @@ const ROUTES = {
         'the adopted tab was SHIMMED before its own script ran');
       A.eq(await driver.testEval('(()=>{const d=Object.getOwnPropertyDescriptor(Document.prototype,"exitPointerLock");return !!d&&d.writable===false&&d.configurable===false})()'), true,
         'and the installed lock override is immutable, not a page-supplied writable value');
-      A.eq((await driver.testEval('Object.getOwnPropertyNames(window).filter(x=>/1ULTRA/.test(x))')).length, 0,
+      A.eq((await driver.testEval('Object.getOwnPropertyNames(window).filter(x=>/STARNET/.test(x))')).length, 0,
         'the page realm exposes no stable product-named automation marker');
       await driver.selectTab(0);
 

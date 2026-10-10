@@ -134,7 +134,7 @@ const {
   attachRateLimits
 } = require('./providers/factory.js');
 /* RESTRICTED GOOGLE DATA NEVER RIDES THE 1ULTRA RELAY (mcp/google-relay-guard.js). Every provider this process
-   builds for 1Ultra Managed ('starnet' — the one 1Ultra-operated path model traffic can take) streams through
+   builds for 1Ultra Managed ('starnet' — the one StarNet-operated path model traffic can take) streams through
    the guard, so primary runs, fallbacks and auxiliary passes all send a copy with Gmail/Drive tool results
    withheld. Built lazily: providers are constructed long after boot, and connector configs are read per request. */
 let googleRelayGuardInstance = null;
@@ -454,7 +454,7 @@ function applyApiCors(req, res) {
     res.setHeader('Vary', 'Origin');
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');   // PATCH: /api/routing/triggers/:id (line triggers)
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,X-1Ultra-Token,X-Skynet-Token');   // accept the legacy header name too (old Tauri shell)
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,X-StarNet-Token,X-Skynet-Token');   // accept the legacy header name too (old Tauri shell)
   res.setHeader('Access-Control-Max-Age', '600');
 }
 function rejectApi(req, res) {
@@ -520,7 +520,7 @@ const SHARED = path.resolve(__dirname, '..', 'shared');
 function defaultWorkspaces() {
   return ultraHost.runtime; // Never read a personal canonical workspace.
   if (process.platform === 'darwin') {
-    // Match Tauri app.path().app_data_dir() exactly. Older manual sidecars used ~/.local/share/1Ultra;
+    // Match Tauri app.path().app_data_dir() exactly. Older manual sidecars used ~/.local/share/StarNet;
     // that location remains a recovery candidate, never a second canonical station.
     return path.join(os.homedir() || '.', 'Library', 'Application Support', 'ai.skynet.harness', 'workspaces');
   }
@@ -779,7 +779,7 @@ const BUDGET_CAPS = {
   perDay: num(ENV('BUDGET_PER_DAY'), BUDGET_SHIPPED.perDay),         // $25/day soft rail: run ends 'budget'/'day', one-click RESUME in the Budget panel
   global: num(ENV('BUDGET_GLOBAL'), BUDGET_SHIPPED.global)
 };
-// Issue #53: what a 1Ultra-credit run reserves (= its per-run ceiling) when no positive per-run cap is in force.
+// Issue #53: what a StarNet-credit run reserves (= its per-run ceiling) when no positive per-run cap is in force.
 // budgetcaps.DEFAULT_MANAGED_PER_RUN_USD explains the number; SKYNET_BUDGET_MANAGED_PER_RUN retunes it and 0
 // restores the old "the whole wallet is the ceiling" behaviour. A saved/env per-run cap > 0 always wins.
 const MANAGED_PER_RUN_DEFAULT = num(ENV('BUDGET_MANAGED_PER_RUN'), budgetCaps.DEFAULT_MANAGED_PER_RUN_USD);
@@ -12553,7 +12553,7 @@ async function handleTriggerId(req, res, gm) {
   const r = triggerRunner.update(id, fields, extra);
   triggerJson(res, r.ok ? 200 : 409, r.ok ? { ok: true, trigger: triggerView(r.trigger) } : r);
 }
-/* the webhook key: X-1Ultra-Hook-Key header, "Authorization: Bearer <key>", or ?key= (for senders that can only set a URL) */
+/* the webhook key: X-StarNet-Hook-Key header, "Authorization: Bearer <key>", or ?key= (for senders that can only set a URL) */
 function triggerHookKey(req) {
   const h = req.headers || {};
   const hdr = String(h['x-starnet-hook-key'] || '').trim();
@@ -12901,7 +12901,7 @@ function handleBudgetStatus(req, res) {
     saved: Object.assign({}, budgetOverrides),        // only the keys the user explicitly saved
     envDefaults: { perRun: BUDGET_CAPS.perRun, perAgent: BUDGET_CAPS.perAgent, perDay: BUDGET_CAPS.perDay, global: BUDGET_CAPS.global },
     perRun: effectiveCaps.perRun,                     // back-compat: pre-existing flat field kept
-    // Issue #53: the default a 1Ultra-credit run reserves (and stops at) while PER RUN is 0. Null on a station with
+    // Issue #53: the default a StarNet-credit run reserves (and stops at) while PER RUN is 0. Null on a station with
     // no managed credits wired — nothing to govern, so the Budget panel says nothing about it.
     managedRunDefaultUsd: (credits.configured() && MANAGED_PER_RUN_DEFAULT > 0) ? MANAGED_PER_RUN_DEFAULT : null,
     spentToday: known ? ledger.usdForDay(now) : null,
@@ -13254,7 +13254,7 @@ async function handleBudgetSettle(req, res) {
   if (!open) return json(404, { error: 'that run has no unsettled spend', code: 'not_unsettled' });
   let usd;
   if (body.mode === 'limit') {
-    // a 1Ultra-credit receipt's charge is in the STORE's RECENT ACTIVITY (listed by run id), not on a provider dashboard
+    // a StarNet-credit receipt's charge is in the STORE's RECENT ACTIVITY (listed by run id), not on a provider dashboard
     if (!(typeof open.runCapUsd === 'number' && Number.isFinite(open.runCapUsd) && open.runCapUsd > 0)) return json(400, { error: open.managed === true ? 'this run recorded no per-run limit — enter what 1Ultra charged for it (SETTINGS → AI & MODELS › STORE › RECENT ACTIVITY lists each charge with its run id)' : 'this run recorded no per-run limit — enter the charge from your provider dashboard' });
     usd = open.runCapUsd;
   } else {
@@ -16588,7 +16588,7 @@ async function applyNightPatch(agentId, runId, relDir, target, title) {
 }
 
 // the DEFAULT Implement destination for a file deliverable (no folder picker on the simplified card):
-// <Desktop or home>/1Ultra deliverables/<title-slug>-<runId8>. ONE function, used by BOTH the pre-click
+// <Desktop or home>/StarNet deliverables/<title-slug>-<runId8>. ONE function, used by BOTH the pre-click
 // plan preview (workshopImplementPlan) and the actual keep copy — so what the card promises is byte-identical
 // to where the files land.
 function workshopDefaultDest(man, runId) {

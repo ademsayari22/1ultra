@@ -47,7 +47,7 @@ function kill(child) { return new Promise(r => { try { child.on('exit', () => r(
   let B = 'http://' + HOST + ':' + port;
   try {
     let token = await bootToken(B, B);
-    let headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    let headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     const status = async () => (await fetch(B + '/api/nightshift/status', { headers })).json();
 
     // arm the shift by raising the dial (the same call a live station makes) — and confirm the clean baseline.
@@ -70,7 +70,7 @@ function kill(child) { return new Promise(r => { try { child.on('exit', () => r(
     ({ child, port } = await boot(port, env, 20));
     B = 'http://' + HOST + ':' + port;
     token = await bootToken(B, B);
-    headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     s = await status();
     A.eq(s.halted, true, 'the halt survived the sidecar restart (durable, not in-memory)');
 

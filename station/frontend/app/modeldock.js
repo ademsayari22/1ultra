@@ -288,7 +288,7 @@ const ModelDock = (() => {
     return list.filter(m => m && m.id && isAgentModel(m));
   }
 
-  // Return a catalog-confirmed equivalent for a model whose provider changed. Managed 1Ultra/OpenRouter ids
+  // Return a catalog-confirmed equivalent for a model whose provider changed. Managed StarNet/OpenRouter ids
   // are vendor/model; Anthropic's direct API uses the bare tail. Never invent a slug: a candidate is returned
   // only when that exact id is present in the successful catalog.
   function catalogEquivalent(current, p, list) {

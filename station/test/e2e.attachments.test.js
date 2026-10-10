@@ -48,7 +48,7 @@ async function drain(res) { const rd = res.body.getReader(); const dec = new Tex
   const B = fixture.baseUrl;
   try {
     const token = fixture.token;
-    const H = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    const H = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
 
     // 1. UPLOAD a photo -> a lightweight reference; the bytes land in the agent's workspace.
     const up = await fetch(B + '/api/attachments', { method: 'POST', headers: H, body: JSON.stringify({ agent: 'e2e', name: 'pixel.png', dataUrl: 'data:image/png;base64,' + PNG_B64 }) });
@@ -57,7 +57,7 @@ async function drain(res) { const rd = res.body.getReader(); const dec = new Tex
     A.ok(ref.ok && ref.kind === 'image' && /^\.attachments\/.+\.png$/.test(ref.path), 'upload returns an image reference under .attachments/ — ' + JSON.stringify(ref));
 
     // 2. FETCH the photo back through the jailed /api/file route (proves the thumbnail path is real + serves bytes).
-    const fileRes = await fetch(B + '/api/file?agent=e2e&path=' + encodeURIComponent(ref.path), { headers: { 'X-1Ultra-Token': token, Origin: B } });   // the master token rides the header, never the URL (2026-09-25)
+    const fileRes = await fetch(B + '/api/file?agent=e2e&path=' + encodeURIComponent(ref.path), { headers: { 'X-StarNet-Token': token, Origin: B } });   // the master token rides the header, never the URL (2026-09-25)
     A.eq(fileRes.status, 200, 'GET /api/file serves the uploaded attachment');
     A.eq(String(fileRes.headers.get('content-type') || '').indexOf('image/png'), 0, 'served with an image/png content-type');
     const gotBytes = Buffer.from(await fileRes.arrayBuffer());
@@ -104,14 +104,14 @@ async function drain(res) { const rd = res.body.getReader(); const dec = new Tex
 
     // 5. The durable transcript and run history must describe the attachment turn, not duplicate the prior turn.
     const trRes = await fetch(B + '/api/transcript?stream=' + encodeURIComponent(streamId) + '&agent=e2e&limit=20', {
-      headers: { 'X-1Ultra-Token': token, Origin: B }
+      headers: { 'X-StarNet-Token': token, Origin: B }
     });
     A.eq(trRes.status, 200, 'GET /api/transcript reads the attachment stream');
     const transcript = await trRes.json();
     const userTurns = ((transcript && transcript.turns) || []).filter(t => t && t.role === 'user').map(t => t.content);
     A.eq(JSON.stringify(userTurns), JSON.stringify([priorText, attachmentText]), 'durable transcript preserves the attachment turn exactly once');
 
-    const runsRes = await fetch(B + '/api/runs?agent=e2e&limit=20', { headers: { 'X-1Ultra-Token': token, Origin: B } });
+    const runsRes = await fetch(B + '/api/runs?agent=e2e&limit=20', { headers: { 'X-StarNet-Token': token, Origin: B } });
     A.eq(runsRes.status, 200, 'GET /api/runs reads attachment run history');
     const runs = ((await runsRes.json()).runs || []).filter(r => r.streamId === streamId);
     A.eq(runs.length, 2, 'both runs are recorded for the attachment stream');
@@ -121,7 +121,7 @@ async function drain(res) { const rd = res.body.getReader(); const dec = new Tex
     // 6. DELETE the attachment (composer remove-before-send) prunes the workspace file.
     const del = await fetch(B + '/api/attachments', { method: 'POST', headers: H, body: JSON.stringify({ op: 'delete', agent: 'e2e', path: ref.path }) });
     A.eq(del.status, 200, 'POST /api/attachments {op:delete} -> 200');
-    const after = await fetch(B + '/api/file?agent=e2e&path=' + encodeURIComponent(ref.path), { headers: { 'X-1Ultra-Token': token, Origin: B } });   // the master token rides the header, never the URL (2026-09-25)
+    const after = await fetch(B + '/api/file?agent=e2e&path=' + encodeURIComponent(ref.path), { headers: { 'X-StarNet-Token': token, Origin: B } });   // the master token rides the header, never the URL (2026-09-25)
     A.eq(after.status, 404, 'the deleted attachment is gone (404)');
   } finally {
     await fixture.dispose();

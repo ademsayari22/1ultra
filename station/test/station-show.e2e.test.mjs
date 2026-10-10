@@ -158,7 +158,7 @@ try {
   const cleared = ((await evalJS(cdp, SCREEN)) || []).length;
   mock.results = []; mock.phase = MARK + '-UNWATCHED';
   mock.script = [{ name: 'tool_search', args: { query: 'open a window to show the Commander' } }, { name: 'station_show', args: { place: 'settings' } }];
-  const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: base };
+  const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: base };
   const res = await fetch(base + '/api/run', { method: 'POST', headers, body: JSON.stringify({ key: 'sk-or-v1-fake', model: 'test/model', agentId: 'agent', isTask: true, messages: [{ role: 'user', content: MARK + '-UNWATCHED open my settings' }] }) });
   await res.text();
   check('unwatched run: the model was told the screen was left alone', /^REFUSED: the Commander is not looking at this conversation/.test(mock.results[1] || ''), (mock.results[1] || '').slice(0, 200));

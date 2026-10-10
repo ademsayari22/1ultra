@@ -85,7 +85,7 @@ function boot(port, env, attempts) {
 
 async function run(base, token, body) {
   const res = await fetch(base + '/api/run', {
-    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: base }, body: JSON.stringify(body)
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: base }, body: JSON.stringify(body)
   });
   A.eq(res.status, 200, 'image task run streams');
   return (await res.text()).split('\n').map(s => s.trim()).filter(Boolean).map(s => { try { return JSON.parse(s); } catch (_) { return null; } }).filter(Boolean);

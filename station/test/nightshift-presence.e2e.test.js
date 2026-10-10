@@ -85,7 +85,7 @@ function kill(child) { return new Promise(r => { try { child.on('exit', () => r(
   const B = 'http://' + HOST + ':' + port;
   try {
     const token = await bootToken(B, B);
-    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     const status = async () => (await fetch(B + '/api/nightshift/status', { headers })).json();
 
     // arm the shift by raising the dial (the same call a live station makes).

@@ -1279,7 +1279,7 @@ const Chat = (() => {
     const dataUrl = await readAsDataUrl(file);
     const tok = (typeof Harness !== 'undefined' && Harness.apiToken) ? String(Harness.apiToken() || '') : '';
     const headers = { 'Content-Type': 'application/json' };
-    if (tok) headers['X-1Ultra-Token'] = tok;
+    if (tok) headers['X-StarNet-Token'] = tok;
     const res = await fetch('/api/attachments', { method: 'POST', headers, body: JSON.stringify({ agent: attachAgentId(), name: file.name || 'file', dataUrl }) });
     const j = await res.json().catch(() => ({}));
     if (!res.ok || !j || !j.ok) throw new Error((j && j.error) || ('upload HTTP ' + res.status));
@@ -1321,7 +1321,7 @@ const Chat = (() => {
     // best-effort: prune the uploaded bytes so an attach-then-remove doesn't orphan a file in the workspace
     if (entry.ref && entry.ref.path) {
       const tok = (typeof Harness !== 'undefined' && Harness.apiToken) ? String(Harness.apiToken() || '') : '';
-      const headers = { 'Content-Type': 'application/json' }; if (tok) headers['X-1Ultra-Token'] = tok;
+      const headers = { 'Content-Type': 'application/json' }; if (tok) headers['X-StarNet-Token'] = tok;
       fetch('/api/attachments', { method: 'POST', headers, body: JSON.stringify({ op: 'delete', agent: attachAgentId(), path: entry.ref.path }) }).catch(() => {});
     }
     pendingAtts.splice(i, 1);
@@ -2747,7 +2747,7 @@ const Chat = (() => {
   function workspaceDir(agentId) {
     const aid = agentId || 'agent';
     if (_wsDirCache.has(aid)) return _wsDirCache.get(aid);
-    // header auth only: the hardened window.fetch (harness.js) attaches X-1Ultra-Token to every /api/ URL
+    // header auth only: the hardened window.fetch (harness.js) attaches X-StarNet-Token to every /api/ URL
     const p = fetch('/api/workspace/dir?agent=' + encodeURIComponent(aid), { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null).then(j => (j && j.dir) ? String(j.dir) : '').catch(() => '');
     _wsDirCache.set(aid, p);
@@ -4400,7 +4400,7 @@ const Chat = (() => {
             let j = null;
             try {
               const tok = (typeof Harness !== 'undefined' && Harness.apiToken) ? String(Harness.apiToken() || '') : '';
-              const headers = { 'Content-Type': 'application/json' }; if (tok) headers['X-1Ultra-Token'] = tok;
+              const headers = { 'Content-Type': 'application/json' }; if (tok) headers['X-StarNet-Token'] = tok;
               const rr = await fetch('/api/workshop/undo', { method: 'POST', headers, body: JSON.stringify({ agentId: agentId, runId: m.runId, destPath: destPath }) });
               j = await rr.json().catch(() => null);
               if (!rr.ok || !j || j.ok === false) j = null;
@@ -7451,7 +7451,7 @@ const Chat = (() => {
       : scope === 'day' ? 'hit the ' + cap + 'daily spend cap'
       : scope === 'global' ? 'hit the ' + cap + 'all-time spend cap'
       : 'hit a spend cap';
-    // A per-RUN stop says "raise", never "remove": a 1Ultra-credit run with PER RUN at 0 still stops at the
+    // A per-RUN stop says "raise", never "remove": a StarNet-credit run with PER RUN at 0 still stops at the
     // managed default (issue #53), so "remove it" would be an instruction that does nothing there.
     // the caps live in SETTINGS › SPENDING LIMITS (MISSION CONTROL is only a room label; there is no BUDGET tab)
     return what + (scope === 'run' ? ' — raise it' : ' — raise or remove it') + ' in SETTINGS › SPENDING LIMITS';
@@ -8862,7 +8862,7 @@ const Chat = (() => {
   async function nextStageOf(agentId, tag, lineId, dockId) {
     try {
       const h = {}, tok = (typeof window !== 'undefined' && window.__STARNET_API_TOKEN__) || '';
-      if (tok) h['X-1Ultra-Token'] = String(tok);
+      if (tok) h['X-StarNet-Token'] = String(tok);
       // `lineId` = the line this work ENTERED on (work belongs to a line, 2026-08-07). The sidecar's plan is
       // still the decider — it refuses any id that is not this dock's own line — so this only ever narrows.
       const r = await fetch('/api/routing/chain?agentId=' + encodeURIComponent(agentId) + '&tag=' + encodeURIComponent(tag || '')

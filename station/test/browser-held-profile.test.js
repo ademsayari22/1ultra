@@ -87,7 +87,7 @@ function rig(persistentDir, o) {
     A.eq(err && err.code, 'BROWSER_PROFILE_HELD', 'with the held-profile code');
     const msg = String(err && err.message);
     A.ok(/another process is holding the station browser's profile/.test(msg), 'naming the cause: ' + msg);
-    A.ok(/SETTINGS › BROWSER › RESET STATION BROWSER/.test(msg) && /started as administrator can't be closed by 1Ultra/.test(msg), 'and the repair');
+    A.ok(/SETTINGS › BROWSER › RESET STATION BROWSER/.test(msg) && /started as administrator can't be closed by StarNet/.test(msg), 'and the repair');
     A.ok(!/CDP ownership/.test(msg), 'never the raw CDP hand-off text');
     A.eq(r.launches.length, 4, 'three persistent tries + ONE temporary try');
     let err2 = null;

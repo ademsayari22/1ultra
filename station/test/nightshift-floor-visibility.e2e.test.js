@@ -129,7 +129,7 @@ function hotBeliefs(now) {
   try {
     const token = await bootToken(B, B);
     A.ok(token.length >= 32, 'got a session API token');
-    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
 
     sse = attachSse(B, token);
     await sleep(300);   // let the SSE stream open before the beat fires

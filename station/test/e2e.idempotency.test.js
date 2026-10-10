@@ -174,7 +174,7 @@ async function readNdjson(res) {
   const writeCalls = () => mcp.calls.filter(c => c.msg && c.msg.method === 'tools/call' && c.msg.params && c.msg.params.name === 'send_message');
   try {
     const token = await bootToken(B, B);
-    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
 
     const upsert = await fetch(B + '/api/connectors', { method: 'POST', headers, body: JSON.stringify({ id: 'demo', label: 'Demo MCP', transport: 'http', url: mcp.url, token: 'mcp-secret-token' }) });
     A.eq(upsert.status, 200, 'configured the MCP connector');

@@ -97,7 +97,7 @@ function boot(port, env, attemptsLeft) {
   const calls = () => fs.readFileSync(logFile, 'utf8').split('\n').filter(Boolean);
   try {
     const token = await bootToken(B, B);
-    const H = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    const H = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     const post = async (p, body) => (await fetch(B + p, { method: 'POST', headers: H, body: JSON.stringify(body || {}) })).json();
     const get = async (p) => (await fetch(B + p, { headers: H })).json();
 

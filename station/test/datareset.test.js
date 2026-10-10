@@ -128,7 +128,7 @@ function fakeWindow() {
     A.ok(/stop_sidecar_gracefully\(st\)[\s\S]{0,400}set_aside_for_erase/.test(main), 'the sidecar (and its station browser) stops before any file moves');
     A.ok(main.includes('erase_all::remove_all(&targets)') && main.includes('window.clear_all_browsing_data()'), 'deletion + WebView storage clear are both wired');
     A.ok(/!path\.starts_with\(&install_root\)/.test(main), 'the install folder (and its bundled seed) is never an erase target');
-    A.ok(/fn is_starnet_owned/.test(erase) && /refused: not a 1Ultra-owned location/.test(erase), 'every target passes the 1Ultra-ownership guard');
+    A.ok(/fn is_starnet_owned/.test(erase) && /refused: not a StarNet-owned location/.test(erase), 'every target passes the StarNet-ownership guard');
     A.ok(/DataReset\.mountErase\(el\)/.test(ui) && /DataReset\.mountBrowserReset\(el\)/.test(ui), 'both doors are mounted in Settings');
     A.ok(html.includes('<script src="app/datareset.js"></script>'), 'the module loads');
     A.ok(html.indexOf('app/armconfirm.js') < html.indexOf('app/datareset.js'), 'after the shared arm/confirm helper');

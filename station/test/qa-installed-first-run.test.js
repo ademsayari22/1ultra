@@ -14,7 +14,7 @@ const {
 
 const SHA = 'a'.repeat(40);
 const TREE = 'b'.repeat(40);
-const ARTIFACT = { path: 'C:/Program Files/1Ultra/skynet-desktop.exe', sha256: 'c'.repeat(64), size: 456789 };
+const ARTIFACT = { path: 'C:/Program Files/StarNet/skynet-desktop.exe', sha256: 'c'.repeat(64), size: 456789 };
 const EVIDENCE = { path: 'qa/installed/smoke-run/link.json', sha256: 'd'.repeat(64), size: 123 };
 const ISO = '2026-07-12T12:00:00.000Z';
 const SECRET = 'sk-or-v1-attended-runtime-secret-value';

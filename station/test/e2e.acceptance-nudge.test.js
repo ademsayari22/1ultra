@@ -68,7 +68,7 @@ function boot(port, env, attemptsLeft) {
       { id: 'sop-2', type: 'verification_passed', command: 'node scripts/check-invoice.js acme' }
     ] };
     const r = await fetch(B + '/api/run', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
       body: JSON.stringify({ key: 'sk-or-v1-e2e-fake', model: 'test/model', agentId: 'sop-e2e', isTask: true,
         messages: [{ role: 'user', content: 'Prepare the invoice for acme.\n\nAcceptance (the host checks these when you finish):\n- out/acme-invoice.md contains "TOTAL"\n- check passes: node scripts/check-invoice.js acme' }],
         postconditions: contract })
@@ -88,7 +88,7 @@ function boot(port, env, attemptsLeft) {
     A.ok(evs.some(e => e.name === 'iteration.refunded' && e.payload && e.payload.reason === 'duplicate'), 'the wasted extra turn was refunded as a duplicate (existing accounting)');
     A.eq(end.payload.completionVerdict, 'incomplete', 'the model did nothing on the extra turn, so the host verdict stays incomplete — prose never promotes it');
     const runId = ((evs.find(e => e.name === 'agent.run.start') || {}).payload || {}).runId;
-    const rows = await (await fetch(B + '/api/runs?agent=sop-e2e&runId=' + encodeURIComponent(runId), { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
+    const rows = await (await fetch(B + '/api/runs?agent=sop-e2e&runId=' + encodeURIComponent(runId), { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
     const saved = (rows.runs || [])[0];
     A.eq(saved && saved.completionEvidence.checks.map(c => c.id + ':' + c.status).join(','), 'sop-1:failed,sop-2:failed', 'durable run history keeps both named checks with their outcome');
   } finally {

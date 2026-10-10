@@ -232,7 +232,7 @@ function jwt(claims) {
     A.eq(brandedTempFiles[0], pathMod.join(brandedTempRoot, 'codex', 'tokens.json'),
       'a branded isolated root scans only its own token file');
     A.ok(!tokenStore.isRecognizedWorkspaceRoot(brandedTempRoot, migrationOpts),
-      'a path is not trusted merely because its tail is 1Ultra/workspaces');
+      'a path is not trusted merely because its tail is StarNet/workspaces');
     A.ok(brandedTempFiles.indexOf(pathMod.join(legacyRoot, 'codex', 'tokens.json')) < 0,
       'a branded isolated root cannot pull a legacy OAuth token across the boundary');
   }

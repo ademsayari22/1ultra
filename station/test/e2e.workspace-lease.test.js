@@ -95,7 +95,7 @@ function findFile(root, name) {   // recursive: workspace layout is the sidecar'
 
 async function driveRun(B, token, agentId, text, streamId) {
   const res = await fetch(B + '/api/run', {
-    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
     body: JSON.stringify({ key: 'sk-or-v1-fake', model: 'test/model', agentId, streamId, isTask: true, placed: ['cabinet'], messages: [{ role: 'user', content: text }] })
   });
   return res.text();

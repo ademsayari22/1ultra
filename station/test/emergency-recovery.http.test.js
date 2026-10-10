@@ -19,7 +19,7 @@ const { SidecarFixture } = require('./helpers/sidecar-fixture');
   };
   try {
     await host.start();
-    assert.equal((await host.request('/api/halt', { headers: { 'X-1Ultra-Token': '' } })).status, 403);
+    assert.equal((await host.request('/api/halt', { headers: { 'X-StarNet-Token': '' } })).status, 403);
     assert.equal((await json('POST', '/api/halt/resume', {})).status, 400);
     // Deliberately leave scheduling OFF: resume must not silently arm it.
     await json('POST', '/api/cron/arm', { enabled: false });

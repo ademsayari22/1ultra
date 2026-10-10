@@ -147,7 +147,7 @@ async function startSse(url) {
   try {
     const token = await bootToken(B, B);
     A.ok(token.length >= 32, 'got a session API token');
-    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     sse = await startSse(B + '/api/channels/events?' + require('./_httpToken.js').sseQuery(token));
 
     // 0. EMPTY BACKLOG (granted, nothing queued) -> silent no-op, no workshop.built.
@@ -395,7 +395,7 @@ async function startSse(url) {
     await sleep(180);
     const restarted = await boot(firstBoot.port, env, 20); child = restarted.child; B = 'http://' + HOST + ':' + restarted.port;
     const token2 = await bootToken(B, B);
-    const headers2 = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token2, Origin: B };
+    const headers2 = { 'Content-Type': 'application/json', 'X-StarNet-Token': token2, Origin: B };
     const afterRestart = await (await fetch(B + '/api/deliverables', { headers: headers2 })).json();
     A.ok(afterRestart.items.some(r => r.runId === runId2 && r.status === 'kept'), 'kept deliverable remains indexed after sidecar restart');
     A.ok(afterRestart.items.some(r => r.runId === runId && r.status === 'discarded'), 'discarded deliverable remains indexed after cleanup undo and restart');

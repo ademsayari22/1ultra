@@ -29,7 +29,7 @@
      2026-09-17, amending the older "quotas default off" decision for this one runaway-spend case. */
   const DEFAULT_PER_DAY_USD = 25;
   const SHIPPED_DEFAULTS = Object.freeze({ perRun: 0, perAgent: 0, perDay: DEFAULT_PER_DAY_USD, global: 0 });
-  /* MANAGED PER-RUN DEFAULT (issue #53, 2026-09-30). A 1Ultra-credit run must reserve a FINITE amount before
+  /* MANAGED PER-RUN DEFAULT (issue #53, 2026-09-30). A StarNet-credit run must reserve a FINITE amount before
      its first model call. With no per-run cap in force, admission used to reserve the ENTIRE wallet — and the
      reservation is the loop's per-run ceiling — so one "simple" prompt on a busy/expensive model was allowed to
      spend every dollar the user had just added (reporter: $10 top-up gone on a four-sentence question).
@@ -44,7 +44,7 @@
   function shippedDefaults() { return Object.assign({}, SHIPPED_DEFAULTS); }
   function isNum(v) { return typeof v === 'number' && isFinite(v); }
 
-  /* The amount a MANAGED (1Ultra-credit) run reserves — which is also its per-run spend ceiling.
+  /* The amount a MANAGED (StarNet-credit) run reserves — which is also its per-run spend ceiling.
        capUsd      the cap already in force for this run: an explicit caller cap (a delegated worker's) or the
                    user's positive per-run cap. It is a CEILING, so it is clamped to the wallet: a cap above
                    the balance reserves the balance. (It used to pass through verbatim and admission refused it

@@ -148,7 +148,7 @@ function twoStagePlan() {
   let sse = null;
   try {
     let token = await bootToken(B, B);
-    let headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    let headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     const api = (p, method, body) => fetch(B + p, { method: method || 'GET', headers, body: body === undefined ? undefined : JSON.stringify(body) }).then(r => r.json().catch(() => null).then(j => ({ status: r.status, j })));
     const list = async () => ((await api('/api/routing/triggers')).j || {}).triggers || [];
     const waitFor = async (pred, ms, what) => { const end = Date.now() + ms; while (Date.now() < end) { const v = await pred(); if (v) return v; await sleep(200); } A.ok(false, 'timed out waiting for ' + what); return null; };
@@ -205,12 +205,12 @@ function twoStagePlan() {
     A.ok(JSON.stringify(g1.j).indexOf(key) < 0 && !/secretHash|[a-f0-9]{64}/.test(JSON.stringify(g1.j)), 'the listing never echoes the secret or its hash');
     const hook = (id, h, qs, body) => fetch(B + '/api/hooks/' + id + (qs || ''), { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, h || {}), body: body || JSON.stringify({ order: 7, item: 'blue widget' }) }).then(r => r.json().catch(() => null).then(j => ({ status: r.status, j })));
     A.eq((await hook(wid)).status, 401, 'no key -> 401');
-    A.eq((await hook(wid, { 'X-1Ultra-Hook-Key': key + 'x' })).status, 401, 'a wrong key -> 401');
-    A.eq((await hook('trg_000000000000', { 'X-1Ultra-Hook-Key': key })).status, 401, 'an unknown trigger id -> 401 (existence never revealed)');
-    A.eq((await fetch(B + '/api/hooks/' + wid, { headers: { 'X-1Ultra-Hook-Key': key } })).status, 403, 'a GET on the hook path still meets the launch-token gate');
-    A.eq((await fetch(B + '/api/hooks/allow', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Hook-Key': key }, body: '{}' })).status, 403, 'the neighbouring /api/hooks/allow route is NOT opened by the hook seam');
+    A.eq((await hook(wid, { 'X-StarNet-Hook-Key': key + 'x' })).status, 401, 'a wrong key -> 401');
+    A.eq((await hook('trg_000000000000', { 'X-StarNet-Hook-Key': key })).status, 401, 'an unknown trigger id -> 401 (existence never revealed)');
+    A.eq((await fetch(B + '/api/hooks/' + wid, { headers: { 'X-StarNet-Hook-Key': key } })).status, 403, 'a GET on the hook path still meets the launch-token gate');
+    A.eq((await fetch(B + '/api/hooks/allow', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Hook-Key': key }, body: '{}' })).status, 403, 'the neighbouring /api/hooks/allow route is NOT opened by the hook seam');
     A.eq((await api('/api/routing/triggers')).j.triggers.find(t => t.id === wid).fires, 0, 'refused calls never fired');
-    const okHook = await hook(wid, { 'X-1Ultra-Hook-Key': key });
+    const okHook = await hook(wid, { 'X-StarNet-Hook-Key': key });
     A.eq(okHook.status, 202, 'the right key -> 202 accepted: ' + JSON.stringify(okHook.j));
     A.ok(okHook.j && okHook.j.accepted === true && okHook.j.durable === false, 'the 202 says honestly that the waiting item is not on disk yet (a restart before it runs drops it)');
     const wdone = await waitFor(async () => { const t = (await list()).find(x => x.id === wid); return t && t.lastOutcome ? t : null; }, 30000, 'the webhook fire to finish');
@@ -225,10 +225,10 @@ function twoStagePlan() {
     await waitFor(async () => { const t = (await list()).find(x => x.id === wid); return t && t.fires === 2 && !t.running && !t.queued ? t : null; }, 30000, 'the second webhook fire');
     const regen = await api('/api/routing/triggers/' + wid + '/secret', 'POST', {});
     A.ok(regen.status === 200 && /^whk_/.test(regen.j.secret) && regen.j.secret !== key, 'regenerate answers a NEW secret once');
-    A.eq((await hook(wid, { 'X-1Ultra-Hook-Key': key })).status, 401, 'the old key is retired');
+    A.eq((await hook(wid, { 'X-StarNet-Hook-Key': key })).status, 401, 'the old key is retired');
     const dis = await api('/api/routing/triggers/' + wid, 'PATCH', { enabled: false });
     A.ok(dis.status === 200 && dis.j.trigger.enabled === false, 'PATCH disables the webhook');
-    A.eq((await hook(wid, { 'X-1Ultra-Hook-Key': regen.j.secret })).status, 409, 'a disabled trigger refuses the right key with 409');
+    A.eq((await hook(wid, { 'X-StarNet-Hook-Key': regen.j.secret })).status, 409, 'a disabled trigger refuses the right key with 409');
 
     /* ---- 4. RESTART ---- */
     sse.close(); sse = null;
@@ -236,7 +236,7 @@ function twoStagePlan() {
     ({ child, port } = await boot(port, env, 20));
     B = 'http://' + HOST + ':' + port;
     token = await bootToken(B, B);
-    headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     const after = await list();
     const f2 = after.find(t => t.id === fid), w2 = after.find(t => t.id === wid);
     A.ok(f2 && w2, 'both triggers survived the restart');

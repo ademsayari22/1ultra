@@ -149,7 +149,7 @@ function twoStagePlan() {
   let sse = null;
   try {
     const token = await bootToken(B, B);
-    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     const call = (route, body) => fetch(B + route, { method: 'POST', headers, body: JSON.stringify(body == null ? {} : body) })
       .then(r => r.json().then(j => ({ status: r.status, j })));
 

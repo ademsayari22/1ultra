@@ -52,6 +52,11 @@ class UpdateStarnetTest(unittest.TestCase):
         self.assertEqual((self.dest / 'LICENSE').read_text(), 'MIT StarNet\n')
         self.assertEqual((self.dest / 'NOTICE.md').read_text(), 'StarNet credits\n')
 
+    def test_rebrand_keeps_identifiers_joined_by_hyphen_or_slash(self):
+        self.assertEqual(U.rebrand("h['X-StarNet-Token'] = t; p = 'Application Support/StarNet'; code = 'refused-by-newer-StarNet'"),
+                         "h['X-StarNet-Token'] = t; p = 'Application Support/StarNet'; code = 'refused-by-newer-StarNet'")
+        self.assertEqual(U.rebrand('Came with StarNet. STARNET: ready'), 'Came with 1Ultra. 1ULTRA: ready')
+
     def test_applies_patch_and_records_adaptations(self):
         manifest = self.run_export()
         self.assertIn("const ultraHost = require('../ultra-host.js');", (self.dest / 'sidecar/index.js').read_text())

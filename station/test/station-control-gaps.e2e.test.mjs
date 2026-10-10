@@ -74,7 +74,7 @@ function startMock() {
   return new Promise(r => server.listen(0, '127.0.0.1', () => { mock.server = server; mock.base = 'http://127.0.0.1:' + server.address().port + '/api/v1'; r(mock); }));
 }
 const api = async (base, token, method, path, body) => {
-  const r = await fetch(base + path, { method, headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: base }, body: body ? JSON.stringify(body) : undefined });
+  const r = await fetch(base + path, { method, headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: base }, body: body ? JSON.stringify(body) : undefined });
   let j = null; try { j = await r.json(); } catch (_) {}
   return { status: r.status, json: j };
 };
@@ -129,7 +129,7 @@ try {
     { name: 'station_settings', args: { section: 'limits' } },                                                                       // 8
     { name: 'station_control', args: { action: 'estop.engage', args: {} } }                                                           // 9
   ];
-  const res = await fetch(base + '/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: base },
+  const res = await fetch(base + '/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: base },
     body: JSON.stringify({ key: 'sk-or-v1-fake', model: 'test/model', agentId: 'agent', isTask: true, messages: [{ role: 'user', content: MARK + ' queue tidy-the-docs as away work, browser in its own window, clear my notifications, clean up deliverables, max 150 steps, then hit the E-STOP' }] }) });
   await res.text();
   const R = mock.results;

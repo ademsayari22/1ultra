@@ -52,7 +52,7 @@ const throwsMsg = async (fn) => { try { await fn(); return ''; } catch (e) { ret
     // the crew finds app.create by searching "app": its description must keep OUTSIDE builds away (a Netlify site and
     // a React todo became 1Ultra apps on 10-02 before this line)
     const createDesc = tools.defs.find(d => d.name === 'app.create').description;
-    A.ok(/INSIDE 1Ultra/.test(createDesc) && /NOT for anything meant to run, be published or be shipped outside 1Ultra/.test(createDesc) && /framework codebase/.test(createDesc) && /add-on for the Commander's own web browser/.test(createDesc), 'app.create says it is only for apps inside 1Ultra, never a site/project/script to ship elsewhere');
+    A.ok(/INSIDE StarNet/.test(createDesc) && /NOT for anything meant to run, be published or be shipped outside StarNet/.test(createDesc) && /framework codebase/.test(createDesc) && /add-on for the Commander's own web browser/.test(createDesc), 'app.create says it is only for apps inside 1Ultra, never a site/project/script to ship elsewhere');
     // (sweep 2026-10-02) …without the words people SEARCH for those asks: tool_search matches description substrings and
     // shows only the first sentence, so "a website, a React project, a browser extension" made it reveal app.create as
     // the top hit for exactly "browser extension" / "host a site" / "react project"

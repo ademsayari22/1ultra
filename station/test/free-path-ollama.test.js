@@ -85,7 +85,7 @@ global.App.currentAgent = () => ({ name: 'NOVA', onboarded: true });
   ok(/RUN FREE LOCALLY \(OLLAMA\)/.test(keycta) && /SET UP OLLAMA/.test(keycta), 'the free door has a proven label and an honest unproven label');
   ok(/ollamaReady \? '◇ RUN FREE LOCALLY/.test(keycta), 'the "run free" label is gated on the sidecar probe verdict (truthful telemetry)');
   ok(/Harness\.probeProvider\('ollama'\)/.test(keycta), 'the verdict comes from the sidecar probe route, not a local guess');
-  ok(/LINK 1ULTRA/.test(keycta), 'an unlinked starnet station is offered a LINK, not a key');
+  ok(/LINK STARNET/.test(keycta), 'an unlinked starnet station is offered a LINK, not a key');
   ok(/openTerm\('settings', 'providers'\)/.test(keycta), 'every door lands on the PROVIDERS section of settings');
 
   const index = read('frontend/index.html');

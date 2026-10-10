@@ -105,7 +105,7 @@ for (const [scope, cap, want] of [
   const bal = SlagLog.diagnose('budget', { atBalance: true, cacheFrac: 0.05 });
   const line = SlagLog.line(bal);
   A.eq(bal.reason, 'budget', 'a balance stop is still a budget post-mortem (the maintenance quest keys on the reason)');
-  A.ok(/1Ultra balance/.test(line) && /add credits under SETTINGS → AI & MODELS/i.test(line) && !/raise/i.test(line), 'a balance stop toast names the balance and the top-up door: ' + line);
+  A.ok(/StarNet balance/.test(line) && /add credits under SETTINGS → AI & MODELS/i.test(line) && !/raise/i.test(line), 'a balance stop toast names the balance and the top-up door: ' + line);
   A.ok(/^hit the budget cap — Raise the budget/.test(SlagLog.line(SlagLog.diagnose('budget', { atBalance: false }))), 'a stop at a chosen cap keeps its own post-mortem');
   A.ok(/cold cache/.test(SlagLog.diagnose('budget', { cacheFrac: 0.05 }).title), 'and the cold-cache lesson is unchanged for a cap stop');
   const world = read('frontend/app/world.js');
@@ -130,7 +130,7 @@ for (const [scope, cap, want] of [
   const note = endNote('budget');
   A.ok(/SETTINGS › SPENDING LIMITS/.test(note) && !/MISSION CONTROL/.test(note), 'an ACP budget stop names SPENDING LIMITS: ' + note);
   const bal = endNote('budget', true);
-  A.ok(/1Ultra balance/.test(bal) && /SETTINGS → AI & MODELS/.test(bal) && !/raise/.test(bal), 'an ACP balance stop names the balance and the top-up door: ' + bal);
+  A.ok(/StarNet balance/.test(bal) && /SETTINGS → AI & MODELS/.test(bal) && !/raise/.test(bal), 'an ACP balance stop names the balance and the top-up door: ' + bal);
 }
 // ACP: only the lead's own end decides (a delegated worker's run.end rides the same stream)
 async function acpLeadOnly() {
@@ -148,9 +148,9 @@ async function acpLeadOnly() {
     return sent.map(p => (p && p.update && p.update.content && p.update.content.text) || '').join('');
   };
   const lead = await turn([['agent.run.start', { runId: 'lead' }], ['agent.run.end', { runId: 'lead', reason: 'budget', budgetScope: 'run', budgetCapUsd: 3, budgetCapIsBalance: true }]]);
-  A.ok(/1Ultra balance/.test(lead), 'the lead\'s balance stop reaches the editor: ' + JSON.stringify(lead.slice(-160)));
+  A.ok(/StarNet balance/.test(lead), 'the lead\'s balance stop reaches the editor: ' + JSON.stringify(lead.slice(-160)));
   const worker = await turn([['agent.run.start', { runId: 'lead' }], ['agent.run.start', { runId: 'w1' }], ['agent.run.end', { runId: 'w1', reason: 'budget', budgetScope: 'run', budgetCapIsBalance: true }], ['agent.run.end', { runId: 'lead', reason: 'budget', budgetScope: 'run', budgetCapUsd: 3 }]]);
-  A.ok(/SPENDING LIMITS/.test(worker) && !/1Ultra balance/.test(worker), 'a worker\'s balance stop never speaks for the lead: ' + JSON.stringify(worker.slice(-160)));
+  A.ok(/SPENDING LIMITS/.test(worker) && !/StarNet balance/.test(worker), 'a worker\'s balance stop never speaks for the lead: ' + JSON.stringify(worker.slice(-160)));
 }
 // ---- /usage ----
 (async () => {

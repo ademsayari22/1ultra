@@ -1334,7 +1334,7 @@ const Voice = (() => {
       /* CHECK r.ok. `fetch` RESOLVES on 4xx/5xx, and the route's honest 200-degrade envelope is not the only
          thing that can come back: rejectBadApiToken answers 403 with the plain text 'forbidden token' BEFORE
          the route table is reached — the documented state after a sidecar respawn, where the page still holds
-         the old X-1Ultra-Token — and any 5xx/HTML/empty error body behaves the same. r.json() then rejects,
+         the old X-StarNet-Token — and any 5xx/HTML/empty error body behaves the same. r.json() then rejects,
          the catch yields {}, and an UNREACHABLE endpoint was laundered into a CONFIRMED-EMPTY transcript:
          the user's spoken sentence disappeared with no error and no diagnostic, byte-identical to having said
          nothing into a dead room. An unknown is not an empty. */

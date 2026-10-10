@@ -19,7 +19,9 @@ OWNED = ('ultra-host.js', 'ultra-policy.js', 'ultra-state.js', 'ultra-switches.j
          'UPSTREAM.json', 'package.json', 'package-lock.json', 'node_modules/', 'frontend/campaign/', 'frontend/assets/',
          'frontend/ultra-window.js', 'frontend/ultra-brand.css')
 RENAMES = {'package.json': 'package.upstream.json', 'package-lock.json': 'package-lock.upstream.json'}
-BRAND = [(re.compile(r'\bStarNet\b'), '1Ultra'), (re.compile(r'\bSTARNET\b'), '1ULTRA'), (re.compile(r'\bStarnet\b'), '1Ultra')]
+# Display words only: a brand word joined to '-' or '/' is an identifier (X-StarNet-Token header, Support/StarNet path,
+# refused-by-newer-StarNet code) and must keep its exact spelling.
+BRAND = [(re.compile(r'(?<![-/])\b' + word + r'\b(?![-/])'), new) for word, new in (('StarNet', '1Ultra'), ('STARNET', '1ULTRA'), ('Starnet', '1Ultra'))]
 BRAND_ROOTS = {'frontend', 'sidecar', 'shared', 'test', 'skills-catalog'}
 
 

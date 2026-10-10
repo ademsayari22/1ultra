@@ -28,7 +28,7 @@ const SECRET = 'rk-live-verySECRET-9876';
   let apiToken = fixture.token;
   const j = async (m, p, body) => {
     const headers = { 'Content-Type': 'application/json', Origin: B() };
-    if (apiToken) headers['X-1Ultra-Token'] = apiToken;
+    if (apiToken) headers['X-StarNet-Token'] = apiToken;
     const r = await fetch(B() + p, { method: m, headers, body: body ? JSON.stringify(body) : undefined });
     const t = await r.text(); let v; try { v = JSON.parse(t); } catch (_) { v = t; }
     return { status: r.status, body: v, text: t };

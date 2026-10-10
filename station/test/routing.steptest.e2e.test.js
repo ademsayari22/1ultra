@@ -135,7 +135,7 @@ function twoStagePlan(hopBrief) {
   try {
     let token = await bootToken(B, B);
     A.ok(token.length >= 32, 'got a session API token');
-    let headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    let headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     const call = (method, p, body) => fetch(B + p, { method, headers, body: body === undefined ? undefined : (typeof body === 'string' ? body : JSON.stringify(body)) })
       .then(r => r.text().then(t => { let j = null; try { j = JSON.parse(t); } catch (_) { j = null; } return { status: r.status, j }; }));
     const poll = async (id) => {
@@ -227,7 +227,7 @@ function twoStagePlan(hopBrief) {
     ({ child, port } = await boot(port + 1, env, 20));
     B = 'http://' + HOST + ':' + port;
     token = await bootToken(B, B);
-    headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     const after = await call('GET', '/api/routing/steptest');
     A.eq(after.status, 200);
     A.eq(after.j.session && after.j.session.id, id, 'after a restart GET answers the same session');

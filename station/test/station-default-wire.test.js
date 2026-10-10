@@ -67,7 +67,7 @@ A.eq((appjs.match(/Harness\.setProv\(saved\.prov\)/g) || []).length, 0, 'no resu
 A.eq((appjs.match(/Harness\.setProv\(savedStationProv\(saved\)\)/g) || []).length, 3, 'all three resume paths restore the station provider');
 
 // SETTINGS -> PROVIDERS moves the station default (the Overseer's pin), so unpinned agents follow the switch instead
-// of the provider the station just left (a 1Ultra-credits station switched to a BYOK key kept sending `starnet`).
+// of the provider the station just left (a StarNet-credits station switched to a BYOK key kept sending `starnet`).
 {
   const calls = [];
   const src2 = ['stationDefaultWire', 'focusWire', 'setStationProvider'].map(lift).join('\n');

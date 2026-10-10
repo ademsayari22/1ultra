@@ -37,7 +37,7 @@ const { SidecarFixture } = require('./helpers/sidecar-fixture.js');
   const fixture = SidecarFixture.create({ timeoutMs: 20000, env: { SKYNET_AUX_BUDGET: '0', SKYNET_OPENROUTER_BASE: base, OPENROUTER_API_KEY: 'synthetic-crm-key', SKYNET_FULL_ACCESS: '0', STARNET_FULL_ACCESS: '0' } });
   async function drive(nextMode, decision = 'once') {
     mode = nextMode; wire = []; effects = [];
-    const response = await fetch(fixture.baseUrl + '/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': fixture.token }, body: JSON.stringify({ agentId: mode === 'direct' ? 'worker' : 'agent', provider: 'openrouter', key: 'synthetic-crm-key', model: 'test/model', isTask: true, internal: true, placed: [], system: mode === 'direct' ? 'CRM_SPECIALIST' : '', messages: [{ role: 'user', content: 'Perform the fixture CRM task.' }] }) });
+    const response = await fetch(fixture.baseUrl + '/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': fixture.token }, body: JSON.stringify({ agentId: mode === 'direct' ? 'worker' : 'agent', provider: 'openrouter', key: 'synthetic-crm-key', model: 'test/model', isTask: true, internal: true, placed: [], system: mode === 'direct' ? 'CRM_SPECIALIST' : '', messages: [{ role: 'user', content: 'Perform the fixture CRM task.' }] }) });
     assert.equal(response.status, 200);
     const reader = response.body.getReader(), decoder = new TextDecoder();
     let pending = '', leadId = ''; const events = [], prompts = [];

@@ -40,7 +40,7 @@ try {
   A.ok(one.candidates[0].displayRoot.startsWith('~'), 'candidate path redacts the user home');
   A.eq(one.candidates[0].stationName, 'NOVA', 'candidate names the station from the valid save envelope');
   A.eq(Recovery._internals.displayPath('D:\\Profiles\\1Ultra\\workspaces', 'C:\\Users\\Ada', require('node:path').win32, 'win32'),
-    '[local-data]/1Ultra/workspaces', 'a custom data shelf outside the home is never disclosed as an absolute path');
+    '[local-data]/StarNet/workspaces', 'a custom data shelf outside the home is never disclosed as an absolute path');
 
   const report = Recovery.recoveryReport({ fs, path, platform: 'darwin', arch: 'x64', home, workspaceRoot: current, candidateRoots: [legacyA], inspection: one, publicLineage: { evidence: [] } });
   const reportRaw = JSON.stringify(report);

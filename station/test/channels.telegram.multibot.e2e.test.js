@@ -173,7 +173,7 @@ const STATION = 'STATIONTOKEN', TOK_A = 'TOKAAA', TOK_B = 'TOKBBB';
   try {
     const token = await bootToken(B, B);
     const api = (method, url, body) => fetch(B + url, {
-      method, headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+      method, headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
       body: body === undefined ? undefined : JSON.stringify(body)
     }).then(async r => ({ status: r.status, j: await r.json().catch(() => ({})) }));
 
@@ -293,7 +293,7 @@ const STATION = 'STATIONTOKEN', TOK_A = 'TOKAAA', TOK_B = 'TOKBBB';
     // ---- 7. malformed disconnect is inert; then a valid disconnect stops exactly bot A ----
     const botsBeforeMalformed = fs.readFileSync(path.join(ws, 'channels', 'secrets.json'), 'utf8');
     const badDisconnect = await fetch(B + '/api/channels/telegram/bots/111/disconnect', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B }, body: '{bad'
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B }, body: '{bad'
     });
     A.eq(badDisconnect.status, 400, 'malformed per-bot disconnect -> 400');
     A.eq(fs.readFileSync(path.join(ws, 'channels', 'secrets.json'), 'utf8'), botsBeforeMalformed, 'malformed per-bot disconnect leaves durable bot configuration byte-identical');
@@ -345,7 +345,7 @@ const STATION = 'STATIONTOKEN', TOK_A = 'TOKAAA', TOK_B = 'TOKBBB';
       const B2 = 'http://' + HOST + ':' + second.port;
       const token2 = await bootToken(B2, B2);
       await waitUntil(() => tg.perToken[TOK_A].calls.filter(c => c.method === 'getUpdates').length > beforeRestartPolls, 5000, 'keychain-backed bot polls after restart');
-      const status2 = await fetch(B2 + '/api/channels/telegram/status', { headers: { 'X-1Ultra-Token': token2, Origin: B2 } }).then(r => r.json());
+      const status2 = await fetch(B2 + '/api/channels/telegram/status', { headers: { 'X-StarNet-Token': token2, Origin: B2 } }).then(r => r.json());
       const restarted = (status2.bots || []).find(b => b.botId === '111');
       A.ok(restarted && restarted.configured && restarted.durable && restarted.runReady, 'token-free saved bot is configured durably and its roster provider remains runnable after restart');
       const disk2 = JSON.parse(fs.readFileSync(path.join(ws2, 'channels', 'secrets.json'), 'utf8'));

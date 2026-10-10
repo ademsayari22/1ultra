@@ -73,7 +73,7 @@
     if (providerId !== 'starnet' && String(input.stationOpenAIKey || '').trim()) {
       return { ok: true, provider: 'openai', protocol: 'openai-images', key: String(input.stationOpenAIKey).trim(), baseUrl: base(input.stationOpenAIBaseUrl), keySource: 'station' };
     }
-    // Last resort for any other text run: the station's ChatGPT sign-in. Never for a 1Ultra-credits run
+    // Last resort for any other text run: the station's ChatGPT sign-in. Never for a StarNet-credits run
     // (same rule as the BYOK keys above: a credits run does not silently move onto another account).
     if (providerId !== 'starnet' && codexSignedIn) return codexRoute();
     return { ok: false, code: 'media-route-required' };

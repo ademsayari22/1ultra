@@ -129,7 +129,7 @@ async function until(B, headers, pred, label, ms) {
     ({ child, port } = await boot(8990 + (process.pid % 25), env, 20));
     let B = 'http://' + HOST + ':' + port;
     let token = await bootToken(B, B);
-    let headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    let headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
 
     // ---- a station with no loops pays no timer ----------------------------------------------------------
     const empty = await (await fetch(B + '/api/loops', { headers })).json();
@@ -234,7 +234,7 @@ async function until(B, headers, pred, label, ms) {
     await sleep(600);
     ({ child, port } = await boot(port, env, 20));
     B = 'http://' + HOST + ':' + port;
-    token = await bootToken(B, B); headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    token = await bootToken(B, B); headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     const revived = (await (await fetch(B + '/api/loops', { headers })).json()).loops[0];
     A.eq(revived.id, beforeRestart.id, 'the loop survived the restart');
     A.eq(revived.state, 'dormant', 'still dormant — a converged loop does not quietly resume itself');
@@ -265,7 +265,7 @@ async function until(B, headers, pred, label, ms) {
     await sleep(600);
     ({ child, port } = await boot(port, env, 20));
     B = 'http://' + HOST + ':' + port;
-    token = await bootToken(B, B); headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    token = await bootToken(B, B); headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     await sleep(2500);
     halted = await (await fetch(B + '/api/loops', { headers })).json();
     A.eq(halted.halted, true, 'the E-STOP SURVIVED the restart — no self-resuming autonomy');

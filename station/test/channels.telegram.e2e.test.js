@@ -368,7 +368,7 @@ async function waitUntil(fn, ms, label) {
     // before asking it to run anything.
     const pair = await (await fetch(B + '/api/channels/telegram/owner/pair', {
       method: 'POST',
-      headers: { 'X-1Ultra-Token': token, Origin: B, 'Content-Type': 'application/json' },
+      headers: { 'X-StarNet-Token': token, Origin: B, 'Content-Type': 'application/json' },
       body: '{}'
     })).json();
     A.ok(pair && /^[-A-Z0-9]{11}$/.test(String(pair.code || '')), 'local owner pairing issued a one-time code');
@@ -377,13 +377,13 @@ async function waitUntil(fn, ms, label) {
 
     const channelFile = path.join(ws, 'channels', 'secrets.json');
     const stationBeforeMalformed = fs.existsSync(channelFile) ? fs.readFileSync(channelFile, 'utf8') : null;
-    const stationStatusBefore = await (await fetch(B + '/api/channels/telegram/status', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
+    const stationStatusBefore = await (await fetch(B + '/api/channels/telegram/status', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
     const stationBadDisconnect = await fetch(B + '/api/channels/telegram/disconnect', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B }, body: '{bad'
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B }, body: '{bad'
     });
     A.eq(stationBadDisconnect.status, 400, 'malformed station Telegram disconnect -> 400');
     if (stationBeforeMalformed !== null) A.eq(fs.readFileSync(channelFile, 'utf8'), stationBeforeMalformed, 'malformed station disconnect leaves durable configuration byte-identical');
-    const stationStatus = await (await fetch(B + '/api/channels/telegram/status', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
+    const stationStatus = await (await fetch(B + '/api/channels/telegram/status', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
     A.eq(stationStatus.connected, stationStatusBefore.connected, 'malformed station disconnect does not change the connected flag');
     A.eq(stationStatus.state, stationStatusBefore.state, 'malformed station disconnect does not change the poll state');
     tg.pushText(4242, 99, 'research AI trend now');
@@ -400,7 +400,7 @@ async function waitUntil(fn, ms, label) {
     await sse.waitFor(events => events.some(e => e.name === 'agent.run.end' && e.payload && e.payload.agentId === 'tg_4242'), 5000, 'SSE run end');
     await sse.waitFor(events => events.some(e => e.name === 'channel.delivery' && e.payload && e.payload.channel === 'telegram' && e.payload.chatId === '4242' && e.payload.ok === true), 5000, 'channel delivery');
 
-    const tr = await (await fetch(B + '/api/transcript?stream=global&agent=tg_4242&limit=20', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
+    const tr = await (await fetch(B + '/api/transcript?stream=global&agent=tg_4242&limit=20', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
     const turns = (tr && tr.turns) || [];
     A.ok(turns.some(t => t.role === 'user' && String(t.content || '').indexOf('research AI trend now') >= 0), 'transcript captured Telegram user turn');
     A.ok(turns.some(t => t.role === 'assistant' && String(t.content || '').indexOf('Telegram answer') >= 0), 'transcript captured Telegram assistant reply');
@@ -428,7 +428,7 @@ async function waitUntil(fn, ms, label) {
 
     // Same named lead and specialist through desktop and owner Telegram; a wire tool
     // alone is not proof that the worker ran or that its result reached the parent.
-    const parityHeaders = () => ({ 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B });
+    const parityHeaders = () => ({ 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B });
     const parityRoster = await fetch(B + '/api/roster', { method: 'POST', headers: parityHeaders(), body: JSON.stringify({ agents: [
       { agentId: 'parity_lead', system: 'Lead parity crew', name: 'Parity Lead', model: 'test/model' },
       { agentId: 'parity_worker', system: 'Return the requested marker.', name: 'Parity Worker', model: 'test/model' }
@@ -523,7 +523,7 @@ async function waitUntil(fn, ms, label) {
     await waitUntil(() => tg.sends.some(s => String(s.chat_id) === '7778'), 8000, '/start reply');
     const startReply = rendered((tg.sends.find(s => String(s.chat_id) === '7778') || {}).text);
     A.eq(llm.requests.length, llmBeforeStart, '/start is answered by the hub without spending a model turn');
-    A.ok(/1ULTRA online/.test(startReply), '/start greets the newcomer instead of answering "/start" as a question');
+    A.ok(/STARNET online/.test(startReply), '/start greets the newcomer instead of answering "/start" as a question');
     A.ok(/\/help/.test(startReply), '/start tells a first-time member what they can actually say');
 
     /* ---- /approvals ON must not COST the agent its office --------------------------------------------------
@@ -586,7 +586,7 @@ async function waitUntil(fn, ms, label) {
     // HOLD it in-flight via the mock gate, prove the snapshot lists it (attributed + sourced 'telegram'), then
     // release and prove it's gone once the run ends — exactly tracking the hub's inflight lifecycle. ----
     const snapshot = async () => {
-      const r = await fetch(B + '/api/state/snapshot', { headers: { 'X-1Ultra-Token': token, Origin: B } });
+      const r = await fetch(B + '/api/state/snapshot', { headers: { 'X-StarNet-Token': token, Origin: B } });
       A.eq(r.status, 200, 'GET /api/state/snapshot -> 200');
       return r.json();
     };
@@ -681,14 +681,14 @@ async function waitUntil(fn, ms, label) {
     let restartStatusSeen = null;
     try {
       await waitUntil(async () => {
-        restartStatusSeen = await (await fetch(B + '/api/channels/telegram/status', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
+        restartStatusSeen = await (await fetch(B + '/api/channels/telegram/status', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
         return restartStatusSeen && restartStatusSeen.connected === true && restartStatusSeen.state === 'up';
       }, 7000, 'saved Telegram status up after restart');
     } catch (e) {
       e.message += ': ' + JSON.stringify(restartStatusSeen);
       throw e;
     }
-    const restartedStatus = await (await fetch(B + '/api/channels/telegram/status', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
+    const restartedStatus = await (await fetch(B + '/api/channels/telegram/status', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
     A.eq(restartedStatus.configured, true, 'restart resolves the saved Telegram token without user input');
     A.eq(restartedStatus.durable, true, 'restart reports the saved Telegram token has a durable home');
     await telegramParity('owner Telegram after restart');
@@ -701,7 +701,7 @@ async function waitUntil(fn, ms, label) {
        told "1 of 1 known chat(s) reachable now" — and channel.send's own honest refusal was unreachable.
        Driven over /api/run because channel.targets has no HTTP surface of its own. */
     {
-      const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+      const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
       const runTargets = async () => {
         const res = await fetch(B + '/api/run', {
           method: 'POST', headers,

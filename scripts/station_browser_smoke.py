@@ -19,6 +19,7 @@ def main():
     parser.add_argument('--port', type=int, default=8552, choices=range(8550, 8560))
     parser.add_argument('--output', type=Path, default=Path('/tmp/1ultra-station-experience-qa'))
     parser.add_argument('--agents', action='store_true', help='Exercise agent UI using a local fake CLI; never a provider')
+    parser.add_argument('--starnet', action='store_true', help="Exercise Starnet's interface at / with the campaign window")
     args = parser.parse_args()
     project = Path(__file__).resolve().parents[1]
     output = args.output.resolve()
@@ -65,7 +66,8 @@ def main():
                         time.sleep(.1)
                 else:
                     raise RuntimeError('Fixture startup deadline exceeded')
-                subprocess.run(['node', str(project / ('tests/station-agents-browser.cjs' if args.agents else 'tests/station-experience-browser.cjs'))],
+                journey = 'tests/station-starnet-browser.cjs' if args.starnet else ('tests/station-agents-browser.cjs' if args.agents else 'tests/station-experience-browser.cjs')
+                subprocess.run(['node', str(project / journey)],
                     cwd=project, check=True, timeout=180,
                     env={**os.environ, 'ULTRA_BROWSER_FIXTURE': 'copied-records',
                          'ULTRA_BROWSER_BASE': base, 'ULTRA_BROWSER_OUTPUT': str(output),

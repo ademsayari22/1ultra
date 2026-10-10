@@ -37,7 +37,7 @@ const { SidecarFixture } = require('./helpers/sidecar-fixture.js');
     const noTok = await fetch(B + '/api/insights');
     A.eq(noTok.status, 403, 'GET /api/insights without a token -> 403');
 
-    const r = await fetch(B + '/api/insights', { headers: { 'X-1Ultra-Token': fixture.token, Origin: B } });
+    const r = await fetch(B + '/api/insights', { headers: { 'X-StarNet-Token': fixture.token, Origin: B } });
     A.eq(r.status, 200, 'GET /api/insights -> 200');
     const j = await r.json();
     A.ok(j.trackRecord && typeof j.trackRecord === 'object', 'the payload carries the track record');

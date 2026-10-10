@@ -76,7 +76,7 @@ function startMock() {
 }
 // answer(prompt) -> decision: every permission.prompt on the run's own stream is answered through /api/consent, the way the desk card does
 async function leadRun(base, token, prompt, answer) {
-  const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: base };
+  const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: base };
   const res = await fetch(base + '/api/run', { method: 'POST', headers,
     body: JSON.stringify({ key: 'sk-or-v1-fake', model: 'test/model', agentId: 'agent', isTask: true, messages: [{ role: 'user', content: MARK + ' ' + prompt }] }) });
   const events = [], prompts = [];
@@ -103,7 +103,7 @@ async function leadRun(base, token, prompt, answer) {
   return { status: res.status, events, prompts };
 }
 const api = async (base, token, method, path, body) => {
-  const r = await fetch(base + path, { method, headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: base }, body: body ? JSON.stringify(body) : undefined });
+  const r = await fetch(base + path, { method, headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: base }, body: body ? JSON.stringify(body) : undefined });
   let j = null; try { j = await r.json(); } catch (_) {}
   return { status: r.status, json: j };
 };

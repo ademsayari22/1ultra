@@ -61,7 +61,7 @@ function seedTokens(ws, id, envelope) {
   let B = 'http://' + HOST + ':' + port;
   try {
     let token = await bootToken(B, B);
-    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
 
     for (const id of ['grok', 'kimi']) {
       const statusUrl = B + '/api/auth/' + id + '/status';
@@ -89,7 +89,7 @@ function seedTokens(ws, id, envelope) {
     ({ child, port } = await boot(port, env, 20));
     B = 'http://' + HOST + ':' + port;
     token = await bootToken(B, B);
-    let headers2 = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    let headers2 = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     for (const id of ['grok', 'kimi']) {
       const s = await (await fetch(B + '/api/auth/' + id + '/status', { headers: headers2 })).json();
       A.eq(s.connected, false, id + ': logout remains disconnected after a real sidecar restart');
@@ -103,7 +103,7 @@ function seedTokens(ws, id, envelope) {
     ({ child, port } = await boot(port, env, 20));
     B = 'http://' + HOST + ':' + port;
     token = await bootToken(B, B);
-    headers2 = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    headers2 = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     for (const id of ['grok', 'kimi']) {
       const s = await (await fetch(B + '/api/auth/' + id + '/status', { headers: headers2 })).json();
       A.eq(s.connected, true, id + ': a healthy persisted sign-in still reads connected:true');

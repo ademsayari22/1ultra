@@ -68,7 +68,7 @@ function boot(port, workspaces, attemptsLeft) {
   await refreshToken();
   const j = async (m, p, body) => {
     const headers = { 'Content-Type': 'application/json' };
-    if (apiToken) headers['X-1Ultra-Token'] = apiToken;   // hardened: GET data routes are token-gated too now
+    if (apiToken) headers['X-StarNet-Token'] = apiToken;   // hardened: GET data routes are token-gated too now
     const r = await fetch(B() + p, { method: m, headers, body: body ? JSON.stringify(body) : undefined });
     const t = await r.text(); let v; try { v = JSON.parse(t); } catch (_) { v = t; }
     return { status: r.status, body: v };

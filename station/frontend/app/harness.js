@@ -167,7 +167,7 @@ const Harness = (() => {
   let apiToken = (typeof window !== 'undefined' && window.__STARNET_API_TOKEN__) ? String(window.__STARNET_API_TOKEN__) : '';
   let apiTokenPromise = null;
 
-  // TRUE only for our OWN sidecar API — a same-origin request under /api/. The X-1Ultra-Token this gates is a
+  // TRUE only for our OWN sidecar API — a same-origin request under /api/. The X-StarNet-Token this gates is a
   // PRIVATE local credential; a naive substring match on '/api/' would attach it to third-party URLs that merely
   // contain '/api/' (e.g. the OpenRouter fallback catalog https://openrouter.ai/api/v1/models), leaking the token
   // cross-origin AND forcing a CORS preflight OpenRouter rejects (so the fallback fails exactly when it's needed).
@@ -205,7 +205,7 @@ const Harness = (() => {
   function withApiToken(init, token) {
     init = Object.assign({}, init || {});
     const headers = new Headers(init.headers || {});
-    if (token) headers.set('X-1Ultra-Token', token);
+    if (token) headers.set('X-StarNet-Token', token);
     init.headers = headers;
     return init;
   }
@@ -1430,7 +1430,7 @@ const Harness = (() => {
      This is the measurement that turns that guess into proof.
 
      GET /api/health is the right probe and the only one that works here: it is in apiauth's TOKEN_EXEMPT set, so
-     it needs no X-1Ultra-Token (a stale-token 403 would otherwise read as "dead" — a second lie), and its
+     it needs no X-StarNet-Token (a stale-token 403 would otherwise read as "dead" — a second lie), and its
      handler is a bare writeHead(200)/end('ok') that touches no store, so it cannot itself fail for load reasons.
      Bounded by an AbortController, because a socket the sidecar accepted and never answered (the exact
      hung-request bug this fix exists for) would otherwise hang the error row forever. On timeout we return

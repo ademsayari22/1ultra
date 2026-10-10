@@ -174,7 +174,7 @@ test('managed HTTP 400 keeps local, relay and upstream correlation through resta
   const model = 'anthropic/claude-sonnet-5';
   const server = http.createServer((req, res) => {
     if (req.url.includes('/chat/completions')) {
-      res.writeHead(400, { 'Content-Type': 'application/json', 'X-1Ultra-Request-Id': 'relay-fixture-123' });
+      res.writeHead(400, { 'Content-Type': 'application/json', 'X-StarNet-Request-Id': 'relay-fixture-123' });
       res.end(JSON.stringify({ error: { message: 'Provider returned error. '.repeat(35),
         request_id: 'relay-fixture-123', upstream_request_id: 'upstream-fixture-456',
         metadata: { raw: 'PRIVATE PROMPT MUST NOT LEAK' } } })); return;

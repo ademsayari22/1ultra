@@ -162,7 +162,7 @@ function seedLogs(ws, now) {
   const B = 'http://' + HOST + ':' + port;
   try {
     const token = await bootToken(B, B);
-    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
 
     // ===== 1. MINE + STASH (never auto-commit) — a real task run floats the idea, never acts on it. =====
     const directive = 'Please wire up the belt-router retry loop for me. Unrelated thought while I remember it: ' +

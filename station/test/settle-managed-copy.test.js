@@ -29,11 +29,11 @@ const harness = (status) => {
   const { node, posts } = harness(st); await tick();
   const [managedRow, byokRow] = node('#budget-unsettled').children;
   assert.ok(managedRow && byokRow, 'one row per interrupted run');
-  // the 1Ultra-credit row points at the in-app STORE's RECENT ACTIVITY (review 2026-10-08): it lists each charge with
+  // the StarNet-credit row points at the in-app STORE's RECENT ACTIVITY (review 2026-10-08): it lists each charge with
   // its run id, on a linked station AND on an operator (env) station — the account web page has no run ids, and an
   // operator station's charges are not on account.starnetos.com at all
   const mTip = managedRow.attrs['data-tip'];
-  assert.match(mTip, /1Ultra credits/, 'the managed row says it ran on 1Ultra credits: ' + mTip);
+  assert.match(mTip, /StarNet credits/, 'the managed row says it ran on 1Ultra credits: ' + mTip);
   assert.match(mTip, /SETTINGS → AI & MODELS › STORE › RECENT ACTIVITY/, 'and where its charge is: ' + mTip);
   assert.match(mTip, /run m1\b/, 'naming the run id the activity lists it under: ' + mTip);
   assert.doesNotMatch(mTip, /account\.starnetos\.com/, 'no hardcoded account host');
@@ -64,5 +64,5 @@ const harness = (status) => {
   assert.match(text, /<h4 class="ms-h">STORE /, 'the STORE heading exists under AI & MODELS');
   assert.match(text, /RECENT ACTIVITY<\/span>/, 'with its RECENT ACTIVITY list');
   assert.match(text, /e && e\.runId \? ' · run ' \+ esc\(String\(e\.runId\)\.slice\(0, 8\)\)/, 'whose rows show the run id (first 8 chars)');
-  console.log('settle-managed-copy: 1Ultra-credit receipts point at the STORE’s RECENT ACTIVITY, provider-key receipts at the provider dashboard PASS');
+  console.log('settle-managed-copy: StarNet-credit receipts point at the STORE’s RECENT ACTIVITY, provider-key receipts at the provider dashboard PASS');
 })().catch(e => { console.error(e); process.exitCode = 1; });

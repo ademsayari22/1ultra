@@ -81,7 +81,7 @@ function findFile(dir, name) {
   try {
     await fx.start();
     const B = fx.baseUrl;
-    const H = { 'Content-Type': 'application/json', 'X-1Ultra-Token': fx.token, Origin: B };
+    const H = { 'Content-Type': 'application/json', 'X-StarNet-Token': fx.token, Origin: B };
 
     // register the worker on the roster (so team.dispatch can find it) with a detectable system marker
     const roster = await fetch(B + '/api/roster', { method: 'POST', headers: H, body: JSON.stringify({ agents: [

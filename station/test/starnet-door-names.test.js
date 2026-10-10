@@ -1,4 +1,4 @@
-/* test/starnet-door-names.test.js — every 1Ultra-credit message names a door that EXISTS.
+/* test/starnet-door-names.test.js — every StarNet-credit message names a door that EXISTS.
    The SETTINGS console has no "PROVIDERS" section any more: the 1Ultra card, the STORE (+ ADD CREDITS) and
    the relink live on the AI & MODELS page (stationui.js section id 'providers', label 'AI & MODELS'). A prop
    refusal or a credential error that says "SETTINGS → PROVIDERS" sends the user hunting for a tab that is not

@@ -1,5 +1,5 @@
 'use strict';
-/* node test/managed-credit-refusal.e2e.test.js — a funded 1Ultra-credit station must never be told it is out of
+/* node test/managed-credit-refusal.e2e.test.js — a funded StarNet-credit station must never be told it is out of
    credits (customer report 2026-10-06: "$79.24 on my account, but it says I'm out of credits and must top up").
    Two seams told that lie before this test existed:
      • a balance check that FAILED (cloud slow / 5xx / timeout) left the cached balance null, the uncapped

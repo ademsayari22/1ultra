@@ -753,7 +753,7 @@
   async function watch() {
     let j;
     try {
-      const r = await fetch('/api/loops', { headers: { 'X-1Ultra-Token': window.__STARNET_API_TOKEN__ || '' } });
+      const r = await fetch('/api/loops', { headers: { 'X-StarNet-Token': window.__STARNET_API_TOKEN__ || '' } });
       if (!r.ok) return;                        // an errored read must not clear the waiting badge
       j = await r.json();
     }

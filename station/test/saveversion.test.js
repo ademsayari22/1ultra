@@ -130,7 +130,7 @@ function futureRaw(over) {
 
   // future backup version → refused with a clear string the import UI surfaces.
   const err = Backup.validate({ schema: 'starnet.backup', version: Backup.VERSION + 1, store: goodStore });
-  A.ok(typeof err === 'string' && /newer 1Ultra/i.test(err), 'validate() refuses a future-version backup with a clear message');
+  A.ok(typeof err === 'string' && /newer StarNet/i.test(err), 'validate() refuses a future-version backup with a clear message');
 
   // applyBundle refuses it too (never writes any key) — validate() gates it.
   localStorage.clear();

@@ -80,7 +80,7 @@ function boot(port, env, attemptsLeft) {
   const B = 'http://' + HOST + ':' + port;
   try {
     const token = await bootToken(B, B);
-    const hdr = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    const hdr = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     const r0 = await fetch(B + '/api/roster', { method: 'POST', headers: hdr, body: JSON.stringify({ agents: [
       { agentId: 'agent', system: 'lead', name: 'NOVA', role: 'overseer', track: '' },
       { agentId: 'rookie', system: 'you research', name: 'ROOKIE', role: 'researcher', track: '' }

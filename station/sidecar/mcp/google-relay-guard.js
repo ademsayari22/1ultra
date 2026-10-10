@@ -1,8 +1,8 @@
 'use strict';
-/* sidecar/mcp/google-relay-guard.js — RESTRICTED-tier Google data never reaches a 1Ultra-operated server.
+/* sidecar/mcp/google-relay-guard.js — RESTRICTED-tier Google data never reaches a StarNet-operated server.
 
    Google's security assessment (CASA) applies when restricted-scope data (Gmail read/compose, whole-Drive read)
-   is stored on or transmitted through the DEVELOPER's servers. 1Ultra is local-first: the one 1Ultra-operated
+   is stored on or transmitted through the DEVELOPER's servers. 1Ultra is local-first: the one StarNet-operated
    path model traffic can take is the 1Ultra Managed provider ('starnet', the credits relay). This guard keeps
    restricted Google content off that path in both directions it could travel:
 

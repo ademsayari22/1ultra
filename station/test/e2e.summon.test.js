@@ -86,7 +86,7 @@ function boot(port, env, attemptsLeft) {
     // drive a real streaming lead run; the mock makes it call team.summon
     const res = await fetch(B + '/api/run', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+      headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
       body: JSON.stringify({ key: 'sk-or-v1-fake', model: 'test/model', agentId: 'agent', isTask: true, messages: [{ role: 'user', content: 'summon a research agent for me' }] })
     });
     A.eq(res.status, 200, 'POST /api/run streams (200)');
@@ -108,7 +108,7 @@ function boot(port, env, attemptsLeft) {
         if (ev.name === 'crew.summon.request' && !ackPosted) {
           summonReq = ev.payload; ackPosted = true;
           await fetch(B + '/api/summon/ack', {
-            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
             // `desk` = where the station's summonAgent() actually seeded the new worker's workstation
             body: JSON.stringify({ runId, requestId: ev.payload.requestId, agentId: 'researcher-2', desk: 'BRIDGE' })
           });

@@ -134,7 +134,7 @@
     // the user got "Something went wrong" in a loop while the real answer was one sentence away).
     agent_busy:    { retryable: true,  action: null,       msg: 'That agent is still busy with a previous run — wait for it to finish, or open its conversation and stop the active run.' },
     // the SIDECAR's own token gate said no (a 403 with "forbidden token/origin/host"): after a sidecar
-    // crash+respawn the page still holds the OLD X-1Ultra-Token, so EVERY action 403s. Retrying is doomed and
+    // crash+respawn the page still holds the OLD X-StarNet-Token, so EVERY action 403s. Retrying is doomed and
     // "add a key" is the wrong door — the page needs the fresh boot token, which only a reload fetches.
     stale_session: { retryable: false, action: 'reload',   msg: 'The station restarted — reload this page to reconnect.' },
     /* 1Ultra's OWN spend ledger can't say what was spent (sidecar/loop.js stopForSpend, failureCode
@@ -307,7 +307,7 @@
     // HTTP status from "sidecar HTTP <status>" or an explicit status arg
     const s = status || (low.match(/\b(?:http|status)\s+(\d{3})\b/) ? Number(RegExp.$1) : null);
     if (s) {
-      // OUR OWN sidecar's token gate (crash+respawn → stale X-1Ultra-Token): a "sidecar HTTP 403" throw or a
+      // OUR OWN sidecar's token gate (crash+respawn → stale X-StarNet-Token): a "sidecar HTTP 403" throw or a
       // "forbidden token/origin/host" body means reload for the fresh boot token — never the provider-key door.
       if (s === 403 && (/sidecar http/.test(low) || /\bforbidden\b/.test(low))) return 'stale_session';
       if (s === 401 || s === 403) return NO_CREDIT_RE.test(low) ? 'billing' : 'auth';
@@ -416,7 +416,7 @@
       // the per-agent run mutex — UI-level, and the sidecar message already names the holder + doors.
       kind = 'agent_busy';
     } else if (/sidecar http 403\b/.test(raw.toLowerCase()) || (status === 403 && /\bforbidden\b/.test(raw.toLowerCase()))) {
-      // OUR OWN sidecar's token gate said no (stale X-1Ultra-Token after a crash+respawn) — UI-level, caught
+      // OUR OWN sidecar's token gate said no (stale X-StarNet-Token after a crash+respawn) — UI-level, caught
       // BEFORE delegating: the sidecar API classifier would read a bare 403 as provider `auth` and the error row
       // would offer "🔑 Add a key", the wrong door (EL-11 FIX 2). The only fix is the fresh boot token → reload.
       kind = 'stale_session';

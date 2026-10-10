@@ -97,7 +97,7 @@ function seedScoutState(ws) {
 
 async function driveRun(B, token, agentId, text) {
   const r = await fetch(B + '/api/run', {
-    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
     body: JSON.stringify({ key: 'sk-or-v1-scout-fake', model: 'test/model', agentId, isTask: true, messages: [{ role: 'user', content: text }] })
   });
   const rd = r.body.getReader(); while (true) { const { done } = await rd.read(); if (done) break; }   // drain to run end
@@ -108,7 +108,7 @@ async function pollScout(B, token, pred, label, ms) {
   const until = Date.now() + (ms || 15000);
   let last = null;
   while (Date.now() < until) {
-    try { last = await (await fetch(B + '/api/scout', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json(); } catch (_) {}
+    try { last = await (await fetch(B + '/api/scout', { headers: { 'X-StarNet-Token': token, Origin: B } })).json(); } catch (_) {}
     if (last && pred(last)) return last;
     await sleep(250);
   }
@@ -144,7 +144,7 @@ const QUIET = { SKYNET_THREAD_MINE: '0', SKYNET_SKILL_REVIEW: '0', SKYNET_SKILL_
       const token = await bootToken(B, B);
 
       // sanity: pre-run, the scout is honestly COLD (no interests -> warm:false, gate binds 'cold').
-      const cold = await (await fetch(B + '/api/scout', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
+      const cold = await (await fetch(B + '/api/scout', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
       A.eq(cold.warm, false, 'pre-run the station is honestly cold (no interests yet)');
       A.eq(cold.gate.binding, 'cold', 'the gate reports the cold binding pre-run');
 

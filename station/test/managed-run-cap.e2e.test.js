@@ -1,6 +1,6 @@
 'use strict';
 /* node test/managed-run-cap.e2e.test.js — issue #53 "Credit Over Consumption On Simple Tasks".
-   A 1Ultra-credit (managed, provider 'starnet') run on a fresh station used to reserve the WHOLE wallet as its
+   A StarNet-credit (managed, provider 'starnet') run on a fresh station used to reserve the WHOLE wallet as its
    per-run ceiling (the shipped per-run cap is 0 = off, and admission turned "no cap" into "the balance"), so one
    prompt on a busy model could spend every dollar the user had just added. This boots the REAL sidecar against a
    fake 1Ultra cloud (balance / debit / credit / metered chat completions — the relay charges each completion,
@@ -9,7 +9,7 @@
         with reason 'budget' / scope 'run' and names the cap it hit (an honest stop, never a fake "done");
      2. a small balance below the default still runs (the reservation is clamped to what's there, not refused);
      3. a per-run cap the user SAVES in the Budget panel replaces the default, higher or lower;
-     4. /api/budget/status tells the Budget panel which default governs 1Ultra-credit runs.
+     4. /api/budget/status tells the Budget panel which default governs StarNet-credit runs.
    Hermetic: temp workspace + APPDATA/LOCALAPPDATA/USERPROFILE/HOME all point at scratch dirs. */
 const assert = require('node:assert/strict');
 const http = require('node:http');
@@ -81,7 +81,7 @@ const CALL_USD = 0.75;   // what the relay charges per completion in this fixtur
     assert.ok(charged <= 2 + CALL_USD + 1e-9, 'total charged stays within the cap plus one in-flight completion (charged $' + charged + ' over ' + chatCalls + ' calls)');
     assert.ok(balance >= 10 - 2 - CALL_USD - 1e-9, 'most of the wallet is left ($' + balance + ')');
 
-    // ---- 4. the Budget panel can see the default that governs 1Ultra-credit runs ----
+    // ---- 4. the Budget panel can see the default that governs StarNet-credit runs ----
     const st0 = await fixture.json('GET', '/api/budget/status');
     assert.equal(st0.body && st0.body.caps && st0.body.caps.perRun, 0, 'the per-run cap itself still ships off (BYOK runs are unchanged)');
     assert.equal(st0.body && st0.body.managedRunDefaultUsd, 2, 'status names the $2 managed per-run default: ' + JSON.stringify(st0.body && st0.body.managedRunDefaultUsd));
@@ -125,7 +125,7 @@ const CALL_USD = 0.75;   // what the relay charges per completion in this fixtur
     assert.equal(save.status, 200, 'saving 0 (no cap) succeeds');
     reset(10);
     r = await run('saved-zero');
-    assert.equal(reserveOf(), 2, 'a saved 0 on a 1Ultra-credit run falls back to the $2 default, never the whole wallet');
+    assert.equal(reserveOf(), 2, 'a saved 0 on a StarNet-credit run falls back to the $2 default, never the whole wallet');
     const st1 = await fixture.json('GET', '/api/budget/status');
     assert.equal(st1.body && st1.body.managedRunDefaultUsd, 2, 'status still reports the governing managed default with a saved 0');
     console.log('managed-run-cap: OK — $2 default reserve+stop, small wallet clamped, saved caps authoritative, status truthful');

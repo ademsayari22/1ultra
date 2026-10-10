@@ -203,7 +203,7 @@ const F = (err, status, opts) => friendlyError(err, status, opts);
   A.eq(v.retryable, false, 'auth not retryable');
   A.eq(v.action, 'settings', 'auth points at Settings');
   A.ok(/ChatGPT/i.test(v.userMessage) && /key/i.test(v.userMessage), 'auth friendly headline offers a fix path (add a key or sign in with ChatGPT)');
-  // EL-11 FIX 2: a "sidecar HTTP 403" is OUR OWN token gate (stale X-1Ultra-Token after a crash+respawn), not
+  // EL-11 FIX 2: a "sidecar HTTP 403" is OUR OWN token gate (stale X-StarNet-Token after a crash+respawn), not
   // a provider key problem — it takes the reload door, never "🔑 Add a key". Provider 403s still read as auth.
   A.eq(F(new Error('sidecar HTTP 403')).kind, 'stale_session', 'sidecar 403 -> stale_session (the station restarted)');
   A.eq(F(new Error('sidecar HTTP 403')).action, 'reload', 'stale_session offers the reload door');

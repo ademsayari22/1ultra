@@ -12,7 +12,7 @@
 
    `servers` is injectable for deterministic tests. Production defaults cover common servers that are
    present on PATH; command discovery is read-only and bounded. Child environments contain only runtime
-   plumbing (PATH/home/temp/locale), never 1Ultra/provider/channel credentials. */
+   plumbing (PATH/home/temp/locale), never StarNet/provider/channel credentials. */
 'use strict';
 
 const { pathToFileURL, fileURLToPath } = require('node:url');

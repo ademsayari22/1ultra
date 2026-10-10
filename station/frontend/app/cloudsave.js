@@ -341,7 +341,7 @@ const CloudSave = (() => {
   //
   // DESKTOP REALITY (July-22 data-loss incident): the page runs on the tauri.localhost origin and the shell
   // rewrites ONLY window.fetch to the sidecar's real loopback URL — a relative sendBeacon posts into the
-  // bundled-asset protocol and VANISHES (and sendBeacon cannot set the X-1Ultra-Token header anyway). The old
+  // bundled-asset protocol and VANISHES (and sendBeacon cannot set the X-StarNet-Token header anyway). The old
   // code then treated sendBeacon's `true` ("queued for dispatch") as a confirmed 200: it nulled `pending` and
   // stamped health OK, so the newest save silently evaporated on EVERY desktop close/minimize while the
   // save-dot claimed "backed up". Three rules now:
@@ -382,7 +382,7 @@ const CloudSave = (() => {
     const s = Core ? Core.snapshot(health, now())
       : { lastPushOkAt: health.lastPushOkAt, lastPushFailAt: health.lastPushFailAt, consecutiveFailures: health.consecutiveFailures, nextRetryAt: 0, warn: false, stale: false };
     s.conflict = conflict;
-    s.degraded = degraded;   // EL-11 FIX 1: refused-by-newer-1Ultra is its own persistent, renderable state
+    s.degraded = degraded;   // EL-11 FIX 1: refused-by-newer-StarNet is its own persistent, renderable state
     return s;
   }
 

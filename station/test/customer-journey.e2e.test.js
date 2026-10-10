@@ -110,7 +110,7 @@ test('customer journey: connect, select, tool, output, restart and repeat on all
       if (boot) await fixture.restart();
       // The desktop keychain re-pushes runtime keys each launch. Codex OAuth loads from durable storage.
       for (const p of providers) {
-        const r = await fixture.request('/api/key', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': IPC }, body: JSON.stringify({ provider: p, key: p === 'codex' ? '' : p + '-fixture', baseUrl: base + '/' + p }) });
+        const r = await fixture.request('/api/key', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': IPC }, body: JSON.stringify({ provider: p, key: p === 'codex' ? '' : p + '-fixture', baseUrl: base + '/' + p }) });
         assert.equal(r.status, 200, await r.text());
       }
       const roster = JSON.parse(fs.readFileSync(path.join(fixture.workspace, 'agent.roster.json'), 'utf8'));

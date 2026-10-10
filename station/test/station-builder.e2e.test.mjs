@@ -93,7 +93,7 @@ function startMock() {
   return new Promise(r => server.listen(0, '127.0.0.1', () => { mock.server = server; mock.base = 'http://127.0.0.1:' + server.address().port + '/api/v1'; r(mock); }));
 }
 async function leadRun(base, token, prompt) {
-  const res = await fetch(base + '/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: base },
+  const res = await fetch(base + '/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: base },
     body: JSON.stringify({ key: 'sk-or-v1-fake', model: 'test/model', agentId: 'agent', isTask: true, messages: [{ role: 'user', content: prompt }] }) });
   const text = await res.text();
   return { status: res.status, events: text.split('\n').map(l => { try { return JSON.parse(l); } catch (_) { return null; } }).filter(Boolean) };
@@ -187,11 +187,11 @@ try {
   let TJ = null; try { TJ = JSON.parse(tl.split('\n')[0]); } catch (_) { TJ = null; }
   check('station_test_line sends a real job down the line and reads every step back', runT.status === 200 && !!TJ && TJ.line === 'SHIP IT' && TJ.status === 'delivered' && TJ.steps.length >= 2 && TJ.steps.every(s => s.ended === 'done') && (mock.lineSteps || 0) - steps0 >= 2, tl.slice(0, 300));
   check('what the line delivered comes back fenced as data, not instructions', /\[BEGIN EXTERNAL WEB CONTENT — what the line SHIP IT delivered/.test(tl) && /LINE STEP DONE: hello/.test(tl), tl.slice(-240));
-  const jobs = await fetch(base + '/api/line-jobs', { headers: { 'X-1Ultra-Token': token, Origin: base } }).then(r => r.json()).catch(() => null);
+  const jobs = await fetch(base + '/api/line-jobs', { headers: { 'X-StarNet-Token': token, Origin: base } }).then(r => r.json()).catch(() => null);
   check('and the job is on record like any SEND A JOB', !!jobs && (jobs.jobs || []).some(j => j.name === 'SHIP IT' && j.status === 'delivered'), JSON.stringify(jobs || {}).slice(0, 240));
 
   // 4c. WHAT STARTS A LINE (10-01): a schedule and a webhook through the panel's own cores, and a trigger turned off
-  const api = (p, o) => fetch(base + p, Object.assign({ headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: base } }, o || {})).then(r => r.json()).catch(() => null);
+  const api = (p, o) => fetch(base + p, Object.assign({ headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: base } }, o || {})).then(r => r.json()).catch(() => null);
   mock.planTool = 'station_start_line'; mock.planArgs = { line: 'SHIP IT', schedule: 'weekdays at 8:30am', job: 'TEST JOB: the morning check' };
   let nS = mock.results.length;
   await leadRun(base, token, 'run the SHIP IT line every weekday morning');

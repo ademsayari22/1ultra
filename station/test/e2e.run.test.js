@@ -151,7 +151,7 @@ function boot(port, env, attemptsLeft) {
     // drive a real streaming run and collect the NDJSON event stream
     const res = await fetch(B + '/api/run', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+      headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
       body: JSON.stringify({ key: 'sk-or-v1-e2e-fake', model: 'test/model', agentId: 'e2e', messages: [{ role: 'user', content: 'hi' }] })
     });
     A.eq(res.status, 200, 'POST /api/run streams (200)');
@@ -191,7 +191,7 @@ function boot(port, env, attemptsLeft) {
     {
       const before = mock.requests.length;
       const r = await fetch(B + '/api/run', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
         body: JSON.stringify({
           key: 'sk-or-v1-e2e-fake', model: 'test/model', agentId: 'pair-recovery-e2e',
           messages: [
@@ -213,7 +213,7 @@ function boot(port, env, attemptsLeft) {
     {
       const before = mock.requests.length;
       const r = await fetch(B + '/api/run', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
         body: JSON.stringify({ provider: 'custom', baseUrl: mock.base, key: 'fixture-only', model: 'test/model', agentId: 'compatible-pair-e2e',
           messages: [{ role: 'user', content: 'PAIRRECOVERY compatible route' }, { role: 'tool', tool_call_id: '', content: 'PAIRRECOVERY evidence survives' }] })
       });
@@ -229,7 +229,7 @@ function boot(port, env, attemptsLeft) {
     // incomplete on both the live event and the durable run row. Model prose cannot promote it.
     {
       const r = await fetch(B + '/api/run', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
         body: JSON.stringify({
           key: 'sk-or-v1-e2e-fake', model: 'test/model', agentId: 'postcondition-e2e', isTask: true,
           messages: [{ role: 'user', content: 'Say hello, but this workflow requires an exact check.' }],
@@ -242,7 +242,7 @@ function boot(port, env, attemptsLeft) {
       A.eq(end && end.payload.completionVerdict, 'incomplete', 'live run end refuses completion without the contracted check');
       A.eq(end && end.payload.effectVerdict, 'no_observed_effects', 'live run end carries the bounded effect verdict');
       const runId = ((evs.find(e => e.name === 'agent.run.start') || {}).payload || {}).runId;
-      const rows = await (await fetch(B + '/api/runs?agent=postcondition-e2e&runId=' + encodeURIComponent(runId), { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
+      const rows = await (await fetch(B + '/api/runs?agent=postcondition-e2e&runId=' + encodeURIComponent(runId), { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
       const saved = (rows.runs || [])[0];
       A.eq(saved && saved.completionEvidence.completionVerdict, 'incomplete', 'durable run history preserves the host assessment');
       A.eq(saved && saved.completionEvidence.checks[0].code, 'matching_verification_missing', 'durable history explains exactly which proof was missing');
@@ -252,7 +252,7 @@ function boot(port, env, attemptsLeft) {
     {
       const before = mock.requests.length;
       const r = await fetch(B + '/api/run', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
         body: JSON.stringify({ key: 'sk-or-v1-e2e-fake', model: 'test/model', agentId: 'code-e2e', isTask: true, messages: [{ role: 'user', content: 'CODEMODE compose a read' }] })
       });
       // code.run is consent-gated (2026-09-23 security stopgap): stream the run and approve its prompt once,
@@ -269,7 +269,7 @@ function boot(port, env, attemptsLeft) {
             evs.push(ev);
             if (ev.name === 'agent.run.start') runId = ev.payload.runId;
             if (ev.name === 'permission.prompt') {
-              fetch(B + '/api/consent', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+              fetch(B + '/api/consent', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
                 body: JSON.stringify({ runId, promptId: ev.payload.promptId, decision: 'once' }) }).catch(() => {});
             }
           }
@@ -292,7 +292,7 @@ function boot(port, env, attemptsLeft) {
     {
       const before = mock.requests.length;
       const r = await fetch(B + '/api/run', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
         body: JSON.stringify({ key: 'sk-or-v1-e2e-fake', model: 'test/model', reasoningEffort: 'medium', agentId: 'e2e-domain', isTask: true, placed: ['dish'], messages: [{ role: 'user', content: 'DOMAINSTOP Check starnessos.invalid and read its docs.' }] })
       });
       const raw = await r.text();
@@ -309,7 +309,7 @@ function boot(port, env, attemptsLeft) {
       A.ok(offered.indexOf('team_dispatch') < 0 && offered.indexOf('web_search') < 0, 'lead is not offered delegation or expansive search for a single-host check');
       A.ok(offered.indexOf('browser_navigate') >= 0, 'the placed DISH keeps the browser on a single-host check (saw: ' + offered.join(', ') + ')');
       const runId = ((evs.find(e => e.name === 'agent.run.start') || {}).payload || {}).runId;
-      const runs = await (await fetch(B + '/api/runs?agent=e2e-domain&runId=' + encodeURIComponent(runId), { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
+      const runs = await (await fetch(B + '/api/runs?agent=e2e-domain&runId=' + encodeURIComponent(runId), { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
       const row = (runs.runs || [])[0];
       A.ok(row && row.model === 'test/model' && row.reasoningEffort === 'medium', 'run row persists actual model + reasoning effort');
       A.ok(row && row.durationMs > 0 && Array.isArray(row.toolTrace) && row.toolTrace.length === 1, 'run row persists elapsed time and one tool trace');
@@ -317,14 +317,14 @@ function boot(port, env, attemptsLeft) {
     }
 
     // H1.1: the run's full dialogue was persisted to the durable transcript (not just title+final) — fetch it back.
-    const tr = await (await fetch(B + '/api/transcript?stream=global&agent=e2e&limit=20', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
+    const tr = await (await fetch(B + '/api/transcript?stream=global&agent=e2e&limit=20', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
     const turns = (tr && tr.turns) || [];
     A.ok(turns.some(t => t.role === 'user' && t.content === 'hi'), 'transcript captured the user directive');
     A.ok(turns.some(t => t.role === 'assistant' && String(t.content).indexOf('Hello') >= 0), 'transcript captured the assistant reply turn');
 
     // H1.2: bulletproof resume — a 2nd run on the SAME stream with EMPTY history must seed the prior dialogue.
     async function drive(streamId, text) {
-      const r = await fetch(B + '/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+      const r = await fetch(B + '/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
         body: JSON.stringify({ key: 'sk-or-v1-e2e-fake', model: 'test/model', agentId: 'e2e', streamId, messages: [{ role: 'user', content: text }] }) });
       const rd = r.body.getReader(); while (true) { const { done } = await rd.read(); if (done) break; }   // drain
     }
@@ -336,7 +336,7 @@ function boot(port, env, attemptsLeft) {
     A.ok(seeded.indexOf('what was it') >= 0, 'run B still carries its own new directive last');
 
     // H3.2: the RUNS history rows carry their streamId — the join that lets a row open its transcript.
-    const runsJson = await (await fetch(B + '/api/runs?agent=e2e&limit=20', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
+    const runsJson = await (await fetch(B + '/api/runs?agent=e2e&limit=20', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
     A.ok((runsJson.runs || []).some(r => r.streamId === 's1'), 'H3.2: a RUNS row records its streamId (joins outcome -> transcript)');
 
     // ---- NDJSON keep-alive heartbeat (2026-07-07 multi-agent escape): while the run produces no events
@@ -344,7 +344,7 @@ function boot(port, env, attemptsLeft) {
     //      lines prove the socket is alive, and every consumer skips them. SLOWPOKE stalls the mock 300ms
     //      with KA at 40ms, so heartbeats MUST appear between events; the run must still parse clean. ----
     {
-      const r = await fetch(B + '/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+      const r = await fetch(B + '/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
         body: JSON.stringify({ key: 'sk-or-v1-e2e-fake', model: 'test/model', agentId: 'e2e-ka', messages: [{ role: 'user', content: 'SLOWPOKE say hi' }] }) });
       const rd = r.body.getReader(); const dc = new TextDecoder(); let raw = '';
       while (true) { const { value, done } = await rd.read(); if (done) break; raw += dc.decode(value, { stream: true }); }
@@ -358,7 +358,7 @@ function boot(port, env, attemptsLeft) {
     //      one agent must now run side by side and BOTH complete clean (the workspace lease only engages on
     //      mutating tools, which neither of these chat runs uses). ----
     {
-      const drive2 = (agentId, text, streamId) => fetch(B + '/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+      const drive2 = (agentId, text, streamId) => fetch(B + '/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
         body: JSON.stringify({ key: 'sk-or-v1-e2e-fake', model: 'test/model', agentId, streamId, messages: [{ role: 'user', content: text }] }) });
       const slow = drive2('dup-agent', 'SLOWPOKE hold the desk', 'dup-session-a'); // in flight ~300ms
       await new Promise(r => setTimeout(r, 60));                            // let the first run be admitted
@@ -376,11 +376,11 @@ function boot(port, env, attemptsLeft) {
     //      RAM-only). Provoke a recorded run error (KABOOM: a hard 401 from the mock provider), reboot on
     //      the same workspace, and the error must still be in the report. ----
     {
-      const r = await fetch(B + '/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
+      const r = await fetch(B + '/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
         body: JSON.stringify({ key: 'sk-or-v1-e2e-fake', model: 'test/model', agentId: 'diag-agent', messages: [{ role: 'user', content: 'KABOOM please' }] }) });
       const rawErr = await r.text();
       A.ok(rawErr.indexOf('KABOOM-DIAG-NEEDLE') >= 0, 'the provider failure surfaced on the run stream (agent.run.error carries the provider message)');
-      const d1 = await (await fetch(B + '/api/diagnostics', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
+      const d1 = await (await fetch(B + '/api/diagnostics', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
       A.ok(d1.text.indexOf('KABOOM-DIAG-NEEDLE') >= 0, 'the run error is in this session\'s diagnostics tail');
     }
 
@@ -391,7 +391,7 @@ function boot(port, env, attemptsLeft) {
     //      same-agent mutex for minutes ("already running" with nothing visible), and the reloaded COMMS
     //      claimed the turn failed while the harness was still driving it. The fix listens on res 'close'. ----
     {
-      const hdr = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+      const hdr = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
       // raw http.request so the CLIENT socket is destroyable mid-stream (fetch cannot half-kill a socket)
       const seen = await new Promise((resolve, reject) => {
         const guard = setTimeout(() => reject(new Error('no stream data before destroy')), 8000);
@@ -408,7 +408,7 @@ function boot(port, env, attemptsLeft) {
       let settled = null;
       for (let i = 0; i < 40 && !settled; i++) {
         await new Promise(r => setTimeout(r, 250));
-        const rows = (await (await fetch(B + '/api/runs?agent=e2e-dc&limit=10', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json()).runs || [];
+        const rows = (await (await fetch(B + '/api/runs?agent=e2e-dc&limit=10', { headers: { 'X-StarNet-Token': token, Origin: B } })).json()).runs || [];
         settled = rows.find(r => String(r.title || '').indexOf('DRIPFEED') >= 0) || null;
       }
       A.ok(!!settled, 'the abandoned run settled into runs.jsonl within 10s of the disconnect');
@@ -432,7 +432,7 @@ function boot(port, env, attemptsLeft) {
     const B2 = 'http://' + HOST + ':' + boot2.port;
     try {
       const token2 = await bootToken(B2, B2);
-      const d2 = await (await fetch(B2 + '/api/diagnostics', { headers: { 'X-1Ultra-Token': token2, Origin: B2 } })).json();
+      const d2 = await (await fetch(B2 + '/api/diagnostics', { headers: { 'X-StarNet-Token': token2, Origin: B2 } })).json();
       A.ok(d2.text.indexOf('KABOOM-DIAG-NEEDLE') >= 0, 'RESTART-SAFE: the error tail survived the sidecar restart (diag.errors.json)');
       A.ok(d2.text.indexOf('(none recorded)') < 0, 'the report no longer claims an empty tail after restart');
     } finally {

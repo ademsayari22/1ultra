@@ -58,7 +58,7 @@ async function journey() {
   let token = '';
   const request = async(route,options={}) => {
     if (fixture) return fixture.request(route,options);
-    return fetch(live+route,{...options,headers:{...options.headers,Origin:live,'X-1Ultra-Token':token}});
+    return fetch(live+route,{...options,headers:{...options.headers,Origin:live,'X-StarNet-Token':token}});
   };
   const json = async(method,route,body)=> {
     const r=await request(route,{method,headers:{'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});

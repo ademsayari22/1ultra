@@ -46,11 +46,11 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     try {
       // boot log warned LOUDLY (never silent)
       await wait(150);
-      A.ok(/WORKSPACE WRITTEN BY A NEWER 1ULTRA|DEGRADED/i.test(fixture.output()), 'boot logs a loud newer-1Ultra / DEGRADED warning');
+      A.ok(/WORKSPACE WRITTEN BY A NEWER 1ULTRA|DEGRADED/i.test(fixture.output()), 'boot logs a loud newer-StarNet / DEGRADED warning');
 
       const token = fixture.token;
       A.ok(token.length >= 32, 'got a session API token');
-      const hdrs = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+      const hdrs = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
 
       // the sidecar did NOT re-stamp the newer marker DOWN (leave newer data honest)
       const stamp = JSON.parse(fs.readFileSync(path.join(ws, '.schema-version.json'), 'utf8'));
@@ -79,7 +79,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
       A.eq(saveJson.error, 'workspace written by newer 1Ultra', 'degraded save POST carries the honest error');
 
       // GET /api/save STILL SERVES (reads are never blocked in degraded mode)
-      const readRes = await fetch(B + '/api/save?agent=agent', { headers: { 'X-1Ultra-Token': token, Origin: B } });
+      const readRes = await fetch(B + '/api/save?agent=agent', { headers: { 'X-StarNet-Token': token, Origin: B } });
       A.eq(readRes.status, 200, 'GET /api/save still serves in degraded mode (reads not blocked)');
     } finally { await fixture.dispose(); }
   }

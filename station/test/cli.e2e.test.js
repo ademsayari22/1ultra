@@ -138,7 +138,7 @@ function hermetic(profile) {
       A.ok(j.turns === 1 && Array.isArray(j.toolCalls) && j.toolCalls.length === 0, 'turns + no tool calls');
       A.ok(!/Hello from the station/.test(r.err), 'the answer is not duplicated on stderr');
       // truthfulness: the station's OWN run history holds this runId
-      const runs = await fetch(fixture.baseUrl + '/api/runs?limit=3', { headers: { 'X-1Ultra-Token': fixture.token, Origin: fixture.baseUrl } });
+      const runs = await fetch(fixture.baseUrl + '/api/runs?limit=3', { headers: { 'X-StarNet-Token': fixture.token, Origin: fixture.baseUrl } });
       const hist = await runs.json();
       A.ok((hist.runs || []).some(x => x.runId === j.runId && x.reason === 'done'), 'the receipt\'s runId is in the station\'s run history with the same reason');
     }
@@ -180,7 +180,7 @@ function hermetic(profile) {
 
       const d = await cli(['doctor', '--port', String(port)], attachEnv);
       A.eq(d.code, 0, 'doctor exits 0');
-      A.ok(/1Ultra diagnostics/.test(d.out) && /Credential:\s+configured/.test(d.out), 'doctor prints the static diagnostics report');
+      A.ok(/StarNet diagnostics/.test(d.out) && /Credential:\s+configured/.test(d.out), 'doctor prints the static diagnostics report');
       A.ok(d.out.indexOf('sk-or-v1') < 0, 'doctor never prints a key');
     }
 
@@ -240,7 +240,7 @@ function hermetic(profile) {
       again.workspace = ws2;
       await again.start();
       try {
-        const h = { 'X-1Ultra-Token': again.token, Origin: again.baseUrl };
+        const h = { 'X-StarNet-Token': again.token, Origin: again.baseUrl };
         const sv = await (await fetch(again.baseUrl + '/api/save?agent=agent', { headers: h })).json();
         A.ok(sv.save && sv.save.agent && sv.save.agent.name === 'ATLAS' && sv.save.schema === 'starnet.save', 'GET /api/save serves the bootstrapped agent — the desktop\'s boot path takes the RESUME branch, never the first-run ceremony');
         A.ok(!sv.recovery, 'no quarantine/recovery marker was raised by the bootstrap files');

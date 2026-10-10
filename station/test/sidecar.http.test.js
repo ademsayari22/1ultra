@@ -151,7 +151,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
   let apiToken = '';
   const j = async (m, p, body) => {
     const headers = { 'Content-Type': 'application/json' };
-    if (apiToken) headers['X-1Ultra-Token'] = apiToken;   // hardened: GET data routes need the token too now
+    if (apiToken) headers['X-StarNet-Token'] = apiToken;   // hardened: GET data routes need the token too now
     const r = await fetch(B + p, { method: m, headers, body: body ? JSON.stringify(body) : undefined });
     const t = await r.text(); let v; try { v = JSON.parse(t); } catch (_) { v = t; }
     return { status: r.status, body: v };
@@ -168,11 +168,11 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
     A.ok(/__STARNET_API_TOKEN__/.test(injected), 'served index.html bootstraps the API token for browser mode');
     apiToken = await bootToken(B, B);
     A.ok(apiToken.length >= 32, 'served index.html carries a high-entropy API token');
-    const tok = { 'X-1Ultra-Token': apiToken };
+    const tok = { 'X-StarNet-Token': apiToken };
     const tauriOrigin = 'http://tauri.localhost';
 
     const sessNoToken = await fetch(B + '/api/session', { method: 'POST', headers: { Origin: B } });
-    A.eq(sessNoToken.status, 403, 'POST /api/session without X-1Ultra-Token -> 403');
+    A.eq(sessNoToken.status, 403, 'POST /api/session without X-StarNet-Token -> 403');
     const sess = await fetch(B + '/api/session', { method: 'POST', headers: Object.assign({ Origin: B }, tok) });
     A.eq(sess.status, 200, 'POST /api/session with token -> 200');
     const sessBody = await sess.json();
@@ -219,7 +219,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
     const desktopDiagResponse = await fetch(B + '/api/diagnostics', { headers: Object.assign({ Origin: tauriOrigin }, tok) });
     const desktopDiag = await desktopDiagResponse.json();
     A.eq(desktopDiag.report.mode, 'desktop', 'http://tauri.localhost is classified as the packaged desktop origin');
-    A.ok(/1Ultra diagnostics/.test(diag.body.text), 'the block is clearly fenced');
+    A.ok(/StarNet diagnostics/.test(diag.body.text), 'the block is clearly fenced');
     A.ok(/no keys, tokens, or message content/.test(diag.body.text), 'the block states it carries no secrets');
     A.eq(typeof diag.body.report.keyPresent, 'boolean', 'keyPresent is a boolean, never the key itself');
     // the pre-seeded discord channel carries a fake OpenRouter key (sk-or-v1-fake-discord) + a bot token — NEITHER
@@ -281,7 +281,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
       const RB = 'http://' + HOST + ':' + rb.port;
       try {
         const rtok = await bootToken(RB, RB);
-        const rh = { 'Content-Type': 'application/json', 'X-1Ultra-Token': rtok, Origin: RB };
+        const rh = { 'Content-Type': 'application/json', 'X-StarNet-Token': rtok, Origin: RB };
         const read = async p => {
           const rr = await fetch(RB + p, { headers: rh });
           return { status: rr.status, body: await rr.json() };
@@ -373,7 +373,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
       const PB = 'http://' + HOST + ':' + pb.port;
       try {
         const ptok = await bootToken(PB, PB);
-        const ph = { 'Content-Type': 'application/json', 'X-1Ultra-Token': ptok, Origin: PB };
+        const ph = { 'Content-Type': 'application/json', 'X-StarNet-Token': ptok, Origin: PB };
         const request = async (method, p, value) => {
           const rr = await fetch(PB + p, { method, headers: ph, body: value == null ? undefined : JSON.stringify(value) });
           const text = await rr.text(); let parsed = null; try { parsed = JSON.parse(text); } catch (_) {}
@@ -472,7 +472,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
       const ZB = 'http://' + HOST + ':' + zb.port;
       try {
         const ztok = await bootToken(ZB, ZB);
-        const zh = { 'Content-Type': 'application/json', 'X-1Ultra-Token': ztok, Origin: ZB };
+        const zh = { 'Content-Type': 'application/json', 'X-StarNet-Token': ztok, Origin: ZB };
         const request = async (method, p, value) => {
           const rr = await fetch(ZB + p, { method, headers: zh, body: value == null ? undefined : JSON.stringify(value) });
           const text = await rr.text(); let parsed = null; try { parsed = JSON.parse(text); } catch (_) {}
@@ -636,7 +636,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
     const channelsFile = path.join(ws, 'channels', 'secrets.json');
     const signalBeforeMalformed = fs.readFileSync(channelsFile, 'utf8');
     const signalBadJson = await fetch(B + '/api/channels/signal/disconnect', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': apiToken }, body: '{bad'
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': apiToken }, body: '{bad'
     });
     A.eq(signalBadJson.status, 400, 'Signal disconnect with malformed JSON -> 400');
     A.eq(fs.readFileSync(channelsFile, 'utf8'), signalBeforeMalformed, 'malformed Signal disconnect leaves durable configuration byte-identical');
@@ -700,7 +700,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
       const B2 = 'http://' + HOST + ':' + b2.port;
       try {
         const tok2 = await bootToken(B2, B2);
-        const r2 = await fetch(B2 + '/api/version', { headers: { 'X-1Ultra-Token': tok2, Origin: B2 } });
+        const r2 = await fetch(B2 + '/api/version', { headers: { 'X-StarNet-Token': tok2, Origin: B2 } });
         const v2 = await r2.json();
         A.eq(r2.status, 200, 'GET /api/version (BUILD_DESCRIBE boot) -> 200');
         A.eq(v2.harness, bd, '/api/version harness = STARNET_BUILD_DESCRIBE (env override wins over git/pkg)');
@@ -838,7 +838,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
     A.eq(slashUnknown.status, 404, 'POST /api/slash/dispatch unknown -> 404');
 
     const noApiToken = await fetch(B + '/api/budget/resume', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: B }, body: JSON.stringify({ scope: 'day' }) });
-    A.eq(noApiToken.status, 403, 'privileged POST without X-1Ultra-Token -> 403');
+    A.eq(noApiToken.status, 403, 'privileged POST without X-StarNet-Token -> 403');
 
     // ---- budget status reflects the PRE-SEEDED ledger (persisted spend survived a fresh boot) ----
     const st = await j('GET', '/api/budget/status');
@@ -898,9 +898,9 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
     const grokOut = await j('POST', '/api/run', { model: 'grok-4.7', provider: 'grok' });
     A.eq(grokOut.status, 400, 'POST /api/run on a signed-out GROK OAUTH -> 400');
     A.ok(/^missing key\/model — sign in to GROK OAUTH first/.test(String(grokOut.body)), 'the signed-out grok refusal names the grok sign-in (got: ' + grokOut.body + ')');
-    const badJson = await fetch(B + '/api/run', { method: 'POST', headers: { 'X-1Ultra-Token': apiToken }, body: '{not json' });
+    const badJson = await fetch(B + '/api/run', { method: 'POST', headers: { 'X-StarNet-Token': apiToken }, body: '{not json' });
     A.eq(badJson.status, 400, 'POST /api/run with malformed JSON -> 400');
-    const cancelBadJson = await fetch(B + '/api/cancel', { method: 'POST', headers: { 'X-1Ultra-Token': apiToken }, body: '{not json' });
+    const cancelBadJson = await fetch(B + '/api/cancel', { method: 'POST', headers: { 'X-StarNet-Token': apiToken }, body: '{not json' });
     A.eq(cancelBadJson.status, 400, 'POST /api/cancel with malformed JSON -> 400');
 
     const spotifyStart = await j('POST', '/api/spotify/auth/start', { clientId: 'spotify-http-test-client' });
@@ -908,7 +908,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
     const spotifyFile = path.join(ws, '.secrets', 'spotify.json');
     const spotifyBeforeMalformed = fs.readFileSync(spotifyFile, 'utf8');
     const spotifyBadJson = await fetch(B + '/api/spotify/auth/start', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': apiToken }, body: '{not json'
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': apiToken }, body: '{not json'
     });
     A.eq(spotifyBadJson.status, 400, 'Spotify auth start with malformed JSON -> 400 even when a client id is already saved');
     A.eq(fs.readFileSync(spotifyFile, 'utf8'), spotifyBeforeMalformed, 'malformed Spotify auth start leaves durable OAuth configuration byte-identical');
@@ -992,7 +992,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
     //      no-op (the run already ended or auto-settled), exactly like /api/consent; malformed JSON 400s. ----
     const ackStale = await j('POST', '/api/summon/ack', { runId: 'nope', requestId: 'nope', agentId: 'researcher-2' });
     A.eq(ackStale.status, 200, 'POST /api/summon/ack with an unknown run -> 200 no-op');
-    const ackBadJson = await fetch(B + '/api/summon/ack', { method: 'POST', headers: { 'X-1Ultra-Token': apiToken }, body: '{not json' });
+    const ackBadJson = await fetch(B + '/api/summon/ack', { method: 'POST', headers: { 'X-StarNet-Token': apiToken }, body: '{not json' });
     A.eq(ackBadJson.status, 400, 'POST /api/summon/ack with malformed JSON -> 400');
 
     // ---- memory observability + new-hero reset: the declined reject-list GET, the undo-a-discard restore, and the
@@ -1209,7 +1209,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
       A.ok(/no key/i.test(sttNoKey.body.reason || ''), 'with no engine and no key the STT degrade names the no-key reason');
     }
     // raw-bytes shape (the recorder-provider default): a webm content-type body, still no key -> clean degrade.
-    const sttRaw = await fetch(B + '/api/stt', { method: 'POST', headers: Object.assign({ 'Content-Type': 'audio/webm' }, apiToken ? { 'X-1Ultra-Token': apiToken } : {}), body: Buffer.from('fake opus bytes') });
+    const sttRaw = await fetch(B + '/api/stt', { method: 'POST', headers: Object.assign({ 'Content-Type': 'audio/webm' }, apiToken ? { 'X-StarNet-Token': apiToken } : {}), body: Buffer.from('fake opus bytes') });
     A.eq(sttRaw.status, 200, 'POST /api/stt raw audio bytes -> 200');
     const sttRawBody = await sttRaw.json();
     A.eq(sttRawBody.text, '', 'raw-bytes STT with no key returns an empty transcript');
@@ -1422,7 +1422,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
       const EB = 'http://' + HOST + ':' + eb.port;
       try {
         const etok = await bootToken(EB, EB);
-        const post = (t) => fetch(EB + '/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': etok, Origin: EB }, body: JSON.stringify({ text: t }) });
+        const post = (t) => fetch(EB + '/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': etok, Origin: EB }, body: JSON.stringify({ text: t }) });
         const r1 = await post('edge floor round trip');
         A.eq(r1.status, 200, 'edge-floor /api/tts (no key) -> 200');
         A.eq(r1.headers.get('x-voice-cache'), 'miss', 'first edge synth is a cache miss');
@@ -1454,7 +1454,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
           const SB = 'http://' + HOST + ':' + sb.port;
           try {
             const stok = await bootToken(SB, SB);
-            const H = { 'Content-Type': 'application/json', 'X-1Ultra-Token': stok, Origin: SB };
+            const H = { 'Content-Type': 'application/json', 'X-StarNet-Token': stok, Origin: SB };
             const lvs = await (await fetch(SB + '/api/local-voice/status', { headers: H })).json();
             A.eq(lvs.available, false, 'the kill-switch presents the installed-build truth through the route');
             const postLocal = (t, v) => fetch(SB + '/api/tts', { method: 'POST', headers: H, body: JSON.stringify({ text: t, local: true, localVoice: v }) });
@@ -1504,7 +1504,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
       try {
         const gtok = await bootToken(GB, GB);
         const audioBytes = Buffer.from('OPUSFAKEAUDIO-abc123');
-        const r = await fetch(GB + '/api/stt', { method: 'POST', headers: { 'Content-Type': 'audio/webm', 'X-1Ultra-Token': gtok, Origin: GB }, body: audioBytes });
+        const r = await fetch(GB + '/api/stt', { method: 'POST', headers: { 'Content-Type': 'audio/webm', 'X-StarNet-Token': gtok, Origin: GB }, body: audioBytes });
         A.eq(r.status, 200, 'groq-keyed /api/stt -> 200');
         const body = await r.json();
         A.eq(body.text, 'station systems nominal', 'the transcript comes from the dedicated Groq Whisper branch');

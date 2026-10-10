@@ -179,7 +179,7 @@ class SidecarFixture {
     const headers = Object.assign({}, opts.headers || {});
     if (!Object.keys(headers).some(key => key.toLowerCase() === 'origin')) headers.Origin = this.baseUrl;
     if (this.token && !Object.keys(headers).some(key => key.toLowerCase() === 'x-starnet-token')) {
-      headers['X-1Ultra-Token'] = this.token;
+      headers['X-StarNet-Token'] = this.token;
     }
     opts.headers = headers;
     return fetch(this.baseUrl + route, opts);

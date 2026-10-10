@@ -7,7 +7,7 @@ const fsp = require('node:fs/promises');
 const { pathToFileURL } = require('node:url');
 
 // Per-user model cache, alongside the rest of the app's data root (%LOCALAPPDATA%\1Ultra on Windows,
-// ~/Library/Application Support/1Ultra on macOS — the two platforms we ship). Never inside the repo:
+// ~/Library/Application Support/StarNet on macOS — the two platforms we ship). Never inside the repo:
 // these are ~150 MB of downloaded weights, and PRIVACY.md documents this path for manual removal.
 function defaultCacheRoot() {
   if (process.platform === 'win32') {

@@ -340,7 +340,7 @@ function makeAcpClient(port, onPermission) {
       A.eq(r.result.stopReason, 'cancelled', 'a user cancel reports stopReason CANCELLED, not a generic end_turn');
       const said = client.textFor(sessionId);
       A.ok(!/could not complete this turn/.test(said), 'a deliberate cancel is NOT reported as a transport failure: ' + JSON.stringify(said).slice(0, 200));
-      A.ok(!/the run failed inside 1Ultra/.test(said), 'and does NOT tell the user to go check the station log');
+      A.ok(!/the run failed inside StarNet/.test(said), 'and does NOT tell the user to go check the station log');
       mock.release();   // drop the parked completion so the next phase starts from a clean inflight count
     }
 
@@ -403,7 +403,7 @@ function makeAcpClient(port, onPermission) {
       A.ok(r.result, 'a prompt against a dead station still resolves the turn');
       const said = lonely.textFor(s.result.sessionId);
       A.ok(/could not complete this turn/.test(said), 'and says plainly that it could not run: ' + JSON.stringify(said).slice(0, 300));
-      A.ok(/1Ultra is not running|not reachable/.test(said), 'naming the real cause rather than inventing an answer');
+      A.ok(/StarNet is not running|not reachable/.test(said), 'naming the real cause rather than inventing an answer');
     } finally { lonely.kill(); await sleep(150); }
   }
 

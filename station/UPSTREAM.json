@@ -14764,13 +14764,6 @@
       ]
     },
     {
-      "path": "frontend/app/apiticket.js",
-      "current_sha256": "8278f4776ce70e0adc763057bd92da31baf765e2594c60304d0994ed257b7ba8",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "frontend/app/app.js",
       "current_sha256": "c74d8482cf8b52216485d438ccf64f1a912933a8f736a94ace2717d6b416a51b",
       "reasons": [
@@ -14905,7 +14898,7 @@
     },
     {
       "path": "frontend/app/chat.js",
-      "current_sha256": "725b2178db287edfe8754f7d39c156524f19ae085b9e9ab2b247d10cf7237665",
+      "current_sha256": "fdad73472975d13dbdfa14d4b3ed72497427ab4bf10daefa632870bd12a06bf5",
       "reasons": [
         "brand"
       ]
@@ -14933,7 +14926,7 @@
     },
     {
       "path": "frontend/app/cloudsave.js",
-      "current_sha256": "10460ba3fb6e430064839ff3dad09db18b28f32a00599f61def42d51070028a9",
+      "current_sha256": "5c7ce904e7ef4043e305976c061d63874011559651a25e4e11ffb3be54b695f5",
       "reasons": [
         "brand"
       ]
@@ -15094,14 +15087,14 @@
     },
     {
       "path": "frontend/app/freshstart.js",
-      "current_sha256": "f3753dacafba6f7708ea5595b85aef33108511654e0a3846b8ba6427f34e1f97",
+      "current_sha256": "2c4e21d7b288a2879bb3b68b3a9d368f60cd51edbc10ea00bba8d7e89b506002",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "frontend/app/friendlyerror.js",
-      "current_sha256": "ceb3f731ab021b44e9637d8ce9a760330d2c4fdbc09b1cd6aa5542ced4665a4a",
+      "current_sha256": "5309924e93b9505141c4f65c2a4fde5152732cffd9842df67f9eaa0f70344734",
       "reasons": [
         "brand"
       ]
@@ -15157,7 +15150,7 @@
     },
     {
       "path": "frontend/app/harness.js",
-      "current_sha256": "c0356cf3687714822ecb570f9190312b51b47b4a478aacf5e6fe7a922dc2f924",
+      "current_sha256": "6607055aceb2521da2434051c05d88444cede9aff9f03734835f10d6f5ef4bdc",
       "reasons": [
         "brand"
       ]
@@ -15311,7 +15304,7 @@
     },
     {
       "path": "frontend/app/modeldock.js",
-      "current_sha256": "3b1b278f046d6a1e26de832dd54e4913bcd1b27ce0d0d3ec0a68b960ba7701c3",
+      "current_sha256": "750c8387a50d4736135b616ad297ffba1162e5585195a8743bb3968719739a21",
       "reasons": [
         "brand"
       ]
@@ -15857,7 +15850,7 @@
     },
     {
       "path": "frontend/app/stationui.js",
-      "current_sha256": "087e31bc423c45a5cd17d31934c04e32b6eeb6429a8b36319dee47561c7a1903",
+      "current_sha256": "149b59ea21fbf6f1093dc763c8b0c404f5efde24c5e3ccaf20baf72c303607a7",
       "reasons": [
         "brand"
       ]
@@ -16003,13 +15996,6 @@
       ]
     },
     {
-      "path": "frontend/app/userprops.js",
-      "current_sha256": "e4b79cdd5c144c741aec862624e77938c86382022705cd79a23ff085f46ea84c",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "frontend/app/verdictfollowup.js",
       "current_sha256": "f33c10e7fea5968ba61a6135f60f263ed9a4fb687c3e1252ef6509d86e2aa321",
       "reasons": [
@@ -16025,7 +16011,7 @@
     },
     {
       "path": "frontend/app/voice.js",
-      "current_sha256": "e500d3e89373f8a757ca47b4dc136e9332caaf59b9a4cb1cfe8e0bd2c9e857a4",
+      "current_sha256": "27da49ae51bf34cebfd82eee0dd24f70429f993f2af2dbd07cc8ffb1f7515090",
       "reasons": [
         "brand"
       ]
@@ -16088,7 +16074,7 @@
     },
     {
       "path": "frontend/app/windows/loops.js",
-      "current_sha256": "86b37be53a3e4bbfd2af3b53ca286ae874d13493a1526f13280cc477968145cd",
+      "current_sha256": "3c51b6a10754e8cb7a8c6fc12207622e7b512a1f669ab5c48b073730e43747a9",
       "reasons": [
         "brand"
       ]
@@ -16137,7 +16123,7 @@
     },
     {
       "path": "frontend/app/workflowpanel.js",
-      "current_sha256": "7db72a43d484ca425309780c79c570f39fed70a07b6070dcb5dd463d72056d90",
+      "current_sha256": "0aa80dab0b4d8581fd44f111e400345c2685f24343e00d9600c809d4986378ad",
       "reasons": [
         "brand"
       ]
@@ -16438,13 +16424,6 @@
       ]
     },
     {
-      "path": "sidecar/apitickets.js",
-      "current_sha256": "5e3fbf762e5eb03aca0dad4413b72d116f9aaae20f1d12a6fd8d72a1c45c7fff",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "sidecar/apps.js",
       "current_sha256": "5e518ccc8b21e196fce621af0e8fd93852026c516a77fb7ecb8163ea614e8c58",
       "reasons": [
@@ -16453,7 +16432,7 @@
     },
     {
       "path": "sidecar/browser-handoff-routes.js",
-      "current_sha256": "a4f4003a7ecc97ad518efc83a75fbff0a6004e7f6890719621abef28263b1436",
+      "current_sha256": "cd58417f4b65d8d6b71afc8976ac5fe401ee5f1cb1da3a4b69179274db22c534",
       "reasons": [
         "brand"
       ]
@@ -16474,7 +16453,7 @@
     },
     {
       "path": "sidecar/budgetcaps.js",
-      "current_sha256": "55d9e7f1ac51edf0edbd059d245612157133b45fd396aaf4588eecd2c3e99877",
+      "current_sha256": "ac4d51ea4baab1cb70dbe098fb7592d6b8c3157f8e1321c87eb685fa9fcae997",
       "reasons": [
         "brand"
       ]
@@ -16677,14 +16656,14 @@
     },
     {
       "path": "sidecar/image-task.js",
-      "current_sha256": "b43c4c4faa653133d50e206f4c0a05e29ed046c2694e5d0686629503795d7846",
+      "current_sha256": "b41b2888508551c9ad313e4149d581aca8d0ffc24bab6c18b1ca8cafad19a5db",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "sidecar/index.js",
-      "current_sha256": "5bef212b9f523d4fe1dab041b344d233df106dcaf193b2246d84dfa2d1d950af",
+      "current_sha256": "d57bff091819772cd5f433f49c8e3f2d47a0f5dc83b10f0e41a153fa8599a825",
       "reasons": [
         "brand",
         "patch:ultra-host-require,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty"
@@ -16727,7 +16706,7 @@
     },
     {
       "path": "sidecar/local-voice.js",
-      "current_sha256": "49c39bbec6057e8a637dfd9b1b6ccd9eb0115891968d7d1ff51d19e898c617a8",
+      "current_sha256": "63fde76450f765082a0d5f648107262dee35ef981de3fa892cb30d37531b48e6",
       "reasons": [
         "brand"
       ]
@@ -16741,7 +16720,7 @@
     },
     {
       "path": "sidecar/lsp-manager.js",
-      "current_sha256": "476d143fbe3a1163df7bc3ab53c0b95959c1182c4b77458d7aca939ff210594e",
+      "current_sha256": "615137f906351452964cec37371fde7ba77e3152de98ff7db65d2e06580329b9",
       "reasons": [
         "brand"
       ]
@@ -16783,7 +16762,7 @@
     },
     {
       "path": "sidecar/mcp/google-relay-guard.js",
-      "current_sha256": "df5c2a4220a1bc3fc4fd3480f7a822c63b52c485c9559ececbc644a4f21cf39b",
+      "current_sha256": "105d7d8a3047bb2f85e4fc0a93b981cdcd8c3e26a464cd63117627a075c1a646",
       "reasons": [
         "brand"
       ]
@@ -16832,7 +16811,7 @@
     },
     {
       "path": "sidecar/openai-compat.js",
-      "current_sha256": "e2cfdd02c447b22966b65847891abf8857f696dd95c44d2c2740a313338dbd79",
+      "current_sha256": "3642dcd97766cba38a3057e246be9aaf9b6fe25b91443a87a98ef12615e8737c",
       "reasons": [
         "brand"
       ]
@@ -16971,13 +16950,6 @@
       ]
     },
     {
-      "path": "sidecar/providers/liveprices.js",
-      "current_sha256": "e6ce7357242be99b73f1b5c2ca2e3f2f28e7235eea0fb5bbbf22590255016041",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "sidecar/providers/ollama-native.js",
       "current_sha256": "68b36d995e615b19245be9b381e7f2569b48416a2ff05f4603030300fa2a0537",
       "reasons": [
@@ -17085,13 +17057,6 @@
     {
       "path": "sidecar/skills/catalog.js",
       "current_sha256": "edc5bf57e20377d5c55e3aab9dd5440b5a17932a38e78727e51be7090bf6da34",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "sidecar/skills/exchange-fetch.js",
-      "current_sha256": "b45a2821a900e8a1530a669f6a52781257bb322b8b8e03d8d65e281615dfae3c",
       "reasons": [
         "brand"
       ]
@@ -17400,13 +17365,6 @@
     {
       "path": "sidecar/workspace-safety.js",
       "current_sha256": "de66626de020c413b1f53ce7a1baa5d156d57d9a08a0f57867bde004fb124d4f",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/originals.json",
-      "current_sha256": "7ab3e56ff2e5f75dd1ad75044336343b8a3278d381b79ce8af7a4f73e80e89c0",
       "reasons": [
         "brand"
       ]
@@ -18022,14 +17980,14 @@
     },
     {
       "path": "test/acp-core.test.js",
-      "current_sha256": "c86b99b9dc625622e8af26c904307230e6d51e935e90686517c66e91677e0b7f",
+      "current_sha256": "01fa130af6b2aae262c83ba3e4e48399161dd4f855c1768e2911ae59b1e3db5f",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/acp.e2e.test.js",
-      "current_sha256": "c3cd6596b50f5534e69b5c7c49994a6458982d52642b471fd57449196446634b",
+      "current_sha256": "4c63a322160ee89ec3303a6d35cc39ab2fa75db7b4147cab2155e84ea469f6a8",
       "reasons": [
         "brand"
       ]
@@ -18043,21 +18001,14 @@
     },
     {
       "path": "test/apps.test.js",
-      "current_sha256": "136a482585aea126c473e11f2ff0b2700888c330ded7fd618f085fe9c8e76368",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/atlas-events.emit.e2e.test.js",
-      "current_sha256": "657b1e2b174d13d162e5f90dbac7911cdbf4e992e945600126065824d252a1b3",
+      "current_sha256": "e4e35ed1b401a80cfcbc15b2271ce9081209ccecf3c560d5d43cff65affccb3f",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/autojobs.test.js",
-      "current_sha256": "937e6d1fc99ccfe345d4a406f9eb085f24550e484b1b26f656b2e2664f4e9ffb",
+      "current_sha256": "63e646279f9760ecd7142d872dba32f9c5d76d6a5ef7a07f3434da325257395e",
       "reasons": [
         "brand"
       ]
@@ -18065,13 +18016,6 @@
     {
       "path": "test/autojobstore.test.js",
       "current_sha256": "306f795d8b39d8faf61b61ad8074e0cb8be7d8cce7147c26d97ca481ab23b4be",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/autonomy-ledger.e2e.test.js",
-      "current_sha256": "a1af4f2f6958c02c2676274f4db791b860a9a88ae518725ad1e79579daad8a3c",
       "reasons": [
         "brand"
       ]
@@ -18098,20 +18042,6 @@
       ]
     },
     {
-      "path": "test/auxbudget.e2e.test.js",
-      "current_sha256": "fb78cec413e3f48b2b54817ed8944b74479eb74ed75aa19409da83e84f53f464",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/boot-security.test.js",
-      "current_sha256": "e98bae64cb655dda14627bf0bd206ca7ca1ff7c9f43532696a01caee0d7fc5ea",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/bootguard.test.js",
       "current_sha256": "2f6d1e00ebdbf2caff5143dbc6db7279daebe1fe143161762bfe9e3779795404",
       "reasons": [
@@ -18128,13 +18058,6 @@
     {
       "path": "test/browser-handoff-routes.test.js",
       "current_sha256": "c0b210fe9c9a25684624410936edd24837b2a8deb15e6db28aeaad2df0442e58",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/browser-held-profile.test.js",
-      "current_sha256": "50252529efdafb64a391ddda8b2356974be801ecc78cf999b2410755d86440c6",
       "reasons": [
         "brand"
       ]
@@ -18168,13 +18091,6 @@
       ]
     },
     {
-      "path": "test/browser.gauntlet.e2e.test.js",
-      "current_sha256": "43a60f7ee4a770693c827463f9d54a0cd51c147fdb5bdebce9b13a9e60b04d0b",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/browser.test.js",
       "current_sha256": "d282aa47962c6669e91014832c537d611c956c300be6af20fbe18c4df5a6bd39",
       "reasons": [
@@ -18183,56 +18099,21 @@
     },
     {
       "path": "test/budget-authority-ui.test.js",
-      "current_sha256": "36b72b4b8b6cf3bfa6593850cb0b76e37412c89f5734ca8955c8e528dfd1c381",
+      "current_sha256": "2406c7784d3ffc25d024d26d840c05d321792c1f760d039ecd60eb2889a754fc",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/budget-caps.test.js",
-      "current_sha256": "96b11401c259956460fb130c76334202d5deecdd901dac5a62eb34058ce9e9b8",
+      "current_sha256": "9c70987ca1f8b170b0a8f7418468f932d8eab3df7955f361b91b2ae7cc8a3c2d",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/budget-stop-door.test.js",
-      "current_sha256": "529dc78d7c2201e664b34e519657aac0e1cbf3c64445f68faba029d1751ef0a8",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/cancel-host-run.e2e.test.js",
-      "current_sha256": "885e73a2bd199c6d83356b1c5b080df3a4ba3160eb673c90480328aa5fe43854",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/channels.keychain-all.e2e.test.js",
-      "current_sha256": "3df7b476948b3bd706f743db5033e382470df080e7db6e7d4dec1d00f9222fb6",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/channels.relay-owner.e2e.test.js",
-      "current_sha256": "34ca84bf8ee8a4f0bb85dda9983490ad83f1d79fbff65055576e835c3242dff2",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/channels.telegram.botchain.e2e.test.js",
-      "current_sha256": "aa91e52f8103f3a5fd2af707439b65d2344c697677bd1d15a217733aaa1b71da",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/channels.telegram.buttons.e2e.test.js",
-      "current_sha256": "dd126455ab56c051c0c88485bd0f0941eda8c823a17076aa22b1701512913fba",
+      "current_sha256": "e4501f87a03b7a2dea571c51288a918939b7bdee6fbf5f090fcc946b864bdfda",
       "reasons": [
         "brand"
       ]
@@ -18245,29 +18126,8 @@
       ]
     },
     {
-      "path": "test/channels.telegram.e2e.test.js",
-      "current_sha256": "caf01b6bbd58a92831e27622f2f12ec3f4fcfb4a7002cccec87fbe220781f457",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/channels.telegram.groups.test.js",
       "current_sha256": "f8bd1d09e4f74157ac7a16446614b79f1ed30750d1b84b91b3fb6a4ae4609447",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/channels.telegram.multibot.e2e.test.js",
-      "current_sha256": "76a8f34d40c3289df3e74df35af4794f617b74aa5fe9f8e8bdaac0ffde63f84b",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/chat-prompt-diet.e2e.test.js",
-      "current_sha256": "b3efeaad30bee4242c739cb88bdeb0d09f7a8102bbc631a16625c9ca0609fc5c",
       "reasons": [
         "brand"
       ]
@@ -18280,36 +18140,8 @@
       ]
     },
     {
-      "path": "test/cli.e2e.test.js",
-      "current_sha256": "0bd78610be9677d8cc8df09680d7e8da640f2c53b48a9e8787d7a257c4f1e4aa",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/cloudsave-refusal.test.js",
       "current_sha256": "c31df0b95082baf092146d8923d800b647a1e6220fdfc1b3950c20af210d1041",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/codex-status.e2e.test.js",
-      "current_sha256": "355047f4ca382b341dc63d549c97cd6734ba5fcfef308fb7d627af13838f64aa",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/comms-send.e2e.test.js",
-      "current_sha256": "6e42d4828774c70052d751748305f5acc5e0d5196f4bf88ef3274ac5b0fac718",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/computer-control.http.test.js",
-      "current_sha256": "d76fa456d9813ce5e08f1631a8fcf820ba7341c43c50d20e2d1f1e494318f5f4",
       "reasons": [
         "brand"
       ]
@@ -18323,7 +18155,7 @@
     },
     {
       "path": "test/configexport.test.js",
-      "current_sha256": "a64eaa20e95f88fa6c7d892f0fc0f3ce64a3e1b7a984c2213719611616580a76",
+      "current_sha256": "d330835788fe191d2e3eafa5dda9c168da93eafc020432f2f6fa0c66ab657e9b",
       "reasons": [
         "brand"
       ]
@@ -18371,43 +18203,8 @@
       ]
     },
     {
-      "path": "test/credrotate.e2e.test.js",
-      "current_sha256": "72de873cb57533d3dad1cb12d8cb9bc9cfca22a0b632cb945736ba8c494793b0",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/cron-guard.test.js",
       "current_sha256": "094d948951de8e9c8f02e9d4ac0e976dde8765eecee6faf82e0a662c1971e7b8",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/cron.api.test.js",
-      "current_sha256": "b7f6b947308f0dd45ec305da3766bf2f509834cff94c2958d8191f87cef8243f",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/cron.arm.test.js",
-      "current_sha256": "d02ccb97a9b882e7827739ae9ae70da16c501eddce0e6d559b3bd661417b18ba",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/cron.degraded.e2e.test.js",
-      "current_sha256": "62614a7e10edbd4dd8e51fb78c4d970e4b02cdeac21253d7e5ff85bacef36209",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/cron.run-now.e2e.test.js",
-      "current_sha256": "d4a81a677c2bda9cb0018902c72226f7f736c8823608ab9c362c3ec2199cff6c",
       "reasons": [
         "brand"
       ]
@@ -18420,36 +18217,15 @@
       ]
     },
     {
-      "path": "test/cron.session-transcript.e2e.test.js",
-      "current_sha256": "d4f29e8d79f69f60ebb1f01e4245c2a0c9bab0526ddd6c5c31a31ea26bfba0a5",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/customer-journey.e2e.test.js",
-      "current_sha256": "4d9f9ac8fa0565486f0557055a146b7433e4e66c1a10d4ce059b35759ba933e2",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/datareset.test.js",
-      "current_sha256": "139a2190317edb0717708f7b2b322ffd27e1881fb1b740ed737025d2d32ea23a",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/delegated-connectors.e2e.test.js",
-      "current_sha256": "77f1e398d8681f0dc98f2594df3f942e22767ff7dc3cfa83d95a56fd67ad0bee",
+      "current_sha256": "6c84c9145023232317a9558a3858858e6d01f0be74dd233c215436ec5f426856",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/desktop-build-macos-notarization.test.js",
-      "current_sha256": "6d127c42a5a63996c9385d9702fd951a2c326fe5407fdaafd4b1b66ab0ce3baa",
+      "current_sha256": "c44124a97b62f3fbb738922f559454230eb8890a2529b06eb31200fa1f0f782f",
       "reasons": [
         "brand"
       ]
@@ -18490,13 +18266,6 @@
       ]
     },
     {
-      "path": "test/discovery.http.test.js",
-      "current_sha256": "b52df9e0f598a8d86b7b47508e02486533c371105fdc31c889e56a33b4bb4f37",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/dossierinject.test.js",
       "current_sha256": "1baceea1b33aaecaf19b0962dc8dbe89e8376101a8c927c9b6beaa57b4f15569",
       "reasons": [
@@ -18504,106 +18273,15 @@
       ]
     },
     {
-      "path": "test/e2e.acceptance-nudge.test.js",
-      "current_sha256": "3277aaebb12bdd0f1ffd82e519a187ef16d8a9b0ec3723171d15fc4c9e878d54",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/e2e.attachments.test.js",
-      "current_sha256": "1f96d8ceb5c7f17ee16627ef15fbe543f7e1003ac14e651b04aa6cbec35e5bc0",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/e2e.connector-readback.test.js",
-      "current_sha256": "73dae7ba314f26b827ba1bedf96333da3ccb6ef1d3ae904c9d099c85f9af4027",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/e2e.dispatch-session.test.js",
-      "current_sha256": "57022445010f36a8eec337fc3196448bd8698028c114fac057a0663f484733dc",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/e2e.idempotency.test.js",
-      "current_sha256": "d72c93ab8ed27190fef7c2c81a6446a7ac18ed72cc24e34ed8894a610a10c60d",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/e2e.mcp-connector.test.js",
-      "current_sha256": "70afb28137aa6a798149becd29dfc206de508f9e56f28415f3433b4111a5b6cb",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/e2e.mcp-session-expiry.test.js",
-      "current_sha256": "9f739c0e617a3f7225ec98e5c33f6ad1e19d92a322e3b93643932a269cb283f6",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/e2e.pathtrust.test.js",
-      "current_sha256": "eaa791b8400120c6a78834849b66b88e284981800efeea334af4bc2f773bae7a",
+      "current_sha256": "41fd6337491e5e7c5507a8b067aca3c9237365022fe1685536e6984087e58b9a",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/e2e.run.test.js",
-      "current_sha256": "2451837d23b8835a292c938e9a543c5d1da3855b047e4497fb4189c86e16a09b",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/e2e.subagent-background.test.js",
-      "current_sha256": "6ea88ff0a7f36d72e2498c47af64d93fa11d43c0508b3fc3f6023bd5d8c67de4",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/e2e.summon.test.js",
-      "current_sha256": "7120941c455aa02cf91d78c6b5422e96819b742ea9dc7c002af044a26475cbbf",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/e2e.trigger-fullaccess-taint.test.js",
-      "current_sha256": "ea04e7ab62d821fc9e45b13f1d7a37c636538769434a63af634629eb3ac21e08",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/e2e.worker-access.test.js",
-      "current_sha256": "7c30a59fed3749d932ee94426e993bd527bc5caa5c50b4366cc5939f487716e2",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/e2e.workspace-lease.test.js",
-      "current_sha256": "ff8afd187ef560c0cee316d9640f9e77bcabc1f9ee6992f9dbadbe7939f14d1e",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/emergency-recovery.http.test.js",
-      "current_sha256": "b46bdbe1ddf3138c3b65077e2d91a6cc121d71b122ec94d0954171549e07cc88",
+      "current_sha256": "ab35328256866619b6c98a348bf6d904fc859c6da7c44ba3fd8ea2a4881ca3cc",
       "reasons": [
         "brand"
       ]
@@ -18624,7 +18302,7 @@
     },
     {
       "path": "test/errorclass.test.js",
-      "current_sha256": "d0c395ecc28a91eedccb78228c91288e55453c24e3d5214a780247cda1f4f0bf",
+      "current_sha256": "3ad10eb80751bdf687d492ee45772f42edff44baee61aa97a158edd1c2dc8e5a",
       "reasons": [
         "brand"
       ]
@@ -18658,13 +18336,6 @@
       ]
     },
     {
-      "path": "test/feedbackmemory.http.test.js",
-      "current_sha256": "2675f7481c4f1d3c64418b94d892f7660a554869bfdd53daa63bf745b9e37309",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/fixtures/upgrade/v090-intel-mac/recovery-canary.txt",
       "current_sha256": "a91d1f56837f25b88a47f0952cd9b40bc9b08a61f0ade7c4fca0c9b81233fb98",
       "reasons": [
@@ -18680,7 +18351,7 @@
     },
     {
       "path": "test/free-path-ollama.test.js",
-      "current_sha256": "fddb258d1ebc396ff2403377ccc5c6cfef3342e1c2e7df3e866822e1bc7055d3",
+      "current_sha256": "37627b75131b5f2f68d5efce50b48b63aad8598ee63af759373764675ac191b4",
       "reasons": [
         "brand"
       ]
@@ -18694,7 +18365,7 @@
     },
     {
       "path": "test/friendlyerror.test.js",
-      "current_sha256": "c5c106f9c070565945b7e7e22ff2002ef56a73701419973e50e812980d989bf1",
+      "current_sha256": "afb55235e58bfe0a2fe9efe9dd2c82bf6238812c1cea6ad72c01097d81b55961",
       "reasons": [
         "brand"
       ]
@@ -18756,22 +18427,8 @@
       ]
     },
     {
-      "path": "test/growth-rating-upgrade.e2e.test.js",
-      "current_sha256": "b46076e0295b31155d637d7b62f990ad2826f4078db129d5d266974d9b2b4680",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/harness-internal.test.js",
-      "current_sha256": "9f0a19bf38faa5544907cf593221db4aff30de3bc638ec5bd898a2e3f49be737",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/helpers/sidecar-fixture.js",
-      "current_sha256": "8e040d6694e952e6816e94ccacd66d2f5ebe7a07f385263f4268f6df20ac139c",
+      "current_sha256": "9ff7694d790dd18ea523a2926020eb3b95f5dc0efc076be4570963637b77c34a",
       "reasons": [
         "brand"
       ]
@@ -18791,43 +18448,8 @@
       ]
     },
     {
-      "path": "test/image-task.e2e.test.js",
-      "current_sha256": "74450692218048e312ae4a98791d7dfaac04fd451bbdf8acfb70bce5c4958a4b",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/image-task.test.js",
-      "current_sha256": "41bc67d811ca590c2c1ab8e201feed32fb9a71d964c735152c1d89019cd0df02",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/interrupted-run-in-history.test.js",
-      "current_sha256": "5f9abff0aee47b2a9267a9723d454fc3d531a91f4302c2ea4461c2979dcc778d",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/keycta-recovery.test.js",
-      "current_sha256": "1ed070f81531a4f52f3e95a5612c973a2c18513bb5dc5fe483273be17c1a0e28",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/lifecycle-armed.http.test.js",
-      "current_sha256": "614afbdc1b9656f1cfa2c3615057e6902f6c48f0d1eb7249496591546c85f168",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/lineage-stationless-halt.http.test.js",
-      "current_sha256": "a01a23e2a6b18244ed9674b9b4c14985508edcad9d6a471cfc0390536617ac57",
+      "current_sha256": "5ace298594187799a1b2e9428fca11b8e198e2f800df87a92b2355bd528c4a5b",
       "reasons": [
         "brand"
       ]
@@ -18840,13 +18462,6 @@
       ]
     },
     {
-      "path": "test/live.smoke.js",
-      "current_sha256": "9da36e7022dd5aea9d5db238964c50ae733899d3fec35b628b7422ea5dc6f1df",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/loop.provider-recovery.test.js",
       "current_sha256": "a29ca32a64feeb0bfb96ccc934310733e15b0f58097737ffba0fce9282af1cd9",
       "reasons": [
@@ -18854,29 +18469,15 @@
       ]
     },
     {
-      "path": "test/loops-check.e2e.test.js",
-      "current_sha256": "6edcc911b7338caa35968168855e4952f555c40305678f218fb5b4fa8b557483",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/loops-git.e2e.test.js",
-      "current_sha256": "fd78a0df3ddd15b611e933a3381372c47084922e25f0e8927d2e0cfdc4e48d0a",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/loops-stall.e2e.test.js",
-      "current_sha256": "482102ca97a37ec7c6af2dd8f8f4f7bd4705e7cf63ff8054a01b74cf19a42c77",
+      "current_sha256": "a20829f2bd0693b73bc07f113608379040d3c1a48864e22a7118633734eacbb6",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/loops.e2e.test.js",
-      "current_sha256": "421127e6bb7bae4f1392107b34770b8d49bf6a11fae5b6cdc79f6a09e690e0fe",
+      "current_sha256": "aaf08f21e66e53dddcb1307e29ad6c805d0ce74d657e1638313ebc1a62638a54",
       "reasons": [
         "brand"
       ]
@@ -18897,7 +18498,7 @@
     },
     {
       "path": "test/managed-credit-refusal.e2e.test.js",
-      "current_sha256": "c02d5614752ac500ec6454b27b9c29a354d736fa25ac0524109934b9fc12703d",
+      "current_sha256": "9ac3300dbf74d4595dc1465cd652e5bdb8ca569ca831c89da08ceb909e5448d7",
       "reasons": [
         "brand"
       ]
@@ -18918,7 +18519,7 @@
     },
     {
       "path": "test/managed-run-cap.e2e.test.js",
-      "current_sha256": "91dcbb0ba76af93bd09ec65147ead85492eb20281f56f590eb3b1f4d9b1f3c95",
+      "current_sha256": "bb69330ec12536b5890ddca5327d0ae9ecd2c2147921555d9f68abd1775c83a9",
       "reasons": [
         "brand"
       ]
@@ -18939,14 +18540,14 @@
     },
     {
       "path": "test/mcp-serve.test.js",
-      "current_sha256": "f08600462ee0aa05a6cfe02cb7246b124c655d29aab8971d0b6c7dbd1f332aac",
+      "current_sha256": "c1e904879844172b0c327f5662e46f926bd4fbeee872d2609faf5b4547becf12",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/mcp.catalog.test.js",
-      "current_sha256": "2aae6bfd7a6e4b646839987fae1a1d8808e3ea281e5ce1fe1fabb72fb880edcf",
+      "current_sha256": "7b9f8bbebc314bd81076ca4e5df282f3b5840eb4bea84803c7d1d6437d284bde",
       "reasons": [
         "brand"
       ]
@@ -18966,13 +18567,6 @@
       ]
     },
     {
-      "path": "test/memory-corrections.http.test.js",
-      "current_sha256": "2666255119156351946a70061a00861a7171a4d4798aa209efe57466533b3f8b",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/model-provider-reconcile.test.js",
       "current_sha256": "b5265062e14f12fa36f60e56c905d055f9993c1a2f1d8de33074d429278929a0",
       "reasons": [
@@ -18981,77 +18575,28 @@
     },
     {
       "path": "test/nightshift-act.e2e.test.js",
-      "current_sha256": "8dff5344e0b197226b1e9bde5e8c40977b29d5ebcad60ccbe332e800a96c5eb7",
+      "current_sha256": "09f698860da5f492e637a33785fe89b2afb46eec324d85c2bd13285983c71b80",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/nightshift-beat-halt.e2e.test.js",
-      "current_sha256": "3ac3b7fc182832c9c5db8ff0d93aced2ae2b53ca9a94d6c7103503fcbc924a84",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/nightshift-budget.e2e.test.js",
-      "current_sha256": "18a90c22551e40f833a680308bdbb9667e83dc9b9a9a23b1a3796f28b96c0bb2",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/nightshift-contextpack.e2e.test.js",
-      "current_sha256": "53ea847dab8fa5fdd2d607596b54cdb7f5b84dd9b839fd418765ef5d177f0d9b",
+      "current_sha256": "3f2be83f120ea42f4cfdf932beeda9c4eb3bd7f8ca30a09f73ba7d439ddca3c1",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/nightshift-floor-visibility.e2e.test.js",
-      "current_sha256": "07b56c1a862343902c1be6115ec63375eab4b8b29afd1bc23c42c42e78306a60",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/nightshift-focus.e2e.test.js",
-      "current_sha256": "4a401eadf5b35c01181fb5d92406f0000ae1b3c91eda48647613c70686cdc282",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/nightshift-grant.e2e.test.js",
-      "current_sha256": "80d5145196a9b22e6dabb623ae8550b3f96818ba48cc1b5119d6f7384bfcfbd8",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/nightshift-halt.e2e.test.js",
-      "current_sha256": "31b6048e7debb83d75c38a8b28ab7208d20f4b56daf50d202596d95f0d894d69",
+      "current_sha256": "55e53e44ddaf487b3675a8e61f9710d6aaee3fa8d7a478a1ecb49f2796c534c3",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/nightshift-presence.e2e.test.js",
-      "current_sha256": "280df1d9f384111b2ca86f2ed8a53bfb6f1292b1f49ca6059f973d70a1cc6c57",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/oauth-status.e2e.test.js",
-      "current_sha256": "fdc3dc57fde7f30937a826da91c59699211a0fb9569b196fc4a82e353510f6c3",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/outcomes.http.test.js",
-      "current_sha256": "f058d2d89fa9e09f5c41029bcc6eab815fc536e580c349a03fa028673acbb11d",
+      "current_sha256": "7861a21c53a87d1b7cadd54c36b487f2f1f7f3bf07c5b363d8cdc10bf6b0bcd3",
       "reasons": [
         "brand"
       ]
@@ -19059,13 +18604,6 @@
     {
       "path": "test/packaged-lifecycle.test.js",
       "current_sha256": "9f882d263556fa013f1c4db7704efa396f91810e98b8fba99e935205adda3737",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/paid-link-lifecycle.e2e.test.js",
-      "current_sha256": "2991e363cb99f8a072764bf721cc5266150f3ebd99bc594b06118a12204a9c37",
       "reasons": [
         "brand"
       ]
@@ -19092,29 +18630,8 @@
       ]
     },
     {
-      "path": "test/poweruser-shell-repairs.test.js",
-      "current_sha256": "9e824e6cd43e647dba5478218e5a0d4bce0138555724a6bb5f6a2d1136d49a76",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/projectbless.test.js",
       "current_sha256": "531169fd5efc9451a615cca42976916ce5b803d33d7885b8823a7a6189a1fb68",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/prompt-cache-prefix.e2e.test.js",
-      "current_sha256": "e0c56943a820205b6c5f40d007851ce4fa3521fe05904655098aca19e07737f6",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/provider-recovery.e2e.test.js",
-      "current_sha256": "e88b1ad86343f66ee5d0a58967659bec6701c47e42b090ef5007d686afa31f7a",
       "reasons": [
         "brand"
       ]
@@ -19128,7 +18645,7 @@
     },
     {
       "path": "test/provider.codex-auth.test.js",
-      "current_sha256": "d1069773e567ed50e2cccac944753c4f27450385ecfd0fcc49592bbe793ec554",
+      "current_sha256": "005ed4ae83a0953015d80ab11c99b4da3d64fe644ad11acbd922bbbc33e3f840",
       "reasons": [
         "brand"
       ]
@@ -19142,14 +18659,7 @@
     },
     {
       "path": "test/provider.openai-compatible.test.js",
-      "current_sha256": "764949fc9e66a33292e29792bbd96f61784a6bb9ff7cb3390e48d312b3562beb",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/provider.registry.test.js",
-      "current_sha256": "987d49ea32a898b3ef1eeb69623d434a307f193a721e91f29837382fadedff0d",
+      "current_sha256": "3cfa209172027675f95b307016d65fd9ffaab9d4a3ed820b0460a9b3513ac0c1",
       "reasons": [
         "brand"
       ]
@@ -19162,22 +18672,8 @@
       ]
     },
     {
-      "path": "test/qa-installed-first-run.test.js",
-      "current_sha256": "2d34355ca20eec931c62341760809942500523a1af4dc646eb442154941f0841",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/qa-installed-link-transport.test.js",
       "current_sha256": "ba980c9b595b82eeadbf38b0b20d0112ef388790efe7255a2261e2c895bb1c89",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/qa-installed-smoke.test.js",
-      "current_sha256": "aa4e6e90abbf830ec03c9137790e1336da068b397169868c9bc108775eb36a6c",
       "reasons": [
         "brand"
       ]
@@ -19204,13 +18700,6 @@
       ]
     },
     {
-      "path": "test/questrefresh.e2e.test.js",
-      "current_sha256": "7525afb0f41db6d9e65de18f2b79cd952e261729a75a8037dc7b659bcc440fda",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/quitguard.test.js",
       "current_sha256": "1823ebd2aaab7f03ba4328602e080f5ac2f24d49b7dae5473318087d5bba8dcc",
       "reasons": [
@@ -19227,13 +18716,6 @@
     {
       "path": "test/reasoning-migration-0125.test.js",
       "current_sha256": "3fc1b2065e221ebcdb85cbfc08e77516d7a10050fc020f8d40059da97da5d82a",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/recipe-drift.http.test.js",
-      "current_sha256": "895129fe6364d53cd96a9d1577a7d7ed930f23d9354d858d1e5420a93b6b64a7",
       "reasons": [
         "brand"
       ]
@@ -19316,13 +18798,6 @@
       ]
     },
     {
-      "path": "test/remote.relay.e2e.test.js",
-      "current_sha256": "e5c0fd609d022d5c35aa3f0a02e806dfa14fdc56c2e466f6d8e4fe55ce5c2ab5",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/remote.relay.test.js",
       "current_sha256": "7a8d42c11682763b1cb867dbce8b95405d49bf3e7857bf5e175182b196a81a42",
       "reasons": [
@@ -19331,7 +18806,7 @@
     },
     {
       "path": "test/rename-migrate.test.js",
-      "current_sha256": "072f959ef06af71e65e88853c3a77e1f7cad88eb8b6cc96e0e9fbd69acf0eba7",
+      "current_sha256": "850f10ba5d5db008bdbc999f581b2185b41468c04c6dfc0bd241796fd358baa8",
       "reasons": [
         "brand"
       ]
@@ -19344,41 +18819,6 @@
       ]
     },
     {
-      "path": "test/resolve-task.e2e.test.js",
-      "current_sha256": "47646b0b24077a10f5bb44b32cadb7b0b4c0100108aca01d6d8218dda0961961",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/roster-envelope.http.test.js",
-      "current_sha256": "08715b766532b45171f1140683fd03cd68b3cdcdcb2c0b0c3a2a4a018829e737",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/roster-track.e2e.test.js",
-      "current_sha256": "2c0fd39d8527fca2f4d39795febda49afc4796aaef4e4526dbc50ceba453e467",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/route-honesty.e2e.test.js",
-      "current_sha256": "0bf8e8bcc5b485ca620bcd7008d8bacbf527237bba506211f6a6dbcebed8598f",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/routes-coverage.http.test.js",
-      "current_sha256": "5cbe6d471254e0f6981fc3f57a4c034ae1f6c7eff8a30b4cbcb4443fb4db7448",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/routine-keys.e2e.test.js",
       "current_sha256": "573aefbe4e237ef387345b5a9df1441ac708bc1c026770dd1b64553acd90e1e4",
       "reasons": [
@@ -19386,78 +18826,8 @@
       ]
     },
     {
-      "path": "test/routine-manage.e2e.test.js",
-      "current_sha256": "02861643310ab944e6b1d1b3d4bf4f8f1ef16493cbaa8dfac8558513dbe5f5c2",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/routine-tools.test.js",
       "current_sha256": "d14122cdc4c2bb1f4126fb651710451a72073bc622744ae6c08a070a4ac506dd",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/routing.chain-seam.e2e.test.js",
-      "current_sha256": "3696c75b61a0eed2322dab671e687115eb568f8b2268f0c5939393e744917eda",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/routing.linestats.e2e.test.js",
-      "current_sha256": "7a8cc0e25189a658688152d9cf88933262aeee62c4393f8d54442a58ab4401a7",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/routing.persist.e2e.test.js",
-      "current_sha256": "dd99f7ce1d86affb9d91c6896bb889ad595a635c56dda737dd0a050fdf64930f",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/routing.sample-stop.e2e.test.js",
-      "current_sha256": "3bbb3a6bfb97d78dcc01af86527929c494a09bdd3180fb2b52741494a6de57ff",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/routing.sample.e2e.test.js",
-      "current_sha256": "bacac85abdd2de840910f69bf6ad7d121de196d88d8ef5205624aa462dfbe9d1",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/routing.steptest.e2e.test.js",
-      "current_sha256": "a9a47ce5ef575471a9535075a1afb6d12c0e1d95b5c0aef60d6056faf40f83db",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/routing.triggers.e2e.test.js",
-      "current_sha256": "25fe8b85d94da096d49baca97edce92b50708396195b7a3266e821ed75b207c4",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/run-recovery-ui.test.js",
-      "current_sha256": "eed1bf3ca040df43a06ddce1a30102290756e38f5a1c7b82f7754d1480b34019",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/run-recovery.api.test.js",
-      "current_sha256": "6714aa4bbd311651d1d0793b0a7e621be5d4e18fbe2fa8c8f9e9e778d7b4e8ee",
       "reasons": [
         "brand"
       ]
@@ -19471,35 +18841,21 @@
     },
     {
       "path": "test/saveversion.test.js",
-      "current_sha256": "1b2502ed77d0db931eae07bdb14f4a293900483fa59233e1ce3ec6a5055542cd",
+      "current_sha256": "b14b33d49875a9555bef9cfc3543d8147e71aa383ba62aa93594b52c496e3c81",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/schema-stamp.test.js",
-      "current_sha256": "2fe698ac6aae6436648c48228553518664dbc94e0108a8e92d7388f61923556d",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/scout.e2e.test.js",
-      "current_sha256": "5d1b95f5aa53f675432d8cdd88227ea79f29156858b697d4054bad92063e2bba",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/scout.http.test.js",
-      "current_sha256": "75c02d9fdb25636fac0c2d8defa5b21c67168386bae5f1125c57d5e063d316aa",
+      "current_sha256": "e6e5cfbd9d4f6ba6b68f8ab7bc8fe0fcb8286e54204a8d4f7687304172cb4c68",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/servicekeys.http.test.js",
-      "current_sha256": "12d7a9ef417b754a83ed5581a37986414efaaa809e74208e22312b9d544b4472",
+      "current_sha256": "dee6522e7330668f202587e52b2eddf42782747cc7c27d3e3d473e2e98d3a7c6",
       "reasons": [
         "brand"
       ]
@@ -19513,7 +18869,7 @@
     },
     {
       "path": "test/settle-managed-copy.test.js",
-      "current_sha256": "452f9d95ddb3e2b87b31959eca775223e8533eb7226e0ef0312436dc095de2c6",
+      "current_sha256": "a0377097ddfe275461ebebcdf8cd4b7c2e7d2755e8797bb7eac12ce9a8347db0",
       "reasons": [
         "brand"
       ]
@@ -19548,21 +18904,7 @@
     },
     {
       "path": "test/sidecar.http.test.js",
-      "current_sha256": "033473852d0d15d532d299f1b98b84c41a5567915ab013257548ec3acd3f7b46",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/sidecar.security.test.js",
-      "current_sha256": "deca577eca598539ecb68d3e9457c7831209f6bda5bb3689235d8a6dff875442",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/skill-exchange.http.test.js",
-      "current_sha256": "ab8c45498dfc604d8bbd518ef62fda29dee40e15e1b40d3734b27ec8bdfb22c4",
+      "current_sha256": "5095f862f8f0c3115f814aeb8de2a7f62d0f96eca9db90f85492ab45170c7acb",
       "reasons": [
         "brand"
       ]
@@ -19604,28 +18946,14 @@
     },
     {
       "path": "test/skill-uploads-pull.test.js",
-      "current_sha256": "19eabd707b96d88cca9aac307ad9c2d4967cc74a722570c675fe61cb39534755",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/skills.gate.http.test.js",
-      "current_sha256": "445cc2ecb2ead56a81d3b9592ce6fd51872804f176abd7307798b0aed253fa7e",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/skills.gate.prompt.e2e.test.js",
-      "current_sha256": "ff6f3e455e8b32d7cf1429e46cc33fd37c6e5c552fb8bf1f5d530ccc3876970a",
+      "current_sha256": "189ef58533f9c738950f3767bd8277677abc406be5935d91f43e77d6ed9b15e5",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/slag-known-error-kinds.test.js",
-      "current_sha256": "e984eb6e0c2e2d7300e418878f3773f3062f282956a159f1959852975c20a9eb",
+      "current_sha256": "d2258c31a2422c9989a75fb52040473ae0182f6914d5acb8b6115d3ca353a667",
       "reasons": [
         "brand"
       ]
@@ -19653,21 +18981,21 @@
     },
     {
       "path": "test/starnet-door-names.test.js",
-      "current_sha256": "064fd1fa965c8aa7b0389eeffe4573f88407ca269330377238d9bb851bfeeac8",
+      "current_sha256": "2576d18bcf67c3b4f0d87725818984ecab8efc1f5300e3168e0e8ea99af3062f",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/station-builder.e2e.test.mjs",
-      "current_sha256": "ca1fab98be03d0e36cd887ee7fb95ae01dddf75a051415ad8b66e3d6517a6ee2",
+      "current_sha256": "0fce1267539c3b0b84df93a4b93f8ad5c9134796a52ae5d79009fbfcdebbb9a4",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/station-builder.test.js",
-      "current_sha256": "ee339dbf313d8834e9e7223bc2ec3480c6fbfee7a3d2eb70adc3b431835e3bca",
+      "current_sha256": "41a849a51e7c200c0be21d81216ad8f0213f3da792ac5f3bf266aa6e54cea34c",
       "reasons": [
         "brand"
       ]
@@ -19680,36 +19008,8 @@
       ]
     },
     {
-      "path": "test/station-control-gaps.e2e.test.mjs",
-      "current_sha256": "8cf9fb86abed956cb4fd12976fff90b72bdfedc1dd65612af10f78a5fa7bc75e",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/station-control.e2e.test.mjs",
-      "current_sha256": "828a63a6ca306a891f3443c32c3a273d7d001f99de8b1454360a0501ff717ac5",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/station-default-wire.test.js",
-      "current_sha256": "a462e1d5a872f25485ec96c40c051e9cec3862d40cb2378f92105c54f76e7f1a",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/station-layout.e2e.test.mjs",
-      "current_sha256": "e94dae61708ca1311d254a41e69cd523258207ff3d72625c0fd9133fc35ce2b7",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/station-show.e2e.test.mjs",
-      "current_sha256": "1cbe5da4f49f94441153cf68dc30649bafa34570c1a7cacff05fff1fa22e65d8",
+      "current_sha256": "abd144b129320bd546c49daa3d99a24aed6cf9ee882a0acd5a2bef3e4ca08dcb",
       "reasons": [
         "brand"
       ]
@@ -19731,27 +19031,6 @@
     {
       "path": "test/station-tooltip.test.js",
       "current_sha256": "2d44af3cc748008c13a6ef1e6699428a99e82977931d78933a5376d9b3db1915",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/subscription-stacking-oauth.e2e.test.js",
-      "current_sha256": "a26411491955368db8247a7fb810f973f2193a24b0eb1fa7f8a32bfca8cfae4b",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/subscription-stacking.e2e.test.js",
-      "current_sha256": "e8b302b0375cb199f19a4eb69afaf3926cb02da09228aac31777553f571143c9",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/summarize-failover.e2e.test.js",
-      "current_sha256": "dcc22e0b3b40d2a55d766a2dfdface70f987e218c53b5331bbf9db195698f489",
       "reasons": [
         "brand"
       ]
@@ -19806,13 +19085,6 @@
       ]
     },
     {
-      "path": "test/threads.e2e.test.js",
-      "current_sha256": "8381599334d5ae6de96cd5c1d36dbccb94d871cc82b9a0a72cb34064b76fefe4",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/tierlist.test.js",
       "current_sha256": "e6edbc4c83d408c3f9a937a4e8e008b8730171513f1117783d88a291116d8b67",
       "reasons": [
@@ -19828,7 +19100,7 @@
     },
     {
       "path": "test/unreachable-browser-mode.test.js",
-      "current_sha256": "56e66de1c1d8d6f235fe93680b768c9d3d836a38bd44b1b06e3a5db46f9d20b6",
+      "current_sha256": "ec03fc6181663fd96e41a5c486a34bede6c82729d270e428f80c6a409a4b8d6d",
       "reasons": [
         "brand"
       ]
@@ -19836,13 +19108,6 @@
     {
       "path": "test/untrusted-taint.test.js",
       "current_sha256": "0b7470c32618c3922220f4c593aa1f9318b4f0e1852ca58c7b7ce4aca9d2e9ce",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/update-preparation.http.test.js",
-      "current_sha256": "5bc0d5179d2680601574f65f493ab136c195c5a5119ce52d4bc7ed4e44b78116",
       "reasons": [
         "brand"
       ]
@@ -19876,13 +19141,6 @@
       ]
     },
     {
-      "path": "test/verdictpackets.http.test.js",
-      "current_sha256": "e6e8ef612c89486f158f054d26c9b074b6b027afeedfd9fce762f09a9e7a3655",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/voice-live-ui.test.js",
       "current_sha256": "9f76d8248c92056485710fc942a91d2c92230b94a931ed52912767e4f05ee982",
       "reasons": [
@@ -19892,13 +19150,6 @@
     {
       "path": "test/web-request.test.js",
       "current_sha256": "f88b9ad93f7032d87f96966ea8faa09331c568b1e6eb36fef15c243b48c05ee4",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/webhook-replay.e2e.test.js",
-      "current_sha256": "abf60a1b58317817b8905088caee48e5989dd2f4e4cd26371c95fef40ed50deb",
       "reasons": [
         "brand"
       ]
@@ -19918,29 +19169,8 @@
       ]
     },
     {
-      "path": "test/workshop-implement.e2e.test.js",
-      "current_sha256": "ed4d1a7bb8b3fd76f257ce440a2be03deb8735da7cdcbb39ce1f028857ce6a23",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/workshop-undo.e2e.test.js",
-      "current_sha256": "79da2b1a11822377530c55364538e1b7dc6bdd6db221393872c5263ab1de8465",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/workshop.e2e.test.js",
-      "current_sha256": "66ad2bfe076a80d55d1cd0079b7d850991abfc56fc57aca55bc282b922d612a8",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/workspace-lineage.http.test.js",
-      "current_sha256": "37f63610b513eef5fa4567d703055fbffb063a29d1d6460efbad1b2517660698",
+      "current_sha256": "8a50c5e9783b21aeefb25391e3bcda7afc994edb14178939b400bccd9cbbdb9c",
       "reasons": [
         "brand"
       ]
@@ -19954,14 +19184,14 @@
     },
     {
       "path": "test/workspace-recovery.test.js",
-      "current_sha256": "720dcd43d58e2a5c87d81c1308f1caa2268d410e4bc6a4047fa42edcfcac3ef7",
+      "current_sha256": "2afede55fd5fddb3b8faec1f6742b472d78a4b9c0a1363afd85c2a6bb8751b77",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/workspace-safety.test.js",
-      "current_sha256": "a1681fb6774df6af5f4f40b55f3d55ce5a869ecc52ea50eaf443b4be3437b28d",
+      "current_sha256": "f447bb1b360d042827aad9ea7651375349cd9de782ad9de808faa34d9749cd98",
       "reasons": [
         "brand"
       ]

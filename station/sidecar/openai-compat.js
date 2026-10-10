@@ -360,7 +360,7 @@ function makeOpenAiCompat(deps) {
         health: '/health'
       },
       streaming: true,
-      session_continuity_header: 'X-1Ultra-Session-Id',
+      session_continuity_header: 'X-StarNet-Session-Id',
       surface: 'autonomous',
       max_concurrent_runs: maxConcurrent(),
       // deliberate follow-ups NOT in this slice (see docs/OPENAI_COMPAT.md):
@@ -455,7 +455,7 @@ function makeOpenAiCompat(deps) {
     const response = chatCompletionObject({ id, model: modelField, created, content: acc.buf, finishReason, usage });
     response.starnet = runOutcome(acc.reason, !!acc.buf, acc.errMsg && redact(acc.errMsg));
     if (finishReason === 'error') response.error = { message: response.starnet.error || response.starnet.status, type: 'agent_error' };
-    return json(res, 200, response, { 'X-1Ultra-Session-Id': sessionId });
+    return json(res, 200, response, { 'X-StarNet-Session-Id': sessionId });
   }
 
   // Keyed streams share progress; their terminal frame waits for durable persistence.

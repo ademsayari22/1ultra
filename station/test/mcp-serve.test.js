@@ -4,7 +4,7 @@
    then spawns sidecar/mcp/serve.js as a child and speaks REAL newline-delimited JSON-RPC 2.0 over
    its stdio: initialize -> tools/list (all 11 tool names) -> tools/call conversations_list ->
    events_poll -> channels_list -> permissions_list_open -> messages_send (dev channel round-trip)
-   -> and finally a sidecar-DOWN proof (kill the sidecar; a tool returns a structured start-1Ultra
+   -> and finally a sidecar-DOWN proof (kill the sidecar; a tool returns a structured start-StarNet
    error while the server itself keeps listing tools).
 
    The bridge never touches store files: everything above is proxied over loopback HTTP to the
@@ -206,7 +206,7 @@ function parseToolResult(result) {
     A.eq((stillList.tools || []).length, 10, 'tools/list still works with the sidecar down (server is independent)');
     r = parseToolResult(await rpc.request('tools/call', { name: 'conversations_list', arguments: {} }));
     A.ok(r.isError === true, 'a data tool marks isError when the sidecar is unreachable');
-    A.ok(r.data.sidecarReachable === false && /1Ultra/i.test(r.data.error), 'the error tells the operator to start 1Ultra');
+    A.ok(r.data.sidecarReachable === false && /StarNet/i.test(r.data.error), 'the error tells the operator to start 1Ultra');
 
     // ⛔ STATION RESTART: THE SCRAPED TOKEN IS PER-LAUNCH AND GOES STALE. 1Ultra is a desktop app the
     // Commander closes and reopens; every launch mints a NEW api token. This bridge is spawned once by the MCP

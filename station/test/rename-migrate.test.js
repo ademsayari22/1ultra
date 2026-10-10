@@ -52,7 +52,7 @@ function memStorage(init) {
   A.eq(s.getItem('starnet.save'), 'A', 'value intact after re-run');
 }
 
-// ---- E. an already-1Ultra store (fresh install, no legacy keys) migrates nothing ----
+// ---- E. an already-StarNet store (fresh install, no legacy keys) migrates nothing ----
 {
   const s = memStorage({ 'starnet.save': 'A', 'starnet.byok.key': 'K' });
   A.eq(LM.run(s), 0, 'no legacy keys -> nothing to do');

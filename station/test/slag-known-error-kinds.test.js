@@ -2,7 +2,7 @@
 /* node test/slag-known-error-kinds.test.js — a failed run's post-mortem names the REAL door for every error kind the
    page classifies (audit B3, 2026-10-08).
 
-   slaglog.js KNOWN_ERROR_KINDS predated the 10-07 1Ultra-credit kinds, so a refused 1Ultra link (managed_credit_link —
+   slaglog.js KNOWN_ERROR_KINDS predated the 10-07 StarNet-credit kinds, so a refused 1Ultra link (managed_credit_link —
    not retryable, its door is RELINK) or an unanswered balance check (managed_credit_unavailable — try again) became a
    maintenance quest saying "send the request again… copy the diagnostics and report it". And a stalled BUILD's beat
    (workqueststore.js stallBeat) passed no error at all, so even an empty wallet read as a 1Ultra bug to report.

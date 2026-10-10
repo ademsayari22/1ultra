@@ -50,7 +50,7 @@ function boot(port, env, attemptsLeft) {
   try {
     const token = await bootToken(B, B);
     A.ok(token.length >= 32, 'got a session API token');
-    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
     /* `lineId` = the line the browser's work ENTERED on (work belongs to a line, 2026-08-07). Every ask
        below that expects a hop carries it, because only work fed in through a line's own trigger may run
        that line; the no-lineId case gets its own block (§6). */
