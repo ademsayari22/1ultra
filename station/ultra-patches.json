@@ -69,7 +69,7 @@
     "id": "no-codex-token-load",
     "file": "sidecar/index.js",
     "find": "function loadCodexTokens() {\n",
-    "replace": "function loadCodexTokens() {\n  return null; // 1Ultra: follows the lead.codex switch.\n"
+    "replace": "function loadCodexTokens() {\n  if (!ultraHost.switches.isOn('lead.codex')) return null; // 1Ultra: Codex tokens load only while the lead.codex switch is on.\n"
   },
   {
     "id": "no-discovery",
@@ -244,5 +244,17 @@
     "file": "sidecar/mcp/client.js",
     "find": "const clientInfo = deps.clientInfo || { name: 'starnet-harness', version: '0' };",
     "replace": "const clientInfo = deps.clientInfo || { name: '1ultra-station', version: '0' };"
+  },
+  {
+    "id": "codex-model-sol",
+    "file": "sidecar/providers/codex.js",
+    "find": "  const STATIC_MODELS = [\n",
+    "replace": "  const STATIC_MODELS = [\n    { id: 'gpt-6.1-sol',         displayName: 'GPT-6.1 Sol',         context_length: 272000, max_completion_tokens: 128000, supportsTools: true, reasoningEfforts: CODEX_EFFORT_LIST.slice(), defaultReasoningLevel: 'xhigh' },\n"
+  },
+  {
+    "id": "modeldock-codex-sol",
+    "file": "frontend/app/modeldock.js",
+    "find": "const CODEX_MODELS = ['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.3-codex-spark'];",
+    "replace": "const CODEX_MODELS = ['gpt-6.1-sol', 'gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.3-codex-spark'];"
   }
 ]

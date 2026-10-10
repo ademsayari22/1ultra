@@ -4326,7 +4326,7 @@ const channelStore = makeChannelStore({ fs, pathMod: path, root: CHANNELS_DIR, c
 //      are NEVER placed on the event bus. Shape: { access_token, refresh_token, last_refresh, auth_mode }. ----
 const CODEX_TOKENS_FILE = path.join(WORKSPACES, 'codex', 'tokens.json');
 function loadCodexTokens() {
-  return null; // 1Ultra: follows the lead.codex switch.
+  if (!ultraHost.switches.isOn('lead.codex')) return null; // 1Ultra: Codex tokens load only while the lead.codex switch is on.
   try {
     return codexTokenStore.loadCodexTokensWithMigration({
       currentFile: CODEX_TOKENS_FILE,

@@ -27,6 +27,10 @@ def main():
                 target = root / relative; target.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(source, target)
         (root / 'runs').mkdir()
         runtime = root / 'runtime'; runtime.mkdir()
+        import base64
+        b64 = lambda d: base64.urlsafe_b64encode(json.dumps(d).encode()).decode().rstrip('=')
+        (runtime / 'codex').mkdir()
+        (runtime / 'codex' / 'tokens.json').write_text(json.dumps({'access_token': b64({'alg': 'none'}) + '.' + b64({'exp': 4102444800}) + '.fixture', 'refresh_token': 'fixture-refresh', 'last_refresh': '2026-10-10T00:00:00Z', 'auth_mode': 'chatgpt'}))
         (runtime / 'ultra-control.json').write_text('{"halted": true}\n')
         (runtime / 'ultra-state.json').write_text(json.dumps({'version': 1, 'world': None, 'workstreams': None, 'companySessions': {}, 'crew': {}, 'memory': [], 'tasks': [], 'workflows': [], 'workflowRuns': {}, 'focus': None, 'settings': {'theme': 'dark', 'text': 16, 'reducedMotion': False}, 'history': [{'at': 'fixture', 'fields': ['settings']}]}) + '\n')
         log = open(root / 'station.log', 'w+')
@@ -85,7 +89,7 @@ def main():
             sw = request('/api/ultra/switches')
             values = {row['id']: row['value'] for row in sw['switches']}
             assert values['lead.codex'] is False and values['concurrency'] == 2 and values['crew.escalate_to_lead'] is True
-            request('/api/ultra/switches', {'id': 'tools.web', 'value': True}, sw['version'], expected=409)
+            request('/api/ultra/switches', {'id': 'crew.freellmapi', 'value': True}, sw['version'], expected=409)
             request('/api/ultra/switches', {'id': 'concurrency', 'value': 3}, 'stale', expected=409)
             sw = request('/api/ultra/switches', {'id': 'concurrency', 'value': 3}, sw['version'])
             assert {r['id']: r['value'] for r in sw['switches']}['concurrency'] == 3
@@ -111,6 +115,20 @@ def main():
             assert blessed.get('ok') is not True, blessed
             assert str(root) not in json.dumps(request('/api/projects')), 'the 1Ultra root must never become a project'
             checks.append('the 1Ultra project folder cannot be blessed as an agent project')
+            sw = request('/api/ultra/switches'); request('/api/ultra/switches', {'id': 'lead.codex', 'value': True}, sw['version'])
+            proc.terminate(); proc.wait(timeout=10); boot()
+            status = request('/api/auth/codex/status')
+            assert status.get('connected') is True, status
+            request('/api/ultra/control', {'action': 'stop'})
+            req = urllib.request.Request(base + '/api/run', data=json.dumps({'provider': 'codex', 'model': 'gpt-6.1-sol', 'reasoningEffort': 'xhigh', 'messages': [{'role': 'user', 'content': 'fixture'}], 'agentId': 'agent'}).encode(),
+                                         headers={'X-Starnet-Token': token, 'Origin': base, 'Content-Type': 'application/json'})
+            try:
+                with urllib.request.urlopen(req, timeout=20) as response: body = response.read().decode()
+            except urllib.error.HTTPError as error: body = error.read().decode()
+            assert 'Emergency stop' in body, body[:300]
+            request('/api/halt/resume', {'confirm': True})
+            sw = request('/api/ultra/switches'); request('/api/ultra/switches', {'id': 'lead.codex', 'value': False}, sw['version'])
+            checks.append('Codex lead: tokens load while lead.codex is on; the emergency stop refuses the run before any model call')
             assert len(workspace['leads']) == len(json.loads((root / 'data/leads.json').read_text()))
             checks.append('Authenticated workspace and deterministic ranking')
             lead = workspace['hunt']['leads'][0]

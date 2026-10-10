@@ -21,7 +21,7 @@
     return '<input type="number" data-switch="' + esc(s.id) + '" value="' + esc(String(s.value)) + '" min="' + esc(String(s.min)) + '" max="' + esc(String(s.max)) + '" step="' + (s.type === 'int' ? '1' : '0.01') + '"' + dis + '>';
   }
   function row(s) {
-    const note = s.ready ? (s.needs ? 'Needs: ' + s.needs : '') : 'Not available yet' + (s.needs ? ' · needs: ' + s.needs : '');
+    const note = s.ready ? (s.needs ? (s.id === 'lead.codex' ? '' : 'Needs: ') + s.needs : '') : 'Not available yet' + (s.needs ? ' · needs: ' + s.needs : '');
     return '<label class="ultra-sw-row"><span class="ultra-sw-label"><b>' + esc(s.label) + '</b><small>' + esc(s.id) + (note ? ' · ' + esc(note) : '') + '</small></span>' + control(s) + '</label>';
   }
   async function build(body) {

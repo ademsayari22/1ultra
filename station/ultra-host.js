@@ -24,6 +24,9 @@ const switches=require('./ultra-switches.js').makeSwitches({fs,path,file:path.jo
 // First boot only: give Starnet's interface a lead so it resumes onto the station. Never overwrites existing files.
 if(!fs.existsSync(path.join(runtime,'agent.save.json')))for(const [name,value] of Object.entries(require('./ultra-seed.js').files(Date.now())))
   if(!fs.existsSync(path.join(runtime,name)))durable(path.join(runtime,name),value);
+// One-time default for a seeded lead the interface has never saved: ULTRA thinks at xhigh. Never overrides a choice Adem made.
+try{const saveFile=path.join(runtime,'agent.save.json'),env=JSON.parse(fs.readFileSync(saveFile,'utf8')),doc=env&&env.doc;
+  if(doc&&doc.prov==='codex'&&doc.agent&&doc.agent.model==='gpt-6.1-sol'&&!doc.reasoningEffort&&doc.updatedAt===doc.agent.createdAt){doc.reasoningEffort='xhigh';durable(saveFile,env);}}catch(_){}
 const briefs=makeTaskBriefStore({fs,path,workspaces:runtime});
 const gate=policy.makeGate(()=>switches.value('concurrency')),jobs=new Map();let rpc=null,pending=new Map(),seq=0,
   halted=fs.existsSync(controlFile)?JSON.parse(fs.readFileSync(controlFile,'utf8')).halted===true:false;

@@ -6,6 +6,7 @@ test('seed resumes straight into the station on the codex provider without inven
   const save=files['agent.save.json'];
   assert.equal(save.agentId,'agent');assert.equal(save.doc.schema,'starnet.save');assert.equal(save.doc.version,5);
   assert.equal(save.doc.prov,'codex');assert.equal(save.doc.agent.name,'ULTRA');assert.equal(save.doc.agent.model,'gpt-6.1-sol');
+  assert.equal(save.doc.reasoningEffort,'xhigh');assert.equal(files['agent.roster.json'].agents[0].reasoningEffort,'xhigh');
   assert.deepEqual(save.doc.agents,[]);assert.equal(save.doc.agent.stats.xp,0);
   assert.equal(files['agent.roster.json'].agents[0].provider,'codex');
   assert.doesNotMatch(JSON.stringify(files),/StarNet|STARNET/);

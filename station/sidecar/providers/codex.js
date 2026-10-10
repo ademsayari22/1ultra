@@ -47,6 +47,7 @@
   // "Fast mode" is just the 'low' level surfaced as a variant — there is no separate fast slug.
   const CODEX_EFFORT_LIST = ['low', 'medium', 'high', 'xhigh'];
   const STATIC_MODELS = [
+    { id: 'gpt-6.1-sol',         displayName: 'GPT-6.1 Sol',         context_length: 272000, max_completion_tokens: 128000, supportsTools: true, reasoningEfforts: CODEX_EFFORT_LIST.slice(), defaultReasoningLevel: 'xhigh' },
     { id: 'gpt-5.5',             displayName: 'GPT-5.5',             context_length: 272000, max_completion_tokens: 128000, supportsTools: true, reasoningEfforts: CODEX_EFFORT_LIST.slice(), defaultReasoningLevel: 'medium' },
     { id: 'gpt-5.4',             displayName: 'GPT-5.4',             context_length: 272000, max_completion_tokens: 128000, supportsTools: true, reasoningEfforts: CODEX_EFFORT_LIST.slice(), defaultReasoningLevel: 'medium' },
     { id: 'gpt-5.4-mini',        displayName: 'GPT-5.4 mini',        context_length: 272000, max_completion_tokens: 128000, supportsTools: true, reasoningEfforts: CODEX_EFFORT_LIST.slice(), defaultReasoningLevel: 'medium' },

@@ -6,7 +6,7 @@ const ModelDock = (() => {
   // Delegates to the one complete implementation (U.esc escapes & < > " ' — quotes included, so the id="…"
   // / title="…" attribute contexts this dock builds are injection-safe); keep the null-guard the local had.
   const esc = s => U.esc(s == null ? '' : s);
-  const CODEX_MODELS = ['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.3-codex-spark'];
+  const CODEX_MODELS = ['gpt-6.1-sol', 'gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.3-codex-spark'];
   // Fallback seed only (used when the live /api/models fetch fails) — real, current model ids only.
   // A missing fallback id is honest; an invented one is a lie. claude-3-5-haiku retired 2026-02-19,
   // so it's dropped here; opus-4-8 / sonnet-5 / haiku-4-5 are the current confirmed-real set.

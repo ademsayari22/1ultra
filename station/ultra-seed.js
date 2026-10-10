@@ -11,9 +11,9 @@ function files(now){
     docs:{identity:IDENTITY,purpose:PURPOSE,manual:MANUAL,context:CONTEXT},stats:stats()};
   return {
     'agent.save.json':{version:1,agentId:'agent',updatedAt:now,savedAt:now,doc:{schema:'starnet.save',version:5,updatedAt:now,agent,agents:[],
-      usage:{tokens:0,cost:0,calls:0},prov:'codex',station:null,stationStats:stats(),profile:{v:1,tags:{},seed:null,enabled:true,total:0},
+      usage:{tokens:0,cost:0,calls:0},prov:'codex',reasoningEffort:'xhigh',station:null,stationStats:stats(),profile:{v:1,tags:{},seed:null,enabled:true,total:0},
       dossier:{v:1,dims:{identity:[],stack:[],goals:[],style:[],standing_orders:[]},seededFrom:{},updatedAt:0},workstreams:[],activeId:null,generalId:null}},
-    'agent.roster.json':{version:1,agents:[{agentId:'agent',name:'ULTRA',system:IDENTITY,model:'gpt-6.1-sol',provider:'codex',role:'lead orchestrator'}]},
+    'agent.roster.json':{version:1,agents:[{agentId:'agent',name:'ULTRA',system:IDENTITY,model:'gpt-6.1-sol',provider:'codex',reasoningEffort:'xhigh',role:'lead orchestrator'}]},
     '_commander.dossier.json':{block:'The Commander is Adem, in Sousse, Tunisia. 1Ultra finds Tunisian B2B leads and prepares truthful outreach for small, bounded data pilots. Agents prepare drafts; Adem sends messages and records outcomes himself. Keep claims sourced and unknowns unknown.'},
   };
 }

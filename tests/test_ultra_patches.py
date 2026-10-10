@@ -43,6 +43,12 @@ class PatchAnchorsTest(unittest.TestCase):
             with self.subTest(fragment=fragment):
                 self.assertTrue(fragment in text, f'missing halt/resume integration: {fragment}')
 
+    def test_codex_tokens_load_only_while_lead_switch_is_on(self):
+        text = (ROOT / 'station/sidecar/index.js').read_text()
+        self.assertIn("function loadCodexTokens() {\n  if (!ultraHost.switches.isOn('lead.codex')) return null;", text)
+        self.assertIn("{ id: 'gpt-6.1-sol'", (ROOT / 'station/sidecar/providers/codex.js').read_text())
+        self.assertIn("'gpt-6.1-sol'", (ROOT / 'station/frontend/app/modeldock.js').read_text())
+
 
 if __name__ == '__main__':
     unittest.main()
