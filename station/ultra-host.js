@@ -241,6 +241,7 @@ function onStationHalt(){
   catch(e){throw new Error('Emergency stop is on, but its state was not saved: '+((e&&e.message)||e));}
 }
 function onStationResume(){durable(controlFile,{halted:false});halted=false;}
+function isHalted(){return halted;}
 function beforeRun(o){const r=policy.admitRun({halted});if(!r.ok)throw Object.assign(new Error(r.error),{code:'ULTRA_EMERGENCY_STOP'});}
 function assertProviderAllowed(opts){const r=policy.providerAllowed(opts&&opts.provider,switches);if(!r.ok)throw Object.assign(new Error(r.error),{code:'ULTRA_PROVIDER_OFF'});}
 let routeTable=[];
@@ -248,5 +249,5 @@ function registerRoutes(routes){routeTable=routes;}
 const preGate=(method,url)=>policy.preGate(method,url,switches);
 const routeGate=r=>policy.routeGate(r,switches);
 process.on('exit',()=>{if(rpc)rpc.kill('SIGTERM');for(const job of jobs.values())terminateJob(job);});
-module.exports={root,runtime,policy,handle,classic,campaign,switches,preGate,routeGate,registerRoutes,beforeRun,assertProviderAllowed,onStationHalt,onStationResume,registerStationHalt};
+module.exports={root,runtime,policy,handle,classic,campaign,switches,preGate,routeGate,registerRoutes,beforeRun,assertProviderAllowed,onStationHalt,onStationResume,registerStationHalt,isHalted};
 policy.install(runtime);

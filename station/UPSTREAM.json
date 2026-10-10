@@ -16649,10 +16649,10 @@
     },
     {
       "path": "sidecar/index.js",
-      "current_sha256": "2ddb03e87a20b86d17e069d5004188d6dcce74e4501f0390ed237207975877c2",
+      "current_sha256": "a6bbc35414db65c0934278fe75f3bd92731c7f4883dac977d818a67f79b90099",
       "reasons": [
         "brand",
-        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty"
+        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty"
       ]
     },
     {

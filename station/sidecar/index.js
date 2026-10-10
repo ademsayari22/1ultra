@@ -23083,7 +23083,8 @@ function haltStatus() {
     cron: { halted: !!cronHalted },
     nightshift: { halted: nightshift.isHalted(nightshiftState) },
     loops: { halted: !!loopsHalted },
-    overseer: { halted: overseer.snapshot().paused, error: overseer.snapshot().error || '' }
+    overseer: { halted: overseer.snapshot().paused, error: overseer.snapshot().error || '' },
+    ultra: { halted: ultraHost.isHalted() }
   };
   return { halted: Object.values(subsystems).some(s => s.halted), subsystems };
 }
@@ -23118,9 +23119,11 @@ async function handleHaltResume(req, res) {
   attempt('plugins', () => { pluginRuntime.setJobsPaused(false); reloadExtensions().catch((e) => failNote('plugins.resume', e)); });   // E-STOP paused their jobs
   const state = haltStatus();
   const ok = !state.halted && Object.keys(errors).length === 0;
-  if (ok) { try { ultraHost.onStationResume(); } catch (e) { errors.ultra = String((e && e.message) || e); } }
-  const ultraOk = ok && !errors.ultra;
-  haltJson(res, ultraOk ? 200 : 503, { ok: ultraOk, ...state, errors });
+  const ultraReady = Object.keys(errors).length === 0 && !Object.entries(state.subsystems).some(([k, s]) => k !== 'ultra' && s.halted);
+  if (ultraReady) { try { ultraHost.onStationResume(); } catch (e) { errors.ultra = String((e && e.message) || e); } }
+  const ultraState = haltStatus();
+  const ultraOk = Object.keys(errors).length === 0 && !ultraState.halted;
+  haltJson(res, ultraOk ? 200 : 503, { ok: ultraOk, ...ultraState, errors });
 }
 
 // Unlike ordinary beat accounting, a stop/resume receipt owes a durable read-back.

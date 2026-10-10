@@ -21,7 +21,13 @@
     "id": "station-resume-hook",
     "file": "sidecar/index.js",
     "find": "  haltJson(res, ok ? 200 : 503, { ok, ...state, errors });\n",
-    "replace": "  if (ok) { try { ultraHost.onStationResume(); } catch (e) { errors.ultra = String((e && e.message) || e); } }\n  const ultraOk = ok && !errors.ultra;\n  haltJson(res, ultraOk ? 200 : 503, { ok: ultraOk, ...state, errors });\n"
+    "replace": "  const ultraReady = Object.keys(errors).length === 0 && !Object.entries(state.subsystems).some(([k, s]) => k !== 'ultra' && s.halted);\n  if (ultraReady) { try { ultraHost.onStationResume(); } catch (e) { errors.ultra = String((e && e.message) || e); } }\n  const ultraState = haltStatus();\n  const ultraOk = Object.keys(errors).length === 0 && !ultraState.halted;\n  haltJson(res, ultraOk ? 200 : 503, { ok: ultraOk, ...ultraState, errors });\n"
+  },
+  {
+    "id": "halt-status-ultra",
+    "file": "sidecar/index.js",
+    "find": "    overseer: { halted: overseer.snapshot().paused, error: overseer.snapshot().error || '' }\n  };\n  return { halted: Object.values(subsystems).some(s => s.halted), subsystems };\n",
+    "replace": "    overseer: { halted: overseer.snapshot().paused, error: overseer.snapshot().error || '' },\n    ultra: { halted: ultraHost.isHalted() }\n  };\n  return { halted: Object.values(subsystems).some(s => s.halted), subsystems };\n"
   },
   {
     "id": "model-gate",

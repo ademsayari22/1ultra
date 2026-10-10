@@ -37,6 +37,12 @@ class PatchAnchorsTest(unittest.TestCase):
         for rel, expected in patched_upstream().items():
             self.assertEqual((ROOT / 'station' / rel).read_text(), expected, f'station/{rel} differs from upstream + patches; rerun update_starnet.py')
 
+    def test_halt_status_and_resume_include_ultra(self):
+        text = (ROOT / 'station/sidecar/index.js').read_text()
+        for fragment in ["ultra: { halted: ultraHost.isHalted() }", "const ultraState = haltStatus();", "k !== 'ultra'"]:
+            with self.subTest(fragment=fragment):
+                self.assertTrue(fragment in text, f'missing halt/resume integration: {fragment}')
+
 
 if __name__ == '__main__':
     unittest.main()

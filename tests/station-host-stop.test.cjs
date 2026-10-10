@@ -40,6 +40,7 @@ test('persistence failures keep emergency stop active and cannot skip station ca
         result.afterHaltAdmission = failure(() => host.beforeRun({}));
         result.resumeError = failure(() => host.onStationResume());
         result.afterFailedResumeAdmission = failure(() => host.beforeRun({}));
+        result.afterFailedResumeHalted = host.isHalted?.();
         const body = JSON.stringify({ action: 'stop' });
         const req = Readable.from([Buffer.from(body)]);
         Object.assign(req, {
@@ -59,6 +60,7 @@ test('persistence failures keep emergency stop active and cannot skip station ca
       }
       result.recoveredResumeError = failure(() => host.onStationResume());
       result.recoveredAdmission = failure(() => host.beforeRun({}));
+      result.recoveredHalted = host.isHalted?.();
       result.savedControl = JSON.parse(fs.readFileSync(path.join(runtime, 'ultra-control.json'), 'utf8'));
       process.stdout.write(JSON.stringify(result));
     })().catch(e => { process.stderr.write(e.stack + '\n'); process.exitCode = 1; });
@@ -83,6 +85,7 @@ test('persistence failures keep emergency stop active and cannot skip station ca
     assert.equal(result.afterHaltAdmission?.code, 'ULTRA_EMERGENCY_STOP');
     assert.ok(result.resumeError, 'a failed resume write must throw');
     assert.equal(result.afterFailedResumeAdmission?.code, 'ULTRA_EMERGENCY_STOP');
+    assert.equal(result.afterFailedResumeHalted, true);
     assert.equal(result.stationHalts, 1, 'persistence failure must not skip Starnet cancellation');
     assert.equal(result.stopStatus, 500);
     assert.equal(result.stopResponse.halted, true);
@@ -91,6 +94,7 @@ test('persistence failures keep emergency stop active and cannot skip station ca
     assert.equal(result.stopResponse.problems[1], 'Starnet halt failed: fixture station halt failure');
     assert.equal(result.recoveredResumeError, null);
     assert.equal(result.recoveredAdmission, null);
+    assert.equal(result.recoveredHalted, false);
     assert.deepEqual(result.savedControl, { halted: false });
   } finally {
     fs.chmodSync(runtime, 0o700);
