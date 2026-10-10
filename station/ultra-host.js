@@ -19,8 +19,10 @@ const realRuntime=fs.realpathSync(runtime);
 if(realRuntime!==runtime)throw new Error('Runtime symlinks are refused.');
 const stateFile=path.join(runtime,'ultra-state.json');
 const controlFile=path.join(runtime,'ultra-control.json');
+const switches=require('./ultra-switches.js').makeSwitches({fs,path,file:path.join(runtime,'ultra-switches.json'),
+  providerIds:registry.listProviderProfiles().map(p=>p.id).filter(id=>!['codex','starnet'].includes(id))});
 const briefs=makeTaskBriefStore({fs,path,workspaces:runtime});
-const gate=policy.makeGate(),jobs=new Map();let rpc=null,pending=new Map(),seq=0,
+const gate=policy.makeGate(()=>switches.value('concurrency')),jobs=new Map();let rpc=null,pending=new Map(),seq=0,
   halted=fs.existsSync(controlFile)?JSON.parse(fs.readFileSync(controlFile,'utf8')).halted===true:false;
 function child(once=false){return spawn('python3',[path.join(__dirname,'..','scripts','campaign_rpc.py'),'--root',root,...(once?['--once']:[])],
   {cwd:root,stdio:['pipe','pipe','pipe'],env:{PATH:process.env.PATH,LANG:'C.UTF-8',PYTHONIOENCODING:'utf-8',PYTHONDONTWRITEBYTECODE:'1'}});}
@@ -132,6 +134,13 @@ async function handle(req,res){
       const state=readState();Object.assign(state,body);state.history.push({at:new Date().toISOString(),fields:Object.keys(body)});
       state.history=state.history.slice(-200);writeState(state);return json(res,200,{version:version()});
     }
+    if(p==='/api/ultra/switches'){
+      if(req.method==='GET')return json(res,200,{switches:switches.list(),version:switches.version()});
+      if(req.method!=='POST')return json(res,405,{error:'Owner action requires POST.'});
+      if(String(req.headers['if-match']||'')!==switches.version())return json(res,409,{error:'Switches changed. Reload before saving.'});
+      try{switches.set(body.id,body.value);}catch(e){return json(res,e.code==='not_ready'?409:400,{error:e.message});}
+      return json(res,200,{switches:switches.list(),version:switches.version()});
+    }
     if(p==='/api/ultra/readiness'&&req.method==='GET')return json(res,200,{
       providers:registry.listProviderProfiles().map(p=>({...p,connected:false,modelInvoked:false,status:'disabled by campaign policy'})),
       connectors:connectorCatalog.list().map(c=>({id:c.id,name:c.name,category:c.category,authType:c.authType,connected:false})),
@@ -216,5 +225,5 @@ function campaign(req,res,token){
   res.end(data);
 }
 process.on('exit',()=>{if(rpc)rpc.kill('SIGTERM');for(const job of jobs.values())terminateJob(job);});
-module.exports={root,runtime,policy,handle,classic,campaign};
+module.exports={root,runtime,policy,handle,classic,campaign,switches};
 policy.install(runtime);

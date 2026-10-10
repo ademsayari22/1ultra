@@ -74,6 +74,15 @@ def main():
             for escape in ['/campaign/../sidecar/index.js', '/campaign/%2e%2e/ultra-host.js', '/campaign/..%2fultra-host.js']:
                 request(escape, authenticated=False, expected=404)
             checks.append('campaign page served at /campaign/ and path-jailed')
+            sw = request('/api/ultra/switches')
+            values = {row['id']: row['value'] for row in sw['switches']}
+            assert values['lead.codex'] is False and values['concurrency'] == 2 and values['crew.escalate_to_lead'] is True
+            request('/api/ultra/switches', {'id': 'tools.web', 'value': True}, sw['version'], expected=409)
+            request('/api/ultra/switches', {'id': 'concurrency', 'value': 3}, 'stale', expected=409)
+            sw = request('/api/ultra/switches', {'id': 'concurrency', 'value': 3}, sw['version'])
+            assert {r['id']: r['value'] for r in sw['switches']}['concurrency'] == 3
+            request('/api/ultra/switches', {'id': 'concurrency', 'value': 2}, sw['version'])
+            checks.append('owner switches: defaults, readiness refusal, stale refusal, change')
             assert len(workspace['leads']) == len(json.loads((root / 'data/leads.json').read_text()))
             checks.append('Authenticated workspace and deterministic ranking')
             lead = workspace['hunt']['leads'][0]

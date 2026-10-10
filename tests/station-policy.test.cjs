@@ -12,7 +12,7 @@ test('all upstream external/model routes fail closed including restored schedule
 test('script job limits reject duplicate desks and the third worker', () => {
   const gate=Policy.makeGate(); gate.enter('research');
   assert.throws(()=>gate.enter('research'),/already/); gate.enter('sales');
-  assert.throws(()=>gate.enter('qa'),/two/); gate.leave('research');gate.enter('qa');
+  assert.throws(()=>gate.enter('qa'),/Only 2 preparation workers/); gate.leave('research');gate.enter('qa');
 });
 test('runtime paths cannot overlap business records', () => {
   assert.equal(Policy.runtimeAllowed('/home/adem/1ultra','/home/adem/1ultra/data'),false);

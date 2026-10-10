@@ -6,8 +6,8 @@ function routeAllowed(method, route) {
   if(p==='/health')return method==='GET';
   return method==='GET' && !p.startsWith('/api/') && !p.startsWith('/v1') && !p.startsWith('/workshop-run/');
 }
-function makeGate(){const desks=new Set();return {
-  enter(desk){if(desks.has(desk))throw new Error('This desk already has an active job.');if(desks.size>=2)throw new Error('Only two preparation workers may run.');desks.add(desk);},
+function makeGate(limit=()=>2){const desks=new Set();return {
+  enter(desk){if(desks.has(desk))throw new Error('This desk already has an active job.');const max=limit();if(desks.size>=max)throw new Error('Only '+max+' preparation workers may run.');desks.add(desk);},
   leave(desk){desks.delete(desk);}, active(){return [...desks];}
 };}
 function runtimeAllowed(root,runtime){
