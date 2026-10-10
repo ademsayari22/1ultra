@@ -214,7 +214,10 @@ function gateFetch(fetchFn, check, stopSignal) {
     const stop = typeof stopSignal === 'function' ? stopSignal() : null;
     if (stop) {
       const own = init && init.signal;
-      init = Object.assign({}, init, { signal: own && typeof AbortSignal.any === 'function' ? AbortSignal.any([own, stop]) : (own || stop) });
+      // Never drop the stop: without AbortSignal.any (Node.js older than 20.3) the request is refused instead.
+      if (own && typeof AbortSignal.any !== 'function')
+        return Promise.reject(Object.assign(new Error('1Ultra needs Node.js 20.3 or newer to stop model requests safely.'), { code: 'ULTRA_NODE_TOO_OLD' }));
+      init = Object.assign({}, init, { signal: own ? AbortSignal.any([own, stop]) : stop });
     }
     return (fetchFn || globalThis.fetch).call(this, input, init);
   };

@@ -4,7 +4,7 @@ The merged app runs the pinned Starnet Node host with a private Python campaign 
 
 ## Start
 
-Requires Python 3.10+ and Node.js 20+. Install pinned dependencies once with `cd station && npm ci --ignore-scripts --no-audit --no-fund`, then run `python3 scripts/station.py` and open http://127.0.0.1:8541.
+Requires Python 3.10+ and Node.js 20.3+. Install pinned dependencies once with `cd station && npm ci --ignore-scripts --no-audit --no-fund`, then run `python3 scripts/station.py` and open http://127.0.0.1:8541.
 
 - `/` is the Starnet station (1Ultra build). **WORK → CAMPAIGN** opens the Tunisia campaign; **SYSTEM → SWITCHES** shows what agents may use.
 - `/campaign/` is the campaign page on its own. `/classic/` is the original Python interface. For a separate standard-library fallback, run `python3 scripts/station.py --classic --port 8542`.

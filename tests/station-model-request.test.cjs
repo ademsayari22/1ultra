@@ -50,6 +50,37 @@ test('a gated fetch checks before every request and ties each request to the sta
   assert.equal(seen.length, 2, 'a refused request never reaches fetch');
 });
 
+test('without AbortSignal.any a gated request fails closed instead of dropping the stop', async () => {
+  const saved = AbortSignal.any; let called = 0;
+  const gated = Policy.gateFetch(async () => { called++; return { ok: true }; }, () => {}, () => new AbortController().signal);
+  try {
+    AbortSignal.any = undefined;
+    await assert.rejects(gated('https://x.test/', { signal: new AbortController().signal }), { code: 'ULTRA_NODE_TOO_OLD' });
+    assert.equal(called, 0);
+  } finally { AbortSignal.any = saved; }
+});
+
+test('the station refuses to start on a Node.js without AbortSignal.any', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ultra-node-root-'));
+  const runtime = fs.mkdtempSync(path.join(os.tmpdir(), 'ultra-node-runtime-'));
+  const hostPath = path.resolve(__dirname, '../station/ultra-host.js');
+  try {
+    const stderrPath = path.join(root, 'stderr.txt'), stderr = fs.openSync(stderrPath, 'w');
+    let child;
+    try {
+      child = spawnSync(process.execPath, ['-e', 'AbortSignal.any = undefined; require(process.argv[1]);', hostPath], {
+        env: { ...process.env, ULTRA_ROOT: root, ULTRA_RUNTIME: runtime }, stdio: ['ignore', 'ignore', stderr], timeout: 15000
+      });
+    } finally { fs.closeSync(stderr); }
+    assert.ifError(child.error);
+    assert.notEqual(child.status, 0);
+    assert.match(fs.readFileSync(stderrPath, 'utf8'), /Node\.js 20\.3 or newer/);
+  } finally {
+    fs.rmSync(runtime, { recursive: true, force: true });
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("1Ultra's own refusals are never retried or handed to a fallback provider", () => {
   const { classifyApiError } = require('../station/sidecar/providers/errorClass.js');
   for (const code of ['ULTRA_EMERGENCY_STOP', 'ULTRA_PROVIDER_OFF', 'ULTRA_OUTBOUND_BLOCKED']) {

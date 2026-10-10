@@ -3,6 +3,7 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
 const {spawn}=require('node:child_process'); // capture only for fixed private Python executor
 const readline=require('node:readline');
 const policy=require('./ultra-policy.js');
+if(typeof AbortSignal.any!=='function')throw new Error('1Ultra needs Node.js 20.3 or newer (AbortSignal.any), so the emergency stop can cancel model requests in flight.');
 const workflows=require('./frontend/campaign/ultra-workflows.js');
 const {writeFileDurable}=require('./sidecar/durable-write.js');
 const memcore=require('./sidecar/memcore.js');

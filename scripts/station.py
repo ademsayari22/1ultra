@@ -24,9 +24,10 @@ def main():
         finally: server.server_close()
         return
     node = shutil.which('node')
-    if not node: parser.error('Node.js 20+ is required for the station. Use --classic for the standard-library interface.')
-    major = int(subprocess.check_output([node, '--version'], text=True).strip().lstrip('v').split('.')[0])
-    if major < 20: parser.error('Node.js 20+ is required.')
+    if not node: parser.error('Node.js 20.3+ is required for the station. Use --classic for the standard-library interface.')
+    version = tuple(int(part) for part in subprocess.check_output([node, '--version'], text=True).strip().lstrip('v').split('.')[:2])
+    major = version[0]
+    if version < (20, 3): parser.error('Node.js 20.3+ is required (the emergency stop cancels model requests with AbortSignal.any).')
     modules = root / 'station/node_modules'
     missing = [name for name in ('ajv', 'undici') if not (modules / name / 'package.json').is_file()]
     if missing: parser.error('Install runtime dependencies with: cd station && npm ci --ignore-scripts --no-audit --no-fund')
