@@ -21,7 +21,7 @@ def main():
         assert '/assets/' not in row['path'] and not file.is_symlink(),row['path']
     for file in ('LICENSE','NOTICE.md'):
         row=next(r for r in manifest['files'] if r['path']==file)
-        assert hashlib.sha256((station/file).read_bytes()).hexdigest()==row['sha256'],file
+        assert file not in adapted and hashlib.sha256((station/file).read_bytes()).hexdigest()==row['sha256'],file
     html=(station/'frontend/campaign/index.html').read_text()
     assert '1Ultra' in html and 'frontend/assets' not in html
     for asset in re.findall(r'(?:src|href)="([^"#]+)"',html):
