@@ -10,32 +10,31 @@ CLONE = Path('/home/adem/1ultra/runs/upstream/starnet')
 REVISION = json.loads((ROOT / 'station/UPSTREAM.json').read_text())['revision']
 
 
+def patched_upstream():
+    patches = json.loads((ROOT / 'station/ultra-patches.json').read_text())
+    texts = {}
+    for p in patches:
+        if p['file'] not in texts:
+            raw = subprocess.check_output(['git', '-C', str(CLONE), 'show', f"{REVISION}:{p['file']}"], text=True)
+            texts[p['file']] = U.rebrand(raw) if U.brandable(p['file']) else raw
+        count = texts[p['file']].count(p['find'])
+        if count != 1:
+            raise AssertionError(f"{p['id']} matches {count} times in {p['file']}")
+        texts[p['file']] = texts[p['file']].replace(p['find'], p['replace'])
+    return texts
+
+
 @unittest.skipUnless((CLONE / '.git').exists(), 'upstream clone not present')
 class PatchAnchorsTest(unittest.TestCase):
     def test_every_patch_applies_once_in_order(self):
-        patches = json.loads((ROOT / 'station/ultra-patches.json').read_text())
-        texts = {}
-        for p in patches:
-            if p['file'] not in texts:
-                raw = subprocess.check_output(['git', '-C', str(CLONE), 'show', f"{REVISION}:{p['file']}"], text=True)
-                texts[p['file']] = U.rebrand(raw) if U.brandable(p['file']) else raw
-            count = texts[p['file']].count(p['find'])
-            self.assertEqual(count, 1, f"{p['id']} matches {count} times in {p['file']}")
-            texts[p['file']] = texts[p['file']].replace(p['find'], p['replace'])
+        patched_upstream()
 
     def test_ids_are_unique(self):
         ids = [p['id'] for p in json.loads((ROOT / 'station/ultra-patches.json').read_text())]
         self.assertEqual(len(ids), len(set(ids)))
 
     def test_station_copy_matches_patched_upstream(self):
-        patches = json.loads((ROOT / 'station/ultra-patches.json').read_text())
-        texts = {}
-        for p in patches:
-            if p['file'] not in texts:
-                raw = subprocess.check_output(['git', '-C', str(CLONE), 'show', f"{REVISION}:{p['file']}"], text=True)
-                texts[p['file']] = U.rebrand(raw) if U.brandable(p['file']) else raw
-            texts[p['file']] = texts[p['file']].replace(p['find'], p['replace'])
-        for rel, expected in texts.items():
+        for rel, expected in patched_upstream().items():
             self.assertEqual((ROOT / 'station' / rel).read_text(), expected, f'station/{rel} differs from upstream + patches; rerun update_starnet.py')
 
 

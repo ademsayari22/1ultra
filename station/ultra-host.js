@@ -181,10 +181,10 @@ async function handle(req,res){
     if(p==='/api/ultra/jobs')return json(res,200,startJob(body));
     if(p==='/api/ultra/workflows/step')return json(res,200,await workflowStep(body));
     if(p==='/api/ultra/control'){
-      if(body.action==='stop'){onStationHalt();try{stationHalt();}catch(e){console.warn('[1ultra] station halt failed:',(e&&e.message)||e);}}
-      else if(body.action==='resume')halted=false;
-      else if(body.action==='cancel'){const job=jobs.get(body.id);if(job?.cancellable===false)throw Error('This short atomic preparation write is finishing; new preparation is stopped separately.');if(job?.child){job.status='cancelled';terminateJob(job);saveJobs();}}
-      else throw new Error('Choose stop, resume or cancel.');durable(controlFile,{halted});return json(res,200,{halted});
+      if(body.action==='stop'){const problems=[];try{onStationHalt();}catch(e){problems.push(e.message);}try{stationHalt();}catch(e){problems.push('Starnet halt failed: '+((e&&e.message)||e));}return json(res,problems.length?500:200,{halted:true,problems});}
+      else if(body.action==='resume'){try{onStationResume();}catch(e){return json(res,500,{halted:true,problems:[(e&&e.message)||String(e)]});}}
+      else if(body.action==='cancel'){const job=jobs.get(body.id);if(job?.cancellable===false)throw Error('This short atomic preparation write is finishing; new preparation is stopped separately.');if(job?.child){job.status='cancelled';terminateJob(job);saveJobs();}durable(controlFile,{halted});}
+      else throw new Error('Choose stop, resume or cancel.');return json(res,200,{halted});
     }
     const request={route:req.url.replace('/api/ultra/','/api/'),method:req.method,body,version:req.headers['if-match']||'',task_version:req.headers['x-task-version']||''};
     if(req.method==='POST'&&['/api/ultra/automate','/api/ultra/draft','/api/ultra/simulate','/api/ultra/prepare'].includes(p)){
@@ -235,8 +235,12 @@ function campaign(req,res,token){
 // 1Ultra stop, and Starnet's RESUME clears both. While stopped, every agent run is refused before it reaches a model.
 let stationHalt=()=>{};
 function registerStationHalt(fn){if(typeof fn==='function')stationHalt=fn;}
-function onStationHalt(){halted=true;for(const job of jobs.values())if(job.child){job.status='cancelled';terminateJob(job);}saveJobs();durable(controlFile,{halted});}
-function onStationResume(){halted=false;durable(controlFile,{halted});}
+function onStationHalt(){
+  halted=true;for(const job of jobs.values())if(job.child){job.status='cancelled';terminateJob(job);}
+  try{saveJobs();durable(controlFile,{halted});}
+  catch(e){throw new Error('Emergency stop is on, but its state was not saved: '+((e&&e.message)||e));}
+}
+function onStationResume(){durable(controlFile,{halted:false});halted=false;}
 function beforeRun(o){const r=policy.admitRun({halted});if(!r.ok)throw Object.assign(new Error(r.error),{code:'ULTRA_EMERGENCY_STOP'});}
 function assertProviderAllowed(opts){const r=policy.providerAllowed(opts&&opts.provider,switches);if(!r.ok)throw Object.assign(new Error(r.error),{code:'ULTRA_PROVIDER_OFF'});}
 let routeTable=[];

@@ -23101,7 +23101,6 @@ async function handleHaltResume(req, res) {
   try { body = JSON.parse(await readBody(req, 4096, res)); }
   catch (_) { if (!res.headersSent) haltJson(res, 400, { error: 'bad json' }); return; }
   if (!body || body.confirm !== true) return haltJson(res, 400, { error: 'explicit confirm:true is required to resume' });
-  ultraHost.onStationResume();
   const errors = {};
   const attempt = (name, fn) => { try { fn(); } catch (e) { errors[name] = String(e && e.message || e); } };
   attempt('cron', () => { liftCronHalt(); });
@@ -23119,7 +23118,9 @@ async function handleHaltResume(req, res) {
   attempt('plugins', () => { pluginRuntime.setJobsPaused(false); reloadExtensions().catch((e) => failNote('plugins.resume', e)); });   // E-STOP paused their jobs
   const state = haltStatus();
   const ok = !state.halted && Object.keys(errors).length === 0;
-  haltJson(res, ok ? 200 : 503, { ok, ...state, errors });
+  if (ok) { try { ultraHost.onStationResume(); } catch (e) { errors.ultra = String((e && e.message) || e); } }
+  const ultraOk = ok && !errors.ultra;
+  haltJson(res, ultraOk ? 200 : 503, { ok: ultraOk, ...state, errors });
 }
 
 // Unlike ordinary beat accounting, a stop/resume receipt owes a durable read-back.
@@ -23134,7 +23135,7 @@ function saveNightshiftHalt(next) {
   nightshiftState = next;
 }
 function handleHalt(req, res) {
-  ultraHost.onStationHalt();
+  try { ultraHost.onStationHalt(); } catch (e) { console.warn('[1ultra] ' + ((e && e.message) || e)); }
   // a group-store fault must never skip the rest of the E-STOP (killAll, the durable stand-down stamps)
   try { if (typeof groupSessions !== 'undefined') groupSessions.halt().catch(e => console.warn('[groups] halt persistence failed:', e.message)); }
   catch (e) { console.warn('[groups] halt failed:', (e && e.message) || e); }

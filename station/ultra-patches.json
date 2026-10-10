@@ -15,13 +15,13 @@
     "id": "station-halt-hook",
     "file": "sidecar/index.js",
     "find": "function handleHalt(req, res) {\n",
-    "replace": "function handleHalt(req, res) {\n  ultraHost.onStationHalt();\n"
+    "replace": "function handleHalt(req, res) {\n  try { ultraHost.onStationHalt(); } catch (e) { console.warn('[1ultra] ' + ((e && e.message) || e)); }\n"
   },
   {
     "id": "station-resume-hook",
     "file": "sidecar/index.js",
-    "find": "  if (!body || body.confirm !== true) return haltJson(res, 400, { error: 'explicit confirm:true is required to resume' });\n",
-    "replace": "  if (!body || body.confirm !== true) return haltJson(res, 400, { error: 'explicit confirm:true is required to resume' });\n  ultraHost.onStationResume();\n"
+    "find": "  haltJson(res, ok ? 200 : 503, { ok, ...state, errors });\n",
+    "replace": "  if (ok) { try { ultraHost.onStationResume(); } catch (e) { errors.ultra = String((e && e.message) || e); } }\n  const ultraOk = ok && !errors.ultra;\n  haltJson(res, ultraOk ? 200 : 503, { ok: ultraOk, ...state, errors });\n"
   },
   {
     "id": "model-gate",
