@@ -128,14 +128,18 @@ function setProtectedRoots(roots) {
   const path = require('node:path');
   protectedRoots = roots && roots.root ? { root: path.resolve(roots.root), runtime: path.resolve(roots.runtime || path.join(roots.root, 'runs', 'station-runtime')) } : null;
 }
-function realOrSelf(p) {
+function kernelResolve(p) {
   const path = require('node:path'), fs = require('node:fs');
-  let cur = path.resolve(String(p)); const rest = [];
-  for (let i = 0; i < 128; i++) {
-    try { return path.join(fs.realpathSync(cur), ...rest.slice().reverse()); }
-    catch (_) { const parent = path.dirname(cur); if (parent === cur) break; rest.push(path.basename(cur)); cur = parent; }
+  const abs = path.isAbsolute(String(p)) ? String(p) : path.resolve(String(p));
+  let cur = path.parse(abs).root || path.sep, missing = false;
+  for (const seg of abs.split(path.sep).filter(Boolean)) {
+    if (seg === '.') continue;
+    if (seg === '..') { cur = path.dirname(cur); continue; }
+    const next = path.join(cur, seg);
+    if (!missing) { try { cur = fs.realpathSync(next); continue; } catch (_) { missing = true; } }
+    cur = next;
   }
-  return path.resolve(String(p));
+  return cur;
 }
 function inside(child, parent) {
   const path = require('node:path');
@@ -145,8 +149,8 @@ function inside(child, parent) {
 function protectedPathReason(p) {
   if (!protectedRoots || !p) return null;
   const path = require('node:path');
-  const runtimeReal = realOrSelf(protectedRoots.runtime), rootReal = realOrSelf(protectedRoots.root);
-  for (const candidate of [path.resolve(String(p)), realOrSelf(p)]) {
+  const runtimeReal = kernelResolve(protectedRoots.runtime), rootReal = kernelResolve(protectedRoots.root);
+  for (const candidate of [path.resolve(String(p)), kernelResolve(p)]) {
     if (inside(candidate, protectedRoots.runtime) || inside(candidate, runtimeReal)) continue;
     if (inside(candidate, protectedRoots.root) || inside(candidate, rootReal)) return '1Ultra project files are off-limits to agents: ' + candidate;
   }
@@ -154,7 +158,7 @@ function protectedPathReason(p) {
 }
 function blessRefusal(dir) {
   if (!protectedRoots || !dir) return null;
-  const d = realOrSelf(dir), root = realOrSelf(protectedRoots.root);
+  const d = kernelResolve(dir), root = kernelResolve(protectedRoots.root);
   if (inside(d, root) || inside(root, d)) return 'A project folder may not be, contain or sit inside the 1Ultra project (' + root + ').';
   return null;
 }
