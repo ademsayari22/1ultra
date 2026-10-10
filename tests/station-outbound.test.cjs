@@ -129,8 +129,11 @@ const out = {};
 const run = (key, f) => { try { out[key] = f(); } catch (e) { out[key] = e.code || e.message; } };
 run('hostnameOut', () => https.request('https://chatgpt.com/x', { hostname: 'evil.example' }));
 run('hostnameIn', () => https.request('https://www.mojeek.com/', { hostname: 'chatgpt.com' }));
-run('hostOut', () => https.get(new URL('https://chatgpt.com/x'), { host: 'evil.example' }));
-run('hostIn', () => https.get(new URL('https://www.mojeek.com/'), { host: 'chatgpt.com' }));
+run('hostOut', () => https.request('https://chatgpt.com/x', { host: 'evil.example' }));
+run('hostIn', () => https.request('https://www.mojeek.com/', { host: 'chatgpt.com' }));
+run('hostUrlOut', () => https.get(new URL('https://chatgpt.com/x'), { host: 'evil.example' }));
+run('hostUrlIn', () => https.get(new URL('https://www.mojeek.com/'), { host: 'chatgpt.com' }));
+run('optionsOnly', () => https.request({ host: 'chatgpt.com', path: '/' }));
 run('crewPort', () => http.request('http://127.0.0.1:9/', { port: 3001 }));
 run('wrongPort', () => http.get(new URL('http://127.0.0.1:3001/'), { port: 9 }));
 run('ipc', () => https.request('https://chatgpt.com/x', { socketPath: '/tmp/ultra-test.sock' }));
@@ -143,11 +146,21 @@ console.log(JSON.stringify(out));
 function probeRequests(on = [], opts = { freellmapiPort: 3001 }) {
   return JSON.parse(execFileSync(process.execPath, ['-e', REQUEST_CHILD, POLICY, JSON.stringify(on), JSON.stringify(opts)], { encoding: 'utf8' }).trim().split('\n').pop());
 }
-test('HTTP guards check hostname and host overrides over string and URL destinations', () => {
+test('HTTP guards apply explicit hostname overrides and ignore callback arguments', () => {
   const r = probeRequests(['lead.codex']);
   assert.equal(r.hostnameOut, B); assert.equal(r.hostnameIn, 'REAL');
-  assert.equal(r.hostOut, B); assert.equal(r.hostIn, 'REAL');
   assert.equal(r.callback, 'REAL', 'a callback is not an options override');
+});
+test('HTTP host-only overrides cannot admit an external URL with only the lead switch on', () => {
+  const r = probeRequests(['lead.codex']);
+  assert.equal(r.hostIn, B); assert.equal(r.hostUrlIn, B);
+});
+test('HTTP host-only overrides keep Codex URL destinations allowed with only the lead switch on', () => {
+  const r = probeRequests(['lead.codex']);
+  assert.equal(r.hostOut, 'REAL'); assert.equal(r.hostUrlOut, 'REAL');
+});
+test('HTTP options-only requests use the host when no hostname is supplied', () => {
+  assert.equal(probeRequests(['lead.codex']).optionsOnly, 'REAL');
 });
 test('HTTP guards apply port overrides before checking the FreeLLMAPI switch', () => {
   assert.equal(probeRequests(['crew.freellmapi']).crewPort, 'REAL');

@@ -1,4 +1,5 @@
 'use strict';
+const { urlToHttpOptions } = require('node:url');
 const deny = () => { throw new Error('Live models and external connections are disabled in this campaign.'); };
 // Every Starnet API family by path prefix. 'local' = station state on this machine only. A switch id = answers only
 // while the owner has that switch on ('channels'/'providers' = any switch of that family). 'blocked' = not part of
@@ -203,19 +204,13 @@ function urlTarget(input) {
   try { const u = new URL(raw); return { host: u.hostname, port: u.port, protocol: u.protocol }; } catch (_) { return { host: '', port: 0, protocol: '' }; }
 }
 function requestTarget(args, protocol) {
-  const a = args[0];
-  if (typeof a === 'string' || a instanceof URL) {
-    const target = urlTarget(a);
-    const o = args[1] && typeof args[1] === 'object' ? args[1] : {};
-    if (o.socketPath) return null;
-    target.host = o.hostname || o.host || target.host;
-    if (Object.hasOwn(o, 'port')) target.port = o.port;
-    if (Object.hasOwn(o, 'protocol')) target.protocol = o.protocol;
-    return target;
-  }
-  const o = a && typeof a === 'object' ? a : {};
+  let o = {};
+  let i = 0;
+  if (typeof args[0] === 'string' || args[0] instanceof URL) { o = urlToHttpOptions(new URL(String(args[0]))); i = 1; }
+  if (args[i] && typeof args[i] === 'object' && typeof args[i] !== 'function') o = Object.assign({}, o, args[i]);
   if (o.socketPath) return null;
-  return { host: o.hostname || o.host || 'localhost', port: o.port, protocol: o.protocol || protocol };
+  const host = o.hostname || (typeof o.host === 'string' ? o.host.replace(/:\d+$/, '') : '') || 'localhost';
+  return { host, port: o.port, protocol: o.protocol || protocol };
 }
 function connectTarget(args) {
   const a = args[0];
