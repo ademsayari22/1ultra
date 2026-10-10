@@ -30,6 +30,48 @@ test('a guarded adapter checks before every stream call and leaves everything el
   assert.equal(Policy.guardAdapter(null, check), null);
 });
 
+test('a gated fetch checks before every request and ties each request to the station stop', async () => {
+  let allow = true; const seen = [];
+  const check = () => { if (!allow) throw Object.assign(new Error('Lead agent on Codex is off.'), { code: 'ULTRA_PROVIDER_OFF' }); };
+  let stop = new AbortController();
+  const fakeFetch = async (url, init) => { seen.push({ url, signal: init && init.signal }); return { ok: true }; };
+  const gated = Policy.gateFetch(fakeFetch, check, () => stop.signal);
+  await gated('https://x.test/a', { method: 'POST' });
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].signal.aborted, false);
+  stop.abort(Object.assign(new Error('Emergency stop is on.'), { code: 'ULTRA_EMERGENCY_STOP' }));
+  assert.equal(seen[0].signal.aborted, true, 'the stop aborts a request already in flight');
+  const own = new AbortController(); stop = new AbortController();
+  await gated('https://x.test/b', { signal: own.signal });
+  own.abort();
+  assert.equal(seen[1].signal.aborted, true, "the caller's own signal still aborts the request");
+  allow = false;
+  await assert.rejects(gated('https://x.test/c'), { code: 'ULTRA_PROVIDER_OFF' });
+  assert.equal(seen.length, 2, 'a refused request never reaches fetch');
+});
+
+test("1Ultra's own refusals are never retried or handed to a fallback provider", () => {
+  const { classifyApiError } = require('../station/sidecar/providers/errorClass.js');
+  for (const code of ['ULTRA_EMERGENCY_STOP', 'ULTRA_PROVIDER_OFF', 'ULTRA_OUTBOUND_BLOCKED']) {
+    const c = classifyApiError(Object.assign(new Error('refused by 1Ultra'), { code }), { model: 'gpt-6.1-sol' });
+    assert.equal(c.retryable, false, code); assert.equal(c.shouldFallback, false, code);
+  }
+});
+
+test('the Codex adapter cannot retry or list models after the switch is turned off', async () => {
+  const { makeCodexProvider } = require('../station/sidecar/providers/codex.js');
+  let allow = true, calls = 0;
+  const check = () => { if (!allow) throw Object.assign(new Error('Lead agent on Codex is off.'), { code: 'ULTRA_PROVIDER_OFF' }); };
+  const fixtureFetch = async () => { calls++; allow = false; return new Response('busy', { status: 503 }); };
+  const provider = makeCodexProvider({ fetch: Policy.gateFetch(fixtureFetch, check, null), token: 'fixture', baseUrl: 'https://codex.fixture.test' });
+  await assert.rejects(async () => {
+    for await (const ev of provider.stream({ model: 'gpt-6.1-sol', messages: [{ role: 'user', content: 'fixture' }] })) void ev;
+  }, e => /off/i.test(String(e && e.message)) || (e && e.code) === 'ULTRA_PROVIDER_OFF');
+  assert.equal(calls, 1, 'the retry after the 503 is refused before any request');
+  await provider.listModels();
+  assert.equal(calls, 1, 'the model catalog makes no request either');
+});
+
 test('assertModelRequest refuses during the emergency stop and while the provider switch is off', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ultra-model-root-'));
   const runtime = fs.mkdtempSync(path.join(os.tmpdir(), 'ultra-model-runtime-'));
@@ -41,10 +83,13 @@ test('assertModelRequest refuses during the emergency stop and while the provide
     result.switchOff = attempt();
     host.switches.set('lead.codex', true);
     result.switchOn = attempt();
+    const before = host.stopSignal();
     host.onStationHalt();
+    result.signalAbortedByStop = before.aborted;
     result.halted = attempt();
     result.constructionWhileHalted = (() => { try { host.assertProviderAllowed({ provider: 'codex' }); return 'ok'; } catch (e) { return e.code; } })();
     host.onStationResume();
+    result.freshSignalAfterResume = host.stopSignal().aborted === false;
     result.resumed = attempt();
     host.switches.set('lead.codex', false);
     result.switchedOff = attempt();
@@ -67,7 +112,8 @@ test('assertModelRequest refuses during the emergency stop and while the provide
     assert.equal(child.status, 0, fs.readFileSync(stderrPath, 'utf8'));
     assert.deepEqual(JSON.parse(fs.readFileSync(stdoutPath, 'utf8')), {
       switchOff: 'ULTRA_PROVIDER_OFF', switchOn: 'ok', halted: 'ULTRA_EMERGENCY_STOP',
-      constructionWhileHalted: 'ok', resumed: 'ok', switchedOff: 'ULTRA_PROVIDER_OFF'
+      constructionWhileHalted: 'ok', resumed: 'ok', switchedOff: 'ULTRA_PROVIDER_OFF',
+      signalAbortedByStop: true, freshSignalAfterResume: true
     });
   } finally {
     fs.rmSync(runtime, { recursive: true, force: true });

@@ -155,9 +155,11 @@ function selectProvider(opts) {
   if (opts && normalizeProvider(opts.provider) === 'kimi') {
     opts = Object.assign({}, opts, { baseUrl: kimiRegion.resolveBaseUrl(opts.kimiRegion || kimiPrimaryRegion(), opts.baseUrl) });
   }
-  const built = selectProviderRaw(opts);
+  const ultraCheck = () => ultraHost.assertModelRequest(opts);
+  // 1Ultra: every request the adapter makes (retries, catalog, renewals) re-checks the stop and switch and listens to the stop.
+  const built = selectProviderRaw(Object.assign({}, opts, { fetch: ultraHost.policy.gateFetch(opts && opts.fetch, ultraCheck, ultraHost.stopSignal) }));
   const ultraBuilt = opts && normalizeProvider(opts.provider) === 'starnet' ? googleRelayGuard().guardProvider(built) : built;
-  return ultraHost.policy.guardAdapter(ultraBuilt, () => ultraHost.assertModelRequest(opts));
+  return ultraHost.policy.guardAdapter(ultraBuilt, ultraCheck);
 }
 /* PROACTIVE QUOTA. One tracker for the whole process, attached to the factory so every provider adapter's
    injected fetch is instrumented at a single seam (see providers/ratelimits.js). Quota used to be learned only

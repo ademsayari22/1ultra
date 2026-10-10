@@ -296,8 +296,8 @@
   {
     "id": "model-request-gate",
     "file": "sidecar/index.js",
-    "find": "  return opts && normalizeProvider(opts.provider) === 'starnet' ? googleRelayGuard().guardProvider(built) : built;\n}\n",
-    "replace": "  const ultraBuilt = opts && normalizeProvider(opts.provider) === 'starnet' ? googleRelayGuard().guardProvider(built) : built;\n  return ultraHost.policy.guardAdapter(ultraBuilt, () => ultraHost.assertModelRequest(opts));\n}\n"
+    "find": "  const built = selectProviderRaw(opts);\n  return opts && normalizeProvider(opts.provider) === 'starnet' ? googleRelayGuard().guardProvider(built) : built;\n}\n",
+    "replace": "  const ultraCheck = () => ultraHost.assertModelRequest(opts);\n  // 1Ultra: every request the adapter makes (retries, catalog, renewals) re-checks the stop and switch and listens to the stop.\n  const built = selectProviderRaw(Object.assign({}, opts, { fetch: ultraHost.policy.gateFetch(opts && opts.fetch, ultraCheck, ultraHost.stopSignal) }));\n  const ultraBuilt = opts && normalizeProvider(opts.provider) === 'starnet' ? googleRelayGuard().guardProvider(built) : built;\n  return ultraHost.policy.guardAdapter(ultraBuilt, ultraCheck);\n}\n"
   },
   {
     "id": "codex-token-gate",
@@ -310,5 +310,11 @@
     "file": "sidecar/index.js",
     "find": "async function forceRefreshCodexAccessToken(staleToken) {\n",
     "replace": "async function forceRefreshCodexAccessToken(staleToken) {\n  ultraHost.assertModelRequest({ provider: 'codex' });\n"
+  },
+  {
+    "id": "ultra-refusals-fail-fast",
+    "file": "sidecar/providers/errorClass.js",
+    "find": "    if (isLocalError(err, status, extractBody(err), low)) return 'local_error';\n",
+    "replace": "    if (!status && err && /^ULTRA_/.test(String(err.code || ''))) return 'local_error'; // 1Ultra refused it locally: never retry or fall back\n    if (isLocalError(err, status, extractBody(err), low)) return 'local_error';\n"
   }
 ]

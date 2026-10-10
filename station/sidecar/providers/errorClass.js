@@ -305,6 +305,7 @@
     // 0. errors that never reached an API: a certificate the machine rejects, or a crash in our own code. First,
     //    because neither carries a status or a body — so no later rule can be describing the provider's intent.
     if (!status && isTlsFailure(err, low)) return 'tls_certificate';
+    if (!status && err && /^ULTRA_/.test(String(err.code || ''))) return 'local_error'; // 1Ultra refused it locally: never retry or fall back
     if (isLocalError(err, status, extractBody(err), low)) return 'local_error';
     /* 1. content / policy (most specific intent) — but a TRANSPORT status wins over a text match.
        This ran against the whole message before the status was consulted, so any retryable failure whose

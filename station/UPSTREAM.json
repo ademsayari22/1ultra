@@ -16650,7 +16650,7 @@
     },
     {
       "path": "sidecar/index.js",
-      "current_sha256": "b86479e0a11e17c78df2543b8098d82fc4d1e7bc7dfd0a3f51a2309dee5a64ef",
+      "current_sha256": "fe58e04895503433a2d1ac97aa59686cf52b02f283844a00b1f45aff7cf2be80",
       "reasons": [
         "brand",
         "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty,bless-refusal,model-request-gate,codex-token-gate,codex-refresh-gate"
@@ -16919,9 +16919,10 @@
     },
     {
       "path": "sidecar/providers/errorClass.js",
-      "current_sha256": "83c72b840afbb49ee11af9414a034873d674e464bd803ee0582b1a03a65bffbb",
+      "current_sha256": "8818e133a62551090dd54e8cc060e78949a595f3da5557d0b5335a4ce53e846b",
       "reasons": [
-        "brand"
+        "brand",
+        "patch:ultra-refusals-fail-fast"
       ]
     },
     {

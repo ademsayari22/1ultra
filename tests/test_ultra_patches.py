@@ -47,7 +47,8 @@ class PatchAnchorsTest(unittest.TestCase):
         text = (ROOT / 'station/sidecar/index.js').read_text()
         for fn in ("async function ensureCodexAccessToken() {\n", "async function forceRefreshCodexAccessToken(staleToken) {\n"):
             self.assertIn(fn + "  ultraHost.assertModelRequest({ provider: 'codex' });", text)
-        self.assertIn("return ultraHost.policy.guardAdapter(ultraBuilt, () => ultraHost.assertModelRequest(opts));", text)
+        self.assertIn("fetch: ultraHost.policy.gateFetch(opts && opts.fetch, ultraCheck, ultraHost.stopSignal)", text)
+        self.assertIn("return ultraHost.policy.guardAdapter(ultraBuilt, ultraCheck);", text)
         fs_tools = (ROOT / 'station/sidecar/tools/builtin/fs.js').read_text()
         self.assertIn("require('../../../ultra-policy.js').protectionActive()) ? null : await rgBinary();", fs_tools)
 

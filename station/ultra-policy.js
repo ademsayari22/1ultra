@@ -206,6 +206,19 @@ function guardAdapter(adapter, check) {
   const inner = adapter.stream;
   return Object.assign({}, adapter, { stream: async function* (...args) { check(); yield* inner.apply(adapter, args); } });
 }
+// The adapter's own fetch re-checks the stop and switch before every request (retries, catalogs, renewals included),
+// and each request also listens to the station stop, so pressing stop aborts model requests already in flight.
+function gateFetch(fetchFn, check, stopSignal) {
+  return function ultraGatedFetch(input, init) {
+    try { check(); } catch (e) { return Promise.reject(e); }
+    const stop = typeof stopSignal === 'function' ? stopSignal() : null;
+    if (stop) {
+      const own = init && init.signal;
+      init = Object.assign({}, init, { signal: own && typeof AbortSignal.any === 'function' ? AbortSignal.any([own, stop]) : (own || stop) });
+    }
+    return (fetchFn || globalThis.fetch).call(this, input, init);
+  };
+}
 function makeGate(limit = () => 2) { const desks = new Set(); return {
   enter(desk) { if (desks.has(desk)) throw new Error('This desk already has an active job.'); const max = limit(); if (desks.size >= max) throw new Error('Only ' + max + ' preparation workers may run.'); desks.add(desk); },
   leave(desk) { desks.delete(desk); }, active() { return [...desks]; }
@@ -277,4 +290,4 @@ function install(runtime, switches, opts = {}) {
   const cp = require('node:child_process');
   for (const method of ['spawn', 'spawnSync', 'exec', 'execSync', 'execFile', 'execFileSync', 'fork']) cp[method] = deny;
 }
-module.exports = { ROUTE_CLASSES, classifyPath, routeKey, gate, routeGate, preGate, makeGate, resolveRuntime, resolvePort, runtimeAllowed, install, assertModelAllowed: deny, providerSwitch, providerAllowed, admitRun, allowedTarget, canonicalHost, isPrivateHost, makeGuardedLookup, setProtectedRoots, protectionActive, protectedPathReason, blessRefusal, guardAdapter };
+module.exports = { ROUTE_CLASSES, classifyPath, routeKey, gate, routeGate, preGate, makeGate, resolveRuntime, resolvePort, runtimeAllowed, install, assertModelAllowed: deny, providerSwitch, providerAllowed, admitRun, allowedTarget, canonicalHost, isPrivateHost, makeGuardedLookup, setProtectedRoots, protectionActive, protectedPathReason, blessRefusal, guardAdapter, gateFetch };

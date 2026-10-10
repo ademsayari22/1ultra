@@ -238,12 +238,15 @@ function campaign(req,res,token){
 // 1Ultra stop, and Starnet's RESUME clears both. While stopped, every agent run is refused before it reaches a model.
 let stationHalt=()=>{};
 function registerStationHalt(fn){if(typeof fn==='function')stationHalt=fn;}
+// Model requests listen to this signal; the stop aborts the ones already in flight, resume hands out a fresh one.
+let stopCtl=new AbortController();
+function stopSignal(){return stopCtl.signal;}
 function onStationHalt(){
-  halted=true;for(const job of jobs.values())if(job.child){job.status='cancelled';terminateJob(job);}
+  halted=true;try{stopCtl.abort(Object.assign(new Error('Emergency stop is on. Resume before any model call.'),{code:'ULTRA_EMERGENCY_STOP'}));}catch(_){}for(const job of jobs.values())if(job.child){job.status='cancelled';terminateJob(job);}
   try{saveJobs();durable(controlFile,{halted});}
   catch(e){throw new Error('Emergency stop is on, but its state was not saved: '+((e&&e.message)||e));}
 }
-function onStationResume(){durable(controlFile,{halted:false});halted=false;}
+function onStationResume(){durable(controlFile,{halted:false});halted=false;if(stopCtl.signal.aborted)stopCtl=new AbortController();}
 function isHalted(){return halted;}
 function beforeRun(o){const r=policy.admitRun({halted});if(!r.ok)throw Object.assign(new Error(r.error),{code:'ULTRA_EMERGENCY_STOP'});}
 function assertProviderAllowed(opts){const r=policy.providerAllowed(opts&&opts.provider,switches);if(!r.ok)throw Object.assign(new Error(r.error),{code:'ULTRA_PROVIDER_OFF'});}
@@ -254,6 +257,6 @@ function registerRoutes(routes){routeTable=routes;}
 const preGate=(method,url)=>policy.preGate(method,url,switches);
 const routeGate=r=>policy.routeGate(r,switches);
 process.on('exit',()=>{if(rpc)rpc.kill('SIGTERM');for(const job of jobs.values())terminateJob(job);});
-module.exports={root,runtime,policy,handle,classic,campaign,switches,preGate,routeGate,registerRoutes,beforeRun,assertProviderAllowed,assertModelRequest,onStationHalt,onStationResume,registerStationHalt,isHalted};
+module.exports={root,runtime,policy,handle,classic,campaign,switches,preGate,routeGate,registerRoutes,beforeRun,assertProviderAllowed,assertModelRequest,stopSignal,onStationHalt,onStationResume,registerStationHalt,isHalted};
 policy.setProtectedRoots({root,runtime});
 policy.install(runtime,switches,{freellmapiPort:3001});
