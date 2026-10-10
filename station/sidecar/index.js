@@ -156,7 +156,8 @@ function selectProvider(opts) {
     opts = Object.assign({}, opts, { baseUrl: kimiRegion.resolveBaseUrl(opts.kimiRegion || kimiPrimaryRegion(), opts.baseUrl) });
   }
   const built = selectProviderRaw(opts);
-  return opts && normalizeProvider(opts.provider) === 'starnet' ? googleRelayGuard().guardProvider(built) : built;
+  const ultraBuilt = opts && normalizeProvider(opts.provider) === 'starnet' ? googleRelayGuard().guardProvider(built) : built;
+  return ultraHost.policy.guardAdapter(ultraBuilt, () => ultraHost.assertModelRequest(opts));
 }
 /* PROACTIVE QUOTA. One tracker for the whole process, attached to the factory so every provider adapter's
    injected fetch is instrumented at a single seam (see providers/ratelimits.js). Quota used to be learned only
@@ -4387,6 +4388,7 @@ let codexAuthDead = codexAuthState.deadFromTokens(codexTokens);
 // ChatGPT sign-in (dead/missing refresh token) or surface a transient "retry later" (quota/network).
 let codexRefreshInFlight = null;   // SINGLE-FLIGHT refresh guard — see the comment inside ensureCodexAccessToken
 async function ensureCodexAccessToken() {
+  ultraHost.assertModelRequest({ provider: 'codex' });
   if (!codexTokens || !codexTokens.access_token) {
     const e = new Error('Not signed in to ChatGPT — connect a ChatGPT subscription first.');
     e.code = 'codex_not_connected'; e.reloginRequired = true; throw e;
@@ -4411,6 +4413,7 @@ async function ensureCodexAccessToken() {
    another caller already rotated past the token that 401'd, hand back the current one instead of burning a
    second rotation. Same single-flight guard: parallel 401s share one refresh. */
 async function forceRefreshCodexAccessToken(staleToken) {
+  ultraHost.assertModelRequest({ provider: 'codex' });
   if (!codexTokens || !codexTokens.access_token) {
     const e = new Error('Not signed in to ChatGPT — connect a ChatGPT subscription first.');
     e.code = 'codex_not_connected'; e.reloginRequired = true; throw e;

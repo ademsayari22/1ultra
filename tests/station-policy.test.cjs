@@ -109,21 +109,36 @@ test('agents cannot reach 1Ultra project files, except their own runtime', () =>
   try {
     assert.match(Policy.protectedPathReason(px.join(root, 'data', 'leads.json')), /off-limits/);
     assert.match(Policy.protectedPathReason(root), /off-limits/);
-    assert.equal(Policy.protectedPathReason(px.join(runtime, 'agent', 'note.md')), null);
+    const own = { agentId: 'agent' };
+    assert.equal(Policy.protectedPathReason(px.join(runtime, 'agent', 'note.md'), own), null);
+    assert.equal(Policy.protectedPathReason(px.join(runtime, 'agent'), own), null);
+    // Inside the runtime only the calling agent's own workspace is open: never the station's control files,
+    // its reserved folders (codex/ holds the ChatGPT tokens) or another agent's workspace.
+    assert.match(Policy.protectedPathReason(px.join(runtime, 'agent', 'note.md')), /off-limits/, 'no agent id: nothing in the runtime is exempt');
+    for (const target of ['ultra-switches.json', 'ultra-control.json', 'permissions.allow.json', px.join('codex', 'tokens.json'), px.join('other', 'x.md'), ''])
+      assert.match(Policy.protectedPathReason(px.join(runtime, target), own), /off-limits/, target || 'runtime itself');
+    assert.match(Policy.protectedPathReason(px.join(runtime, 'codex', 'tokens.json'), { agentId: 'codex' }), /off-limits/, 'a reserved id is never a workspace');
+    assert.match(Policy.protectedPathReason(px.join(runtime, 'agent', 'x'), { agentId: '../agent' }), /off-limits/, 'an invalid id is never a workspace');
+    assert.match(Policy.protectedPathReason(px.join(runtime, 'agent', '..', 'ultra-switches.json'), own), /off-limits/);
+    fsx.symlinkSync(px.join(runtime, 'ultra-switches.json'), px.join(runtime, 'agent', 'switches-link'));
+    assert.match(Policy.protectedPathReason(px.join(runtime, 'agent', 'switches-link'), own), /off-limits/, 'a link out of the own workspace is refused');
     fsx.symlinkSync(px.join(root, 'data'), px.join(runtime, 'agent', 'link'));
-    assert.match(Policy.protectedPathReason(px.join(runtime, 'agent', 'link', 'leads.json')), /off-limits/);
+    assert.match(Policy.protectedPathReason(px.join(runtime, 'agent', 'link', 'leads.json'), own), /off-limits/);
     fsx.symlinkSync(px.join(root, 'data'), px.join(runtime, 'agent', 'link2'));
-    assert.match(Policy.protectedPathReason(px.join(runtime, 'agent', 'link2', 'new', 'file.txt')), /off-limits/);
-    assert.match(Policy.protectedPathReason(px.join(runtime, 'agent', 'link2') + '/../leads.json'), /off-limits/);
+    assert.match(Policy.protectedPathReason(px.join(runtime, 'agent', 'link2', 'new', 'file.txt'), own), /off-limits/);
+    assert.match(Policy.protectedPathReason(px.join(runtime, 'agent', 'link2') + '/../leads.json', own), /off-limits/);
     const rel = px.relative(process.cwd(), px.join(runtime, 'agent', 'link2'));
-    assert.match(Policy.protectedPathReason(rel + '/../leads.json'), /off-limits/);
+    assert.match(Policy.protectedPathReason(rel + '/../leads.json', own), /off-limits/);
     assert.equal(Policy.protectedPathReason(osx.tmpdir()), null);
     assert.match(Policy.blessRefusal(root), /1Ultra project/);
     assert.match(Policy.blessRefusal(px.dirname(root)), /1Ultra project/);
     assert.match(Policy.blessRefusal(px.join(root, 'data')), /1Ultra project/);
-    assert.equal(Policy.blessRefusal(fsx.mkdtempSync(px.join(osx.tmpdir(), 'ultra-other-'))), null);
+    const other = fsx.mkdtempSync(px.join(osx.tmpdir(), 'ultra-other-'));
+    assert.equal(Policy.blessRefusal(other), null);
+    fsx.rmSync(other, { recursive: true, force: true });
   } finally { Policy.setProtectedRoots(null); }
   assert.equal(Policy.protectedPathReason(px.join(root, 'data')), null, 'no roots set: upstream behaviour unchanged');
+  fsx.rmSync(root, { recursive: true, force: true });
 });
 test('provider routes open while the lead or crew switch is on', () => {
   const on = (...ids) => ({ isOn: id => ids.includes(id) });

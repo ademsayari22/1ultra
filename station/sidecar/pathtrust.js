@@ -144,7 +144,7 @@
       // Host-wide Full Power intentionally bypasses project blessings, protected-file policy, cross-agent
       // workspace ownership and symlink containment. The OS remains the authority on whether the path exists
       // and whether this user can read or write it.
-      const ultraProtected = typeof require === 'function' ? require('../ultra-policy.js').protectedPathReason(norm) : null;
+      const ultraProtected = typeof require === 'function' ? require('../ultra-policy.js').protectedPathReason(norm, { agentId: o.agentId }) : null;
       if (ultraProtected) throw new Error(ultraProtected);
       if (unrestrictedHost) {
         return { base: (P.parse(norm).root || P.dirname(norm)), abs: norm, unrestrictedHost: true };

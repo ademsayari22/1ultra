@@ -43,6 +43,14 @@ class PatchAnchorsTest(unittest.TestCase):
             with self.subTest(fragment=fragment):
                 self.assertTrue(fragment in text, f'missing halt/resume integration: {fragment}')
 
+    def test_every_model_request_rechecks_stop_and_switch(self):
+        text = (ROOT / 'station/sidecar/index.js').read_text()
+        for fn in ("async function ensureCodexAccessToken() {\n", "async function forceRefreshCodexAccessToken(staleToken) {\n"):
+            self.assertIn(fn + "  ultraHost.assertModelRequest({ provider: 'codex' });", text)
+        self.assertIn("return ultraHost.policy.guardAdapter(ultraBuilt, () => ultraHost.assertModelRequest(opts));", text)
+        fs_tools = (ROOT / 'station/sidecar/tools/builtin/fs.js').read_text()
+        self.assertIn("require('../../../ultra-policy.js').protectionActive()) ? null : await rgBinary();", fs_tools)
+
     def test_codex_tokens_load_only_while_lead_switch_is_on(self):
         text = (ROOT / 'station/sidecar/index.js').read_text()
         self.assertIn("function loadCodexTokens() {\n  if (!ultraHost.switches.isOn('lead.codex')) return null;", text)

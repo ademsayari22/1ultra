@@ -16650,10 +16650,10 @@
     },
     {
       "path": "sidecar/index.js",
-      "current_sha256": "b4d46bc3f920057c355f29ececfbf6e314519417f56ff7817d5cb645c1cc221e",
+      "current_sha256": "b86479e0a11e17c78df2543b8098d82fc4d1e7bc7dfd0a3f51a2309dee5a64ef",
       "reasons": [
         "brand",
-        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty,bless-refusal"
+        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty,bless-refusal,model-request-gate,codex-token-gate,codex-refresh-gate"
       ]
     },
     {
@@ -16806,7 +16806,7 @@
     },
     {
       "path": "sidecar/pathtrust.js",
-      "current_sha256": "cc122332b4c683a292c4a85302b63bcf833401955121d17c960941ea48abe93c",
+      "current_sha256": "5e4d382073a0b4425db3cd0d9dc5073b7b9ee64f492596b0ffb4d9f28b4ef915",
       "reasons": [
         "brand",
         "patch:protected-paths"
@@ -17179,9 +17179,10 @@
     },
     {
       "path": "sidecar/tools/builtin/fs.js",
-      "current_sha256": "f264f843dc4f3af7fbde5c93c35db6e31bc2c27880c2ba59e4ada88ad0d04c5f",
+      "current_sha256": "5f4251da359420346397638c3f400a339ed1ed89c4057fa1627b7bac77755e2a",
       "reasons": [
-        "brand"
+        "brand",
+        "patch:protected-walk-list,protected-walk-list-call,protected-walk-search,protected-walk-search-policy,protected-walk-search-agent,protected-walk-no-rg"
       ]
     },
     {

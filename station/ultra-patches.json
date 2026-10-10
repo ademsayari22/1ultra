@@ -195,7 +195,7 @@
     "id": "protected-paths",
     "file": "sidecar/pathtrust.js",
     "find": "      if (unrestrictedHost) {\n        return { base: (P.parse(norm).root || P.dirname(norm)), abs: norm, unrestrictedHost: true };\n",
-    "replace": "      const ultraProtected = typeof require === 'function' ? require('../ultra-policy.js').protectedPathReason(norm) : null;\n      if (ultraProtected) throw new Error(ultraProtected);\n      if (unrestrictedHost) {\n        return { base: (P.parse(norm).root || P.dirname(norm)), abs: norm, unrestrictedHost: true };\n"
+    "replace": "      const ultraProtected = typeof require === 'function' ? require('../ultra-policy.js').protectedPathReason(norm, { agentId: o.agentId }) : null;\n      if (ultraProtected) throw new Error(ultraProtected);\n      if (unrestrictedHost) {\n        return { base: (P.parse(norm).root || P.dirname(norm)), abs: norm, unrestrictedHost: true };\n"
   },
   {
     "id": "bless-refusal",
@@ -256,5 +256,59 @@
     "file": "frontend/app/modeldock.js",
     "find": "const CODEX_MODELS = ['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.3-codex-spark'];",
     "replace": "const CODEX_MODELS = ['gpt-6.1-sol', 'gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.3-codex-spark'];"
+  },
+  {
+    "id": "protected-walk-list",
+    "file": "sidecar/tools/builtin/fs.js",
+    "find": "    async function walk(absDir, prefix, out, limit) {\n      if (out.length >= limit) return;\n      let entries;\n      try { entries = await fsp.readdir(absDir, { withFileTypes: true }); }\n      catch (e) { if (e && e.code === 'ENOENT') return; throw e; }\n      for (const ent of entries) {\n        if (out.length >= limit) { out.push('…[truncated]'); return; }\n        const rel = prefix ? (prefix + '/' + ent.name) : ent.name;\n        if (ent.isDirectory()) { out.push(rel + '/'); await walk(P.join(absDir, ent.name), rel, out, limit); }\n",
+    "replace": "    async function walk(absDir, prefix, out, limit, agentId) {\n      if (out.length >= limit) return;\n      let entries;\n      try { entries = await fsp.readdir(absDir, { withFileTypes: true }); }\n      catch (e) { if (e && e.code === 'ENOENT') return; throw e; }\n      const ultraPolicy = (typeof require === 'function' ? require('../../../ultra-policy.js') : null);\n      for (const ent of entries) {\n        if (out.length >= limit) { out.push('…[truncated]'); return; }\n        const rel = prefix ? (prefix + '/' + ent.name) : ent.name;\n        if (ultraPolicy && ultraPolicy.protectedPathReason(P.join(absDir, ent.name), { agentId })) continue; // 1Ultra: protected entries are never listed or descended\n        if (ent.isDirectory()) { out.push(rel + '/'); await walk(P.join(absDir, ent.name), rel, out, limit, agentId); }\n"
+  },
+  {
+    "id": "protected-walk-list-call",
+    "file": "sidecar/tools/builtin/fs.js",
+    "find": "          const out = []; await walk(abs, '', out, 500);\n",
+    "replace": "          const out = []; await walk(abs, '', out, 500, (ctx && ctx.agentId) || 'agent');\n"
+  },
+  {
+    "id": "protected-walk-search",
+    "file": "sidecar/tools/builtin/fs.js",
+    "find": "        const rel = prefix ? (prefix + '/' + ent.name) : ent.name;\n        const abs = P.join(absDir, ent.name);\n",
+    "replace": "        const rel = prefix ? (prefix + '/' + ent.name) : ent.name;\n        const abs = P.join(absDir, ent.name);\n        // 1Ultra: a protected entry is never read or descended, whatever the search started from.\n        if (ultraPolicy && ultraPolicy.protectedPathReason(abs, { agentId: stats.agentId })) { stats.skippedProtected = (stats.skippedProtected || 0) + 1; continue; }\n"
+  },
+  {
+    "id": "protected-walk-search-policy",
+    "file": "sidecar/tools/builtin/fs.js",
+    "find": "    async function collectFiles(absDir, prefix, acc, stats, baseReal, ignoreStack) {\n",
+    "replace": "    async function collectFiles(absDir, prefix, acc, stats, baseReal, ignoreStack) {\n      const ultraPolicy = (typeof require === 'function' ? require('../../../ultra-policy.js') : null);\n"
+  },
+  {
+    "id": "protected-walk-search-agent",
+    "file": "sidecar/tools/builtin/fs.js",
+    "find": "        const stats = { files: 0, truncated: false, maxFiles, gitignore: args.gitignore !== false };\n",
+    "replace": "        const stats = { files: 0, truncated: false, maxFiles, gitignore: args.gitignore !== false, agentId: (ctx && ctx.agentId) || 'agent' };\n"
+  },
+  {
+    "id": "protected-walk-no-rg",
+    "file": "sidecar/tools/builtin/fs.js",
+    "find": "        const rg = await rgBinary();\n",
+    "replace": "        // 1Ultra: while project protection is active only the Node walker runs, because it checks protected paths per entry\n        const rg = (typeof require === 'function' && require('../../../ultra-policy.js').protectionActive()) ? null : await rgBinary();\n"
+  },
+  {
+    "id": "model-request-gate",
+    "file": "sidecar/index.js",
+    "find": "  return opts && normalizeProvider(opts.provider) === 'starnet' ? googleRelayGuard().guardProvider(built) : built;\n}\n",
+    "replace": "  const ultraBuilt = opts && normalizeProvider(opts.provider) === 'starnet' ? googleRelayGuard().guardProvider(built) : built;\n  return ultraHost.policy.guardAdapter(ultraBuilt, () => ultraHost.assertModelRequest(opts));\n}\n"
+  },
+  {
+    "id": "codex-token-gate",
+    "file": "sidecar/index.js",
+    "find": "async function ensureCodexAccessToken() {\n",
+    "replace": "async function ensureCodexAccessToken() {\n  ultraHost.assertModelRequest({ provider: 'codex' });\n"
+  },
+  {
+    "id": "codex-refresh-gate",
+    "file": "sidecar/index.js",
+    "find": "async function forceRefreshCodexAccessToken(staleToken) {\n",
+    "replace": "async function forceRefreshCodexAccessToken(staleToken) {\n  ultraHost.assertModelRequest({ provider: 'codex' });\n"
   }
 ]

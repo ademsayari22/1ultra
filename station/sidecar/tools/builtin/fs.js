@@ -442,15 +442,17 @@ const { note: failNote } = require('../../failopen');
     };
 
     // recursive directory walk -> relative paths (dirs end with '/'), bounded so a huge tree can't flood the prompt
-    async function walk(absDir, prefix, out, limit) {
+    async function walk(absDir, prefix, out, limit, agentId) {
       if (out.length >= limit) return;
       let entries;
       try { entries = await fsp.readdir(absDir, { withFileTypes: true }); }
       catch (e) { if (e && e.code === 'ENOENT') return; throw e; }
+      const ultraPolicy = (typeof require === 'function' ? require('../../../ultra-policy.js') : null);
       for (const ent of entries) {
         if (out.length >= limit) { out.push('…[truncated]'); return; }
         const rel = prefix ? (prefix + '/' + ent.name) : ent.name;
-        if (ent.isDirectory()) { out.push(rel + '/'); await walk(P.join(absDir, ent.name), rel, out, limit); }
+        if (ultraPolicy && ultraPolicy.protectedPathReason(P.join(absDir, ent.name), { agentId })) continue; // 1Ultra: protected entries are never listed or descended
+        if (ent.isDirectory()) { out.push(rel + '/'); await walk(P.join(absDir, ent.name), rel, out, limit, agentId); }
         else out.push(rel);
       }
     }
@@ -462,7 +464,7 @@ const { note: failNote } = require('../../failopen');
       run: async (args, ctx) => {
         const { abs } = await resolveInside((ctx && ctx.agentId) || 'agent', (args && args.path) || '.', { scope: 'read', ctx });
         if (args && args.recursive) {
-          const out = []; await walk(abs, '', out, 500);
+          const out = []; await walk(abs, '', out, 500, (ctx && ctx.agentId) || 'agent');
           return { content: out.length ? out.join('\n') : '(empty)', summary: out.length + ' entr' + (out.length === 1 ? 'y' : 'ies') };
         }
         let names;
@@ -929,6 +931,7 @@ const { note: failNote } = require('../../failopen');
       return rules.length ? { baseRel, rules } : null;
     }
     async function collectFiles(absDir, prefix, acc, stats, baseReal, ignoreStack) {
+      const ultraPolicy = (typeof require === 'function' ? require('../../../ultra-policy.js') : null);
       const maxFiles = stats.maxFiles || SEARCH_MAX_FILES;
       if (stats.files >= maxFiles) { stats.truncated = true; return; }
       let entries;
@@ -945,6 +948,8 @@ const { note: failNote } = require('../../failopen');
         if (ent.name.charAt(0) === '.') continue;                 // hidden (matches ripgrep's default)
         const rel = prefix ? (prefix + '/' + ent.name) : ent.name;
         const abs = P.join(absDir, ent.name);
+        // 1Ultra: a protected entry is never read or descended, whatever the search started from.
+        if (ultraPolicy && ultraPolicy.protectedPathReason(abs, { agentId: stats.agentId })) { stats.skippedProtected = (stats.skippedProtected || 0) + 1; continue; }
         // a link (or a Windows junction) must PROVE it still lands inside the jail before we read or descend
         if (typeof ent.isSymbolicLink === 'function' && ent.isSymbolicLink()) {
           if (baseReal && !pathInside(await realpathOrSelf(abs), baseReal)) { stats.skippedLinks = (stats.skippedLinks || 0) + 1; continue; }
@@ -990,7 +995,7 @@ const { note: failNote } = require('../../failopen');
         const target = ({ grep: 'content', find: 'files' })[args.target] || args.target || 'content';
         const cx = Math.max(0, Math.min(10, Number(args.context) || 0));
         const maxFiles = Math.max(1, Math.min(SEARCH_MAX_FILES_CEILING, Math.floor(Number(args.max_files)) || SEARCH_MAX_FILES));
-        const stats = { files: 0, truncated: false, maxFiles, gitignore: args.gitignore !== false };
+        const stats = { files: 0, truncated: false, maxFiles, gitignore: args.gitignore !== false, agentId: (ctx && ctx.agentId) || 'agent' };
         const signal = ctx && ctx.signal;
 
         // .gitignore layers ABOVE the start dir still bind (a `path` of "src/x" is inside the root's rules);
@@ -1008,7 +1013,8 @@ const { note: failNote } = require('../../failopen');
         }
         const baseReal = await realpathOrSelf(base);
         async function walkAll() { const all = []; await collectFiles(abs, startPrefix, all, stats, baseReal, ancestors); return all; }
-        const rg = await rgBinary();
+        // 1Ultra: while project protection is active only the Node walker runs, because it checks protected paths per entry
+        const rg = (typeof require === 'function' && require('../../../ultra-policy.js').protectionActive()) ? null : await rgBinary();
         const rgCommon = ['--no-require-git', '--no-messages', '--max-filesize', String(SEARCH_MAX_FILE_BYTES), '-g', '!node_modules', '--sort', 'path'];
         if (!stats.gitignore) rgCommon.push('--no-ignore');
         const rgRel = (p) => { const n = String(p).replace(/\\/g, '/').replace(/^\.\//, ''); return startPrefix ? startPrefix + '/' + n : n; };

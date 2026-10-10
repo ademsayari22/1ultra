@@ -141,11 +141,12 @@ function makeGuardedLookup(baseLookup, isOn, opts = {}) {
 }
 // The 1Ultra project folder is never an agent's to read or write; only the station runtime inside it is.
 let protectedRoots = null;
+function protectionActive() { return !!protectedRoots; }
 function setProtectedRoots(roots) {
   const path = require('node:path');
   protectedRoots = roots && roots.root ? { root: path.resolve(roots.root), runtime: path.resolve(roots.runtime || path.join(roots.root, 'runs', 'station-runtime')) } : null;
 }
-function kernelResolve(p) {
+function kernelResolve(p, depth = 0) {
   const path = require('node:path'), fs = require('node:fs');
   const raw = String(p);
   const abs = path.isAbsolute(raw) ? raw : process.cwd() + path.sep + raw;
@@ -154,7 +155,13 @@ function kernelResolve(p) {
     if (seg === '.') continue;
     if (seg === '..') { cur = path.dirname(cur); continue; }
     const next = path.join(cur, seg);
-    if (!missing) { try { cur = fs.realpathSync(next); continue; } catch (_) { missing = true; } }
+    if (!missing) {
+      try { cur = fs.realpathSync(next); continue; } catch (_) {
+        // A dangling link still says where a write would land: follow it as the kernel would.
+        try { if (depth < 40 && fs.lstatSync(next).isSymbolicLink()) { cur = kernelResolve(path.resolve(cur, fs.readlinkSync(next)), depth + 1); continue; } } catch (_) {}
+        missing = true;
+      }
+    }
     cur = next;
   }
   return cur;
@@ -164,12 +171,25 @@ function inside(child, parent) {
   const rel = path.relative(parent, child);
   return rel === '' || (rel !== '..' && !rel.startsWith('..' + path.sep) && !path.isAbsolute(rel));
 }
-function protectedPathReason(p) {
+// An agent's own workspace is runtime/<agentId>/ for a valid id that does not name a station folder (codex/ …).
+function ownWorkspaceId(opts) {
+  const id = opts && typeof opts.agentId === 'string' ? opts.agentId : '';
+  if (!/^[A-Za-z0-9_-]{1,40}$/.test(id)) return null;
+  try { return require('./sidecar/workspace-reserved.js').isReservedWorkspaceId(id) ? null : id; } catch (_) { return null; }
+}
+// Inside the runtime only the calling agent's own workspace is open; the station's control files (switches, stop,
+// permissions, saves), its reserved folders and other agents' workspaces are refused, even in Full Power.
+function protectedPathReason(p, opts) {
   if (!protectedRoots || !p) return null;
   const path = require('node:path');
   const runtimeReal = kernelResolve(protectedRoots.runtime), rootReal = kernelResolve(protectedRoots.root);
+  const id = ownWorkspaceId(opts);
+  const own = id ? [path.join(protectedRoots.runtime, id), path.join(runtimeReal, id)] : [];
   for (const candidate of [path.resolve(String(p)), kernelResolve(p)]) {
-    if (inside(candidate, protectedRoots.runtime) || inside(candidate, runtimeReal)) continue;
+    if (inside(candidate, protectedRoots.runtime) || inside(candidate, runtimeReal)) {
+      if (own.some(w => inside(candidate, w))) continue;
+      return '1Ultra station files outside your own workspace are off-limits to agents: ' + candidate;
+    }
     if (inside(candidate, protectedRoots.root) || inside(candidate, rootReal)) return '1Ultra project files are off-limits to agents: ' + candidate;
   }
   return null;
@@ -179,6 +199,12 @@ function blessRefusal(dir) {
   const d = kernelResolve(dir), root = kernelResolve(protectedRoots.root);
   if (inside(d, root) || inside(root, d)) return 'A project folder may not be, contain or sit inside the 1Ultra project (' + root + ').';
   return null;
+}
+// Every inference call re-checks the owner's stop and switch: an adapter built while they allowed it must not keep calling after they change.
+function guardAdapter(adapter, check) {
+  if (!adapter || typeof adapter.stream !== 'function') return adapter;
+  const inner = adapter.stream;
+  return Object.assign({}, adapter, { stream: async function* (...args) { check(); yield* inner.apply(adapter, args); } });
 }
 function makeGate(limit = () => 2) { const desks = new Set(); return {
   enter(desk) { if (desks.has(desk)) throw new Error('This desk already has an active job.'); const max = limit(); if (desks.size >= max) throw new Error('Only ' + max + ' preparation workers may run.'); desks.add(desk); },
@@ -251,4 +277,4 @@ function install(runtime, switches, opts = {}) {
   const cp = require('node:child_process');
   for (const method of ['spawn', 'spawnSync', 'exec', 'execSync', 'execFile', 'execFileSync', 'fork']) cp[method] = deny;
 }
-module.exports = { ROUTE_CLASSES, classifyPath, routeKey, gate, routeGate, preGate, makeGate, resolveRuntime, resolvePort, runtimeAllowed, install, assertModelAllowed: deny, providerSwitch, providerAllowed, admitRun, allowedTarget, canonicalHost, isPrivateHost, makeGuardedLookup, setProtectedRoots, protectedPathReason, blessRefusal };
+module.exports = { ROUTE_CLASSES, classifyPath, routeKey, gate, routeGate, preGate, makeGate, resolveRuntime, resolvePort, runtimeAllowed, install, assertModelAllowed: deny, providerSwitch, providerAllowed, admitRun, allowedTarget, canonicalHost, isPrivateHost, makeGuardedLookup, setProtectedRoots, protectionActive, protectedPathReason, blessRefusal, guardAdapter };
