@@ -250,4 +250,5 @@ const preGate=(method,url)=>policy.preGate(method,url,switches);
 const routeGate=r=>policy.routeGate(r,switches);
 process.on('exit',()=>{if(rpc)rpc.kill('SIGTERM');for(const job of jobs.values())terminateJob(job);});
 module.exports={root,runtime,policy,handle,classic,campaign,switches,preGate,routeGate,registerRoutes,beforeRun,assertProviderAllowed,onStationHalt,onStationResume,registerStationHalt,isHalted};
-policy.install(runtime);
+policy.setProtectedRoots({root,runtime});
+policy.install(runtime,switches,{freellmapiPort:3001});

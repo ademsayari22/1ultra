@@ -2,7 +2,7 @@
 const deny = () => { throw new Error('Live models and external connections are disabled in this campaign.'); };
 // Every Starnet API family by path prefix. 'local' = station state on this machine only. A switch id = answers only
 // while the owner has that switch on ('channels'/'providers' = any switch of that family). 'blocked' = not part of
-// 1Ultra. No match = 'unclassified' and refused. policy.install() still blocks all outbound calls underneath.
+// 1Ultra. No match = 'unclassified' and refused. policy.install() guards outbound calls with the same switches.
 const ROUTE_CLASSES = Object.freeze({
   '/api/activity':'local','/api/agent-skills':'local','/api/agents':'local','/api/attachments':'local','/api/budget':'local',
   '/api/cancel':'local','/api/checkpoint':'local','/api/config':'local','/api/consent':'local','/api/deliverables':'local',
@@ -122,6 +122,22 @@ function allowedTarget(target, isOn, opts = {}) {
   if (CODEX_HOSTS.some(h => host === h || host.endsWith('.' + h))) return on('lead.codex') || on('tools.web');
   return on('tools.web');
 }
+function makeGuardedLookup(baseLookup, isOn, opts = {}) {
+  return (hostname, options, callback) => {
+    if (typeof options === 'function') { callback = options; options = {}; }
+    options = options || {};
+    baseLookup(hostname, { ...options, all: true }, (err, list) => {
+      if (err) return callback(err);
+      // The socket wrapper already authorized the hostname; DNS adds the private-address check.
+      if (list.some(a => {
+        const ok = !isPrivateHost(a.address) || allowedTarget({ host: a.address, port: opts.port, protocol: opts.protocol }, isOn, opts);
+        return !ok;
+      }))
+        return callback(Object.assign(new Error('1Ultra blocked an outbound connection to ' + hostname + '. Turn on the matching switch.'), { code: 'ULTRA_OUTBOUND_BLOCKED' }));
+      return options.all ? callback(null, list) : callback(null, list[0].address, list[0].family);
+    });
+  };
+}
 // The 1Ultra project folder is never an agent's to read or write; only the station runtime inside it is.
 let protectedRoots = null;
 function setProtectedRoots(roots) {
@@ -182,17 +198,56 @@ function runtimeAllowed(root, runtime) {
   if (runtime === path.join(root, 'runs', 'station-runtime')) return true;
   return runtime.startsWith('/tmp/') && (runtime === path.join(root, 'runtime') && root.startsWith('/tmp/') || !runtime.startsWith(root + path.sep));
 }
-function install(runtime) {
+function urlTarget(input) {
+  const raw = typeof input === 'string' || input instanceof URL ? String(input) : (input && input.url) || '';
+  try { const u = new URL(raw); return { host: u.hostname, port: u.port, protocol: u.protocol }; } catch (_) { return { host: '', port: 0, protocol: '' }; }
+}
+function requestTarget(args, protocol) {
+  const a = args[0];
+  if (typeof a === 'string' || a instanceof URL) return urlTarget(a);
+  const o = a && typeof a === 'object' ? a : {};
+  if (o.socketPath) return null;
+  return { host: o.hostname || o.host || 'localhost', port: o.port, protocol: o.protocol || protocol };
+}
+function connectTarget(args) {
+  const a = args[0];
+  if (Array.isArray(a)) return connectTarget(a);
+  if (a && typeof a === 'object') return a.path ? null : { host: a.host || 'localhost', port: a.port };
+  if (typeof a === 'number' || /^\d+$/.test(String(a))) return { host: typeof args[1] === 'string' ? args[1] : 'localhost', port: Number(a) };
+  return null; // a string path is a local IPC socket
+}
+function install(runtime, switches, opts = {}) {
   const port = resolvePort(process.env);
   for (const key of Object.keys(process.env)) if (/^(STARNET|SKYNET)_/.test(key)) delete process.env[key];
   Object.assign(process.env, { STARNET_WORKSPACES: runtime, STARNET_PORT: port,
     STARNET_LIVE_PRICES: '0', STARNET_QUEST_REFRESH: '0', STARNET_CRON_ENABLED: '0', STARNET_NIGHTSHIFT_ENABLED: '0',
     STARNET_SKILL_REVIEW: '0', STARNET_APP_VERSION: '1Ultra-local', STARNET_BUILD_DESCRIBE: '54899e5+1ultra' });
-  // Phase 1: no outbound connection of any kind. Later phases allow specific hosts per switch.
-  globalThis.fetch = async () => deny();
-  for (const mod of ['node:http', 'node:https']) { const m = require(mod); m.request = deny; m.get = deny; }
-  require('node:net').Socket.prototype.connect = deny;
+  const isOn = id => { try { return !!(switches && switches.isOn(id)); } catch (_) { return false; } };
+  const check = target => {
+    if (target && !allowedTarget(target, isOn, opts))
+      throw Object.assign(new Error('1Ultra blocked an outbound connection to ' + (target.host || 'an unknown host') + '. Turn on the matching switch.'), { code: 'ULTRA_OUTBOUND_BLOCKED' });
+  };
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => { check(urlTarget(input)); return realFetch(input, init); };
+  for (const [mod, protocol] of [['node:http', 'http:'], ['node:https', 'https:']]) {
+    const m = require(mod);
+    for (const fn of ['request', 'get']) { const real = m[fn]; m[fn] = function (...args) { check(requestTarget(args, protocol)); return real.apply(this, args); }; }
+  }
+  const net = require('node:net'); const realConnect = net.Socket.prototype.connect;
+  net.Socket.prototype.connect = function (...args) {
+    const target = connectTarget(args); check(target);
+    if (target && net.isIP(target.host) === 0 && canonicalHost(target.host) !== 'localhost') {
+      const callArgs = Array.isArray(args[0]) ? args[0] : args;
+      const hasOptions = callArgs[0] && typeof callArgs[0] === 'object';
+      const options = hasOptions ? callArgs[0] : { host: target.host, port: target.port };
+      if (!options.lookup) {
+        const rest = callArgs.slice(hasOptions || typeof callArgs[1] !== 'string' ? 1 : 2);
+        args = [{ ...options, lookup: makeGuardedLookup(require('node:dns').lookup, isOn, { ...opts, port: target.port, protocol: target.protocol }) }, ...rest];
+      }
+    }
+    return realConnect.apply(this, args);
+  };
   const cp = require('node:child_process');
   for (const method of ['spawn', 'spawnSync', 'exec', 'execSync', 'execFile', 'execFileSync', 'fork']) cp[method] = deny;
 }
-module.exports = { ROUTE_CLASSES, classifyPath, routeKey, gate, routeGate, preGate, makeGate, resolveRuntime, resolvePort, runtimeAllowed, install, assertModelAllowed: deny, providerSwitch, providerAllowed, admitRun, allowedTarget, canonicalHost, isPrivateHost, setProtectedRoots, protectedPathReason, blessRefusal };
+module.exports = { ROUTE_CLASSES, classifyPath, routeKey, gate, routeGate, preGate, makeGate, resolveRuntime, resolvePort, runtimeAllowed, install, assertModelAllowed: deny, providerSwitch, providerAllowed, admitRun, allowedTarget, canonicalHost, isPrivateHost, makeGuardedLookup, setProtectedRoots, protectedPathReason, blessRefusal };

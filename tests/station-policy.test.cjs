@@ -177,3 +177,91 @@ test('invalid numeric and IPv6 hosts fail closed during canonicalization', () =>
     assert.equal(Policy.allowedTarget({ host, port: 443, protocol: 'https:' }, on('tools.web', 'lead.codex', 'crew.freellmapi'), { freellmapiPort: 3001 }), false, host);
   }
 });
+
+const lookupOn = (...ids) => id => ids.includes(id);
+function lookupResult(lookup, hostname, options) {
+  return new Promise(resolve => {
+    const callback = (...args) => resolve(args);
+    if (options === undefined) lookup(hostname, callback);
+    else lookup(hostname, options, callback);
+  });
+}
+test('guarded DNS refuses any private address in the answer list', async () => {
+  const answers = {
+    'evil.example': [{ address: '10.0.0.5', family: 4 }],
+    'mixed.example': [{ address: '93.184.216.34', family: 4 }, { address: '10.0.0.5', family: 4 }],
+  };
+  const baseLookup = (hostname, options, callback) => {
+    assert.equal(options.all, true);
+    callback(null, answers[hostname]);
+  };
+  const lookup = Policy.makeGuardedLookup(baseLookup, lookupOn('tools.web'), { port: 443, protocol: 'https:' });
+  for (const hostname of ['evil.example', 'mixed.example']) {
+    const [error, address] = await lookupResult(lookup, hostname, { all: false });
+    assert.ok(error instanceof Error, hostname);
+    assert.equal(error.code, 'ULTRA_OUTBOUND_BLOCKED', hostname);
+    assert.equal(address, undefined, hostname);
+  }
+});
+test('guarded DNS returns a public address in the requested scalar or list shape', async () => {
+  const baseLookup = (hostname, options, callback) => {
+    assert.equal(hostname, 'ok.example');
+    assert.deepEqual(options, { family: 4, all: true });
+    callback(null, [{ address: '93.184.216.34', family: 4 }]);
+  };
+  const lookup = Policy.makeGuardedLookup(baseLookup, lookupOn('tools.web'), { port: 443, protocol: 'https:' });
+  assert.deepEqual(await lookupResult(lookup, 'ok.example', { family: 4, all: false }), [null, '93.184.216.34', 4]);
+  assert.deepEqual(await lookupResult(lookup, 'ok.example', { family: 4, all: true }), [null, [{ address: '93.184.216.34', family: 4 }]]);
+});
+test('guarded DNS accepts the hostname and callback form', async () => {
+  const baseLookup = (hostname, options, callback) => {
+    assert.equal(hostname, 'ok.example');
+    assert.deepEqual(options, { all: true });
+    callback(null, [{ address: '93.184.216.34', family: 4 }]);
+  };
+  const lookup = Policy.makeGuardedLookup(baseLookup, lookupOn('tools.web'), { port: 443 });
+  assert.deepEqual(await lookupResult(lookup, 'ok.example'), [null, '93.184.216.34', 4]);
+});
+test('guarded DNS allows the FreeLLMAPI loopback answer only with its crew switch', async () => {
+  const baseLookup = (hostname, options, callback) => {
+    assert.equal(hostname, 'localhost');
+    assert.equal(options.all, true);
+    callback(null, [{ address: '127.0.0.1', family: 4 }]);
+  };
+  const opts = { freellmapiPort: 3001, port: 3001, protocol: 'http:' };
+  const allowed = Policy.makeGuardedLookup(baseLookup, lookupOn('crew.freellmapi'), opts);
+  assert.deepEqual(await lookupResult(allowed, 'localhost', { all: false }), [null, '127.0.0.1', 4]);
+  for (const on of [lookupOn(), lookupOn('tools.web')]) {
+    const [error] = await lookupResult(Policy.makeGuardedLookup(baseLookup, on, opts), 'localhost', { all: false });
+    assert.equal(error.code, 'ULTRA_OUTBOUND_BLOCKED');
+  }
+});
+test('guarded DNS passes through lookup errors', async () => {
+  const original = Object.assign(new Error('No DNS answer'), { code: 'ENOTFOUND' });
+  const baseLookup = (hostname, options, callback) => callback(original);
+  const lookup = Policy.makeGuardedLookup(baseLookup, lookupOn('tools.web'), { port: 443 });
+  const result = await lookupResult(lookup, 'missing.example', { all: true });
+  assert.equal(result.length, 1);
+  assert.equal(result[0], original);
+});
+test('guarded DNS permits public Codex answers with only the lead switch on', async () => {
+  const baseLookup = (hostname, options, callback) => {
+    assert.equal(hostname, 'chatgpt.com');
+    assert.equal(options.all, true);
+    callback(null, [{ address: '104.18.32.47', family: 4 }]);
+  };
+  const lookup = Policy.makeGuardedLookup(baseLookup, lookupOn('lead.codex'), { port: 443, protocol: 'https:' });
+  assert.deepEqual(await lookupResult(lookup, 'chatgpt.com', { all: false }), [null, '104.18.32.47', 4]);
+});
+test('guarded DNS refuses loopback rebinding on port 443 with only the lead switch on', async () => {
+  const baseLookup = (hostname, options, callback) => {
+    assert.equal(hostname, 'rebind.example');
+    assert.equal(options.all, true);
+    callback(null, [{ address: '127.0.0.1', family: 4 }]);
+  };
+  const lookup = Policy.makeGuardedLookup(baseLookup, lookupOn('lead.codex'), { port: 443, protocol: 'https:' });
+  const result = await lookupResult(lookup, 'rebind.example', { all: false });
+  assert.equal(result.length, 1);
+  assert.ok(result[0] instanceof Error);
+  assert.equal(result[0].code, 'ULTRA_OUTBOUND_BLOCKED');
+});
