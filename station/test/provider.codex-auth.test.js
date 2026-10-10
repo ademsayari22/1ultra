@@ -162,8 +162,8 @@ function jwt(claims) {
     const pathMod = require('node:path');
     const roamingBase = pathMod.join('C:\\', 'Users', 'u', 'AppData', 'Roaming');
     const currentRoot = pathMod.join('C:\\', 'Users', 'u', 'AppData', 'Roaming', 'ai.skynet.harness', 'workspaces');
-    const legacyRoot = pathMod.join('C:\\', 'Users', 'u', 'AppData', 'Local', '1Ultra', 'workspaces');
-    const sidecarDir = pathMod.join('C:\\', 'Users', 'u', 'AppData', 'Local', '1Ultra', 'sidecar');
+    const legacyRoot = pathMod.join('C:\\', 'Users', 'u', 'AppData', 'Local', 'StarNet', 'workspaces');
+    const sidecarDir = pathMod.join('C:\\', 'Users', 'u', 'AppData', 'Local', 'StarNet', 'sidecar');
     const localBase = pathMod.join('C:\\', 'Users', 'u', 'AppData', 'Local');
     const migrationOpts = {
       pathMod, currentWorkspaces: currentRoot, defaultWorkspaces: () => legacyRoot, sidecarDir,
@@ -223,7 +223,7 @@ function jwt(claims) {
     A.ok(tokenStore.isRecognizedWorkspaceRoot(currentRoot, migrationOpts),
       'the real Roaming app-data home is recognized, so version-rename migration still runs');
 
-    const brandedTempRoot = pathMod.join(pathMod.sep === '\\' ? 'C:\\' : '/', 'tmp', 'attacker', '1Ultra', 'workspaces');
+    const brandedTempRoot = pathMod.join(pathMod.sep === '\\' ? 'C:\\' : '/', 'tmp', 'attacker', 'StarNet', 'workspaces');
     const brandedTempFiles = tokenStore.candidateCodexTokenFiles({
       pathMod, currentWorkspaces: brandedTempRoot, defaultWorkspaces: () => legacyRoot, sidecarDir,
       env: { LOCALAPPDATA: localBase, APPDATA: roamingBase }

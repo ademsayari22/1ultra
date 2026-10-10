@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Line Design"
   category: "Station"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 A line is standing work the station runs unwatched: a job lands in the INBOX, rides the belts through BAYS, and leaves at the OUTBOX. Each bay is one agent doing one step from one brief. A line scheduled untested fails at 3 a.m. with nobody there — so the design ends with a test, never with the schedule.

@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Data Cleanup and Analysis"
   category: "Productivity"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 A messy export becomes a clean table, a written record of every cleaning decision, a short report and one chart. The bar: every number in the report traces back to rows in the raw file, and every raw row is accounted for — in the clean table, or in the rejects file with its reason.

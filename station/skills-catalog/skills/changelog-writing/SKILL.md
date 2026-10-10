@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Changelog Writing"
   category: "Engineering"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 A changelog tells the people who use the software what is different for them. It is not a list of what the developers did. The bar: every line is an effect a user can notice, every line traces to a change you read, and nothing in the range is unaccounted for.

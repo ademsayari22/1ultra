@@ -16,7 +16,7 @@ class UpdateStarnetTest(unittest.TestCase):
         files = {
             'sidecar/index.js': "'use strict';\nconst label = 'StarNet ready';\n",
             'frontend/index.html': '<title>STARNET</title><p>Starnet station</p>',
-            'frontend/app/a.js': "show('StarNet'); key('starnet.save'); env('STARNET_PORT');\n",
+            'frontend/app/a.js': "show('StarNet ready'); key('starnet.save'); env('STARNET_PORT'); app('StarNet');\n",
             'frontend/prop-atlas.html': '<p>review page</p>',
             'frontend/dev/review.html': '<p>dev</p>',
             'frontend/assets/brand/logo.svg': '<svg/>',
@@ -47,7 +47,7 @@ class UpdateStarnetTest(unittest.TestCase):
 
     def test_rebrands_display_words_only(self):
         self.run_export()
-        self.assertEqual((self.dest / 'frontend/app/a.js').read_text(), "show('1Ultra'); key('starnet.save'); env('STARNET_PORT');\n")
+        self.assertEqual((self.dest / 'frontend/app/a.js').read_text(), "show('1Ultra ready'); key('starnet.save'); env('STARNET_PORT'); app('StarNet');\n")
         self.assertEqual((self.dest / 'frontend/index.html').read_text(), '<title>1ULTRA</title><p>1Ultra station</p>')
         self.assertEqual((self.dest / 'LICENSE').read_text(), 'MIT StarNet\n')
         self.assertEqual((self.dest / 'NOTICE.md').read_text(), 'StarNet credits\n')
@@ -56,6 +56,11 @@ class UpdateStarnetTest(unittest.TestCase):
         self.assertEqual(U.rebrand("h['X-StarNet-Token'] = t; p = 'Application Support/StarNet'; code = 'refused-by-newer-StarNet'"),
                          "h['X-StarNet-Token'] = t; p = 'Application Support/StarNet'; code = 'refused-by-newer-StarNet'")
         self.assertEqual(U.rebrand('Came with StarNet. STARNET: ready'), 'Came with 1Ultra. 1ULTRA: ready')
+
+    def test_rebrand_leaves_functional_strings_alone(self):
+        code = "const RE = /^(?:STARNET|SKYNET)_/i; dir = path.join(base, 'StarNet', 'workspaces'); label: 'STARNET'"
+        self.assertEqual(U.rebrand(code), code)
+        self.assertEqual(U.rebrand('<title>STARNET</title><b>StarNet could not save.</b>'), '<title>1ULTRA</title><b>1Ultra could not save.</b>')
 
     def test_applies_patch_and_records_adaptations(self):
         manifest = self.run_export()

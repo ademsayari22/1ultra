@@ -18,7 +18,7 @@ try {
     platform: { platform: process.platform, arch: process.arch }, provenance: { verified: true }
   } });
   const subjectFile = join(temp, 'subject.json'), referenceFile = join(temp, 'reference.json');
-  writeFileSync(subjectFile, JSON.stringify(manifest('1Ultra', '0.8.5', 'a'.repeat(40), 'b'.repeat(40))));
+  writeFileSync(subjectFile, JSON.stringify(manifest('StarNet', '0.8.5', 'a'.repeat(40), 'b'.repeat(40))));
   writeFileSync(referenceFile, JSON.stringify(manifest('Hermes Agent', contract.reference.version, contract.reference.commit, contract.reference.sourceTree)));
   const probe = index => ({
     schemaVersion: 'starnet.eval.same-model-probe.v1', generatedAt: new Date().toISOString(),

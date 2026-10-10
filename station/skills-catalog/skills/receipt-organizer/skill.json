@@ -6,5 +6,5 @@
   "tags": ["receipts", "invoices", "ledger", "bookkeeping", "files"],
   "requires": ["cabinet"],
   "license": "MIT",
-  "authors": ["1Ultra"]
+  "authors": ["StarNet"]
 }

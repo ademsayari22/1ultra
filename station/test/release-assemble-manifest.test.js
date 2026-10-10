@@ -169,14 +169,14 @@ try {
     ok(/SemVer/i.test(res.stderr), 'semver message');
   }
   // 8. Basename collision across platforms → hard fail (mac bundles not renamed per-arch:
-  // both legs emit "1Ultra.app.tar.gz", which is ONE flat release asset — one arch would
+  // both legs emit "StarNet.app.tar.gz", which is ONE flat release asset — one arch would
   // silently receive the other arch's binary).
   {
     const dist = path.join(tmp, 'collide');
     fs.mkdirSync(dist);
     writeArtifact(dist, 'StarNet_0.2.0_x64-setup.exe');
-    writeArtifact(dist, path.join('macos', 'aarch64', '1Ultra.app.tar.gz'));
-    writeArtifact(dist, path.join('macos', 'x86_64', '1Ultra.app.tar.gz'));
+    writeArtifact(dist, path.join('macos', 'aarch64', 'StarNet.app.tar.gz'));
+    writeArtifact(dist, path.join('macos', 'x86_64', 'StarNet.app.tar.gz'));
     writeArtifact(dist, 'StarNet_0.2.0_amd64.AppImage');
     writeArtifact(dist, 'StarNet_0.2.0_amd64.deb');
     const res = run(['--dist', dist, ...COMMON, '--out', path.join(tmp, 'collide-latest.json')]);

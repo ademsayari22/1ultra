@@ -60,11 +60,11 @@
   }
   /* The `_`-boundary requirement meant a CONCATENATED name never matched, so the ambient secrets people
      actually have leaked straight into every task child's env: STRIPE_APIKEY, ANTHROPIC_APIKEY, GITHUB_PAT,
-     FOO_ACCESSTOKEN. (1Ultra's own KEYS vars always end in _API_KEY, which is why this never showed up in
+     FOO_ACCESSTOKEN. (StarNet's own KEYS vars always end in _API_KEY, which is why this never showed up in
      our own fixtures.) Keep the boundary form for the words that read as prose (PASS, AUTH, KEY) and add
      the glued spellings that are unambiguous on their own. */
   const SECRET_ENV_NAME_RE = /(?:^|_)(?:TOKEN|KEY|SECRET|PASSWORD|PASS|AUTH|BEARER|COOKIE|CREDENTIAL)(?:_|$)|(?:APIKEY|ACCESSTOKEN|ACCESSKEY|SECRETKEY|AUTHTOKEN|APITOKEN|PRIVATEKEY|PASSWD)|(?:^|_)PAT(?:_|$)/i;
-  const INTERNAL_ENV_NAME_RE = /^(?:1ULTRA|SKYNET)_/i;
+  const INTERNAL_ENV_NAME_RE = /^(?:STARNET|SKYNET)_/i;
   const EXECUTION_HOOK_ENV_RE = /^(?:NODE_OPTIONS|NODE_PATH|npm_config_script_shell|COMSPEC)$/i;
   /* Agent-driven commands: the shared station-secret strip (child-env.js — 1Ultra's own names, the service-key
      names the sidecar exported, any held secret VALUE), then every secret-SHAPED name on top. */

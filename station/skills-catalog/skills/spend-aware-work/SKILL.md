@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Spend-Aware Work"
   category: "Station"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 Metered runs spend real money on the Commander's account. The station has rails that stop a run when a cap is hit — but a run stopped by a cap has usually already wasted what it spent. Plan so you never meet the rail.

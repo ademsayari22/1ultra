@@ -1,6 +1,6 @@
 /* sidecar/tools/builtin/station-show.js — station.show: the agent puts a 1Ultra window in front of the Commander.
 
-   WHY (Andrew 2026-10-04: agents should "basically use [1Ultra] itself instead of the user having to navigate"): an agent
+   WHY (Andrew 2026-10-04: agents should "basically use [StarNet] itself instead of the user having to navigate"): an agent
    asked "where are my deliverables?" or "open my schedules" could only recite a menu path for the Commander to click
    through. This opens it — any place in frontend/app/places.js (the one list of where things are), through the same door
    its dock button or tab uses, raised to the front, answered with what is really on screen.

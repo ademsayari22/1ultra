@@ -6,5 +6,5 @@
   "tags": ["projects", "codebase", "onboarding", "notebook"],
   "requires": ["cabinet", "notebook"],
   "license": "MIT",
-  "authors": ["1Ultra"]
+  "authors": ["StarNet"]
 }

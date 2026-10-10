@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Issue Triage"
   category: "Engineering"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 Triage turns a pile of reports into a short list of work someone can start on, and an honest account of the rest. The bar: every item was read in full, every label has a reason, and nothing on GitHub changes until the Commander has approved the list.

@@ -110,7 +110,7 @@ async function until(B, headers, pred, label, ms) {
     SKYNET_FULL_ACCESS: '1'
   };
   // scrub any inherited budget env so the assertion is about the shipped default, not this machine's shell
-  for (const k of Object.keys(process.env)) if (/^(SKYNET|1ULTRA)_BUDGET_/.test(k)) env[k] = '';
+  for (const k of Object.keys(process.env)) if (/^(SKYNET|STARNET)_BUDGET_/.test(k)) env[k] = '';
   let child, port;
   try {
     const OBJ = 'keep the release folder complete and correct';

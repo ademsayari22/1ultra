@@ -38,11 +38,11 @@ const env = C.buildExport({
     id: 'bad-url', transport: 'http', url: 'https://bad host/mcp?opaque=MALFORMED_URL_SECRET'
   }],
   notifyPrefs: { runComplete: true, sound: false }
-}, { now: 123, app: '1Ultra' });
+}, { now: 123, app: 'StarNet' });
 
 eq(env.starnetExport, 1, 'envelope carries the starnetExport:1 version pivot');
 eq(env.exportedAt, 123, 'exportedAt stamped from injected clock');
-eq(env.app, '1Ultra', 'app name stamped');
+eq(env.app, 'StarNet', 'app name stamped');
 eq(env.sections.budget.perRun, 2, 'budget section carried');
 eq(env.sections.fallback.models.length, 2, 'fallback chain carried as {models}');
 eq(env.sections.dossier.block, 'the commander block', 'dossier carried');

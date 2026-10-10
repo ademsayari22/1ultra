@@ -51,7 +51,7 @@ function proof(hash, bytes, overrides) {
     generatedAt: new Date().toISOString(),
     sourceMachine: { os: 'Windows 11 Test VM', machineKind: 'windows-sandbox' },
     installer: { sha256: hash, bytes },
-    installedApp: { source: 'nsis-installed', launched: true, usableHarness: true, observedWindowTitle: '1Ultra' },
+    installedApp: { source: 'nsis-installed', launched: true, usableHarness: true, observedWindowTitle: 'StarNet' },
     workload: {
       completed: true,
       durationMs: 42000,

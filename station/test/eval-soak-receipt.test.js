@@ -17,7 +17,7 @@ try {
   const keygen = spawnSync(process.execPath, ['scripts/eval/runner.mjs', 'keygen', '--private', privateKey, '--public', publicKey], { cwd: root, encoding: 'utf8' });
   A.eq(keygen.status, 0, 'test receipt key is generated');
   writeFileSync(manifestFile, JSON.stringify({ subject: {
-    name: '1Ultra', version: '0.8.5', commit: 'a'.repeat(40), dirty: false,
+    name: 'StarNet', version: '0.8.5', commit: 'a'.repeat(40), dirty: false,
     sourceTree: { value: 'b'.repeat(40) }, executable: { path: process.execPath, sha256: executableSha },
     platform: { platform: 'win32', arch: 'x64' },
     provenance: { verified: true, describe }

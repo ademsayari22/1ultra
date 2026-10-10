@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Calendar Scheduling"
   category: "Productivity"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 Scheduling goes wrong in two ways: a time that was not actually free, and a time zone nobody said out loud. Offer only slots you checked, name the zone on every time, and change nothing on the calendar until the Commander says so.

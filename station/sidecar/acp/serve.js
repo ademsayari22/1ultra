@@ -7,7 +7,7 @@
    consent prompts to the editor as native approve/reject cards.
 
    Register it with the client, e.g.:
-     { "agent_servers": { "1Ultra": { "command": "npm", "args": ["run", "-s", "acp:serve"] } } }
+     { "agent_servers": { "StarNet": { "command": "npm", "args": ["run", "-s", "acp:serve"] } } }
    (or `node sidecar/acp/serve.js`, with --port=/--host=/--token= or STARNET_PORT/STARNET_TOKEN.)
 
    ── THE SHAPE (identical to sidecar/mcp/serve.js on purpose) ─────────────────────────────────────────────────

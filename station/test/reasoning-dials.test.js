@@ -165,7 +165,7 @@ module.exports = (async () => {
     await collect(run, { model: 'deepseek-flash', messages: next, tools: TOOLS, reasoningEffort: 'high' });
     const sent = ep.posts[1].messages.find(x => x.tool_calls);
     A.eq(sent.reasoning_content, 'I should read the file first.', 'the captured reasoning rides back on its own turn');
-    A.eq(sent.reasoning, undefined, '1Ultra\'s parking field never reaches the wire');
+    A.eq(sent.reasoning, undefined, 'StarNet\'s parking field never reaches the wire');
     A.eq(JSON.stringify(next), before, 'the durable transcript is never mutated');
     // thinking OFF: plain schema, nothing owed
     ep.posts.length = 0;

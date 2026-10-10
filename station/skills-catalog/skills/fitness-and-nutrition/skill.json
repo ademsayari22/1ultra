@@ -6,5 +6,5 @@
   "tags": ["fitness", "training", "nutrition", "meal-planning", "health", "habit-tracking"],
   "requires": ["cabinet"],
   "license": "MIT",
-  "authors": ["1Ultra"]
+  "authors": ["StarNet"]
 }

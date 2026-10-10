@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Fitness and Nutrition"
   category: "Planning"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 Plan training and eating for one stated goal, then let the log steer it. The bar: a plan the Commander can follow this week with the time and equipment they really have, numbers whose arithmetic is shown, and no advice that belongs to a doctor.

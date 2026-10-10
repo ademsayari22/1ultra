@@ -6,5 +6,5 @@
   "tags": ["citations", "sources", "fact-checking", "research", "quotes"],
   "requires": ["dish", "cabinet"],
   "license": "MIT",
-  "authors": ["1Ultra"]
+  "authors": ["StarNet"]
 }

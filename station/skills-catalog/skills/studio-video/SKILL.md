@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Studio Video"
   category: "Creative"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 The studio cuts a video from parts it makes itself: voiceover takes from voice_generate, stills from image_generate, and an edit decision list from resolve_timeline_file. The narration is the spine — pictures are timed to the voice, never the other way round.

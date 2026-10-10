@@ -83,7 +83,7 @@ const Topbar = (() => {
   function downTip(desktop) {
     if (!engine) return DOWN_TIP;
     if (engine.state === 'ok') return 'lost the live link to 1Ultra’s background service — the service itself is answering, so this window is reconnecting on its own';
-    const what = engine.reason || (engine.state === 'silent' ? '1Ultra’s background service isn’t answering (it may be stuck)' : '1Ultra’s background service isn’t running');
+    const what = engine.reason || (engine.state === 'silent' ? 'StarNet’s background service isn’t answering (it may be stuck)' : 'StarNet’s background service isn’t running');
     return what + (desktop ? ' — click to restart the station service' : BROWSER_STEP);
   }
   function connectionBox(el) { return (el && el.closest && el.closest('.tb-connection')) || el; }

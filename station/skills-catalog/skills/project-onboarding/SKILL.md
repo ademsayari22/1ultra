@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Project Onboarding"
   category: "Engineering"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 The first hour in a new folder decides whether every later run works with the project or against it. Read before you write, and save what you learned so the next run starts from the map instead of from zero.

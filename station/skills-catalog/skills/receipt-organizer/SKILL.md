@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Receipt Organizer"
   category: "Productivity"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 A receipt pile becomes useful when every document has one row in a ledger and one obvious name. Read each document once, record only what it actually says, and never touch the originals without the Commander's go-ahead.

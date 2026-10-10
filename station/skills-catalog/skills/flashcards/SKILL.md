@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Flashcards"
   category: "Planning"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 Spaced repetition works only when two things are true: the cards ask for real recall, and the grading is honest. A deck graded kindly schedules itself too far out and the Commander forgets the material while the numbers say otherwise.

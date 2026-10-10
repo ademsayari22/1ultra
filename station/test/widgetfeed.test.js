@@ -166,7 +166,7 @@ const rejects = async (p, label) => { try { await p; A.ok(false, label + ' (did 
     await rejects(t.getTool.run({ id: w.id }), 'scheduled update stops on a deleted definition');
   }
   {
-    const { t } = make(); const source = { kind: 'agent', id: 'starnet', label: '1Ultra' };
+    const { t } = make(); const source = { kind: 'agent', id: 'starnet', label: 'StarNet' };
     for (const display of ['list', 'trend', 'progress']) {
       await t.configure({ id: display, label: display, request: 'real data', display }, source);
       await rejects(run(t, { id: display, version: 1, value: '9' }), display + ' refuses an invented/missing shape');

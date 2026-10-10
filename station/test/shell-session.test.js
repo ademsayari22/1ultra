@@ -58,7 +58,7 @@ function makeFake() {
   }
   {
     const W = path.win32;
-    const root = 'C:\\Users\\andro\\AppData\\Local\\1Ultra\\workspaces';
+    const root = 'C:\\Users\\andro\\AppData\\Local\\StarNet\\workspaces';
     const jail = W.join(root, 'agent');
     const ext = 'C:\\Users\\andro\\Desktop\\GALAGA';
     const fakeFs = { existsSync: function () { return true; }, statSync: function () { return { isDirectory: function () { return true; } }; } };
@@ -110,7 +110,7 @@ function makeFake() {
   // Step 6: a Windows local environment can run from a user-named host folder via structured cwd, not `cd /c/...`.
   {
     const W = path.win32;
-    const root = 'C:\\Users\\andro\\AppData\\Local\\1Ultra\\workspaces';
+    const root = 'C:\\Users\\andro\\AppData\\Local\\StarNet\\workspaces';
     const jailWin = W.join(root, 'agent');
     const ext = 'C:\\Users\\andro\\Desktop\\GALAGA';
     const calls = [];
@@ -136,7 +136,7 @@ function makeFake() {
   // from the same agent's ordinary private-workspace shell session.
   {
     const W = path.win32;
-    const root = 'C:\\Users\\andro\\AppData\\Local\\1Ultra\\workspaces';
+    const root = 'C:\\Users\\andro\\AppData\\Local\\StarNet\\workspaces';
     const jailWin = W.join(root, 'agent');
     const project = 'C:\\Users\\andro\\Desktop\\PROJECT';
     const projectSub = W.join(project, 'sub');
@@ -171,7 +171,7 @@ function makeFake() {
   // records the dangerous-shaped command but never executes it, so this proves policy without mutating the host.
   {
     const W = path.win32;
-    const root = 'C:\\Users\\andro\\AppData\\Local\\1Ultra\\workspaces';
+    const root = 'C:\\Users\\andro\\AppData\\Local\\StarNet\\workspaces';
     const jailWin = W.join(root, 'agent');
     const hostDir = 'C:\\Windows';
     const calls = [];

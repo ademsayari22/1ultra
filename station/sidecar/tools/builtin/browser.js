@@ -663,10 +663,10 @@
     const host = String((r && r.host) || 'the site');
     const priv = /resolves to private address (\S+)/.exec(reason);
     if (priv) {
-      return { code: 'NETWORK_REFUSED', text: '1Ultra\'s browser safety check refused it: this computer\'s DNS answered ' + priv[1] + ' for ' + host +
+      return { code: 'NETWORK_REFUSED', text: 'StarNet\'s browser safety check refused it: this computer\'s DNS answered ' + priv[1] + ' for ' + host +
         ', a private or blocked address. That answer usually comes from a DNS filter (Pi-hole, AdGuard, NextDNS, router parental controls), ' +
         'a VPN, a security app or the hosts file on this computer. A browser using its own secure DNS can still open the site, so it may work there. ' +
-        '1Ultra\'s browser uses no outside proxy, VPN or gateway: it connects from this computer. Fix or allow ' + host + ' in that DNS filter.' };
+        'StarNet\'s browser uses no outside proxy, VPN or gateway: it connects from this computer. Fix or allow ' + host + ' in that DNS filter.' };
     }
     if (/ENOTFOUND|EAI_AGAIN|ESERVFAIL|ETIMEOUT|ECONNREFUSED.*53|getaddrinfo|no verified DNS address/i.test(reason)) {
       return { code: 'NAVIGATION_FAILED', text: 'this computer could not look up ' + host + ' (' + reason + '). Its DNS did not answer for that name; ' +
@@ -676,7 +676,7 @@
       return { code: 'NAVIGATION_FAILED', text: reason + ' from this computer: the address was found but did not answer. A firewall, VPN or security app ' +
         'may be blocking 1Ultra\'s connection to ' + host + '.' };
     }
-    return { code: 'NETWORK_REFUSED', text: '1Ultra\'s browser safety check refused it: ' + reason };
+    return { code: 'NETWORK_REFUSED', text: 'StarNet\'s browser safety check refused it: ' + reason };
   }
   // Separate from assertSafeUrl: public browsing retains its SSRF boundary. Only the workbench-
   // scoped browser.test_navigate tool may use this validator, and only for an agent's local dev UI.

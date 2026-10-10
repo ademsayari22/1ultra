@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Persistent Reminders"
   category: "Productivity"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 A reminder that fires once is easy to miss; one that nags is soon muted. Keep a plain file of what is owed, nudge on the cadence the Commander chose, get shorter each time, and stop the moment they say it is done.

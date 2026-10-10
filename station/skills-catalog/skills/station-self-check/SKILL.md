@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Station Self-Check"
   category: "Station"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 A self-check answers "is my station actually working?" from the harness's own readings, never from memory or a guess. Every finding names the tool that showed it and the one action that fixes it.

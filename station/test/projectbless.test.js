@@ -145,8 +145,8 @@ function coreOver(tree, blessSink, links) {
 
   // --- projectLapsedLine (#60): an anchor the grant layer no longer backs SAYS so instead of silently writing elsewhere ---
   {
-    const lapsed = projectLapsedLine('C:\\1Ultra\\Projects\\Project_002', false);
-    ok(lapsed.indexOf('PROJECT FOLDER NOT TRUSTED') >= 0 && lapsed.indexOf('C:\\1Ultra\\Projects\\Project_002') >= 0, 'an un-blessed anchor names the folder and says it is not trusted');
+    const lapsed = projectLapsedLine('C:\\StarNet\\Projects\\Project_002', false);
+    ok(lapsed.indexOf('PROJECT FOLDER NOT TRUSTED') >= 0 && lapsed.indexOf('C:\\StarNet\\Projects\\Project_002') >= 0, 'an un-blessed anchor names the folder and says it is not trusted');
     ok(/RELATIVE file path writes to your private workspace, not that folder/.test(lapsed), 'it tells the agent where relative writes really land');
     ok(/absolute paths inside it/.test(lapsed) && /add it again under PROJECTS/.test(lapsed), 'it names the two ways back into the folder');
     ok(!/anchored to the trusted project folder/.test(lapsed), 'it never asserts the folder access the grant layer cannot prove');

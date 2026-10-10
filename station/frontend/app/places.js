@@ -29,7 +29,7 @@
     P('to-review', 'MY WORK › DELIVERABLES › TO REVIEW', 'finished work waiting for the Commander\'s verdict, at the top of DELIVERABLES', { term: 'outbox' }),
     P('recipes', 'MY WORK › RECIPES', 'ready-made jobs to start in one click', { fn: 'recipes' }),
     P('workflows', 'AUTOMATE › WORKFLOWS', 'conveyor lines of agents on the floor: send a job down a line, see each line\'s output', { term: 'workflows' }),
-    P('schedules', 'AUTOMATE › SCHEDULES', 'routines: any job on a schedule (1Ultra\'s own scheduler, never OS cron)', { term: 'automation', section: 'routines' }),
+    P('schedules', 'AUTOMATE › SCHEDULES', 'routines: any job on a schedule (StarNet\'s own scheduler, never OS cron)', { term: 'automation', section: 'routines' }),
     P('new-schedule', 'AUTOMATE › SCHEDULES › NEW', 'the form for a new scheduled routine', { term: 'automation', section: 'routines-create' }),
     P('goal-loops', 'AUTOMATE › GOAL LOOPS', 'one objective repeated until it is done', { term: 'automation', section: 'loops' }),
     P('new-goal-loop', 'AUTOMATE › GOAL LOOPS › START', 'the form for a new goal loop', { term: 'automation', section: 'loops-start' }),

@@ -6,5 +6,5 @@
   "tags": ["lines", "conveyor", "workflow", "automation", "testing"],
   "requires": ["orchestrator"],
   "license": "MIT",
-  "authors": ["1Ultra"]
+  "authors": ["StarNet"]
 }

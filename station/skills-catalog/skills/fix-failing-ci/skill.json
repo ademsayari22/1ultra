@@ -6,5 +6,5 @@
   "tags": ["github", "ci", "tests", "debugging", "pull-requests"],
   "requires": ["cabinet", "workbench"],
   "license": "MIT",
-  "authors": ["1Ultra"]
+  "authors": ["StarNet"]
 }

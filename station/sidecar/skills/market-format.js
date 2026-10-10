@@ -83,7 +83,7 @@ function libraryToSkillMd(recipe, opts) {
   opts = opts || {};
   const lines = ['---', 'name: ' + recipe.slug, 'description: ' + q(str(recipe.description).replace(/\s+/g, ' ').trim()),
     'license: ' + q(recipe.license || 'MIT'), 'metadata:', '  title: ' + q(recipe.name), '  category: ' + q(recipe.category || 'General'),
-    '  author: ' + q(opts.author || '1Ultra')];
+    '  author: ' + q(opts.author || 'StarNet')];
   if (opts.version) lines.push('  version: ' + q(opts.version));
   lines.push('---', '');
   return lines.join('\n') + '\n' + str(recipe.body).trim() + '\n';
@@ -138,7 +138,7 @@ function buildEntry(src) {
   const pkg = packageFormat.canonicalize(files, { maxFileBytes: 256000 });
   const entry = {
     slug, name: doc.title, description: doc.description.slice(0, 280), version: str(src.version),
-    author: list(src.authors).join(', ') || doc.author || '1Ultra', license: str(src.license || doc.license),
+    author: list(src.authors).join(', ') || doc.author || 'StarNet', license: str(src.license || doc.license),
     shelf: src.shelf, category: str(src.category || doc.category || 'General'), tags: list(src.tags).slice(0, 8), requires,
     librarySlug: src.librarySlug ? str(src.librarySlug) : '',
     sourceUrl: '/skills/' + slug + '/' + src.version + '/SKILL.md',

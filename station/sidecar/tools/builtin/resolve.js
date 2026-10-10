@@ -183,7 +183,7 @@
     const xml = '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE fcpxml>\n' +
       el('fcpxml', { version: '1.10' }, [
         el('resources', {}, [fmt].concat(assets)),
-        el('library', {}, [el('event', { name: '1Ultra' }, [el('project', { name: title }, [
+        el('library', {}, [el('event', { name: 'StarNet' }, [el('project', { name: title }, [
           el('sequence', { format: 'r1', duration: ftime(total, rate), tcStart: '0s', tcFormat: 'NDF', audioLayout: 'stereo', audioRate: '48k' },
             [el('spine', {}, spineXml)])
         ])])])

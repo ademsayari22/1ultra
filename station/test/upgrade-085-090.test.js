@@ -205,7 +205,7 @@ A.ok(/format!\("channel:\{channel\}"\)/.test(credentialsRs) && /read_channel_tok
 // the desktop bundle-id shelf before stores open, survives the candidate reader, and leaves the source intact.
 const intelHome = fs.mkdtempSync(path.join(os.tmpdir(), 'starnet-upgrade-085-intel-mac-'));
 try {
-  const legacyMac = path.join(intelHome, '.local', 'share', '1Ultra', 'workspaces');
+  const legacyMac = path.join(intelHome, '.local', 'share', 'StarNet', 'workspaces');
   const desktopMac = path.join(intelHome, 'Library', 'Application Support', 'ai.skynet.harness', 'workspaces');
   fs.mkdirSync(legacyMac, { recursive: true });
   makeSaveStore({ fs, pathMod: path, root: legacyMac, clock: { now: () => 1700000000100 } }).save('agent', oldDoc);

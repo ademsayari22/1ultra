@@ -122,7 +122,7 @@ const REDIRECT = 'http://127.0.0.1:8787/api/connectors/oauth/callback';
 {
   let seen = null;
   const f = fakeFetch([['/register', (url, opts) => { seen = JSON.parse(opts.body); return { json: { client_id: 'dcr-abc-123' } }; }]]);
-  const r = await O.registerClient({ fetchImpl: f, registrationEndpoint: 'https://mcp.notion.com/register', redirectUri: REDIRECT, clientName: '1Ultra' });
+  const r = await O.registerClient({ fetchImpl: f, registrationEndpoint: 'https://mcp.notion.com/register', redirectUri: REDIRECT, clientName: 'StarNet' });
   A.eq(r.clientId, 'dcr-abc-123', 'registration returns a client_id');
   A.eq(r.tokenEndpointAuthMethod, 'none', 'registration defaults to a public PKCE client');
   A.eq(seen.token_endpoint_auth_method, 'none', 'registers as a PUBLIC client (no secret)');

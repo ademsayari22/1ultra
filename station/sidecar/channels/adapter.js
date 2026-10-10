@@ -164,7 +164,7 @@
     const ignoreBots = o.ignoreBots !== false;
     const allowedUsers = normalizeAllowed(o.allowedUsers);
 
-    /* WAKE WORDS. `@thebot` is how you address a bot; "1Ultra, check the logs" is how you address a person, and
+    /* WAKE WORDS. `@thebot` is how you address a bot; "StarNet, check the logs" is how you address a person, and
        it is what people actually type. Without this the most natural way to call the agent by the name the member
        gave it does nothing at all.
 

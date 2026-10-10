@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Channel Updates"
   category: "Communication"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 An update on a phone is read in five seconds between other things. It either tells the Commander something they needed, or it teaches them to mute the station. Most runs should not ping.

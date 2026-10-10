@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Grounded Citations"
   category: "Research"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 A citation is a promise that the source says what you say it says. Keep that promise mechanically: open every source, save its text, copy the supporting sentence, and prove by a literal search that the sentence is really there. The bar: the Commander can check any claim in under a minute.

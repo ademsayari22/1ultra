@@ -69,7 +69,7 @@ const receiptWriter = installedScript.match(/python3 - "\$receipt"[^\n]*<<'PY'\r
 const probe = `import tempfile, pathlib, plistlib, json, sys
 with tempfile.TemporaryDirectory() as tmp:
     root = pathlib.Path(tmp)
-    app = root / '1Ultra.app'
+    app = root / 'StarNet.app'
     (app / 'Contents').mkdir(parents=True)
     dmg = root / 'misleading_0.10.0.dmg'
     dmg.write_bytes(b'exact fixture bytes')

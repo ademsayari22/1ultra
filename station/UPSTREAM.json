@@ -14898,7 +14898,7 @@
     },
     {
       "path": "frontend/app/chat.js",
-      "current_sha256": "fdad73472975d13dbdfa14d4b3ed72497427ab4bf10daefa632870bd12a06bf5",
+      "current_sha256": "87b099a1d39829ffdd0e8ff544b2b60407c8ab03b27d22114d5604f3f8fd9643",
       "reasons": [
         "brand"
       ]
@@ -15094,7 +15094,7 @@
     },
     {
       "path": "frontend/app/friendlyerror.js",
-      "current_sha256": "5309924e93b9505141c4f65c2a4fde5152732cffd9842df67f9eaa0f70344734",
+      "current_sha256": "5c1985ac3e5cd05a0670c598604eb25c3322096f4b083f6e242c529e58a4bcaf",
       "reasons": [
         "brand"
       ]
@@ -15122,7 +15122,7 @@
     },
     {
       "path": "frontend/app/goalloop.js",
-      "current_sha256": "32bd5e43bc8d919b4b81b3979b9b7cf2f0b548061fef2876bd0b6eae9e77777d",
+      "current_sha256": "f3d79c02b9f3588a72ab582c8ac51e2a7d7cc966c70b1b3b446cc5609d410a46",
       "reasons": [
         "brand"
       ]
@@ -15304,7 +15304,7 @@
     },
     {
       "path": "frontend/app/modeldock.js",
-      "current_sha256": "750c8387a50d4736135b616ad297ffba1162e5585195a8743bb3968719739a21",
+      "current_sha256": "496d663961c6f1c7b7b1a52d35cd52bea81151b620358420c28c2d0a23ba9f5c",
       "reasons": [
         "brand"
       ]
@@ -15402,7 +15402,7 @@
     },
     {
       "path": "frontend/app/places.js",
-      "current_sha256": "978fb0f9823033674c2257d3920b7a97c21b3a119406aa5e149702352c2bb7b8",
+      "current_sha256": "2811d8af1f33dea12b6249d69e39ce677bd8e220ef780e8ab1fe99191aee3aca",
       "reasons": [
         "brand"
       ]
@@ -15927,7 +15927,7 @@
     },
     {
       "path": "frontend/app/topbar.js",
-      "current_sha256": "797befe7974b8b57c8f85cc2d7839e839b4937efa3c6a4003da0e816d23a476b",
+      "current_sha256": "8779f4e6ca9aae6dcdc57418438a25454206b4c2778d5f902cc2ba192d7feff7",
       "reasons": [
         "brand"
       ]
@@ -16297,13 +16297,6 @@
       ]
     },
     {
-      "path": "frontend/css/plugins.css",
-      "current_sha256": "728626b8ae89665f35da0a2c1da1782c6537a0c974e2bf1e6fb3ff3aa2c9d4f3",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "frontend/css/refit.css",
       "current_sha256": "cad5d008983c6f5a6be9960aeb7519c0c07546899a2bfef773acaf6782ef4a87",
       "reasons": [
@@ -16354,10 +16347,10 @@
     },
     {
       "path": "frontend/index.html",
-      "current_sha256": "3568b0b4d005cde4b16a764cbc0e66f5f7f63006ef0e50e90212ed82ceae11e3",
+      "current_sha256": "6b9229a64d1254d96c4758c916c02480c90d70991bad025de20f949264e1aef3",
       "reasons": [
         "brand",
-        "patch:dock-campaign,dock-switches,ultra-window-script,ultra-brand-css"
+        "patch:dock-campaign,dock-switches,ultra-window-script,ultra-brand-css,label-title-logo,label-console-wordmark,label-provider-wordmark,label-logo-img"
       ]
     },
     {
@@ -16411,14 +16404,14 @@
     },
     {
       "path": "sidecar/acp/core.js",
-      "current_sha256": "fc7faf6a0a018546fe7b5191def1cd7c76f5789420d25126cbc73d9f3842018b",
+      "current_sha256": "47958ebee894c59b0c8a24ecd4654f0bd3f6d9a1a988ab9bfc135502408a8da4",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "sidecar/acp/serve.js",
-      "current_sha256": "c29a548f90498e4e0436e95c2827008320f88a399554f6615d16965a33ea7ddb",
+      "current_sha256": "7cd6d51c7f92d365d95dfaae9a107bf22ba2d56242d91196c3e0f5d75bf3e7ef",
       "reasons": [
         "brand"
       ]
@@ -16488,7 +16481,7 @@
     },
     {
       "path": "sidecar/channels/adapter.js",
-      "current_sha256": "dceb58f882545ba3ce7c6983866cbd75c08e17c12623afd544e52899eb06ec81",
+      "current_sha256": "ae9dddfbb30e9e0a109b53a5f6fefabcb7d2ab0f59eb097b751ae6ca2a03c159",
       "reasons": [
         "brand"
       ]
@@ -16501,15 +16494,8 @@
       ]
     },
     {
-      "path": "sidecar/channels/telegram.transport.js",
-      "current_sha256": "92949d2fe7af28b4c6ce02117397e10457986a89183bbaa9127bf525599c4ca7",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "sidecar/child-env.js",
-      "current_sha256": "f4749cb33493042ad70f4e271cc47391092ed232bf4c3e3cabcc1fda11aab013",
+      "current_sha256": "6af2e053d1dcdecdf98d42f9afbc0c66dc171f016f0dcdebc195f3c1c3eb5df0",
       "reasons": [
         "brand"
       ]
@@ -16530,7 +16516,7 @@
     },
     {
       "path": "sidecar/configexport.js",
-      "current_sha256": "1fe1ebfc49ba851564b5e81233becb50006d33ac71ec7f76e87df01ee82f1599",
+      "current_sha256": "84d23358c478f43a2271adaae9e99889a7ab1f09e95cdd75fbd5c967c8ff8cbf",
       "reasons": [
         "brand"
       ]
@@ -16607,7 +16593,7 @@
     },
     {
       "path": "sidecar/environment.js",
-      "current_sha256": "568316efebec7dbe9fe085a38819920e5c89b550f98dfb2701de8b08ab224c01",
+      "current_sha256": "b536d9fc3a976cec8ecf8fd2d48a3f50a458c1a179b2cb4769137f9129befe32",
       "reasons": [
         "brand"
       ]
@@ -16663,7 +16649,7 @@
     },
     {
       "path": "sidecar/index.js",
-      "current_sha256": "d57bff091819772cd5f433f49c8e3f2d47a0f5dc83b10f0e41a153fa8599a825",
+      "current_sha256": "94ef1da29a92312203d941d01e4f04c69f80cb7819c28469abdc27a7e8525a3f",
       "reasons": [
         "brand",
         "patch:ultra-host-require,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty"
@@ -16706,7 +16692,7 @@
     },
     {
       "path": "sidecar/local-voice.js",
-      "current_sha256": "63fde76450f765082a0d5f648107262dee35ef981de3fa892cb30d37531b48e6",
+      "current_sha256": "356e4221581da1aad9f314c3295a808ab5ca714789752b5ab6ce21d0dc5d169b",
       "reasons": [
         "brand"
       ]
@@ -16714,13 +16700,6 @@
     {
       "path": "sidecar/loop.js",
       "current_sha256": "b31e0ed6cce663d87afd267d8cbba313cac772d7c0b3a754d6e60d4134266bf5",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "sidecar/lsp-manager.js",
-      "current_sha256": "615137f906351452964cec37371fde7ba77e3152de98ff7db65d2e06580329b9",
       "reasons": [
         "brand"
       ]
@@ -16768,13 +16747,6 @@
       ]
     },
     {
-      "path": "sidecar/mcp/oauth.js",
-      "current_sha256": "b2577c82798946d26fab0d7cbde04df0be4f5fc2ca4e923a2c20dad62753f8ab",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "sidecar/mcp/serve.js",
       "current_sha256": "b8f5264883ef225db6713e6ed7272bd43aa6ff0782aa946f62bae61df36c01cc",
       "reasons": [
@@ -16798,13 +16770,6 @@
     {
       "path": "sidecar/mcp/transport.google.js",
       "current_sha256": "cecccc90e8f5c7fc3a3439026736728b39ebde48411d6e8ac2245dc182a7d993",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "sidecar/media-service.js",
-      "current_sha256": "b7f189baf60326855f588077a51e0f6f6ec37a7d68b48884ef46acf6ff0bd6c4",
       "reasons": [
         "brand"
       ]
@@ -16923,7 +16888,7 @@
     },
     {
       "path": "sidecar/providers/codex-token-store.js",
-      "current_sha256": "8dc563abfd67cf26847b9eaa89be980732bd6c07edc4111ac45d3f73216ff815",
+      "current_sha256": "042ee43c12549c7d447a8d7a049195cf65284738a28d2ec8378661bc11003223",
       "reasons": [
         "brand"
       ]
@@ -16938,13 +16903,6 @@
     {
       "path": "sidecar/providers/factory.js",
       "current_sha256": "aa7f04ca535ff4ee2b5637a45578626d3836672e8040f107e1757014ce1d02bd",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "sidecar/providers/kimi-region.js",
-      "current_sha256": "1c28444c99717c7dfdaadc037227713d740bd50a06ba5a2a4b49971031589e6b",
       "reasons": [
         "brand"
       ]
@@ -16965,7 +16923,7 @@
     },
     {
       "path": "sidecar/providers/openrouter.js",
-      "current_sha256": "23d75cc3620a571d95ceced6acfa31541e5403d1d397df7bda5f3217aa0a7fd0",
+      "current_sha256": "6572788a5eb1e886d728542b6d0dd44f259d3faba225f122452733415a17f492",
       "reasons": [
         "brand"
       ]
@@ -16979,7 +16937,7 @@
     },
     {
       "path": "sidecar/providers/registry.js",
-      "current_sha256": "77503040f21894cb49cba9239d730231fde97f7e9d9829aa69baba7adf740e41",
+      "current_sha256": "5f9bf034c824d84585d2894006ec8c37d27fc14d2fd87b512a59faaf2cda14f9",
       "reasons": [
         "brand"
       ]
@@ -17001,20 +16959,6 @@
     {
       "path": "sidecar/realtime-voice.js",
       "current_sha256": "73fdee300ffe1ea07f2a9bef876bb6c78648bd8cb7130831b313538548d42030",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "sidecar/remote/host.js",
-      "current_sha256": "6bcfcd7a76abd01555ed1883da092de88dd8a3dcd65106a4b24353a397bacd6d",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "sidecar/remote/push.js",
-      "current_sha256": "40e9e7dca3777a0d43ef37401ac0e2939d6dbc49bc67721612c3ad4a86a4c036",
       "reasons": [
         "brand"
       ]
@@ -17091,7 +17035,7 @@
     },
     {
       "path": "sidecar/skills/market-format.js",
-      "current_sha256": "4d4da99d1d7e72d445e9f26ac5f7bde154c066e25adff386a290fc8202603b13",
+      "current_sha256": "10aceefa5b2f1fc000b1e093376e8e4af1ab278b6ce38c43c4fbc32c24f8fb01",
       "reasons": [
         "brand"
       ]
@@ -17175,7 +17119,7 @@
     },
     {
       "path": "sidecar/tools/builtin/browser.js",
-      "current_sha256": "83a2e8eb4a3a585e2dde9afa193fe2175d1581ddcd81d97af5418ee3ed44c0ef",
+      "current_sha256": "629f5c53507f3faddf9ff326d80afdfbd68efb6c862424c80c51b9d65f774633",
       "reasons": [
         "brand"
       ]
@@ -17217,7 +17161,7 @@
     },
     {
       "path": "sidecar/tools/builtin/image.js",
-      "current_sha256": "df4a4a19f6d0e0a76a639fc558fd3f7deac7917f4dd87c51fd5c13e66c31eb85",
+      "current_sha256": "a261fd4bad346be045e90ae0b7ace026a01c3d451c3a1a7abf511d0a22bc1b56",
       "reasons": [
         "brand"
       ]
@@ -17252,7 +17196,7 @@
     },
     {
       "path": "sidecar/tools/builtin/resolve.js",
-      "current_sha256": "6ebd91df5461de83548d1ed087226489d33dc479feb717029410468dbd506fc8",
+      "current_sha256": "be16b8aca29e1c3fa177ff30c7f4822ca63ea87884dc0146b1f3ba4929cb6c7d",
       "reasons": [
         "brand"
       ]
@@ -17287,7 +17231,7 @@
     },
     {
       "path": "sidecar/tools/builtin/station-show.js",
-      "current_sha256": "3ceff6ab3f59f07abeed2a76972715ac7e0b0ac453a924f58825379ce4336f39",
+      "current_sha256": "a1713308726c717da423f84115174ff996dd4dabd4ca72538a3109ac218be3fc",
       "reasons": [
         "brand"
       ]
@@ -17363,99 +17307,8 @@
       ]
     },
     {
-      "path": "sidecar/workspace-safety.js",
-      "current_sha256": "de66626de020c413b1f53ce7a1baa5d156d57d9a08a0f57867bde004fb124d4f",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/address-pr-comments/SKILL.md",
-      "current_sha256": "2b8f4cba20f146d51417663c0a74876249c4a98fb1f39477acc5e55fc7a7c487",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/address-pr-comments/skill.json",
-      "current_sha256": "af64132e7ccdce005cc45ae2088d64b48cfe68abdf607a271435599a3d34400d",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/bills-and-subscriptions/SKILL.md",
-      "current_sha256": "d85b79db12074e2e6b8de0b360da1b5c182a5ee728e9f61fdf33a16e7c64df9b",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/bills-and-subscriptions/skill.json",
-      "current_sha256": "0db6380648b2d642ac7a7df6918ffe59ca7f9eb7b4b2b70330c0d0f5fa66defe",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "skills-catalog/skills/blocked-page-recovery/SKILL.md",
       "current_sha256": "832816696ffb358616ca2d880fe8df5087ecc258a1f63552830b9b2bc83d5a37",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/brand-assets/SKILL.md",
-      "current_sha256": "cf6150c76bd7f52e54c136ad88aec78720d0e9a2c14d7114e9c27198c0d48522",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/brand-assets/skill.json",
-      "current_sha256": "f6f357cb74b7dea7dcb09f30a0334df048a293c3586cacaf7ad4a84a5519ae55",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/calendar-scheduling/SKILL.md",
-      "current_sha256": "37499a2d76051b40d4274d908f9a637868b0580c352bc59e3bcfde1600a2645e",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/calendar-scheduling/skill.json",
-      "current_sha256": "1fe8e117f015b6873fdda5f106dbf78c11b7aaac0e663ec4e42a3dbc8d69bcbb",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/changelog-writing/SKILL.md",
-      "current_sha256": "4794cae0fc8b7e270e0c192988ba8daca9ea2f7df11f50e645f7be8918131daf",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/changelog-writing/skill.json",
-      "current_sha256": "f4f680086a169f90bb167486a06ece67ba72f3f621048f875fe7da7f3a29188d",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/channel-updates/SKILL.md",
-      "current_sha256": "cdd46e8102a27a3c9fdffa46828735221a6ca6b7001f653c4f0cd22586608b22",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/channel-updates/skill.json",
-      "current_sha256": "10c012eef53ef8cf672e6df62cd7f4d63f2d1e1bdf8e6ed303efebc04ffbd6d5",
       "reasons": [
         "brand"
       ]
@@ -17496,20 +17349,6 @@
       ]
     },
     {
-      "path": "skills-catalog/skills/crew-handoff/SKILL.md",
-      "current_sha256": "e1a1bb747d849be57de4bbb4d771c035e218250f5653238ece8b9f4653685014",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/crew-handoff/skill.json",
-      "current_sha256": "110ade650c763656cb0d756f87dbc1a491b8f5f5379c1a13ff7dece779ff03c6",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "skills-catalog/skills/customer-research/SKILL.md",
       "current_sha256": "961e47a12cf69900fd55adae935a5328e0aaa01f104c560c74cb60ee1538144f",
       "reasons": [
@@ -17517,50 +17356,8 @@
       ]
     },
     {
-      "path": "skills-catalog/skills/daily-briefing/SKILL.md",
-      "current_sha256": "1194985d407e4ae61e87e8e797acdc4ee479d8c6a136fadc2eaa3e075234877f",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/daily-briefing/skill.json",
-      "current_sha256": "27e92a86fbdf5b5dcce0b3b48368548958d4f9a312b86240b4e7ccc08aa53ffa",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/data-cleanup-and-analysis/SKILL.md",
-      "current_sha256": "bdbc3524ffa272a54755e4ef9b4847a702484488d20a8da7d24eb192bbade2e1",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/data-cleanup-and-analysis/skill.json",
-      "current_sha256": "610c159efe91e8e422d770229e4dc93e6047aab70bef818c137a9a31b6e24fa6",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "skills-catalog/skills/decision-questionnaire/SKILL.md",
       "current_sha256": "3739246ad90f96e6e0ce02faa31a9b1ea62a6b97d027769f0a717e1835991a74",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/deliverable-handoff/SKILL.md",
-      "current_sha256": "b416f20feff5ca83566ab05726b2f2c082cc4a8c4d080a643f42e2bc41e80194",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/deliverable-handoff/skill.json",
-      "current_sha256": "8551d952bc839f24550ea88a00e90272d6176f884ae7b934d598a78ec82b2ac8",
       "reasons": [
         "brand"
       ]
@@ -17580,48 +17377,6 @@
       ]
     },
     {
-      "path": "skills-catalog/skills/fitness-and-nutrition/SKILL.md",
-      "current_sha256": "be239bf3ca82a908e971ac5fd24344dbc95eec05a910b2cb737fc269de63748b",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/fitness-and-nutrition/skill.json",
-      "current_sha256": "b634ac71679a523774414cf0d0dd91c5c44a04257432bf7257c021ae797814c8",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/fix-failing-ci/SKILL.md",
-      "current_sha256": "fdd38d86d5012051908b1360bc774d239b8f2c3875893f88ba0652eb13b9ba09",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/fix-failing-ci/skill.json",
-      "current_sha256": "46ecd72434960f7a1f4280bc0dfb850966a48b14aabaf14059119e8a91de333a",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/flashcards/SKILL.md",
-      "current_sha256": "20b4b8beea25388606ed16ef1f0d646ba5f4cbee855c8b35758d74244564a8a1",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/flashcards/skill.json",
-      "current_sha256": "ca607b87a7ec16cc291fa5cff4d94d1364cd6adc89da6d5263b6a94fd0254fb2",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "skills-catalog/skills/frontend-design/SKILL.md",
       "current_sha256": "b35a8c1c4a461f28c28e57ae21161e6f36bade0a15c907e22c6c3d1e1ea09997",
       "reasons": [
@@ -17636,34 +17391,6 @@
       ]
     },
     {
-      "path": "skills-catalog/skills/grounded-citations/SKILL.md",
-      "current_sha256": "7e9be8a5f38904e1230fcb43f4a9329d48b03a18a222470b4c1096d3298502dc",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/grounded-citations/skill.json",
-      "current_sha256": "f30ceeead76f397a1c6a7344404947a11489f999c58bbaf3f57930f20f5a0d85",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/issue-triage/SKILL.md",
-      "current_sha256": "4cdf33d5078155a1109242cc3b48041949de2622c079fa595ccc74ce61694614",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/issue-triage/skill.json",
-      "current_sha256": "71df5a8dbfa3371c3aaa8dae92524256dabf28ac727c5db8578d851bfeb32d00",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "skills-catalog/skills/lead-magnets/SKILL.md",
       "current_sha256": "a0e9cc0eddedb6b9bd90286fe99885e1da4bd29fe4fd4fb1ddeba90ef20bfd0e",
       "reasons": [
@@ -17673,34 +17400,6 @@
     {
       "path": "skills-catalog/skills/lead-magnets/references/benchmarks.md",
       "current_sha256": "2c7a781a58d39f970d6d4e43c6ce89dde1467530a98bc8d077ce4b75873bd9ab",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/line-design/SKILL.md",
-      "current_sha256": "285e949a6e1f1acda10815b1830e0899ce82afe983b7f74ed41b3c4a90f41c98",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/line-design/skill.json",
-      "current_sha256": "8bc2e0d34e2279bbefbff03b748ea8aee948964d00672ab3b1c7b1ecb641dcb6",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/link-and-video-summary/SKILL.md",
-      "current_sha256": "de6fa2b67946695af9f7f2444e74ded80ce0dc72cc82c1a400d775e636c028ec",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/link-and-video-summary/skill.json",
-      "current_sha256": "628dc7715251b9fc1d82d4c76aba7e44b282dc3d105530ac0385fec4ce2d641b",
       "reasons": [
         "brand"
       ]
@@ -17734,50 +17433,8 @@
       ]
     },
     {
-      "path": "skills-catalog/skills/meeting-prep/SKILL.md",
-      "current_sha256": "a0fe63d36d51a444b57b206183b0e07e874e9846223c57bb9d369868b9b1bef3",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/meeting-prep/skill.json",
-      "current_sha256": "e4be7908770624dd5e8b8e1a8182e2478a2746f890f7cdd41e05070c9d60b842",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/notebook-gardening/SKILL.md",
-      "current_sha256": "f34690ba73818499b73ba5dd418f67d754bc03f1c4e3df46ea7b1a59bd60b0a2",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/notebook-gardening/skill.json",
-      "current_sha256": "a9f27cde04110a30dfd468e380a24a5d0e135dc6d6627a13f7d58a2dd440b8ee",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "skills-catalog/skills/notes-vault/SKILL.md",
       "current_sha256": "7d89613ef563ec9d1b8530d6438ff0e045e4b28722f79d6200e6776f6137af0c",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/persistent-reminders/SKILL.md",
-      "current_sha256": "578aebc3c571533d09c1c49380ee1c09a91d10e0f775b82c1d5c76d635709ffa",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/persistent-reminders/skill.json",
-      "current_sha256": "06e7ebaa136f87815b14ab6d0aa51ae1455615c9f0c6dae1b05b32d5288c27a1",
       "reasons": [
         "brand"
       ]
@@ -17797,36 +17454,8 @@
       ]
     },
     {
-      "path": "skills-catalog/skills/project-onboarding/SKILL.md",
-      "current_sha256": "629e3feb6a1aa4e5ce9a19a02799756f8345fe54c0e3cb1a1041286497f46594",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/project-onboarding/skill.json",
-      "current_sha256": "666979be8a2d68f3893f1c0cc86b8b29ea7140ee36ed1a81bce1d81b2951fc88",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "skills-catalog/skills/publish-site/SKILL.md",
       "current_sha256": "ecefbd3d9c78f0c0020ec6ac00808ac9748ee7a97a8962034c29f6be4f9d0d59",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/receipt-organizer/SKILL.md",
-      "current_sha256": "21276cc06bb07ab66a55d69e095766a45c68d1225926431b8e2e4a2ec5a3d2c5",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/receipt-organizer/skill.json",
-      "current_sha256": "5edad9a368b597edf705541055234e73ada574a5e3957e072a0bde5f3e9baef1",
       "reasons": [
         "brand"
       ]
@@ -17847,14 +17476,7 @@
     },
     {
       "path": "skills-catalog/skills/routine-craft/SKILL.md",
-      "current_sha256": "57609d53f389571ed67a83af323ebf7ed180b8b87330f26b3abc0beb1eb29479",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/routine-craft/skill.json",
-      "current_sha256": "c6dd306163bf4ab255d1cd0ec4c4ef1df5362a5e26b83e15cd2ab74913711275",
+      "current_sha256": "547252f734cb76ba03bb66bccc7b83c9ed1431e77b978204c527c8d54359dd38",
       "reasons": [
         "brand"
       ]
@@ -17874,64 +17496,8 @@
       ]
     },
     {
-      "path": "skills-catalog/skills/skill-authoring/SKILL.md",
-      "current_sha256": "bd22a28a9e0eb8f549df62b72fcc88e9691090f6ae0ef25f2d52b3c6f98fb030",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/skill-authoring/skill.json",
-      "current_sha256": "d19b17d15b2be6f1428f60bd562d085a7665143a2f6cd77a70e09e1fd89feb04",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "skills-catalog/skills/songwriting/SKILL.md",
       "current_sha256": "3b9e088da11ee55a6238a7b597ae755a58f9e828278c8b7e01e9a653d2492fde",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/spend-aware-work/SKILL.md",
-      "current_sha256": "52cb8c1f294e37e073befaa0989c105eef15a457c792c97f18714c7f75b21678",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/spend-aware-work/skill.json",
-      "current_sha256": "a109ef3643fd94515f4a3885f6ca79f5425b61c99cb2d91125ad55d207a307be",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/station-self-check/SKILL.md",
-      "current_sha256": "974855a66d8781b07bd7bcb1ede41445ec6c88792fa21a48dc92ad34daee5934",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/station-self-check/skill.json",
-      "current_sha256": "96fbdc3fdd959e2fbda53297bde01e83f03491a7bcb8b68903c05e5d390424dd",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/studio-video/SKILL.md",
-      "current_sha256": "1a631c079a68850ea8001859e9430257ffa9eb3596044bce61672323d1ef1d9b",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "skills-catalog/skills/studio-video/skill.json",
-      "current_sha256": "37e65b2ea0594d092e671fbb30217cae3e6be3a20904f58f1c55f54892a6a301",
       "reasons": [
         "brand"
       ]
@@ -18050,7 +17616,7 @@
     },
     {
       "path": "test/brand-wordmark-mask.test.js",
-      "current_sha256": "0e45991a0bb61ef8a3625a85949c1758c4d567be182c197a2a12e4eade7090a3",
+      "current_sha256": "bf63cfa7ab5d3209053681134190d85fd19aa10f9534f237e2293b759b7c627b",
       "reasons": [
         "brand"
       ]
@@ -18084,20 +17650,6 @@
       ]
     },
     {
-      "path": "test/browser.desktop-login-journey.test.js",
-      "current_sha256": "5e8b814bb46c59cd3208688dc8ef01b0921206d7f98113873627d6321511eba7",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/browser.test.js",
-      "current_sha256": "d282aa47962c6669e91014832c537d611c956c300be6af20fbe18c4df5a6bd39",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/budget-authority-ui.test.js",
       "current_sha256": "2406c7784d3ffc25d024d26d840c05d321792c1f760d039ecd60eb2889a754fc",
       "reasons": [
@@ -18119,22 +17671,8 @@
       ]
     },
     {
-      "path": "test/channels.telegram.context.test.js",
-      "current_sha256": "b84a60a5304fc01504caecaa3142e914eda041cf92f2ae737af181514dcf91cb",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/channels.telegram.groups.test.js",
-      "current_sha256": "f8bd1d09e4f74157ac7a16446614b79f1ed30750d1b84b91b3fb6a4ae4609447",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/child-env.e2e.test.js",
-      "current_sha256": "c5d74f386b22fb95fc3ad0ac84011fb859ab859c38f828689b08314230f0ef45",
+      "current_sha256": "ab0b1222265d6bf260fde3921c7042ddaab646354839c31c01af100ddd17275f",
       "reasons": [
         "brand"
       ]
@@ -18154,13 +17692,6 @@
       ]
     },
     {
-      "path": "test/configexport.test.js",
-      "current_sha256": "d330835788fe191d2e3eafa5dda9c168da93eafc020432f2f6fa0c66ab657e9b",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/connectors-tool.test.js",
       "current_sha256": "baa5b3b585112c4c616211d2933e68094eb2690020d9e8aa73a21707e7a707e0",
       "reasons": [
@@ -18169,7 +17700,7 @@
     },
     {
       "path": "test/consent-full-request.test.js",
-      "current_sha256": "68d2b039a2d587838a05e671144f24d2d1ad1af0b0c86c2d4312e76f31a20a9b",
+      "current_sha256": "b102783f8f6deccc094901cb904351ab6687f2759be9f3fe2c84b47d7cbcd87a",
       "reasons": [
         "brand"
       ]
@@ -18224,13 +17755,6 @@
       ]
     },
     {
-      "path": "test/desktop-build-macos-notarization.test.js",
-      "current_sha256": "c44124a97b62f3fbb738922f559454230eb8890a2529b06eb31200fa1f0f782f",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/desktop-fresh-start-contract.test.js",
       "current_sha256": "aa781779dd300989552c6dc80919314d1bfcdf2aab7adbf56d650ef78abbd154",
       "reasons": [
@@ -18246,7 +17770,7 @@
     },
     {
       "path": "test/desktop-workspace-migration.test.js",
-      "current_sha256": "edfbf34975ba42d332dbbc71948e5ff7ac98d9d5b70446b96f30cf5aeef9f1aa",
+      "current_sha256": "317edaaf758e0576d1e5dcbba66a21ecd0fed90eb122db84f7bbaab7cc0bf4a8",
       "reasons": [
         "brand"
       ]
@@ -18309,28 +17833,14 @@
     },
     {
       "path": "test/eval-comparison.test.js",
-      "current_sha256": "370b901f690184592e9b28d849438e0e41a6bd1e65043806e61c4d644c0841e2",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/eval-installed-performance.test.js",
-      "current_sha256": "43c83bec64814a040cd58527f3b5402829c9e9e0b48cdcfe1f9d92c73854bd07",
+      "current_sha256": "8dc2c3789b9b3bf1a3c17f8aa3d05f7cb21b4c8cf63b86830501dec501cfa67d",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/eval-same-model-receipt.test.js",
-      "current_sha256": "3043f3d4423f8c223d518526ede5f574e30c2d4decab04964f407a61844f85e6",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/eval-soak-receipt.test.js",
-      "current_sha256": "6663f2a5304208c8b0dbb1bd5d38055e084e1c14bbb0c46ac7757da67245410f",
+      "current_sha256": "a973538ad11a6bbd91d02090b593e6d3c2178cc1d618f33dfbb5554ce9d047f8",
       "reasons": [
         "brand"
       ]
@@ -18469,13 +17979,6 @@
       ]
     },
     {
-      "path": "test/loops-stall.e2e.test.js",
-      "current_sha256": "a20829f2bd0693b73bc07f113608379040d3c1a48864e22a7118633734eacbb6",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/loops.e2e.test.js",
       "current_sha256": "aaf08f21e66e53dddcb1307e29ad6c805d0ce74d657e1638313ebc1a62638a54",
       "reasons": [
@@ -18553,13 +18056,6 @@
       ]
     },
     {
-      "path": "test/mcp.oauth.test.js",
-      "current_sha256": "df13f182443f209d5e774384bac83edec1ff91b549c9e35c1a05f7529a2ddc6e",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/mcp.resources-prompts.test.js",
       "current_sha256": "f72290505074ed724a404f47a24c1794fc5e0232767d13b2f2db9591843803ed",
       "reasons": [
@@ -18603,7 +18099,7 @@
     },
     {
       "path": "test/packaged-lifecycle.test.js",
-      "current_sha256": "9f882d263556fa013f1c4db7704efa396f91810e98b8fba99e935205adda3737",
+      "current_sha256": "85e773c4b7ae15ca0229e959b0407ca2b72912639e2673bb636759e58cb72785",
       "reasons": [
         "brand"
       ]
@@ -18630,22 +18126,8 @@
       ]
     },
     {
-      "path": "test/projectbless.test.js",
-      "current_sha256": "531169fd5efc9451a615cca42976916ce5b803d33d7885b8823a7a6189a1fb68",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/provider.claude-cli.test.js",
-      "current_sha256": "4f2f94fba8e3fe981d5aeb96bbd34837881a3df08e821864c5209b057960a5bb",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/provider.codex-auth.test.js",
-      "current_sha256": "005ed4ae83a0953015d80ab11c99b4da3d64fe644ad11acbd922bbbc33e3f840",
+      "current_sha256": "3e6adb4af8990f54d0b7dce99e0cb56e82e9d214e76f9a83e7c3c2cf2bbfa0c6",
       "reasons": [
         "brand"
       ]
@@ -18672,22 +18154,8 @@
       ]
     },
     {
-      "path": "test/qa-installed-link-transport.test.js",
-      "current_sha256": "ba980c9b595b82eeadbf38b0b20d0112ef388790efe7255a2261e2c895bb1c89",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/qa-product-perfect-claims.test.js",
-      "current_sha256": "5b37c8529811f2fca15f4f334ecc8cd799f421068847438a64bb1f7055abaf88",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/qa-ready.test.js",
-      "current_sha256": "89ae44fc6e7651b4ec7c04a53a24da955fb6e2d827756c61b3adfd925a46298f",
+      "current_sha256": "0f5315c58e18558db37c650db305d22a23f2ed1e31a7a5b3fdcafdbba766485c",
       "reasons": [
         "brand"
       ]
@@ -18708,7 +18176,7 @@
     },
     {
       "path": "test/reasoning-dials.test.js",
-      "current_sha256": "435320f0627aad852910e5ffdc0aa4db4a0ee4db099bc938a8b4050e53e53b9a",
+      "current_sha256": "2aa1b7e0c08cf633ca791f605a80420201cba3eb6d65aee13140dd2146b74a61",
       "reasons": [
         "brand"
       ]
@@ -18729,21 +18197,14 @@
     },
     {
       "path": "test/recipes.test.js",
-      "current_sha256": "c2d37c30cd48d30fad0d465adc1efadea1927643bd42aefb09fc03cdb974efda",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/release-assemble-manifest.test.js",
-      "current_sha256": "eed9d88982a8371216147f88b03729a846ebe8f74728803411afeb0a34a93fee",
+      "current_sha256": "f838fe77a89bb63464273b1f177dcca3a456635dac713d835c18fec1533856d4",
       "reasons": [
         "brand"
       ]
     },
     {
       "path": "test/release-bump.test.js",
-      "current_sha256": "c2373ca17a436e30033648656ac0d55f9a0097664489d89abe210f85280fe6d1",
+      "current_sha256": "e4f96d473de74590e61fd9a26298968d5a77224a17c158062662236c3fe351e0",
       "reasons": [
         "brand"
       ]
@@ -18897,7 +18358,7 @@
     },
     {
       "path": "test/shell-session.test.js",
-      "current_sha256": "76d8eeab6755e4390426b23f1a0b728c38c3e1b594e7e47d6c79c8cf5178f1b1",
+      "current_sha256": "88cdf4aa6920b88c3bd2eb96fc515085bcdc2da91d96bf65ca2948afccbcc495",
       "reasons": [
         "brand"
       ]
@@ -18912,13 +18373,6 @@
     {
       "path": "test/skill-export.test.js",
       "current_sha256": "bd84c9295f59b69f1c10e8fa03a198390c3f5aa9d234ea3838b611c53bf1e031",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/skill-frontmatter.test.js",
-      "current_sha256": "b13a8d6ee2d0cf5d845fbd642e81a3d00895ebce3f0b89b15e5c581eacda9704",
       "reasons": [
         "brand"
       ]
@@ -18939,7 +18393,7 @@
     },
     {
       "path": "test/skill-market.test.js",
-      "current_sha256": "978de949f08fd5e0bd73a9fa6d8b6d1bded4237caf8f91275a78f0b4fcd0d59f",
+      "current_sha256": "2ff32880e87befa413d56b14a158159d3857c1e4c018193a7af501955ae145b6",
       "reasons": [
         "brand"
       ]
@@ -19036,29 +18490,8 @@
       ]
     },
     {
-      "path": "test/t0-clean-install.test.js",
-      "current_sha256": "ee20eee807b071213a08638f39da11089244039107441fa9caca2c4e4c039e36",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/t1-signing.test.js",
       "current_sha256": "64fcad4939b4839c599d24caba78008e14ed047c58319415522306e248887835",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/t3-release-smoke.test.js",
-      "current_sha256": "f965542db9895448f2ccc5ffd6052ba2ae0fb97c4def5cb43ed798fbd8d988a9",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/t4-update-delivery.test.js",
-      "current_sha256": "1248836083d46f8b359d4d6961c826d59c2f07595cc9ae6d8b3d2fd949fd9402",
       "reasons": [
         "brand"
       ]
@@ -19120,13 +18553,6 @@
       ]
     },
     {
-      "path": "test/upgrade-085-090.test.js",
-      "current_sha256": "abc6bc32dd982ace4f4ecaf101e946bd6dfb272e9b28df4053cd1256a37a01f4",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/userprops-catalog.test.js",
       "current_sha256": "dea30a9fdf390a09ede412165c21e59c28f3828c947edb0cc8bddf13f182778d",
       "reasons": [
@@ -19162,20 +18588,6 @@
       ]
     },
     {
-      "path": "test/widgetfeed.test.js",
-      "current_sha256": "0d6f43e6fcce9b01cbdeb1cf1a9582198859e2c3e9c6a24b1b521ba2b424f27a",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
-      "path": "test/workspace-lineage.http.test.js",
-      "current_sha256": "8a50c5e9783b21aeefb25391e3bcda7afc994edb14178939b400bccd9cbbdb9c",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/workspace-owner.test.js",
       "current_sha256": "a65135430d8ae3f302b71ff3e87740de408272337ba25e5c1eecf54bd4532597",
       "reasons": [
@@ -19183,15 +18595,8 @@
       ]
     },
     {
-      "path": "test/workspace-recovery.test.js",
-      "current_sha256": "2afede55fd5fddb3b8faec1f6742b472d78a4b9c0a1363afd85c2a6bb8751b77",
-      "reasons": [
-        "brand"
-      ]
-    },
-    {
       "path": "test/workspace-safety.test.js",
-      "current_sha256": "f447bb1b360d042827aad9ea7651375349cd9de782ad9de808faa34d9749cd98",
+      "current_sha256": "d4018878680840c0210be7af708cf84ee672ac4d291cd03099b521537b356523",
       "reasons": [
         "brand"
       ]

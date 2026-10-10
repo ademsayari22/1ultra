@@ -72,7 +72,7 @@
   const KINDS = {
     // ONLY for a fault PROVEN local: the raw carries "sidecar http 5xx" (our own service answered 500). A
     // provider's 5xx/overloaded must never land here — a message naming a component owes proof it is at fault,
-    // and blaming the local service for an Anthropic/OpenRouter overload had users reporting "1Ultra's servers
+    // and blaming the local service for an Anthropic/OpenRouter overload had users reporting "StarNet's servers
     // are down" during every industry load spike (2026-07-30, the report wave behind this split).
     server_error:  { retryable: true,  action: null,       msg: 'The local 1Ultra service hit an error — give it a moment and try again.' },
     // The PROVIDER's servers answered with an error/overload (5xx, "overloaded", "temporarily unavailable").
@@ -517,8 +517,8 @@
      cloud failure (sidecar/index.js linkStartFailure). Lower-case lead, no trailing period (callers add their own). */
   function linkStartFailure(info) {
     const i = info || {}, j = i.j || {};
-    if (i.local) return '1Ultra\'s engine on this computer isn\'t answering, so the link could not start — restart 1Ultra, then try again';
-    if (i.status === 503 && j.degraded) return '1Ultra\'s engine on this computer stopped after an error, so the link could not start — restart 1Ultra, then try again';
+    if (i.local) return 'StarNet\'s engine on this computer isn\'t answering, so the link could not start — restart 1Ultra, then try again';
+    if (i.status === 503 && j.degraded) return 'StarNet\'s engine on this computer stopped after an error, so the link could not start — restart 1Ultra, then try again';
     if (i.status === 404 && j.error === 'linking_unavailable') return 'account linking isn\'t available in this build of 1Ultra';
     const detail = j.detail ? ' (' + String(j.detail) + ')' : '';
     if (j.reason === 'tls') return 'security software on this computer (an antivirus HTTPS scan or a proxy) is blocking 1Ultra\'s secure connection to the 1Ultra account service' + detail + ' — allow 1Ultra, then try again';

@@ -87,7 +87,7 @@ function client(server, root, url, store, extra) {
     loadJson: (f) => (store.has(f) ? JSON.parse(store.get(f)) : undefined), saveJson: (f, v) => store.set(f, JSON.stringify(v))
   }, extra || {}));
 }
-const ORIGINAL = (body, version) => ({ slug: 'feed-watch', version: version || '1.0.0', shelf: 'originals', category: 'Research', requires: ['dish'], license: 'MIT', authors: ['1Ultra'], librarySlug: 'feed-watch',
+const ORIGINAL = (body, version) => ({ slug: 'feed-watch', version: version || '1.0.0', shelf: 'originals', category: 'Research', requires: ['dish'], license: 'MIT', authors: ['StarNet'], librarySlug: 'feed-watch',
   files: [{ path: 'SKILL.md', content: market.libraryToSkillMd(Object.assign({}, BUNDLED, body ? { body } : {}), { version: version || '1.0.0' }) }] });
 const GRILL = { slug: 'grill-me', version: '1.0.0', shelf: 'community', category: 'Planning', requires: [], license: 'MIT', authors: ['Matt Pocock', 'Nous Research'],
   upstream: { url: 'https://github.com/example/skills/tree/abc/grill-me', commit: 'abc' }, files: [{ path: 'SKILL.md', content: COMMUNITY_MD }, { path: 'LICENSE', content: MIT }] };

@@ -8,7 +8,7 @@ const Recovery = require('../sidecar/workspace-recovery.js');
 
 const home = fs.mkdtempSync(path.join(os.tmpdir(), 'starnet-workspace-recovery-'));
 const current = path.join(home, 'Library', 'Application Support', 'ai.skynet.harness', 'workspaces');
-const legacyA = path.join(home, '.local', 'share', '1Ultra', 'workspaces');
+const legacyA = path.join(home, '.local', 'share', 'StarNet', 'workspaces');
 const legacyB = path.join(home, '.local', 'share', 'Skynet', 'workspaces');
 
 function save(name, updatedAt, marker) {
@@ -39,7 +39,7 @@ try {
   A.eq(one.automaticCandidateId, one.candidates[0].id, 'one valid root is an unambiguous automatic candidate');
   A.ok(one.candidates[0].displayRoot.startsWith('~'), 'candidate path redacts the user home');
   A.eq(one.candidates[0].stationName, 'NOVA', 'candidate names the station from the valid save envelope');
-  A.eq(Recovery._internals.displayPath('D:\\Profiles\\1Ultra\\workspaces', 'C:\\Users\\Ada', require('node:path').win32, 'win32'),
+  A.eq(Recovery._internals.displayPath('D:\\Profiles\\StarNet\\workspaces', 'C:\\Users\\Ada', require('node:path').win32, 'win32'),
     '[local-data]/StarNet/workspaces', 'a custom data shelf outside the home is never disclosed as an absolute path');
 
   const report = Recovery.recoveryReport({ fs, path, platform: 'darwin', arch: 'x64', home, workspaceRoot: current, candidateRoots: [legacyA], inspection: one, publicLineage: { evidence: [] } });
@@ -148,7 +148,7 @@ try {
   const realHome = fs.mkdtempSync(path.join(os.tmpdir(), 'starnet-fake-real-home-'));
   const tmpTarget = fs.mkdtempSync(path.join(os.tmpdir(), 'starnet-scratch-target-')) + path.sep + 'workspaces';
   try {
-    const realRoot = path.join(realHome, '.local', 'share', '1Ultra', 'workspaces');
+    const realRoot = path.join(realHome, '.local', 'share', 'StarNet', 'workspaces');
     write(realRoot, 'agent.save.json', save('ANDREWS-REAL-STATION', 5000, 'real-station'));
     write(realRoot, 'agent/secret-report.md', 'production bytes');
     const realBytes = fs.readFileSync(path.join(realRoot, 'agent.save.json'));
@@ -191,8 +191,8 @@ try {
     fs.rmSync(path.dirname(explicitTarget), { recursive: true, force: true });
     // (e) the predicate itself, cross-platform: case-insensitive on win32, prefix-safe (no /tmpx vs /tmp false positive)
     const w = require('node:path').win32;
-    A.ok(Recovery.scratchTargetReason({ path: w, platform: 'win32', workspaceRoot: 'C:\\Users\\A\\AppData\\Local\\Temp\\starnet-x\\1Ultra\\workspaces', tmpdir: () => 'c:\\users\\a\\appdata\\local\\temp', env: {} }), 'win32: case-insensitive prefix under tmpdir is scratch');
-    A.eq(Recovery.scratchTargetReason({ path: w, platform: 'win32', workspaceRoot: 'C:\\Users\\A\\AppData\\Local\\1Ultra\\workspaces', tmpdir: () => 'C:\\Users\\A\\AppData\\Local\\Temp', env: {} }), null, 'win32: the real LOCALAPPDATA root is NOT scratch');
+    A.ok(Recovery.scratchTargetReason({ path: w, platform: 'win32', workspaceRoot: 'C:\\Users\\A\\AppData\\Local\\Temp\\starnet-x\\StarNet\\workspaces', tmpdir: () => 'c:\\users\\a\\appdata\\local\\temp', env: {} }), 'win32: case-insensitive prefix under tmpdir is scratch');
+    A.eq(Recovery.scratchTargetReason({ path: w, platform: 'win32', workspaceRoot: 'C:\\Users\\A\\AppData\\Local\\StarNet\\workspaces', tmpdir: () => 'C:\\Users\\A\\AppData\\Local\\Temp', env: {} }), null, 'win32: the real LOCALAPPDATA root is NOT scratch');
     const px = require('node:path').posix;
     A.eq(Recovery.scratchTargetReason({ path: px, platform: 'linux', workspaceRoot: '/tmpx/ws', tmpdir: () => '/tmp', env: {} }), null, 'posix: /tmpx is not under /tmp (no string-prefix false positive)');
     A.ok(Recovery.scratchTargetReason({ path: px, platform: 'linux', workspaceRoot: '/tmp', tmpdir: () => '/tmp', env: {} }), 'posix: the tmpdir itself counts as scratch');

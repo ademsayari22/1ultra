@@ -7540,7 +7540,7 @@ const Chat = (() => {
      runs immediately. ↑/↓ move, Enter/Tab run, Esc closes. */
   let slashItems = [], slashSel = 0;
   let slashServerCommands = null, slashCatalogLoading = null, slashCatalogLoaded = null;
-  /* ---------- /goal AUTONOMOUS LOOP (1Ultra's "Ralph loop") ----------
+  /* ---------- /goal AUTONOMOUS LOOP (StarNet's "Ralph loop") ----------
      The loop STATE (goal / status / turnsUsed / subgoals / …) rides on the workstream record as ws.goalLoop, so a
      standing goal survives a reload/switch exactly like the thread history (workstreams.js carries the field through
      serialize()). GoalLoop (goalloop.js) owns the PURE parse + state machine; here we own the aux JUDGE model call

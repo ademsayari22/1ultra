@@ -292,7 +292,7 @@ function makeLspManager(deps) {
         });
         const init = await this.request('initialize', {
           processId: process.pid,
-          clientInfo: { name: '1Ultra', version: '1' },
+          clientInfo: { name: 'StarNet', version: '1' },
           rootUri: pathToFileURL(this.projectRoot).href,
           capabilities: {
             workspace: { workspaceFolders: true, configuration: true },

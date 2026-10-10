@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Routine Craft"
   category: "Station"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 A routine is a saved prompt the scheduler fires on its own. Nobody reads it at run time, nobody answers its questions, and it runs again tomorrow whether or not today's run was any good. Write it for that reader.

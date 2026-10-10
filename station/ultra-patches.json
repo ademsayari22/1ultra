@@ -142,5 +142,29 @@
     "file": "frontend/index.html",
     "find": "</head>",
     "replace": "<link rel=\"stylesheet\" href=\"ultra-brand.css\">\n</head>"
+  },
+  {
+    "id": "label-title-logo",
+    "file": "frontend/index.html",
+    "find": "alt=\"STARNET\" draggable=\"false\">",
+    "replace": "alt=\"1ULTRA\" draggable=\"false\">"
+  },
+  {
+    "id": "label-console-wordmark",
+    "file": "frontend/index.html",
+    "find": "<span class=\"ov-wordmark\" role=\"img\" aria-label=\"StarNet\"></span><span id=\"cc-mode\"",
+    "replace": "<span class=\"ov-wordmark\" role=\"img\" aria-label=\"1Ultra\"></span><span id=\"cc-mode\""
+  },
+  {
+    "id": "label-provider-wordmark",
+    "file": "frontend/index.html",
+    "find": "<span class=\"ov-wordmark\" role=\"img\" aria-label=\"StarNet\"></span></span>",
+    "replace": "<span class=\"ov-wordmark\" role=\"img\" aria-label=\"1Ultra\"></span></span>"
+  },
+  {
+    "id": "label-logo-img",
+    "file": "frontend/index.html",
+    "find": "class=\"logo-img\" role=\"img\" aria-label=\"STARNET\">",
+    "replace": "class=\"logo-img\" role=\"img\" aria-label=\"1ULTRA\">"
   }
 ]

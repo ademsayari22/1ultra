@@ -6,5 +6,5 @@
   "tags": ["health", "diagnostics", "routines", "maintenance"],
   "requires": ["orchestrator", "notebook"],
   "license": "MIT",
-  "authors": ["1Ultra"]
+  "authors": ["StarNet"]
 }

@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Crew Handoff"
   category: "Station"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 A delegated worker runs its own loop on your brief and nothing else. It cannot see your conversation or read your intent. Everything it needs to finish goes in the handoff — or it returns something plausible instead of something right.

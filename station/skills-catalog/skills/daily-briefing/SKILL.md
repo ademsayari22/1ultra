@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Daily Briefing"
   category: "Productivity"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 A morning briefing is read once, on a phone, before the day starts. It fits one screen, holds only what changes the Commander's day, and names what it could not read instead of guessing.

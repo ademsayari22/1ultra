@@ -11,10 +11,10 @@ const { pathToFileURL } = require('node:url');
 // these are ~150 MB of downloaded weights, and PRIVACY.md documents this path for manual removal.
 function defaultCacheRoot() {
   if (process.platform === 'win32') {
-    return path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), '1Ultra', 'models');
+    return path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'StarNet', 'models');
   }
   if (process.platform === 'darwin') {
-    return path.join(os.homedir(), 'Library', 'Application Support', '1Ultra', 'models');
+    return path.join(os.homedir(), 'Library', 'Application Support', 'StarNet', 'models');
   }
   return path.join(process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache'), 'starnet', 'models');
 }

@@ -31,7 +31,7 @@
 'use strict';
 const { note: failNote } = require('./failopen.js');
 
-const STATION_NAME_RE = /^(?:1ULTRA|SKYNET)_/i;
+const STATION_NAME_RE = /^(?:STARNET|SKYNET)_/i;
 // Never stripped by the value rule: a process without these cannot even start, and a connector env value that
 // happened to equal a path must not take PATH down with it.
 const NEVER_STRIP = new Set(['PATH', 'PATHEXT', 'SYSTEMROOT', 'WINDIR', 'COMSPEC', 'HOME', 'USERPROFILE', 'TEMP', 'TMP',

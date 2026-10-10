@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Brand Assets"
   category: "Creative"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 A set looks like a brand when every piece follows the same written rules. image_generate takes no reference image, so consistency lives in the words: one style sheet, repeated exactly, and every result checked against it.

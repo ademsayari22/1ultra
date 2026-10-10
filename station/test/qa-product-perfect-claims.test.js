@@ -178,7 +178,7 @@ const TEST_ONLY_LEDGER_OVERRIDE = 'TEST_ONLY_UNCOMMITTED_LEDGER_FIXTURE';
   const marketingExperimental = marketingExperimentalLabel.claims.find(row => row.disposition === 'EXPERIMENTAL');
   marketingExperimental.experimentalLabel = {
     visible: true,
-    check: { kind: 'contains', path: 'README.md', needle: '1Ultra' }
+    check: { kind: 'contains', path: 'README.md', needle: 'StarNet' }
   };
   A.eq(validateClaimsLedger(marketingExperimentalLabel, { repoRoot }).ok, false, 'marketing copy cannot impersonate a visible point-of-use experimental label');
 

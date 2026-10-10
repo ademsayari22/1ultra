@@ -6,5 +6,5 @@
   "tags": ["telegram", "notifications", "messaging", "updates"],
   "requires": ["dish"],
   "license": "MIT",
-  "authors": ["1Ultra"]
+  "authors": ["StarNet"]
 }

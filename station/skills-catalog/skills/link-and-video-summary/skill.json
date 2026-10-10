@@ -6,5 +6,5 @@
   "tags": ["summary", "articles", "video", "pdf", "quotes", "notes"],
   "requires": ["dish", "cabinet"],
   "license": "MIT",
-  "authors": ["1Ultra"]
+  "authors": ["StarNet"]
 }

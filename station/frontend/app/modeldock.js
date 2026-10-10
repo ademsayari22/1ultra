@@ -133,7 +133,7 @@ const ModelDock = (() => {
   }
   function providerLabel(p) {
     p = normalizeProvider(p);
-    const map = { starnet: '1ULTRA', codex: 'GPT / CODEX', grok: 'GROK OAUTH', kimi: 'KIMI OAUTH', openrouter: 'OPENROUTER', openai: 'OPENAI API', anthropic: 'ANTHROPIC', gemini: 'GEMINI', xai: 'XAI', groq: 'GROQ', mistral: 'MISTRAL', deepseek: 'DEEPSEEK', together: 'TOGETHER', fireworks: 'FIREWORKS', perplexity: 'PERPLEXITY', cerebras: 'CEREBRAS', ollama: 'OLLAMA', 'claude-cli': 'CLAUDE CODE', custom: 'CUSTOM' };
+    const map = { starnet: 'STARNET', codex: 'GPT / CODEX', grok: 'GROK OAUTH', kimi: 'KIMI OAUTH', openrouter: 'OPENROUTER', openai: 'OPENAI API', anthropic: 'ANTHROPIC', gemini: 'GEMINI', xai: 'XAI', groq: 'GROQ', mistral: 'MISTRAL', deepseek: 'DEEPSEEK', together: 'TOGETHER', fireworks: 'FIREWORKS', perplexity: 'PERPLEXITY', cerebras: 'CEREBRAS', ollama: 'OLLAMA', 'claude-cli': 'CLAUDE CODE', custom: 'CUSTOM' };
     return map[p] || String(p || 'openrouter').toUpperCase();
   }
   function normalizeProvider(p) {

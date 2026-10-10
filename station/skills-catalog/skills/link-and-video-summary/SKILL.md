@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Link and Video Summary"
   category: "Research"
-  author: "1Ultra"
+  author: "StarNet"
 ---
 
 A summary stands in for something the Commander will not read or watch, so it has to be true to the source. Cover only what you actually read, point to where each claim sits, and copy quotes exactly.

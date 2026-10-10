@@ -259,7 +259,7 @@ const result = (extra) => Object.assign({ type: 'result', subtype: 'success', is
     const { p, calls } = make({ lines: [init('none'), result({ result: 'ok' })] }, { env });
     await collect(p, { model: 'sonnet', messages: [{ role: 'user', content: 'x' }] });
     const childEnv = calls[0].opts.env;
-    A.ok(childEnv && !Object.keys(childEnv).some(k => /^(1ULTRA|SKYNET)_/i.test(k)), 'no STARNET_/SKYNET_ variable reaches the CLI');
+    A.ok(childEnv && !Object.keys(childEnv).some(k => /^(STARNET|SKYNET)_/i.test(k)), 'no STARNET_/SKYNET_ variable reaches the CLI');
     A.eq([childEnv.CLAUDECODE, childEnv.HOME, childEnv.CLAUDE_CODE_DISABLE_AUTO_MEMORY], [undefined, '/h', '1'], 'not a nested session; user env kept; auto-memory off');
   }
 

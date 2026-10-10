@@ -71,7 +71,7 @@ const fm = (yaml, body) => catalog.parseFrontmatter('---\n' + yaml + '\n---\n' +
   A.eq(pkg.parseFrontmatter(doc).meta.description, 'Extracts text and tables from PDF files. Use when working with PDFs.', 'package hydrate reads the same description');
   const rendered = pkg.renderSkillMd({ name: 'Say "hi"', description: 'uses "quotes" and a: colon', body: '1. go', platforms: ['macos'] });
   const back = pkg.parseFrontmatter(rendered).meta;
-  A.eq([back.name, back.description, back.platforms], ['Say "hi"', 'uses "quotes" and a: colon', ['macos']], '1Ultra\'s own rendered frontmatter round-trips exactly (escapes decoded)');
+  A.eq([back.name, back.description, back.platforms], ['Say "hi"', 'uses "quotes" and a: colon', ['macos']], 'StarNet\'s own rendered frontmatter round-trips exactly (escapes decoded)');
 }
 
 A.report('skill-frontmatter.test');

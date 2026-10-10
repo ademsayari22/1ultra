@@ -33,7 +33,7 @@ function makeFixture(dir, version, opts) {
     packages: { '': { name: 'starnet-harness', version } }
   }, null, 2) + '\n');
   const conf = {
-    $schema: 'x', productName: '1Ultra', version, identifier: 'ai.skynet.harness',
+    $schema: 'x', productName: 'StarNet', version, identifier: 'ai.skynet.harness',
     // The published-floor check reads the releases repo slug from the updater endpoint.
     plugins: { updater: { endpoints: [
       'https://github.com/acme/starnet-releases/releases/latest/download/latest.json'

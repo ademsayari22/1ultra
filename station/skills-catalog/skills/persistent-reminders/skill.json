@@ -6,5 +6,5 @@
   "tags": ["reminders", "follow-up", "recurring", "bills", "chores", "routine"],
   "requires": ["cabinet", "orchestrator"],
   "license": "MIT",
-  "authors": ["1Ultra"]
+  "authors": ["StarNet"]
 }

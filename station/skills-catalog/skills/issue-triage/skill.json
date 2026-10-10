@@ -6,5 +6,5 @@
   "tags": ["github", "issues", "triage", "backlog", "bug-reports", "pull-requests"],
   "requires": ["cabinet"],
   "license": "MIT",
-  "authors": ["1Ultra"]
+  "authors": ["StarNet"]
 }

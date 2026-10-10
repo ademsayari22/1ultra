@@ -104,12 +104,12 @@ const { tmpdir } = require('node:os');
   A.ok(!sourceReceipt.candidateBound && sourceReceipt.limitations.some(x => /not installed-candidate proof/.test(x)),
     'a source-only receipt names its limitation instead of impersonating installed proof');
   const installedReceipt = cmp.makeReceipt({ kind: 'parity', contract, subject: {
-    commit: 'b'.repeat(40), sourceTree: { algorithm: 'git-tree', value: 'tree' }, executable: { path: '1Ultra.exe', sha256: hash },
+    commit: 'b'.repeat(40), sourceTree: { algorithm: 'git-tree', value: 'tree' }, executable: { path: 'StarNet.exe', sha256: hash },
     provenance: { verified: true }, dirty: false
   }, result: parity });
   A.ok(installedReceipt.candidateBound, 'verified clean provenance + commit + source tree + executable hash bind a receipt to a candidate');
   const unverifiedReceipt = cmp.makeReceipt({ kind: 'parity', contract, subject: {
-    commit: 'b'.repeat(40), sourceTree: { algorithm: 'git-tree', value: 'tree' }, executable: { path: '1Ultra.exe', sha256: hash }, dirty: false
+    commit: 'b'.repeat(40), sourceTree: { algorithm: 'git-tree', value: 'tree' }, executable: { path: 'StarNet.exe', sha256: hash }, dirty: false
   }, result: parity });
   A.ok(!unverifiedReceipt.candidateBound, 'an executable hash cannot bind itself to an unrelated source commit without verified provenance');
 

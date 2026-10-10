@@ -47,7 +47,7 @@ function station(name, updatedAt, marker) {
   const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'starnet-lineage-http-'));
   const appData = path.join(sandbox, 'appdata');
   const current = path.join(appData, 'ai.skynet.harness', 'workspaces');
-  const legacyA = path.join(appData, '1Ultra', 'workspaces');
+  const legacyA = path.join(appData, 'StarNet', 'workspaces');
   const legacyB = path.join(appData, 'Skynet', 'workspaces');
   fs.mkdirSync(current, { recursive: true }); fs.mkdirSync(legacyA, { recursive: true }); fs.mkdirSync(legacyB, { recursive: true });
   fs.writeFileSync(path.join(current, '.migration-receipt.json'), JSON.stringify({ version: 1, validated: true, files: [] }));

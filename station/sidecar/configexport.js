@@ -192,7 +192,7 @@
     return {
       starnetExport: SCHEMA,
       exportedAt: (typeof o.now === 'number') ? o.now : null,
-      app: clampStr(o.app || '1Ultra', 40),
+      app: clampStr(o.app || 'StarNet', 40),
       sections
     };
   }

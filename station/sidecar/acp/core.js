@@ -303,7 +303,7 @@
       log('initialize from ' + clientName + ' (protocol v' + str(p.protocolVersion) + ')');
       return {
         protocolVersion: PROTOCOL_VERSION,
-        agentInfo: { name: AGENT_NAME, title: '1Ultra', version: version() },
+        agentInfo: { name: AGENT_NAME, title: 'StarNet', version: version() },
         agentCapabilities: {
           // loadSession: this process can replay a session it is still holding (see session/load — it is
           // honest about a sessionId from a PREVIOUS bridge process, which it cannot know about).

@@ -58,7 +58,7 @@ function desktopBrowser(seam, lease, prompts) {
 }
 
 (async () => {
-  const stationProfile = 'C:\\Users\\Commander\\AppData\\Roaming\\1Ultra\\browser-profile';
+  const stationProfile = 'C:\\Users\\Commander\\AppData\\Roaming\\StarNet\\browser-profile';
   const lease = makeLease(stationProfile);
   const seam = makeDriverSeam();
   const prompts = [];

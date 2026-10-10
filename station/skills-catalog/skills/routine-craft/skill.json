@@ -6,5 +6,5 @@
   "tags": ["routines", "scheduling", "automation", "unattended"],
   "requires": ["orchestrator"],
   "license": "MIT",
-  "authors": ["1Ultra"]
+  "authors": ["StarNet"]
 }

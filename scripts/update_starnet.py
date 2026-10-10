@@ -19,8 +19,9 @@ OWNED = ('ultra-host.js', 'ultra-policy.js', 'ultra-state.js', 'ultra-switches.j
          'UPSTREAM.json', 'package.json', 'package-lock.json', 'node_modules/', 'frontend/campaign/', 'frontend/assets/',
          'frontend/ultra-window.js', 'frontend/ultra-brand.css')
 RENAMES = {'package.json': 'package.upstream.json', 'package-lock.json': 'package-lock.upstream.json'}
-# Display words only: a brand word joined to '-' or '/' is an identifier (X-StarNet-Token header, Support/StarNet path,
-# refused-by-newer-StarNet code) and must keep its exact spelling.
+# Display words only. A brand word is rewritten when it touches whitespace (prose) or sits alone between HTML tags
+# (>STARNET<). A word joined to '-' or '/' (X-StarNet-Token header, Support/StarNet path) or standing alone as a code
+# value ('StarNet' path part, /^(?:STARNET|SKYNET)_/ env filter) keeps its exact spelling: those strings are functional.
 BRAND = [(re.compile(r'(?<![-/])\b' + word + r'\b(?![-/])'), new) for word, new in (('StarNet', '1Ultra'), ('STARNET', '1ULTRA'), ('Starnet', '1Ultra'))]
 BRAND_ROOTS = {'frontend', 'sidecar', 'shared', 'test', 'skills-catalog'}
 
@@ -44,9 +45,16 @@ def brandable(name):
     return len(p.parts) > 1 and p.parts[0] in BRAND_ROOTS and not p.name.upper().startswith(('LICENSE', 'NOTICE', 'COPYING'))
 
 
+def _display(match):
+    s, e, text = match.start(), match.end(), match.string
+    before = text[s - 1] if s else '\n'
+    after = text[e] if e < len(text) else '\n'
+    return before.isspace() or after.isspace() or (before == '>' and after == '<')
+
+
 def rebrand(text):
     for rx, new in BRAND:
-        text = rx.sub(new, text)
+        text = rx.sub(lambda m, new=new: new if _display(m) else m.group(0), text)
     return text
 
 

@@ -529,8 +529,8 @@ function defaultWorkspaces() {
     || path.join(os.homedir() || '.', '.local', 'share');                 // POSIX fallback
   // Skynet→1Ultra rename back-compat: prefer the NEW dir; if it doesn't exist yet but the OLD one does, keep
   // using the old one IN PLACE (no move) so existing data is never lost and any old-code process that still
-  // looks for \Skynet\ keeps sharing the same data (no split-brain). Fresh installs land under \1Ultra\.
-  const neu = path.join(base, '1Ultra', 'workspaces');
+  // looks for \Skynet\ keeps sharing the same data (no split-brain). Fresh installs land under \StarNet\.
+  const neu = path.join(base, 'StarNet', 'workspaces');
   const old = path.join(base, 'Skynet', 'workspaces');   // legacy pre-rename location — read in place, never renamed
   try { if (!fs.existsSync(neu) && fs.existsSync(old)) return old; } catch (_) {}
   return neu;
@@ -9529,7 +9529,7 @@ let telegramStatus = { connected: false, state: 'down', detail: '', delivery: { 
 // startup value. Empty = "we don't know our own name", which the gate treats as "do not silence the room".
 let stationBotUsername = '';
 // The bot's DISPLAY name, learned from the same getMe. It is the wake word: "@thebot check the logs" is how
-// you address a bot, "1Ultra, check the logs" is how people actually type it.
+// you address a bot, "StarNet, check the logs" is how people actually type it.
 let stationBotName = '';
 // Telegram PRIVACY MODE, from the same getMe. null until we are told. With it ON (the default) a group
 // delivers us only commands, @mentions and replies to us — so wake words and observe-mode are promises we
@@ -13361,7 +13361,7 @@ async function handleConfigExport(req, res) {
   let body; try { body = JSON.parse(await readBody(req, 1 << 20)) || {}; } catch (e) { return json(400, { error: 'bad json' }); }
   const snap = collectExportSnapshot(body.sections);
   let env;
-  try { env = configExport.buildExport(snap, { now: Date.now(), app: '1Ultra', only: Array.isArray(body.only) ? body.only : null }); }
+  try { env = configExport.buildExport(snap, { now: Date.now(), app: 'StarNet', only: Array.isArray(body.only) ? body.only : null }); }
   catch (e) { return json(409, { ok: false, error: (e && e.message) || 'configuration cannot be exported safely' }); }
   return json(200, env);
 }
@@ -14285,7 +14285,7 @@ async function handleConnectorOauthStart(req, res) {
     let www = '';
     try {
       const pr = await mcpOauth.withDeadline(net, signal => connectorOauthFetch(entry.url, { method: 'POST', signal, redirect: 'manual', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: '1Ultra', version: '1' } } }) }), 'connector authorization probe');
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'StarNet', version: '1' } } }) }), 'connector authorization probe');
       www = (pr.headers && pr.headers.get && pr.headers.get('www-authenticate')) || '';
     } catch (_) {}
     const disc = await mcpOauth.discover({ fetchImpl: connectorOauthFetch, serverUrl: entry.url, wwwAuthenticate: www, signal: controller.signal, timeoutMs: CONNECTOR_OAUTH_LEG_MS, deadlineAt, now: net.now });
@@ -14305,7 +14305,7 @@ async function handleConnectorOauthStart(req, res) {
     if (!clientId || redirectMoved || tokenEndpointAuthMethod !== requiredAuthMethod || (requiredAuthMethod !== 'none' && !clientSecret)) {
       if (!disc.registrationEndpoint) return json(502, { error: 'this server needs a pre-registered OAuth client (no dynamic registration)' });
       const reg = await mcpOauth.registerClient({ fetchImpl: connectorOauthFetch, registrationEndpoint: disc.registrationEndpoint,
-        redirectUri: CONNECTOR_OAUTH_REDIRECT, clientName: '1Ultra', tokenEndpointAuthMethod: requiredAuthMethod,
+        redirectUri: CONNECTOR_OAUTH_REDIRECT, clientName: 'StarNet', tokenEndpointAuthMethod: requiredAuthMethod,
         signal: controller.signal, timeoutMs: CONNECTOR_OAUTH_LEG_MS, deadlineAt, now: net.now });
       clientId = reg.clientId;
       clientSecret = reg.clientSecret;
@@ -14610,7 +14610,7 @@ function widgetSources() {
     available: c.enabled !== false && ['up', 'cached'].includes(c.state) && !c.authRequired }));
   for (const k of serviceKeys) if (k && k.key) out.push({ kind: 'servicekey', id: k.envVar,
     label: redact(k.name), state: k.enabled === false ? 'disabled' : 'configured', available: k.enabled !== false });
-  out.push({ kind: 'agent', id: 'starnet', label: '1Ultra', state: 'available', available: true });
+  out.push({ kind: 'agent', id: 'starnet', label: 'StarNet', state: 'available', available: true });
   return out;
 }
 function handleWidgetSources(req, res) {

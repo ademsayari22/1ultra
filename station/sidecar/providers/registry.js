@@ -150,7 +150,7 @@
       id: 'starnet',
       aliases: ['starnet-cloud', 'managed'],
       name: '1Ultra Managed',
-      label: '1ULTRA',
+      label: 'STARNET',
       endpoint: 'managed inference (credits)',
       blurb: 'run on credits, no API key — link a station',
       live: true,

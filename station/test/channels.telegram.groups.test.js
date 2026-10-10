@@ -285,15 +285,15 @@ async function run() {
   }
 
   /* ---- G. WAKE WORDS: being called by NAME is being addressed --------------------------------------------
-     "@thebot check the logs" is how you address a bot. "1Ultra, check the logs" is how people actually type,
+     "@thebot check the logs" is how you address a bot. "StarNet, check the logs" is how people actually type,
      and it did nothing at all — the most natural way to call the agent by the name the member gave it. */
   {
     const mk = (patterns) => mkAdapter({ botUsername: 'starnetbot', mentionPatterns: patterns });
 
-    let a = mk(['1Ultra']);
-    a.ad._internals.dispatch(groupMsg({ text: '1Ultra, check the logs' }));
+    let a = mk(['StarNet']);
+    a.ad._internals.dispatch(groupMsg({ text: 'StarNet, check the logs' }));
     A.eq(a.got.length, 1, 'being called by name wakes the bot');
-    a = mk(['1Ultra']);
+    a = mk(['StarNet']);
     a.ad._internals.dispatch(groupMsg({ text: 'hey starnet can you look at this' }));
     A.eq(a.got.length, 1, 'case-insensitively, and anywhere in the sentence');
 
@@ -316,7 +316,7 @@ async function run() {
     a = mk(null);
     a.ad._internals.dispatch(groupMsg({ text: 'unaddressed chatter' }));
     A.eq(a.got.length, 0, 'no patterns configured = the old behaviour, unchanged');
-    a = mk(['1Ultra']);
+    a = mk(['StarNet']);
     a.ad._internals.dispatch(groupMsg({ text: '@starnetbot still works' , mentions: ['starnetbot'] }));
     A.eq(a.got.length, 1, 'and an @mention still works alongside it');
 

@@ -6,5 +6,5 @@
   "tags": ["meetings", "preparation", "briefing", "people", "agenda"],
   "requires": ["dish", "cabinet", "notebook"],
   "license": "MIT",
-  "authors": ["1Ultra"]
+  "authors": ["StarNet"]
 }
