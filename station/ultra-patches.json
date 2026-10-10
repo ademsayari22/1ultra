@@ -6,10 +6,28 @@
     "replace": "'use strict';\n\n// 1Ultra composition boundary: owner switches decide models, connections and background work.\nconst ultraHost = require('../ultra-host.js');\n\nconst http = require('node:http');"
   },
   {
+    "id": "run-admission",
+    "file": "sidecar/index.js",
+    "find": "async function runOnceCore(o) {\n  if (updatePreparation.isFrozen()) {\n    throw Object.assign(new Error('1Ultra is frozen at a verified pre-update recovery point.'), { code: 'UPDATE_MUTATIONS_FROZEN' });\n  }\n",
+    "replace": "async function runOnceCore(o) {\n  if (updatePreparation.isFrozen()) {\n    throw Object.assign(new Error('1Ultra is frozen at a verified pre-update recovery point.'), { code: 'UPDATE_MUTATIONS_FROZEN' });\n  }\n  ultraHost.beforeRun(o);\n"
+  },
+  {
+    "id": "station-halt-hook",
+    "file": "sidecar/index.js",
+    "find": "function handleHalt(req, res) {\n",
+    "replace": "function handleHalt(req, res) {\n  ultraHost.onStationHalt();\n"
+  },
+  {
+    "id": "station-resume-hook",
+    "file": "sidecar/index.js",
+    "find": "  if (!body || body.confirm !== true) return haltJson(res, 400, { error: 'explicit confirm:true is required to resume' });\n",
+    "replace": "  if (!body || body.confirm !== true) return haltJson(res, 400, { error: 'explicit confirm:true is required to resume' });\n  ultraHost.onStationResume();\n"
+  },
+  {
     "id": "model-gate",
     "file": "sidecar/index.js",
     "find": "function selectProvider(opts) {\n",
-    "replace": "function selectProvider(opts) {\n  ultraHost.policy.assertModelAllowed();\n"
+    "replace": "function selectProvider(opts) {\n  ultraHost.assertProviderAllowed(opts);\n"
   },
   {
     "id": "runtime-workspace",
@@ -93,7 +111,7 @@
     "id": "route-registry",
     "file": "sidecar/index.js",
     "find": "function dispatchRoute(req, res) {\n",
-    "replace": "ultraHost.registerRoutes(ROUTES);\nfunction dispatchRoute(req, res) {\n"
+    "replace": "ultraHost.registerRoutes(ROUTES);\nultraHost.registerStationHalt(() => { handleHalt(null, { writeHead() {}, end() {} }); try { killAll(runStopHandles); } catch (_) {} });\nfunction dispatchRoute(req, res) {\n"
   },
   {
     "id": "route-gate",

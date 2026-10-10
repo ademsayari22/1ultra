@@ -181,7 +181,7 @@ async function handle(req,res){
     if(p==='/api/ultra/jobs')return json(res,200,startJob(body));
     if(p==='/api/ultra/workflows/step')return json(res,200,await workflowStep(body));
     if(p==='/api/ultra/control'){
-      if(body.action==='stop'){halted=true;for(const job of jobs.values())if(job.child){job.status='cancelled';terminateJob(job);}saveJobs();}
+      if(body.action==='stop'){onStationHalt();try{stationHalt();}catch(e){console.warn('[1ultra] station halt failed:',(e&&e.message)||e);}}
       else if(body.action==='resume')halted=false;
       else if(body.action==='cancel'){const job=jobs.get(body.id);if(job?.cancellable===false)throw Error('This short atomic preparation write is finishing; new preparation is stopped separately.');if(job?.child){job.status='cancelled';terminateJob(job);saveJobs();}}
       else throw new Error('Choose stop, resume or cancel.');durable(controlFile,{halted});return json(res,200,{halted});
@@ -231,10 +231,18 @@ function campaign(req,res,token){
   res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store','X-Frame-Options':'SAMEORIGIN','Content-Security-Policy':"frame-ancestors 'self'",'X-Content-Type-Options':'nosniff'});
   res.end(data);
 }
+// One emergency stop: the 1Ultra stop also halts Starnet (runs, lines, cron, dispatch), Starnet's E-STOP also sets the
+// 1Ultra stop, and Starnet's RESUME clears both. While stopped, every agent run is refused before it reaches a model.
+let stationHalt=()=>{};
+function registerStationHalt(fn){if(typeof fn==='function')stationHalt=fn;}
+function onStationHalt(){halted=true;for(const job of jobs.values())if(job.child){job.status='cancelled';terminateJob(job);}saveJobs();durable(controlFile,{halted});}
+function onStationResume(){halted=false;durable(controlFile,{halted});}
+function beforeRun(o){const r=policy.admitRun({halted});if(!r.ok)throw Object.assign(new Error(r.error),{code:'ULTRA_EMERGENCY_STOP'});}
+function assertProviderAllowed(opts){const r=policy.providerAllowed(opts&&opts.provider,switches);if(!r.ok)throw Object.assign(new Error(r.error),{code:'ULTRA_PROVIDER_OFF'});}
 let routeTable=[];
 function registerRoutes(routes){routeTable=routes;}
 const preGate=(method,url)=>policy.preGate(method,url,switches);
 const routeGate=r=>policy.routeGate(r,switches);
 process.on('exit',()=>{if(rpc)rpc.kill('SIGTERM');for(const job of jobs.values())terminateJob(job);});
-module.exports={root,runtime,policy,handle,classic,campaign,switches,preGate,routeGate,registerRoutes};
+module.exports={root,runtime,policy,handle,classic,campaign,switches,preGate,routeGate,registerRoutes,beforeRun,assertProviderAllowed,onStationHalt,onStationResume,registerStationHalt};
 policy.install(runtime);

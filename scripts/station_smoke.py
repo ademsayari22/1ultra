@@ -98,6 +98,15 @@ def main():
             request('/api/save?agent=agent')  # local family answers 200 (request() raises on any other status)
             request('/v1/chat/completions', {'model': 'x'}, expected=403)
             checks.append('route classes: none unclassified; model route refused with its switch; local routes answer')
+            request('/api/ultra/control', {'action': 'stop'})
+            assert request('/api/halt')['halted'] is True, '1Ultra stop must halt Starnet too'
+            request('/api/halt/resume', {'confirm': True})
+            assert request('/api/ultra/runtime')['halted'] is False, "Starnet RESUME clears the 1Ultra stop"
+            request('/api/halt', {})
+            assert request('/api/ultra/runtime')['halted'] is True, "Starnet E-STOP sets the 1Ultra stop"
+            request('/api/halt/resume', {'confirm': True})
+            assert request('/api/ultra/runtime')['halted'] is False
+            checks.append('one emergency stop: 1Ultra stop halts Starnet; Starnet E-STOP and RESUME drive the 1Ultra stop')
             assert len(workspace['leads']) == len(json.loads((root / 'data/leads.json').read_text()))
             checks.append('Authenticated workspace and deterministic ranking')
             lead = workspace['hunt']['leads'][0]

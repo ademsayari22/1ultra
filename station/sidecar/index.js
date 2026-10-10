@@ -148,7 +148,7 @@ function googleRelayGuard() {
   return googleRelayGuardInstance;
 }
 function selectProvider(opts) {
-  ultraHost.policy.assertModelAllowed();
+  ultraHost.assertProviderAllowed(opts);
   // KIMI REGION (#70): every Kimi adapter — runs, catalogs, probes, fallbacks, extra accounts — talks to the API of
   // the region its sign-in was minted in. An empty or stock regional base resolves to that region; a custom proxy
   // URL the Commander set is kept. opts.kimiRegion names an extra account's region; otherwise the primary's.
@@ -11470,6 +11470,7 @@ const ROUTES = [
 ];
 
 ultraHost.registerRoutes(ROUTES);
+ultraHost.registerStationHalt(() => { handleHalt(null, { writeHead() {}, end() {} }); try { killAll(runStopHandles); } catch (_) {} });
 function dispatchRoute(req, res) {
   const url = req.url || '';
   const bare = url.split('?')[0];
@@ -18584,6 +18585,7 @@ async function runOnceCore(o) {
   if (updatePreparation.isFrozen()) {
     throw Object.assign(new Error('1Ultra is frozen at a verified pre-update recovery point.'), { code: 'UPDATE_MUTATIONS_FROZEN' });
   }
+  ultraHost.beforeRun(o);
   // Only host-routed workflow runs carry this origin; /api/run never accepts it.
   // (multi-bay) the entry routine names its dock: an agent crewing two lines answers for the bay it fires at
   const workflowLine = o.runsLine === true ? router.lineOfAgent(o.agentId, o.dockId ? router.dockOf(o.agentId, o.dockId) : undefined) : o.lineId;
@@ -23099,6 +23101,7 @@ async function handleHaltResume(req, res) {
   try { body = JSON.parse(await readBody(req, 4096, res)); }
   catch (_) { if (!res.headersSent) haltJson(res, 400, { error: 'bad json' }); return; }
   if (!body || body.confirm !== true) return haltJson(res, 400, { error: 'explicit confirm:true is required to resume' });
+  ultraHost.onStationResume();
   const errors = {};
   const attempt = (name, fn) => { try { fn(); } catch (e) { errors[name] = String(e && e.message || e); } };
   attempt('cron', () => { liftCronHalt(); });
@@ -23131,6 +23134,7 @@ function saveNightshiftHalt(next) {
   nightshiftState = next;
 }
 function handleHalt(req, res) {
+  ultraHost.onStationHalt();
   // a group-store fault must never skip the rest of the E-STOP (killAll, the durable stand-down stamps)
   try { if (typeof groupSessions !== 'undefined') groupSessions.halt().catch(e => console.warn('[groups] halt persistence failed:', e.message)); }
   catch (e) { console.warn('[groups] halt failed:', (e && e.message) || e); }
