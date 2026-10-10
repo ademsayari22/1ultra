@@ -64,3 +64,111 @@ test('only a deliberate 1Ultra launch uses the real runtime; isolated callers ke
   assert.equal(Policy.resolvePort({ ULTRA_PORT: '8550', STARNET_PORT: '9' }), '8550');
   assert.equal(Policy.resolvePort({}), '8541');
 });
+const fsx = require('node:fs'), osx = require('node:os'), px = require('node:path');
+test('each provider needs its own switch; Starnet cloud never runs', () => {
+  const on = (...ids) => ({ isOn: id => ids.includes(id) });
+  assert.equal(Policy.providerSwitch('codex'), 'lead.codex');
+  assert.equal(Policy.providerSwitch('custom'), 'crew.freellmapi');
+  assert.equal(Policy.providerSwitch('openai-compatible'), 'crew.freellmapi');
+  assert.equal(Policy.providerSwitch('anthropic'), 'providers.anthropic');
+  assert.equal(Policy.providerSwitch('starnet'), null);
+  assert.deepEqual(Policy.providerAllowed('codex', on('lead.codex')), { ok: true, switch: 'lead.codex' });
+  const off = Policy.providerAllowed('codex', on());
+  assert.equal(off.ok, false); assert.match(off.error, /lead\.codex/);
+  assert.equal(Policy.providerAllowed('starnet', on('lead.codex')).ok, false);
+  assert.equal(Policy.providerAllowed('', on('lead.codex')).ok, false);
+  assert.equal(Policy.providerAllowed('custom', { isOn: () => { throw new Error('broken store'); } }).ok, false);
+});
+test('the emergency stop refuses every run', () => {
+  assert.deepEqual(Policy.admitRun({ halted: false }), { ok: true });
+  const r = Policy.admitRun({ halted: true });
+  assert.equal(r.ok, false); assert.match(r.error, /Emergency stop/);
+});
+test('outbound targets follow the switches and never reach private addresses', () => {
+  const on = (...ids) => id => ids.includes(id);
+  const t = (host, port, protocol = 'https:') => ({ host, port, protocol });
+  const opts = { freellmapiPort: 3001 };
+  assert.equal(Policy.allowedTarget(t('chatgpt.com'), on(), opts), false);
+  assert.equal(Policy.allowedTarget(t('chatgpt.com'), on('lead.codex'), opts), true);
+  assert.equal(Policy.allowedTarget(t('auth.openai.com'), on('lead.codex'), opts), true);
+  assert.equal(Policy.allowedTarget(t('www.mojeek.com'), on('lead.codex'), opts), false);
+  assert.equal(Policy.allowedTarget(t('www.mojeek.com'), on('tools.web'), opts), true);
+  assert.equal(Policy.allowedTarget(t('127.0.0.1', 3001, 'http:'), on(), opts), false);
+  assert.equal(Policy.allowedTarget(t('127.0.0.1', 3001, 'http:'), on('crew.freellmapi'), opts), true);
+  assert.equal(Policy.allowedTarget(t('localhost', 3001, 'http:'), on('crew.freellmapi'), opts), true);
+  assert.equal(Policy.allowedTarget(t('127.0.0.1', 8541, 'http:'), on('crew.freellmapi', 'tools.web'), opts), false);
+  for (const h of ['192.168.1.10', '10.0.0.5', '172.20.1.1', '169.254.169.254', '::1', 'fd00::1', 'metadata.google.internal'])
+    assert.equal(Policy.allowedTarget(t(h, 80, 'http:'), on('tools.web', 'lead.codex'), opts), false, h);
+  assert.equal(Policy.allowedTarget(t('93.184.216.34', 443), on('tools.web'), opts), true);
+});
+test('agents cannot reach 1Ultra project files, except their own runtime', () => {
+  const root = fsx.mkdtempSync(px.join(osx.tmpdir(), 'ultra-root-'));
+  const runtime = px.join(root, 'runs', 'station-runtime');
+  fsx.mkdirSync(px.join(runtime, 'agent'), { recursive: true }); fsx.mkdirSync(px.join(root, 'data'));
+  Policy.setProtectedRoots({ root, runtime });
+  try {
+    assert.match(Policy.protectedPathReason(px.join(root, 'data', 'leads.json')), /off-limits/);
+    assert.match(Policy.protectedPathReason(root), /off-limits/);
+    assert.equal(Policy.protectedPathReason(px.join(runtime, 'agent', 'note.md')), null);
+    fsx.symlinkSync(px.join(root, 'data'), px.join(runtime, 'agent', 'link'));
+    assert.match(Policy.protectedPathReason(px.join(runtime, 'agent', 'link', 'leads.json')), /off-limits/);
+    assert.equal(Policy.protectedPathReason(osx.tmpdir()), null);
+    assert.match(Policy.blessRefusal(root), /1Ultra project/);
+    assert.match(Policy.blessRefusal(px.dirname(root)), /1Ultra project/);
+    assert.match(Policy.blessRefusal(px.join(root, 'data')), /1Ultra project/);
+    assert.equal(Policy.blessRefusal(fsx.mkdtempSync(px.join(osx.tmpdir(), 'ultra-other-'))), null);
+  } finally { Policy.setProtectedRoots(null); }
+  assert.equal(Policy.protectedPathReason(px.join(root, 'data')), null, 'no roots set: upstream behaviour unchanged');
+});
+test('provider routes open while the lead or crew switch is on', () => {
+  const on = (...ids) => ({ isOn: id => ids.includes(id) });
+  assert.equal(Policy.routeGate({ exact: '/api/providers/engine-key' }, on()).ok, false);
+  assert.equal(Policy.routeGate({ exact: '/api/providers/engine-key' }, on('lead.codex')).ok, true);
+  assert.equal(Policy.routeGate({ exact: '/api/key' }, on('crew.freellmapi')).ok, true);
+});
+
+function withProtectedCache(check) {
+  const root = fsx.mkdtempSync(px.join(osx.tmpdir(), 'ultra-cache-root-'));
+  fsx.mkdirSync(px.join(root, '..cache'));
+  Policy.setProtectedRoots({ root });
+  try { check(root); }
+  finally { Policy.setProtectedRoots(null); fsx.rmSync(root, { recursive: true, force: true }); }
+}
+test('project files in two-dot child directories remain off-limits', () => {
+  withProtectedCache(root => {
+    assert.match(Policy.protectedPathReason(px.join(root, '..cache', 'file')), /off-limits/);
+  });
+});
+test('two-dot child directories cannot be blessed as projects', () => {
+  withProtectedCache(root => {
+    assert.match(Policy.blessRefusal(px.join(root, '..cache')), /1Ultra project/);
+  });
+});
+test('host canonicalization normalizes case, trailing dots and IPv4/IPv6 spellings', () => {
+  assert.equal(Policy.canonicalHost('LOCALHOST.'), 'localhost');
+  assert.equal(Policy.canonicalHost('127.1'), '127.0.0.1');
+  assert.equal(Policy.canonicalHost('2130706433'), '127.0.0.1');
+  assert.equal(Policy.canonicalHost('0:0:0:0:0:0:0:1'), '::1');
+});
+for (const host of ['localhost.', '127.1', '2130706433', '0x7f.1', '0177.0.0.1', '0:0:0:0:0:0:0:1', '[::ffff:7f00:1]']) {
+  test('private host spelling stays blocked with web and lead on: ' + host, () => {
+    const on = (...ids) => id => ids.includes(id);
+    assert.equal(Policy.allowedTarget({ host, port: 443, protocol: 'https:' }, on('tools.web', 'lead.codex'), { freellmapiPort: 3001 }), false);
+    assert.equal(Policy.isPrivateHost(host), true);
+  });
+}
+test('FreeLLMAPI accepts canonical loopback aliases only with its crew switch', () => {
+  const on = (...ids) => id => ids.includes(id);
+  const target = { host: '127.1', port: 3001, protocol: 'http:' };
+  const opts = { freellmapiPort: 3001 };
+  assert.equal(Policy.allowedTarget(target, on('crew.freellmapi'), opts), true);
+  assert.equal(Policy.allowedTarget(target, on('tools.web', 'lead.codex'), opts), false);
+});
+test('invalid numeric and IPv6 hosts fail closed during canonicalization', () => {
+  const on = (...ids) => id => ids.includes(id);
+  for (const host of ['999.1', '4294967296', '::gg', '1:2:3']) {
+    assert.equal(Policy.canonicalHost(host), '', host);
+    assert.equal(Policy.isPrivateHost(host), true, host);
+    assert.equal(Policy.allowedTarget({ host, port: 443, protocol: 'https:' }, on('tools.web', 'lead.codex', 'crew.freellmapi'), { freellmapiPort: 3001 }), false, host);
+  }
+});

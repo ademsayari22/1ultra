@@ -56,7 +56,9 @@ function routeKey(r) {
 function gate(cls, switches) {
   if (cls === 'local') return { ok: true, cls };
   if (cls === 'blocked' || cls === 'unclassified') return { ok: false, cls, error: 'This Starnet feature is not part of 1Ultra.' };
-  if (switches.isOn(cls)) return { ok: true, cls };
+  const isOn = id => { try { return switches.isOn(id) === true; } catch (_) { return false; } };
+  const open = cls === 'providers' ? (isOn('providers') || isOn('lead.codex') || isOn('crew.freellmapi')) : isOn(cls);
+  if (open) return { ok: true, cls };
   return { ok: false, cls, switch: cls, error: 'Turn on "' + cls + '" in 1Ultra switches first.' };
 }
 function routeGate(r, switches) { return gate(classifyPath(routeKey(r)), switches); }
@@ -68,6 +70,93 @@ function preGate(method, url, switches) {
   if (p === '/health') return { ok: method === 'GET', cls: 'local' };
   if (p === '/api' || p.startsWith('/api/')) return { ok: true, cls: 'table' };
   return (method === 'GET' || method === 'HEAD') ? { ok: true, cls: 'static' } : { ok: false, cls: 'static', error: 'Static files are read-only.' };
+}
+// Which owner switch a model provider needs: Codex is the lead, the custom OpenAI-compatible endpoint is FreeLLMAPI's crew,
+// every other provider has its own switch. Starnet's own paid cloud ('starnet') is never part of 1Ultra.
+function providerSwitch(providerId) {
+  const id = String(providerId || '').trim().toLowerCase();
+  if (!id || id === 'starnet') return null;
+  if (id === 'codex') return 'lead.codex';
+  if (id === 'custom' || id === 'openai-compatible' || id === 'local') return 'crew.freellmapi';
+  return 'providers.' + id;
+}
+function providerAllowed(providerId, switches) {
+  const sw = providerSwitch(providerId);
+  if (!sw) return { ok: false, error: 'This model provider is not part of 1Ultra.' };
+  let on = false; try { on = switches.isOn(sw) === true; } catch (_) { on = false; }
+  return on ? { ok: true, switch: sw } : { ok: false, switch: sw, error: 'Turn on "' + sw + '" in 1Ultra switches first.' };
+}
+function admitRun(state) {
+  if (state && state.halted) return { ok: false, error: 'Emergency stop is active. Resume it in 1Ultra before starting agent work.' };
+  return { ok: true };
+}
+const CODEX_HOSTS = ['chatgpt.com', 'auth.openai.com'];
+function canonicalHost(host) {
+  const h = String(host || '').toLowerCase().replace(/^\[|\]$/g, '').replace(/\.+$/, '');
+  if (/^(0x[0-9a-f]*|\d+)(\.(0x[0-9a-f]*|\d+)){0,3}$/i.test(h)) {
+    try { return new URL('http://' + h).hostname; }
+    catch (_) { return ''; }
+  }
+  if (h.includes(':')) {
+    try { return new URL('http://[' + h + ']').hostname.replace(/^\[|\]$/g, ''); }
+    catch (_) { return ''; }
+  }
+  return h;
+}
+function isPrivateHost(host) {
+  const h = canonicalHost(host);
+  if (!h || h === 'localhost' || h.endsWith('.localhost') || h.endsWith('.local') || h.endsWith('.internal') || !h.includes('.') && !h.includes(':')) return true;
+  const v4 = h.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+  if (v4) { const [a, b] = [Number(v4[1]), Number(v4[2])];
+    return a === 0 || a === 10 || a === 127 || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || a >= 224; }
+  if (h.includes(':')) return h === '::' || h === '::1' || /^f[cd]/.test(h) || /^fe[89ab]/.test(h) || h.startsWith('::ffff:');
+  return false;
+}
+// May this process open a connection to target? FreeLLMAPI is the one local service agents may reach.
+function allowedTarget(target, isOn, opts = {}) {
+  const host = canonicalHost(target && target.host);
+  const port = Number(target && target.port) || ((target && target.protocol) === 'http:' ? 80 : 443);
+  const on = id => { try { return isOn(id) === true; } catch (_) { return false; } };
+  if ((host === '127.0.0.1' || host === 'localhost' || host === '::1') && port === Number(opts.freellmapiPort || 3001)) return on('crew.freellmapi');
+  if (isPrivateHost(host)) return false;
+  if (CODEX_HOSTS.some(h => host === h || host.endsWith('.' + h))) return on('lead.codex') || on('tools.web');
+  return on('tools.web');
+}
+// The 1Ultra project folder is never an agent's to read or write; only the station runtime inside it is.
+let protectedRoots = null;
+function setProtectedRoots(roots) {
+  const path = require('node:path');
+  protectedRoots = roots && roots.root ? { root: path.resolve(roots.root), runtime: path.resolve(roots.runtime || path.join(roots.root, 'runs', 'station-runtime')) } : null;
+}
+function realOrSelf(p) {
+  const path = require('node:path'), fs = require('node:fs');
+  let cur = path.resolve(String(p)); const rest = [];
+  for (let i = 0; i < 128; i++) {
+    try { return path.join(fs.realpathSync(cur), ...rest.slice().reverse()); }
+    catch (_) { const parent = path.dirname(cur); if (parent === cur) break; rest.push(path.basename(cur)); cur = parent; }
+  }
+  return path.resolve(String(p));
+}
+function inside(child, parent) {
+  const path = require('node:path');
+  const rel = path.relative(parent, child);
+  return rel === '' || (rel !== '..' && !rel.startsWith('..' + path.sep) && !path.isAbsolute(rel));
+}
+function protectedPathReason(p) {
+  if (!protectedRoots || !p) return null;
+  const path = require('node:path');
+  const runtimeReal = realOrSelf(protectedRoots.runtime), rootReal = realOrSelf(protectedRoots.root);
+  for (const candidate of [path.resolve(String(p)), realOrSelf(p)]) {
+    if (inside(candidate, protectedRoots.runtime) || inside(candidate, runtimeReal)) continue;
+    if (inside(candidate, protectedRoots.root) || inside(candidate, rootReal)) return '1Ultra project files are off-limits to agents: ' + candidate;
+  }
+  return null;
+}
+function blessRefusal(dir) {
+  if (!protectedRoots || !dir) return null;
+  const d = realOrSelf(dir), root = realOrSelf(protectedRoots.root);
+  if (inside(d, root) || inside(root, d)) return 'A project folder may not be, contain or sit inside the 1Ultra project (' + root + ').';
+  return null;
 }
 function makeGate(limit = () => 2) { const desks = new Set(); return {
   enter(desk) { if (desks.has(desk)) throw new Error('This desk already has an active job.'); const max = limit(); if (desks.size >= max) throw new Error('Only ' + max + ' preparation workers may run.'); desks.add(desk); },
@@ -101,4 +190,4 @@ function install(runtime) {
   const cp = require('node:child_process');
   for (const method of ['spawn', 'spawnSync', 'exec', 'execSync', 'execFile', 'execFileSync', 'fork']) cp[method] = deny;
 }
-module.exports = { ROUTE_CLASSES, classifyPath, routeKey, gate, routeGate, preGate, makeGate, resolveRuntime, resolvePort, runtimeAllowed, install, assertModelAllowed: deny };
+module.exports = { ROUTE_CLASSES, classifyPath, routeKey, gate, routeGate, preGate, makeGate, resolveRuntime, resolvePort, runtimeAllowed, install, assertModelAllowed: deny, providerSwitch, providerAllowed, admitRun, allowedTarget, canonicalHost, isPrivateHost, setProtectedRoots, protectedPathReason, blessRefusal };
