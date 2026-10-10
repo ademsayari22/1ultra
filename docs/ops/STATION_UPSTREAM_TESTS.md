@@ -4,6 +4,8 @@ Run on 10 October 2026 against Starnet `54899e5` as adapted for 1Ultra (Phase 1)
 
 **1101 steps: 955 passed, 146 failed.** Every failure has one of the reasons below; none is unexplained.
 
+Rerun on 10 October 2026 after Stage 1a (ULTRA on Codex and the safety rails): the same 1101 steps, 955 passed, and the same 146 steps failed for the same reasons; the real `runs/station-runtime` was again unchanged. The first Stage 1a run found one new failure, `test/failopen-ratchet.test.js`: the emergency-stop hook added one silent `catch`. It now reports through Starnet's `failNote` (`ultra.station-halt.killAll`), and the ratchet passes.
+
 | Reason | Failures | Meaning |
 |---|---|---|
 | `excluded-tooling` | 89 | reads website/, src-tauri/, .github/, qa/, dev/, relay/, bin/, release or eval files that are not imported |
