@@ -209,7 +209,7 @@ function requestTarget(args, protocol) {
   if (typeof args[0] === 'string' || args[0] instanceof URL) { o = urlToHttpOptions(new URL(String(args[0]))); i = 1; }
   if (args[i] && typeof args[i] === 'object' && typeof args[i] !== 'function') o = Object.assign({}, o, args[i]);
   if (o.socketPath) return null;
-  const host = o.hostname || (typeof o.host === 'string' ? o.host.replace(/:\d+$/, '') : '') || 'localhost';
+  const host = o.hostname || o.host || 'localhost';
   return { host, port: o.port, protocol: o.protocol || protocol };
 }
 function connectTarget(args) {

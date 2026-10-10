@@ -134,6 +134,8 @@ run('hostIn', () => https.request('https://www.mojeek.com/', { host: 'chatgpt.co
 run('hostUrlOut', () => https.get(new URL('https://chatgpt.com/x'), { host: 'evil.example' }));
 run('hostUrlIn', () => https.get(new URL('https://www.mojeek.com/'), { host: 'chatgpt.com' }));
 run('optionsOnly', () => https.request({ host: 'chatgpt.com', path: '/' }));
+run('crewIpv6', () => http.request({ host: '::1', port: 3001, path: '/' }));
+run('webIpv6', () => https.request({ host: '2001:4860:4860::8888', path: '/' }));
 run('crewPort', () => http.request('http://127.0.0.1:9/', { port: 3001 }));
 run('wrongPort', () => http.get(new URL('http://127.0.0.1:3001/'), { port: 9 }));
 run('ipc', () => https.request('https://chatgpt.com/x', { socketPath: '/tmp/ultra-test.sock' }));
@@ -161,6 +163,14 @@ test('HTTP host-only overrides keep Codex URL destinations allowed with only the
 });
 test('HTTP options-only requests use the host when no hostname is supplied', () => {
   assert.equal(probeRequests(['lead.codex']).optionsOnly, 'REAL');
+});
+test('HTTP options-only IPv6 loopback requests require the crew switch', () => {
+  assert.equal(probeRequests().crewIpv6, B);
+  assert.equal(probeRequests(['crew.freellmapi']).crewIpv6, 'REAL');
+});
+test('HTTPS options-only public IPv6 requests require the web switch', () => {
+  assert.equal(probeRequests().webIpv6, B);
+  assert.equal(probeRequests(['tools.web']).webIpv6, 'REAL');
 });
 test('HTTP guards apply port overrides before checking the FreeLLMAPI switch', () => {
   assert.equal(probeRequests(['crew.freellmapi']).crewPort, 'REAL');
