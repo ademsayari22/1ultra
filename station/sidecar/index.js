@@ -3644,6 +3644,7 @@ function blessedRoots() { const out = []; for (const k of grantsPermanent) if (k
 function blessProjectRoot(rootReal, meta) {
   meta = meta || {};
   const key = 'path:' + rootReal;
+  if (ultraHost.policy.blessRefusal(rootReal)) return false;
   const at = (typeof meta.now === 'number' && isFinite(meta.now)) ? meta.now : Date.now();
   if (grantsPermanent.has(key)) { projectsStore.touch(rootReal, at); return true; }
   const next = Array.from(grantsPermanent); next.push(key);

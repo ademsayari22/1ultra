@@ -58,7 +58,7 @@
     const transport = deps.transport;
     if (!transport || typeof transport.send !== 'function') throw new Error('makeMcpClient: transport.send is required');
     const timeoutMs = deps.timeoutMs || 0;
-    const clientInfo = deps.clientInfo || { name: 'starnet-harness', version: '0' };
+    const clientInfo = deps.clientInfo || { name: '1ultra-station', version: '0' };
     const capabilities = deps.capabilities || {};
     const onError = typeof deps.onError === 'function' ? deps.onError : function () {};
     let protocolVersion = deps.protocolVersion || DEFAULT_PROTOCOL;

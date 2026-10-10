@@ -107,6 +107,10 @@ def main():
             request('/api/halt/resume', {'confirm': True})
             assert request('/api/ultra/runtime')['halted'] is False
             checks.append('one emergency stop: 1Ultra stop halts Starnet; Starnet E-STOP and RESUME drive the 1Ultra stop')
+            blessed = request('/api/projects/bless', {'path': str(root)}, expected=400)
+            assert blessed.get('ok') is not True, blessed
+            assert str(root) not in json.dumps(request('/api/projects')), 'the 1Ultra root must never become a project'
+            checks.append('the 1Ultra project folder cannot be blessed as an agent project')
             assert len(workspace['leads']) == len(json.loads((root / 'data/leads.json').read_text()))
             checks.append('Authenticated workspace and deterministic ranking')
             lead = workspace['hunt']['leads'][0]

@@ -16649,10 +16649,10 @@
     },
     {
       "path": "sidecar/index.js",
-      "current_sha256": "a6bbc35414db65c0934278fe75f3bd92731c7f4883dac977d818a67f79b90099",
+      "current_sha256": "938aca0abcc28a66ddbb29ddd04d48fd5773038c68ed7dd49f060d870b9efc25",
       "reasons": [
         "brand",
-        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty"
+        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty,bless-refusal"
       ]
     },
     {
@@ -16727,9 +16727,10 @@
     },
     {
       "path": "sidecar/mcp/client.js",
-      "current_sha256": "1e9d25b6d0f6536e09b1331bc77f4c689994570064bc1772aa00987bba26e659",
+      "current_sha256": "6574431acc2187d2acf7f6903b6c6c5075d5677f0f7d137ffe6a83a6b01663df",
       "reasons": [
-        "brand"
+        "brand",
+        "patch:name-mcp-client"
       ]
     },
     {
@@ -16744,6 +16745,13 @@
       "current_sha256": "105d7d8a3047bb2f85e4fc0a93b981cdcd8c3e26a464cd63117627a075c1a646",
       "reasons": [
         "brand"
+      ]
+    },
+    {
+      "path": "sidecar/mcp/oauth.js",
+      "current_sha256": "b2577c82798946d26fab0d7cbde04df0be4f5fc2ca4e923a2c20dad62753f8ab",
+      "reasons": [
+        "patch:name-mcp-oauth"
       ]
     },
     {
@@ -16775,6 +16783,13 @@
       ]
     },
     {
+      "path": "sidecar/media-service.js",
+      "current_sha256": "f9b5450902bc6de76dc85e099f2838d3d589c459d092d95816d2ce51dac319d3",
+      "reasons": [
+        "patch:name-media-speech,name-media-stt"
+      ]
+    },
+    {
       "path": "sidecar/openai-compat.js",
       "current_sha256": "3642dcd97766cba38a3057e246be9aaf9b6fe25b91443a87a98ef12615e8737c",
       "reasons": [
@@ -16790,9 +16805,10 @@
     },
     {
       "path": "sidecar/pathtrust.js",
-      "current_sha256": "193470d130ba50282dce16f1ec14f614e6b09e25cd5da67020c07baa48c86bb7",
+      "current_sha256": "cc122332b4c683a292c4a85302b63bcf833401955121d17c960941ea48abe93c",
       "reasons": [
-        "brand"
+        "brand",
+        "patch:protected-paths"
       ]
     },
     {
@@ -16923,9 +16939,10 @@
     },
     {
       "path": "sidecar/providers/openrouter.js",
-      "current_sha256": "6572788a5eb1e886d728542b6d0dd44f259d3faba225f122452733415a17f492",
+      "current_sha256": "ff3829c857911b987989117e7490b4f8ef272cb59f2d931deaffe9324b6828f1",
       "reasons": [
-        "brand"
+        "brand",
+        "patch:name-openrouter"
       ]
     },
     {
@@ -17161,9 +17178,10 @@
     },
     {
       "path": "sidecar/tools/builtin/image.js",
-      "current_sha256": "a261fd4bad346be045e90ae0b7ace026a01c3d451c3a1a7abf511d0a22bc1b56",
+      "current_sha256": "136734234ac6a48b7a1927a2e7a17c25d1383d2e02ffbc0b13cb84fb067bfb10",
       "reasons": [
-        "brand"
+        "brand",
+        "patch:name-image-ua,name-image-openrouter"
       ]
     },
     {

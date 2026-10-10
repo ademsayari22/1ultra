@@ -190,5 +190,59 @@
     "file": "frontend/index.html",
     "find": "class=\"logo-img\" role=\"img\" aria-label=\"STARNET\">",
     "replace": "class=\"logo-img\" role=\"img\" aria-label=\"1ULTRA\">"
+  },
+  {
+    "id": "protected-paths",
+    "file": "sidecar/pathtrust.js",
+    "find": "      if (unrestrictedHost) {\n        return { base: (P.parse(norm).root || P.dirname(norm)), abs: norm, unrestrictedHost: true };\n",
+    "replace": "      const ultraProtected = typeof require === 'function' ? require('../ultra-policy.js').protectedPathReason(norm) : null;\n      if (ultraProtected) throw new Error(ultraProtected);\n      if (unrestrictedHost) {\n        return { base: (P.parse(norm).root || P.dirname(norm)), abs: norm, unrestrictedHost: true };\n"
+  },
+  {
+    "id": "bless-refusal",
+    "file": "sidecar/index.js",
+    "find": "  const key = 'path:' + rootReal;\n  const at = (typeof meta.now === 'number' && isFinite(meta.now)) ? meta.now : Date.now();\n",
+    "replace": "  const key = 'path:' + rootReal;\n  if (ultraHost.policy.blessRefusal(rootReal)) return false;\n  const at = (typeof meta.now === 'number' && isFinite(meta.now)) ? meta.now : Date.now();\n"
+  },
+  {
+    "id": "name-image-ua",
+    "file": "sidecar/tools/builtin/image.js",
+    "find": "'User-Agent': 'codex_cli_rs/0.0.0 (StarNet)'",
+    "replace": "'User-Agent': 'codex_cli_rs/0.0.0 (1Ultra)'"
+  },
+  {
+    "id": "name-image-openrouter",
+    "file": "sidecar/tools/builtin/image.js",
+    "find": "'HTTP-Referer': 'https://starnet.local', 'X-Title': 'STARNET'",
+    "replace": "'HTTP-Referer': 'https://1ultra.local', 'X-Title': '1Ultra'"
+  },
+  {
+    "id": "name-openrouter",
+    "file": "sidecar/providers/openrouter.js",
+    "find": "'X-Title': 'STARNET'",
+    "replace": "'X-Title': '1Ultra'"
+  },
+  {
+    "id": "name-media-speech",
+    "file": "sidecar/media-service.js",
+    "find": "      response = await fetchFn('https://openrouter.ai/api/v1/audio/speech', voiceFetchOpts({\n        method: 'POST',\n        headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://localhost', 'X-Title': 'STARNET' },\n",
+    "replace": "      response = await fetchFn('https://openrouter.ai/api/v1/audio/speech', voiceFetchOpts({\n        method: 'POST',\n        headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://localhost', 'X-Title': '1Ultra' },\n"
+  },
+  {
+    "id": "name-media-stt",
+    "file": "sidecar/media-service.js",
+    "find": "          response = await fetchFn('https://openrouter.ai/api/v1/chat/completions', voiceFetchOpts({\n            method: 'POST',\n            headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://localhost', 'X-Title': 'STARNET' },\n",
+    "replace": "          response = await fetchFn('https://openrouter.ai/api/v1/chat/completions', voiceFetchOpts({\n            method: 'POST',\n            headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://localhost', 'X-Title': '1Ultra' },\n"
+  },
+  {
+    "id": "name-mcp-oauth",
+    "file": "sidecar/mcp/oauth.js",
+    "find": "client_name: opts.clientName || 'StarNet',",
+    "replace": "client_name: opts.clientName || '1Ultra',"
+  },
+  {
+    "id": "name-mcp-client",
+    "file": "sidecar/mcp/client.js",
+    "find": "const clientInfo = deps.clientInfo || { name: 'starnet-harness', version: '0' };",
+    "replace": "const clientInfo = deps.clientInfo || { name: '1ultra-station', version: '0' };"
   }
 ]

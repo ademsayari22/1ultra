@@ -379,7 +379,7 @@
       if (!apiKey) throw new Error('STUDIO image generation is unavailable: no media connection is configured. Open SETTINGS and connect an OpenRouter API key for image generation, or link this station to your 1Ultra account, then retry; no image was produced.');
       const res = await withTimeout(signal => doFetch(orUrl, {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://starnet.local', 'X-Title': 'STARNET' },
+        headers: { 'Authorization': 'Bearer ' + apiKey, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://1ultra.local', 'X-Title': '1Ultra' },
         body: JSON.stringify(body),
         signal
       }).then(async r => {
@@ -433,7 +433,7 @@
       const send = (token) => {
         const headers = {
           'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'text/event-stream',
-          'originator': 'codex_cli_rs', 'User-Agent': 'codex_cli_rs/0.0.0 (StarNet)'
+          'originator': 'codex_cli_rs', 'User-Agent': 'codex_cli_rs/0.0.0 (1Ultra)'
         };
         const account = jwtAccountId(token);
         if (account) headers['ChatGPT-Account-ID'] = account;
