@@ -14,7 +14,7 @@ async function main(){
   const nav=async tab=>{await page.locator(`#nav [data-tab="${tab}"]`).click();await page.waitForFunction(tab=>document.querySelector('#page-title').textContent.toLowerCase()===tab,tab);};
   const request=(route,body)=>page.evaluate(async({route,body})=>api(route,body),{route,body});
   try{
-    await page.goto(base);await page.waitForSelector('#station-floor');
+    await page.goto(base+'/campaign/');await page.waitForSelector('#station-floor');
     const initialWorkspace=await request('workspace'),initialCampaign=await request('campaign');
     assert.equal(await page.locator('#back').isDisabled(),true);
     assert.equal(await page.locator('#command-dock button').count(),6);

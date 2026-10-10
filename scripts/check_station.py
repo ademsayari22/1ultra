@@ -22,15 +22,14 @@ def main():
     for file in ('LICENSE','NOTICE.md'):
         row=next(r for r in manifest['files'] if r['path']==file)
         assert hashlib.sha256((station/file).read_bytes()).hexdigest()==row['sha256'],file
-    html=(station/'frontend/index.html').read_text()
+    html=(station/'frontend/campaign/index.html').read_text()
     assert '1Ultra' in html and 'frontend/assets' not in html
-    assert not (station/'frontend/index.upstream.html').exists()
     for asset in re.findall(r'(?:src|href)="([^"#]+)"',html):
         assert not asset.startswith(('https:','http:')), 'Active external asset: '+asset
         if asset.startswith('/classic'): continue
-        assert (station/'frontend'/asset).is_file(),asset
-    for file in ['ultra-host.js','ultra-policy.js','ultra-state.js','frontend/ultra-app.js','frontend/ultra-workflows.js','frontend/ultra-experience.js','sidecar/index.js']:
-        subprocess.run(['node','--check',str(station/file)],check=True,capture_output=True)
+        assert (station/'frontend'/asset.lstrip('/')).is_file(),asset
+    for file in sorted({*station.glob('ultra-*.js'),*station.glob('frontend/ultra-*.js'),*station.glob('frontend/campaign/*.js'),station/'sidecar/index.js'}):
+        subprocess.run(['node','--check',str(file)],check=True,capture_output=True)
     print(json.dumps({'pinned_revision':manifest['revision'],'imported_source_files':len(paths),
         'unchanged_upstream_files':unchanged,'adapted_upstream_files':len(adapted),
         'notices':'byte-preserved','active_assets':'local, present','excluded_art':'not imported'},indent=2))

@@ -3,7 +3,7 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
 const {spawn}=require('node:child_process'); // capture only for fixed private Python executor
 const readline=require('node:readline');
 const policy=require('./ultra-policy.js');
-const workflows=require('./frontend/ultra-workflows.js');
+const workflows=require('./frontend/campaign/ultra-workflows.js');
 const {writeFileDurable}=require('./sidecar/durable-write.js');
 const memcore=require('./sidecar/memcore.js');
 const {makeTaskBriefStore}=require('./sidecar/taskbrief-store.js');
@@ -201,6 +201,20 @@ function classic(req,res,token){
   if(ext==='.css')data=Buffer.from(data.toString().replace(/url\(['"]?\/assets\//g,"url('/classic/assets/"));
   res.writeHead(200,{'Content-Type':types[ext]||'application/octet-stream'});res.end(data);
 }
+// The campaign page is 1Ultra's own station page, framed inside Starnet. Path-jailed to frontend/campaign/.
+const CAMPAIGN_BASE=fs.realpathSync(path.join(__dirname,'frontend','campaign'));
+function campaign(req,res,token){
+  let name;try{name=decodeURIComponent(String(req.url).split('?')[0].slice('/campaign'.length));}catch{res.writeHead(400);return res.end();}
+  if(!name){res.writeHead(302,{Location:'/campaign/'});return res.end();}
+  if(name==='/')name='/index.html';
+  const file=path.resolve(CAMPAIGN_BASE,'.'+name);
+  if(!file.startsWith(CAMPAIGN_BASE+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()||fs.realpathSync(file)!==file){res.writeHead(404);return res.end();}
+  const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.md':'text/plain; charset=utf-8'};
+  let data=fs.readFileSync(file);
+  if(path.basename(file)==='index.html')data=Buffer.from(data.toString().replace('<head>','<head><script>window.__STARNET_API_TOKEN__='+JSON.stringify(token)+';</script>'));
+  res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store','X-Frame-Options':'SAMEORIGIN','Content-Security-Policy':"frame-ancestors 'self'",'X-Content-Type-Options':'nosniff'});
+  res.end(data);
+}
 process.on('exit',()=>{if(rpc)rpc.kill('SIGTERM');for(const job of jobs.values())terminateJob(job);});
-module.exports={root,runtime,policy,handle,classic};
+module.exports={root,runtime,policy,handle,classic,campaign};
 policy.install(runtime);

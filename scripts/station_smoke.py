@@ -68,6 +68,12 @@ def main():
             assert '1Ultra' in page
             token = json.loads(re.search(r'window.__STARNET_API_TOKEN__=([^;]+);', page).group(1))
             workspace = request('/api/ultra/workspace'); campaign = request('/api/ultra/campaign')
+            page = request('/campaign/', authenticated=False)
+            assert '1Ultra' in page and 'window.__STARNET_API_TOKEN__=' in page and '/campaign/ultra-app.js' in page
+            assert 'function go(' in request('/campaign/ultra-app.js', authenticated=False)
+            for escape in ['/campaign/../sidecar/index.js', '/campaign/%2e%2e/ultra-host.js', '/campaign/..%2fultra-host.js']:
+                request(escape, authenticated=False, expected=404)
+            checks.append('campaign page served at /campaign/ and path-jailed')
             assert len(workspace['leads']) == len(json.loads((root / 'data/leads.json').read_text()))
             checks.append('Authenticated workspace and deterministic ranking')
             lead = workspace['hunt']['leads'][0]
@@ -87,7 +93,7 @@ def main():
             runtime = request('/api/ultra/runtime')
             request('/api/ultra/runtime', {'memory': [{'id': 'test-note', 'content': 'FICTIONAL TEST', 'status': 'hypothesis', 'source': 'Fixture evidence'}]}, runtime['version'])
             checks.append('Runtime save and stale business-write refusal')
-            job = request('/api/ultra/jobs', {'desk': 'research', 'tool': 'lead-audit', 'params': {}})
+            job = request('/api/ultra/jobs', {'desk': 'qa', 'tool': 'validate-records', 'params': {}})
             for attempt in range(60):
                 runtime = request('/api/ultra/runtime'); row = next(j for j in runtime['jobs'] if j['id'] == job['id'])
                 if row['status'] != 'running': break
@@ -97,7 +103,7 @@ def main():
             checks.append('Script job produces genuine run files')
             runtime=request('/api/ultra/runtime')
             workflow={'id':'fixture-flow','name':'Fixture audit and review','nodes':[
-                {'id':'audit','kind':'script','tool':'lead-audit','desk':'research','params':{}},
+                {'id':'audit','kind':'script','tool':'validate-records','desk':'qa','params':{}},
                 {'id':'review','kind':'owner','label':'Inspect source audit'}],'edges':[['audit','review']]}
             request('/api/ultra/runtime',{'workflows':[workflow]},runtime['version'])
             step=request('/api/ultra/workflows/step',{'id':'fixture-flow'})

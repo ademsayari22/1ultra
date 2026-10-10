@@ -1,5 +1,5 @@
 'use strict';
-const workflows=require('./frontend/ultra-workflows.js');
+const workflows=require('./frontend/campaign/ultra-workflows.js');
 const object=v=>v&&typeof v==='object'&&!Array.isArray(v);
 const EFFORTS=['low','medium','high','xhigh'];
 const SKILLS={research:['ultra-prospect'],sales:['ultra-sales'],delivery:['ultra-deliver'],qa:[]};

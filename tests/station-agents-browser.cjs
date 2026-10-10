@@ -13,7 +13,7 @@ async function main(){
   const api=(route,body)=>page.evaluate(async({route,body})=>api(route,body),{route,body});
   const wait=async id=>{const deadline=Date.now()+20000;while(Date.now()<deadline){const job=(await api('runtime')).jobs.find(j=>j.id===id);if(job&&job.status!=='running')return job;await new Promise(resolve=>setTimeout(resolve,100));}throw Error('Fixture agent did not finish: '+id);};
   try{
-    await page.goto(base+'/#campaign');await page.waitForSelector('#lead-list');
+    await page.goto(base+'/campaign/#campaign');await page.waitForSelector('#lead-list');
     const workspace=await api('workspace'),eligible=workspace.hunt.leads.find(l=>l.draft_eligible);
     assert.ok(eligible,'Fixture has an eligible company');
     await page.locator('[data-tab="crew"]').click();
@@ -66,7 +66,7 @@ async function main(){
     await page.evaluate(id=>showAgent(R.jobs.find(j=>j.id===id)),jobId);
     await page.locator('[data-action="agent-use:'+jobId+'"] ').click();
     const adopted=(await api('workspace')).hunt.leads.find(l=>l.id===eligible.id);assert.equal(adopted.draft.agent_run,job.result.run.id);assert.equal(adopted.draft.reviewed,false);assert.equal(adopted.contact_sent,false);checks.push('Explicit adoption saves an unreviewed pitch with provenance, no contact outcome');
-    await page.goto(base+'/#crew');await page.waitForSelector('[data-action="agent:research"]');
+    await page.goto(base+'/campaign/#crew');await page.waitForSelector('[data-action="agent:research"]');
     await page.locator('[data-action="agent-settings:research"]').click();
     await page.locator('[name="enabled"]').uncheck();await page.locator('#modal-form [type="submit"]').click();
     await page.waitForFunction(()=>!document.querySelector('#modal').open);
@@ -104,7 +104,7 @@ async function main(){
     await page.screenshot({path:path.join(out,'classic-agent-result.png'),fullPage:true});checks.push('Classic Generate pitch uses the same agent transport and reviewable result');
     await page.locator('[data-agent-use]').click();await page.waitForSelector('#pitch-dialog[open]');assert.match(await page.locator('#pitch-message').inputValue(),/FICTIONAL|échantillon/);checks.push('Classic explicit adoption opens the editable unreviewed pitch');
     await page.locator('[data-close-hunt="pitch"]').click();await page.setViewportSize({width:390,height:844});
-    await page.goto(base+'/#crew');await page.waitForSelector('[data-action="agent:sales"]');
+    await page.goto(base+'/campaign/#crew');await page.waitForSelector('[data-action="agent:sales"]');
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
     assert.ok(await page.locator('.crew-grid > .panel').first().evaluate(el=>el.getBoundingClientRect().width>innerWidth*.75),'Agent cards remain readable as full-width panels on mobile');
     await page.screenshot({path:path.join(out,'agents-mobile.png'),fullPage:true});checks.push('Crew agent actions and saved runs fit mobile');

@@ -1,5 +1,5 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
-const F=require('../station/frontend/ultra-workflows.js');
+const F=require('../station/frontend/campaign/ultra-workflows.js');
 test('typed script workflow compiles and enforces owner checkpoints',()=>{
  const plan=F.compile({nodes:[{id:'audit',kind:'script',tool:'lead-audit',desk:'research',params:{}},{id:'review',kind:'owner',label:'Review sources'},{id:'draft',kind:'script',tool:'outreach-drafts',desk:'sales',params:{}}],edges:[['audit','review'],['review','draft']]});
  assert.deepEqual(plan.order,['audit','review','draft']);assert.equal(F.next(plan,[],[]).id,'audit');

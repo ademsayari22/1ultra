@@ -10084,6 +10084,7 @@ const server = http.createServer((req, res) => {
   if (isApi && rejectBadApiToken(req, res)) return;
   if (String(req.url).startsWith('/api/ultra/')) return ultraHost.handle(req, res);
   if (String(req.url).startsWith('/classic')) return ultraHost.classic(req, res, API_TOKEN);
+  if (/^\/campaign(\/|\?|$)/.test(String(req.url))) return ultraHost.campaign(req, res, API_TOKEN);
   const mutationTicket = updatePreparation.beginRequest(req.method, req.url);
   if (!mutationTicket.ok) {
     res.writeHead(423, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });

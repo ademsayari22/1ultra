@@ -1,6 +1,6 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const Experience=require('../station/frontend/ultra-experience.js');
+const Experience=require('../station/frontend/campaign/ultra-experience.js');
 
 test('Back restores company and room context, survives refresh, and never leaves the app',()=>{
   const nav=Experience.navigation(['campaign','station','recipes'],{tab:'campaign',selected:'company-a'});
