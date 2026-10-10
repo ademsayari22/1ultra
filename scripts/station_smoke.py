@@ -26,6 +26,9 @@ def main():
             if source.exists():
                 target = root / relative; target.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(source, target)
         (root / 'runs').mkdir()
+        runtime = root / 'runtime'; runtime.mkdir()
+        (runtime / 'ultra-control.json').write_text('{"halted": true}\n')
+        (runtime / 'ultra-state.json').write_text(json.dumps({'version': 1, 'world': None, 'workstreams': None, 'companySessions': {}, 'crew': {}, 'memory': [], 'tasks': [], 'workflows': [], 'workflowRuns': {}, 'focus': None, 'settings': {'theme': 'dark', 'text': 16, 'reducedMotion': False}, 'history': [{'at': 'fixture', 'fields': ['settings']}]}) + '\n')
         log = open(root / 'station.log', 'w+')
         proc = subprocess.Popen(['node', str(project / 'station/sidecar/index.js')], cwd=project,
             env={'PATH': os.environ['PATH'], 'LANG': 'C.UTF-8', 'ULTRA_ROOT': str(root),
@@ -67,6 +70,11 @@ def main():
             else: raise RuntimeError('Station boot deadline exceeded.')
             assert '1Ultra' in page
             token = json.loads(re.search(r'window.__STARNET_API_TOKEN__=([^;]+);', page).group(1))
+            assert request('/api/ultra/runtime')['halted'] is True, 'existing emergency stop must survive'
+            assert request('/api/ultra/runtime')['state']['history'][0]['at'] == 'fixture'
+            assert (runtime / 'agent.save.json').is_file() and json.loads((runtime / 'agent.save.json').read_text())['doc']['agent']['name'] == 'ULTRA'
+            request('/api/ultra/control', {'action': 'resume'})
+            checks.append('existing runtime kept (stop, state); seed added only missing files')
             workspace = request('/api/ultra/workspace'); campaign = request('/api/ultra/campaign')
             page = request('/campaign/', authenticated=False)
             assert '1Ultra' in page and 'window.__STARNET_API_TOKEN__=' in page and '/campaign/ultra-app.js' in page

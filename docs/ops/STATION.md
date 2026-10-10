@@ -4,17 +4,11 @@ The merged app runs the pinned Starnet Node host with a private Python campaign 
 
 ## Start
 
-Requires Python 3.10+ and Node.js 20+. The free runtime dependencies are pinned in `station/package-lock.json`.
+Requires Python 3.10+ and Node.js 20+. Install pinned dependencies once with `cd station && npm ci --ignore-scripts --no-audit --no-fund`, then run `python3 scripts/station.py` and open http://127.0.0.1:8541.
 
-```sh
-cd station
-npm ci --ignore-scripts --no-audit --no-fund
-cd ..
-python3 scripts/station.py --check
-python3 scripts/station.py
-```
-
-Open http://127.0.0.1:8541. The same listener serves the original interface at `/classic/`. For a separate standard-library fallback, run `python3 scripts/station.py --classic --port 8542`.
+- `/` is the Starnet station (1Ultra build). **WORK → CAMPAIGN** opens the Tunisia campaign; **SYSTEM → SWITCHES** shows what agents may use.
+- `/campaign/` is the campaign page on its own. `/classic/` is the original Python interface. For a separate standard-library fallback, run `python3 scripts/station.py --classic --port 8542`.
+- Phase 1: every switch that reaches a model, the network or a schedule is off and not yet available. Only the worker limit and the spend cap can change.
 
 ## Find leads and convince a buyer
 
@@ -39,11 +33,11 @@ The Crew screen offers manual Research, Sales, Delivery and QA judgment tasks wi
 
 Every specialist loads its required `.codex/agents/ultra_ROLE.toml` developer instructions. Research defaults to `ultra-prospect`, Sales to `ultra-sales` and Delivery to `ultra-deliver`, loaded from this project’s `.agents/skills/`. QA uses its required role without a separate installed skill. Selected skills are supplied as bounded instruction text with the role and owner preferences; missing or symlinked files refuse preparation before script/model work. This does not enable tool execution or automatic skill installation. Run receipts store the effective settings, instruction paths and SHA-256 hashes, and reports show effort and source provenance. The interface labels the requested model as CLI default; it does not infer an unreported resolved model. Project/native role configuration and the terminal live-judgment helper also default to xhigh. Delivery requires a saved script result. Models receive curated input and run with shell, web search, apps, MCP, skill discovery and recursive agents disabled, inside a read-only CLI sandbox. The Node host permits only the fixed private Python worker; upstream provider/connector routes remain blocked. Agent jobs share the two-worker/one-per-desk limit and support cancellation, emergency stop and explicit retry. Closing a dialog does not cancel the job. Receipts persist; interrupted jobs do not replay.
 
-Agent controls require the merged station host. The standalone `--classic` server retains scripts; its agent dialog links to the station. Former classic hash bookmarks on the main listener redirect to `/classic/`.
+Agent controls require the merged station host. The standalone `--classic` server retains scripts; its agent dialog links to the station. Former classic hash bookmarks on the campaign page (`/campaign/`) redirect to `/classic/`.
 
 ## Station features
 
-- The station floor is the default landing screen. A Starnet-style crew rail, room inspector, activity console and bottom command deck keep leads, quests, workflows and outputs within reach. The rendering and crew figures are original 1Ultra artwork.
+- The campaign page (`/campaign/`, also the CAMPAIGN window on the station) opens on its station floor. A crew rail, room inspector, activity console and bottom command deck keep leads, quests, workflows and outputs within reach. The rendering and crew figures are original 1Ultra artwork.
 - Back returns to the previous section, company or room, including after refresh. Popup Back returns to its preceding dialog or work area. A room selector and horizontal map scrolling support smaller screens.
 - A persistent task strip and dialog progress bar appear as preparation is requested. Running scripts show indeterminate activity and elapsed time; saved results remain available in the Run console. Failed, cancelled and interrupted jobs never show full completion. `needs_review` means execution finished with unresolved checks, and remains separate from owner review.
 - Workflow percentages count distinct passed script steps and confirmed owner checkpoints. Changing a workflow resets displayed progress until the revised plan produces its own receipts. Preparation progress does not award business XP.
@@ -68,27 +62,33 @@ Runtime saves use atomic durable writes with a last-known-good backup. Session n
 
 The consulting receivable remains archived, billing facts stay deferred, and existing 30-hour weekly capacity is preserved. No business fact changed during implementation.
 
+## Updating Starnet
+
+1. Fetch: inside `runs/upstream/starnet` (a code-only sparse clone; clone commands are in `docs/superpowers/plans/2026-10-10-starnet-merge-phase1-foundation.md`, Task 3), run `git fetch origin feat/harness-backend && git checkout <commit>`.
+2. Back up: `cp -a station runs/upstream/station-before-<commit>`.
+3. Update: `python3 scripts/update_starnet.py --repo runs/upstream/starnet --revision <commit>`. A patch that no longer matches stops the update. Fix its `find` text in `station/ultra-patches.json` and rerun.
+4. Check: `cd station && npm ci --ignore-scripts && cd .. && python3 scripts/check_station.py && python3 scripts/station_smoke.py`.
+
 ## Source and checks
 
-Upstream: https://github.com/androoAGI/starnet, commit `e0a36dcd31787248b877aea01a6e53741012bc46`. The fork retains 2,394 source/config/test files. MIT license and all notices are byte-preserved. Upstream branding/art/sprites and historical workspaces were excluded; the active interface uses original procedural rendering. `station/UPSTREAM.json` records source hashes and adaptations. The original HTML is retained as an unserved source archive.
+Upstream: https://github.com/androoAGI/starnet at the revision in `station/UPSTREAM.json` (currently `54899e5`, v0.13.2). Display branding is rewritten to 1Ultra, except where the word is part of an identifier joined by `-` or `/` (for example the `X-StarNet-Token` header). `LICENSE` and `NOTICE.md` are byte-identical to upstream. Starnet art is not imported; `station/frontend/assets/` holds only 1Ultra-owned files. 1Ultra-owned files: `station/ultra-*.js`, `station/ultra-patches.json`, `station/frontend/campaign/`, `station/frontend/ultra-window.js`, `station/frontend/ultra-brand.css`, `station/frontend/assets/`. Upstream fast-test results and the reason for each failure are in `docs/ops/STATION_UPSTREAM_TESTS.md`. The update to `54899e5` needed no boot patches beyond the listed `station/ultra-patches.json` entries; Starnet's startup browser-install probe logs one refused (fail-open) call.
 
 ```sh
 python3 scripts/check_station.py
 python3 -m unittest discover -s tests -v
 python3 scripts/station_smoke.py
-node tests/station-policy.test.cjs
-node tests/station-state.test.cjs
-node tests/station-workflows.test.cjs
-node tests/station-experience.test.cjs
-node tests/station-ui-smoke.cjs
+node --test tests/station-policy.test.cjs tests/station-state.test.cjs tests/station-workflows.test.cjs tests/station-experience.test.cjs tests/station-ui-smoke.cjs tests/station-switches.test.cjs tests/station-seed.test.cjs
 ```
 
-The repeatable browser check uses temporary copied records and requires an already installed Playwright package and browser executable. It performs no installation:
+The repeatable browser checks use temporary copied records and require an already installed Playwright package and browser executable. They perform no installation:
 
 ```sh
+python3 scripts/station_browser_smoke.py --starnet --playwright-module /path/to/playwright --browser /path/to/chromium
 python3 scripts/station_browser_smoke.py --playwright-module /path/to/playwright --browser /path/to/chromium
 python3 scripts/station_browser_smoke.py --agents --playwright-module /path/to/playwright --browser /path/to/chromium
 ```
+
+### Verification history (5 October 2026, before the Starnet update)
 
 HTTP checks use copied records and verify original business hashes. Browser checks use copied records at desktop and 390px. The `--agents` check adds a fake Codex executable to the fixture's PATH; production code has no fixture-provider switch. It exercises lifecycle, usage receipts, handoff, explicit adoption, cancellation, failures and classic controls without a provider call. On 5 October 2026 the owner explicitly approved one live Cabinet ZAATIR test. The existing-account Codex CLI completed using the exact reviewed prompt; its structured result and source references passed local checks. The pitch remains unsent and unreviewed by the owner. The approved input, authorization, usage and result are saved in `runs/agent-20261005T174901Z-1930c646/`. This verifies CLI generation; it does not verify upstream provider adapters or live UI job orchestration. The later one-click report update passed nine copied-record agent browser checks, including reload recovery in both interfaces, automatic artifact loading, collection refresh, failure handling and mobile reports. A read-only check of the running listener opened the earlier actual report in Outbox. The owner then explicitly approved one additional live interface test. A single browser-launched Sales pass completed for Cabinet ZAATIR: same-job reload recovery, automatic saved-report display, workspace refresh and 100% progress passed. Its unsent report is `runs/agent-20261005T185447Z-01ea2530/report.md`. The initial click was refused by an active emergency stop before any model; preparation was resumed for the approved test and the stop restored afterward. A trailing-newline comparison and an asynchronous stop-state assertion in the test harness were resolved by read-only checks of the already completed job; no model was repeated. No business records changed. This verifies the main interface and installed account; live classic orchestration, other live roles and upstream adapters remain untested. The earlier additional-transmission approval rejection was resolved by the owner’s explicit go. Verification artifacts for this update are in `runs/station-qa-20261005-reports/`. The earlier export refusal was resolved by the owner’s explicit `go` instruction. Selected native module tests pass; upstream tests tied to the old HTML or excluded artwork are retained but do not apply to the active 1Ultra renderer. The entire upstream suite is not claimed passing.
 

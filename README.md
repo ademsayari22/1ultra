@@ -8,7 +8,7 @@ A local income workspace for Adem Sayari in Sousse, presented as a responsive le
 python3 scripts/station.py
 ```
 
-Open **http://127.0.0.1:8541**. The merged station requires Python 3.10+, Node.js 20+ and the pinned free runtime dependencies in `station/` (`npm ci --ignore-scripts --no-audit --no-fund`). No API key or paid service is needed.
+Open **http://127.0.0.1:8541** for the station: **WORK → CAMPAIGN** opens the Tunisia campaign and **SYSTEM → SWITCHES** shows what agents may use. The campaign page alone is at **http://127.0.0.1:8541/campaign/**. The merged station requires Python 3.10+, Node.js 20+ and the pinned free runtime dependencies in `station/` (`npm ci --ignore-scripts --no-audit --no-fund`). No API key or paid service is needed.
 
 The station adds explainable lead ranking, checked proof packs, reply branches, editable rooms and crew, durable company sessions, preparation tasks, bound script workflows, memory, an artifact outbox, focus timers and fictional practice. See the [station guide](docs/ops/STATION.md) for active features, local checks and retained provider/extension scope.
 
