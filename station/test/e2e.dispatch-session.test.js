@@ -116,7 +116,7 @@ function attachStationPage(B, token, sessions) {
                   ? { ok: true, result: { session: 'research' } }
                   : { ok: false, error: 'unknown station verb: ' + p.verb };
             await fetch(B + '/api/station/ack', {
-              method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
+              method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
               body: JSON.stringify(Object.assign({ id: p.id }, out))
             }).catch(() => {});
           }
@@ -131,7 +131,7 @@ function attachStationPage(B, token, sessions) {
 async function drive(B, token, prompt) {
   const res = await fetch(B + '/api/run', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
+    headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
     body: JSON.stringify({ key: 'sk-or-v1-fake', model: 'test/model', agentId: 'agent', isTask: true, messages: [{ role: 'user', content: prompt }] })
   });
   A.eq(res.status, 200, 'POST /api/run streams (200)');
@@ -161,7 +161,7 @@ async function run(label, dispatchArgs, sessions, body) {
   const page = { close: () => {} };
   try {
     const token = await bootToken(B, B);
-    const H = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    const H = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     // the crew the lead can address — pushed exactly as the browser's pushRoster() does
     const roster = await fetch(B + '/api/roster', { method: 'POST', headers: H, body: JSON.stringify({ agents: [
       { agentId: 'agent', system: 'LEAD', name: 'OVERSEER', model: 'test/model' },

@@ -171,7 +171,7 @@ const STATION = 'STATIONTOKEN', TOK_A = 'TOKCHAIN';
   try {
     const token = await bootToken(B, B);
     const api = (method, url, body) => fetch(B + url, {
-      method, headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
+      method, headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
       body: body === undefined ? undefined : JSON.stringify(body)
     }).then(async r => ({ status: r.status, j: await r.json().catch(() => ({})) }));
 

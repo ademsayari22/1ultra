@@ -1,6 +1,6 @@
 /* node test/goalloop.test.js — the PURE GOAL-LOOP state machine (frontend/app/goalloop.js).
 
-   StarNet's "Ralph loop": set a standing goal, judge after each turn, auto-queue a continuation until the judge
+   1Ultra's "Ralph loop": set a standing goal, judge after each turn, auto-queue a continuation until the judge
    says done / the budget is spent / a user message preempts / the Commander pauses. Deterministic (injected
    clock), fail-open on a garbage judge reply. Mirrors goals.test.js: pure, node-loaded, value floors + caps. */
 'use strict';

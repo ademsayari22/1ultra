@@ -1,6 +1,6 @@
 /* node test/web-request.test.js — the web_request tool: calling a third-party API as the Commander.
 
-   The capability that was missing: nothing in StarNet could send a custom HTTP header, so every
+   The capability that was missing: nothing in 1Ultra could send a custom HTTP header, so every
    authenticated API meant handing the agent a full shell (shell.exec + curl) — a placed workbench and a
    far larger grant than "make one HTTPS call". This locks the properties that make the narrow tool safe:
 

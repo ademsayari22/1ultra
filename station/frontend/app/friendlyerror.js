@@ -1,4 +1,4 @@
-/* STARNET — friendlyerror.js : turn a raw failure into something a beginner can act on.
+/* 1ULTRA — friendlyerror.js : turn a raw failure into something a beginner can act on.
    Pure + testable (UMD: a `Friendly` global in the browser, module.exports under node).
 
    The COMMS panel used to surface raw plumbing on a failed turn — "sidecar HTTP 500", an OpenRouter
@@ -28,7 +28,7 @@
    to classifyApiError() to derive the reason, then translate that reason into a beginner-facing message —
    so the truth table stays single-sourced. In the browser the sidecar module isn't loaded, so we fall back
    to a lightweight pattern-match over the SAME kind vocabulary on the UI-level error strings Harness throws
-   ('sidecar HTTP <status>', 'cannot reach the STARNET sidecar…', a forwarded 'no <cap> — …'). */
+   ('sidecar HTTP <status>', 'cannot reach the 1ULTRA sidecar…', a forwarded 'no <cap> — …'). */
 'use strict';
 (function (root, factory) {
   const api = factory();
@@ -68,23 +68,23 @@
 
   // kind -> beginner-facing copy + whether a plain retry helps + where to send them instead.
   // action: 'settings' (fix the model key) · 'refit' (place the missing gear) · 'skills' (toggle a skill
-  //   family) · 'store' (top up managed credit) · null (just retry / nothing).
+  //   family) · 'store' (top up managed credit) · 'budget' (SETTINGS › SPENDING LIMITS) · null (just retry / nothing).
   const KINDS = {
     // ONLY for a fault PROVEN local: the raw carries "sidecar http 5xx" (our own service answered 500). A
     // provider's 5xx/overloaded must never land here — a message naming a component owes proof it is at fault,
-    // and blaming the local service for an Anthropic/OpenRouter overload had users reporting "StarNet's servers
+    // and blaming the local service for an Anthropic/OpenRouter overload had users reporting "1Ultra's servers
     // are down" during every industry load spike (2026-07-30, the report wave behind this split).
-    server_error:  { retryable: true,  action: null,       msg: 'The local StarNet service hit an error — give it a moment and try again.' },
+    server_error:  { retryable: true,  action: null,       msg: 'The local 1Ultra service hit an error — give it a moment and try again.' },
     // The PROVIDER's servers answered with an error/overload (5xx, "overloaded", "temporarily unavailable").
-    // StarNet is healthy and says so; retry is the primary door because provider load spikes pass.
-    provider_server_error: { retryable: true, action: null, msg: "The AI provider's servers are having trouble right now (overloaded or erroring) — StarNet itself is fine. Wait a moment and try again; if it keeps failing, switch model or provider in COMMS." },
-    network:       { retryable: true,  action: null,       msg: "Can't reach StarNet's local service — if the app closed, restart it; if it restarted, reload this window, then try again." },
+    // 1Ultra is healthy and says so; retry is the primary door because provider load spikes pass.
+    provider_server_error: { retryable: true, action: null, msg: "The AI provider's servers are having trouble right now (overloaded or erroring) — 1Ultra itself is fine. Wait a moment and try again; if it keeps failing, switch model or provider in COMMS." },
+    network:       { retryable: true,  action: null,       msg: "Can't reach 1Ultra's local service — if the app closed, restart it; if it restarted, reload this window, then try again." },
     rate_limit:    { retryable: true,  action: null,       msg: 'The model provider is busy (too many requests) — wait a few seconds and try again.' },
     // The sidecar is fine; its call OUT to the model provider failed (see isUpstreamFetchFailure). Say that, and
-    // say StarNet is healthy — the failure mode this replaces had users restarting and reinstalling for days over
+    // say 1Ultra is healthy — the failure mode this replaces had users restarting and reinstalling for days over
     // a message that named the wrong component. `action: null` on purpose: a provider blip is usually transient,
     // so RETRY must stay the primary chip rather than a SETTINGS door that fixes nothing.
-    provider_unreachable: { retryable: true, action: null, msg: "StarNet is running fine, but it couldn't reach the AI provider — that's usually your internet connection, a VPN or proxy, or the provider having a moment. Try again; if it keeps failing, switch provider or model in SETTINGS." },
+    provider_unreachable: { retryable: true, action: null, msg: "1Ultra is running fine, but it couldn't reach the AI provider — that's usually your internet connection, a VPN or proxy, or the provider having a moment. Try again; if it keeps failing, switch provider or model in SETTINGS." },
     /* A SPENT ALLOWANCE is not a busy moment. A ChatGPT-subscription weekly quota resets in DAYS, so offering
        "wait a few seconds and try again" made every retry doomed and told the user nothing they could act on.
        The copy names the meter that was actually spent — the ChatGPT subscription, NOT API billing — and the
@@ -101,10 +101,21 @@
     // point the user at the xAI (API KEY) provider instead of a doomed reconnect. Door is the PROVIDERS key field.
     grok_oauth_unavailable: { retryable: false, action: 'settings', msg: "Grok sign-in isn't available on this account yet — xAI hasn't opened the Grok sign-in for it. Add an xAI provider key instead (paste it under SETTINGS → AI & MODELS and pick the XAI provider)." },
     billing:       { retryable: false, action: 'settings', msg: "Your provider account is out of credit — top it up, then try again." },
-    // managed StarNet credits ran out (only reachable when a managed-credit backend is wired). Point at the STORE
+    // managed 1Ultra credits ran out (only reachable when a managed-credit backend is wired). Point at the STORE
     // to top up; a BYOK station never hits this kind (it gets `billing`/`auth` instead).
     // copy names the SAME door the button opens (PROVIDERS) — "the STORE" was a surface that doesn't exist as a button.
-    managed_credit:{ retryable: false, action: 'store',    msg: "You're out of StarNet credits — top up under SETTINGS → AI & MODELS, or connect your own provider key." },
+    managed_credit:{ retryable: false, action: 'store',    msg: "You're out of 1Ultra credits — top up under SETTINGS → AI & MODELS, or connect your own provider key." },
+    // The balance check FAILED (the account service was slow, erroring or unreachable) — the balance is unknown, NOT
+    // $0. Reading this as managed_credit told a customer holding $79.24 to top up (2026-10-06). Retry is the door.
+    managed_credit_unavailable: { retryable: true, action: null, msg: "1Ultra couldn't check your credit balance just now — your credits are safe and nothing was charged. Try again in a moment." },
+    // The service reported $0 because THIS station's running 1Ultra runs hold the balance (each reserves up to its PER
+    // RUN limit and refunds what it doesn't spend; budgetcaps.managedRefusalMessage). Waiting is the first fix (retry),
+    // then lowering PER RUN so runs can share the balance (the SPENDING LIMITS door); topping up stays the last
+    // door — a small wallet's hold may come back as cents. Audit B11.
+    managed_credit_held: { retryable: true, action: 'budget', msg: "Your 1Ultra balance is held by 1Ultra runs that are still working — nothing is lost: each run reserves up to its PER RUN limit and refunds what it doesn't spend. Wait for them to finish, lower PER RUN in SETTINGS › SPENDING LIMITS, or top up under SETTINGS → AI & MODELS." },
+    // The account service ANSWERED and refused this station's token (unlinked on the account page, or linked to a
+    // different account). Topping up fixes nothing; relinking does — same PROVIDERS door as the 1ULTRA card.
+    managed_credit_link: { retryable: false, action: 'store', msg: "Your 1Ultra account didn't accept this station's link (it was unlinked, or it belongs to another account) — your credits are safe. Relink it under SETTINGS → AI & MODELS → 1ULTRA MANAGED." },
     // capdenied copy is REBUILT per-error in friendlyError() to name the exact power + gear; this is the fallback
     // when the capability can't be parsed. The door is BUILD MODE (place the gear), NOT the SKILLS list.
     capdenied:     { retryable: false, action: 'refit',    msg: "This task needed a tool this agent doesn't have on station yet — open BUILD MODE to place the gear it's missing." },
@@ -123,10 +134,16 @@
     // the user got "Something went wrong" in a loop while the real answer was one sentence away).
     agent_busy:    { retryable: true,  action: null,       msg: 'That agent is still busy with a previous run — wait for it to finish, or open its conversation and stop the active run.' },
     // the SIDECAR's own token gate said no (a 403 with "forbidden token/origin/host"): after a sidecar
-    // crash+respawn the page still holds the OLD X-StarNet-Token, so EVERY action 403s. Retrying is doomed and
+    // crash+respawn the page still holds the OLD X-1Ultra-Token, so EVERY action 403s. Retrying is doomed and
     // "add a key" is the wrong door — the page needs the fresh boot token, which only a reload fetches.
     stale_session: { retryable: false, action: 'reload',   msg: 'The station restarted — reload this page to reconnect.' },
-    unknown:       { retryable: true,  action: null,       msg: 'Something went wrong on that turn — try again.' }
+    /* 1Ultra's OWN spend ledger can't say what was spent (sidecar/loop.js stopForSpend, failureCode
+       spend_history_unavailable): a limit the Commander chose can't be checked, so the run was stopped. NOT a provider
+       out of credit (never `billing`), and never the generic "Something went wrong — try again": a retry hits the same
+       refusal until the cause is fixed. The copy is REBUILT per cause in friendlyError() (spendUnknownMessage); this is
+       the fallback. The door is SETTINGS › SPENDING LIMITS, where the cause and its fix are listed. */
+    spend_unknown: { retryable: false, action: 'budget',   msg: "Your spending limits can't be checked because 1Ultra's spend history is unknown, so this run was stopped — open SETTINGS › SPENDING LIMITS to fix it." },
+    unknown:      { retryable: true,  action: null,       msg: 'Something went wrong on that turn — try again.' }
   };
 
   // the sidecar classifier speaks in `reason`s; map each onto our UI kind. Its whole domain is the PROVIDER
@@ -149,7 +166,7 @@
   // or ECONNRESET. They all mean ONE thing: the response stream died before it finished.
   //
   // ⚠ WHAT THEY DO **NOT** TELL YOU IS *WHERE* IT DIED (2026-07-29). This predicate used to be documented as
-  // "COMMS lost its local sidecar transport" and the copy asserted "Can't reach StarNet's local service —
+  // "COMMS lost its local sidecar transport" and the copy asserted "Can't reach 1Ultra's local service —
   // restart the app". That is an UNPROVEN claim, and it is wrong in at least two common cases:
   //   • the MODEL PROVIDER's stream drops mid-answer (undici surfaces exactly `terminated` /
   //     `other side closed` / `premature close` / ECONNRESET) — the sidecar is perfectly healthy;
@@ -170,7 +187,7 @@
 
      This existed as a real user report: diagnostics showed a healthy local engine (uptime, workspace present, the
      report itself was served by it) with five `fetch failed` entries — the sidecar could not reach chatgpt.com /
-     api.openai.com — and the app told them "Can't reach StarNet's local service, restart it". They lost a day.
+     api.openai.com — and the app told them "Can't reach 1Ultra's local service, restart it". They lost a day.
 
      WHY THE BUG SURVIVED: sidecar/providers/errorClass.js:168 ALREADY classifies undici transport codes
      correctly, but friendlyerror only `require`s it in node/tests — in the browser classifyApiError is null, so
@@ -186,12 +203,12 @@
   // up. `engineAlive` comes from a token-free GET /api/health probe (Harness.pingEngine) — true/false are
   // measured; null/undefined means nobody probed, so we must not name a culprit at all.
   //   false → the engine really is unreachable: today's copy, now EARNED.
-  //   true  → the engine answered, so "restart StarNet" is actively bad advice; name the stream instead.
+  //   true  → the engine answered, so "restart 1Ultra" is actively bad advice; name the stream instead.
   //   null  → unproven. Say only what happened, prescribe the cheap step, and do NOT blame a component.
   function transportMessage(engineAlive) {
     if (engineAlive === false) return KINDS.network.msg;
     if (engineAlive === true) {
-      return "The reply stream stopped before it finished — StarNet's local service answered a health check, so "
+      return "The reply stream stopped before it finished — 1Ultra's local service answered a health check, so "
         + 'the app itself is running; this was the connection carrying the reply. Try again.';
     }
     return 'The connection dropped before the reply finished — try again. If it keeps happening, use "copy '
@@ -246,7 +263,7 @@
      answers a bad key with HTTP 400 "Incorrect API key provided", and a team with no prepaid credits with 403
      "…doesn't have any credits yet. You can purchase credits on https://console.x.ai/…" (2026-09-27). */
   const REJECTED_KEY_RE = /incorrect api key|invalid api key|api key (?:is )?(?:invalid|not valid|incorrect)|invalid x-api-key/;
-  const NO_CREDIT_RE = /(?:doesn'?t|does not) have any credits|purchase (?:more )?credits|used all (?:of )?(?:its |your )?available credits|(?:reached|exceeded|hit) (?:its |your |the |their )?(?:monthly )?spending limit|insufficient[_ ]?(?:credit|funds|balance)|out of credits?/;
+  const NO_CREDIT_RE = /(?:doesn'?t|does not) have any credits|purchase (?:more )?credits|used all (?:of )?(?:its |your )?available credits|(?:reached|exceeded|hit) (?:its |your |the |their )?(?:monthly )?spending limit|insufficient[_ ]?(?:credit|funds|balance)|out of credits?|credit balance is too low/;
   // the ONE sentence both classifier paths use for "no model is picked": the sidecar guard and the page preflight
   const NO_MODEL_RE = /\bno model selected\b/;
   /* WHICH grok failures mean "this account can't use Grok sign-in" (the allowlist yank)? Only ones that carry the
@@ -255,6 +272,21 @@
      names grok MODELS too, and sending that user to "add an xAI key" is a door onto the room they are already in. */
   const GROK_OAUTH_VOICE_RE = /grok \(xai\) http|grok[ _-]?oauth|grok sign-?in|xai[ _]oauth/;
   const GROK_ALLOWLIST_RE = /allowlist|not allowed|not enabled|not available|unavailable|access forbidden|\bforbidden\b|\b403\b/;
+  /* 1Ultra's OWN spend-ledger refusal (sidecar/loop.js stopForSpend → failureCode spend_history_unavailable; every
+     cause's sentence says "the spending limits you set can't be checked"), the failure code itself, and the older
+     "spend history is unavailable" wording. Local by construction — never a provider's billing. */
+  const SPEND_UNKNOWN_RE = /spending limits you set can['’]t be checked|spend[_ ]history[_ ](?:is[_ ])?unavailable/;
+  // the spend_unknown headline, per cause — the loop's sentence names it; each keeps the SPENDING LIMITS door
+  function spendUnknownMessage(raw) {
+    const low = String(raw || '').toLowerCase();
+    if (/interrupted before its spend was recorded/.test(low)) {
+      return "Your spending limits can't be checked — an earlier run stopped before 1Ultra recorded what it spent, so this run was stopped. Settle that run in SETTINGS › SPENDING LIMITS.";
+    }
+    if (/could not be saved to disk/.test(low)) {
+      return "Your spending limits can't be checked — 1Ultra couldn't save its spend history to disk, so this run was stopped. Restart 1Ultra to recover it; SETTINGS › SPENDING LIMITS shows the details.";
+    }
+    return KINDS.spend_unknown.msg;
+  }
 
   function kindFromRaw(raw, status) {
     const low = String(raw || '').toLowerCase();
@@ -268,14 +300,14 @@
     // MUST precede isTransportLoss: that predicate also matches `fetch failed`, and whichever runs first owns the
     // verdict. Upstream is the more specific (and provable) reading, so it wins.
     if (isUpstreamFetchFailure(low)) return 'provider_unreachable';
-    // the sidecar is unreachable (fetch threw — Harness throws "cannot reach the STARNET sidecar…")
+    // the sidecar is unreachable (fetch threw — Harness throws "cannot reach the 1ULTRA sidecar…")
     if (isTransportLoss(low)) return 'network';
     // content / policy beats a status
     if (/content[ _]?policy|moderation|flagged|safety|content_filter/.test(low)) return 'content_policy_blocked';
     // HTTP status from "sidecar HTTP <status>" or an explicit status arg
     const s = status || (low.match(/\b(?:http|status)\s+(\d{3})\b/) ? Number(RegExp.$1) : null);
     if (s) {
-      // OUR OWN sidecar's token gate (crash+respawn → stale X-StarNet-Token): a "sidecar HTTP 403" throw or a
+      // OUR OWN sidecar's token gate (crash+respawn → stale X-1Ultra-Token): a "sidecar HTTP 403" throw or a
       // "forbidden token/origin/host" body means reload for the fresh boot token — never the provider-key door.
       if (s === 403 && (/sidecar http/.test(low) || /\bforbidden\b/.test(low))) return 'stale_session';
       if (s === 401 || s === 403) return NO_CREDIT_RE.test(low) ? 'billing' : 'auth';
@@ -304,6 +336,9 @@
         return /sidecar http/.test(low) ? 'server_error' : 'provider_server_error';
       }
       if (s === 400 && REJECTED_KEY_RE.test(low)) return 'auth';
+      // Anthropic's empty wallet is a 400 ("Your credit balance is too low … purchase credits"), not a bad request:
+      // it read as `unknown` → "Something went wrong — try again" + report it (2026-10-07). Mirrors classify400.
+      if (s === 400 && NO_CREDIT_RE.test(low)) return 'billing';
       if (s === 400 || s === 413 || s === 422) return /context length|maximum context|context window|too many tokens|reduce the length/.test(low) ? 'context_overflow' : 'unknown';
     }
     // message patterns (no status / in-band error text)
@@ -333,7 +368,13 @@
     let kind = null;
     // Managed-credit exhaustion (only emitted when a credits backend is wired) — a UI-level fault the sidecar
     // classifier doesn't model. Catch it before everything else so the CTA points at the STORE, not blind retry.
-    if (/managed credit|add credits in the store|out of managed credit/.test(raw.toLowerCase())) {
+    // ONLY "out of managed credit" means an empty wallet: "Managed credits are unavailable" also says "managed credit",
+    // and matching that as managed_credit told funded customers to top up whenever a balance check failed.
+    if (/managed credits? (?:are |is )?unavailable/.test(raw.toLowerCase())) {
+      kind = /refused this station'?s link|relink/.test(raw.toLowerCase()) ? 'managed_credit_link' : 'managed_credit_unavailable';
+    } else if (/managed credits? (?:are |is )?held|balance is held by \d+ running starnet run/.test(raw.toLowerCase())) {
+      kind = 'managed_credit_held';   // the balance sits in this station's own running runs' holds — never "out of credit"
+    } else if (/managed credit|add credits in the store|out of managed credit/.test(raw.toLowerCase())) {
       kind = 'managed_credit';
     } else
     // xAI's Grok OAuth device flow can be 403-allowlisted off for an account: the backend says the OAuth surface
@@ -375,10 +416,14 @@
       // the per-agent run mutex — UI-level, and the sidecar message already names the holder + doors.
       kind = 'agent_busy';
     } else if (/sidecar http 403\b/.test(raw.toLowerCase()) || (status === 403 && /\bforbidden\b/.test(raw.toLowerCase()))) {
-      // OUR OWN sidecar's token gate said no (stale X-StarNet-Token after a crash+respawn) — UI-level, caught
+      // OUR OWN sidecar's token gate said no (stale X-1Ultra-Token after a crash+respawn) — UI-level, caught
       // BEFORE delegating: the sidecar API classifier would read a bare 403 as provider `auth` and the error row
       // would offer "🔑 Add a key", the wrong door (EL-11 FIX 2). The only fix is the fresh boot token → reload.
       kind = 'stale_session';
+    } else if (SPEND_UNKNOWN_RE.test(raw.toLowerCase())) {
+      // 1Ultra's own spend ledger refused the run (UI-level: the provider classifier would call it `unknown` and
+      // offer a doomed RETRY) — caught before delegating so both paths open SPENDING LIMITS.
+      kind = 'spend_unknown';
     } else if (classifyApiError) {
       // delegate to the single-sourced truth table; synthesize the err shape it expects (status + message).
       try {
@@ -444,7 +489,7 @@
       const named = raw.match(/connect an? (.+?) api key\b/i);   // the sidecar guard: providerCredentialError()
       let userMessage = k.msg;
       if (/link this station to a starnet account/.test(low)) {
-        userMessage = "This station isn't linked to StarNet credits yet — link it under SETTINGS → AI & MODELS → STARNET MANAGED, or connect your own provider key.";
+        userMessage = "This station isn't linked to 1Ultra credits yet — link it under SETTINGS → AI & MODELS → 1ULTRA MANAGED, or connect your own provider key.";
       } else if (named) {
         userMessage = 'No ' + named[1].trim().replace(/\s+api$/i, '') + ' API key is connected yet — add it under SETTINGS → AI & MODELS, or pick a model from a provider you have already connected.';
       } else if (/configure the (.+?) base url/i.test(raw)) {
@@ -454,12 +499,34 @@
       }
       return { userMessage: userMessage, kind: kind, retryable: k.retryable, action: k.action, raw: raw };
     }
+    if (kind === 'spend_unknown') {
+      return { userMessage: spendUnknownMessage(raw), kind: kind, retryable: k.retryable, action: k.action, raw: raw };
+    }
     // transport loss: the ONE kind whose copy names a component, so it is the one kind that owes proof. The
     // measured verdict rides along on `engineAlive` so a diagnostic report can state what was actually probed.
     if (kind === 'network') {
       return { userMessage: transportMessage(engineAlive), kind: kind, retryable: k.retryable, action: k.action, raw: raw, engineAlive: engineAlive };
     }
     return { userMessage: k.msg, kind: kind, retryable: k.retryable, action: k.action, raw: raw };
+  }
+
+  /* ---- Why a 1ULTRA account-link start failed, from facts only (link-down 2026-10-07). Every failure used to read
+     "could not reach the link service", which blamed the cloud for a dead LOCAL engine and gave support nothing.
+     `info` is what the caller saw: { local:true } when the station's own POST never answered (refused, non-JSON, or
+     Harness.api's deadline), else { status, j } from the sidecar — j.reason is its stable classification of the
+     cloud failure (sidecar/index.js linkStartFailure). Lower-case lead, no trailing period (callers add their own). */
+  function linkStartFailure(info) {
+    const i = info || {}, j = i.j || {};
+    if (i.local) return '1Ultra\'s engine on this computer isn\'t answering, so the link could not start — restart 1Ultra, then try again';
+    if (i.status === 503 && j.degraded) return '1Ultra\'s engine on this computer stopped after an error, so the link could not start — restart 1Ultra, then try again';
+    if (i.status === 404 && j.error === 'linking_unavailable') return 'account linking isn\'t available in this build of 1Ultra';
+    const detail = j.detail ? ' (' + String(j.detail) + ')' : '';
+    if (j.reason === 'tls') return 'security software on this computer (an antivirus HTTPS scan or a proxy) is blocking 1Ultra\'s secure connection to the 1Ultra account service' + detail + ' — allow 1Ultra, then try again';
+    if (j.reason === 'timeout') return 'the 1Ultra account service did not answer in time — check a VPN or firewall, then try again';
+    if (j.reason === 'dns' || j.reason === 'unreachable') return '1Ultra could not reach the 1Ultra account service from this computer' + detail + ' — check a VPN or firewall, then try again';
+    if (j.reason === 'cloud_5xx') return 'the 1Ultra account service is having trouble right now — try again in a minute';
+    if (/^cloud_\d+$/.test(String(j.reason || ''))) return 'the 1Ultra account service turned the link request down (http ' + String(j.reason).slice(6) + ') — try again';
+    return 'could not reach the link service — try again';
   }
 
   /* ---- The DOOR: map a verdict to a ready-to-wire action button { label, run }. ONE place owns every
@@ -598,6 +665,10 @@
       case 'store':
         // this door opens the PROVIDERS section (there is no "store") — name it truthfully with a CRT glyph.
         return { label: '▸ OPEN AI & MODELS', run: () => openSettings('providers') };
+      case 'budget':
+        // spend_unknown: SETTINGS › SPENDING LIMITS lists the interrupted runs to settle (or says restart) — the
+        // only surface that clears the refusal. No retry chip rides with it: a retry hits the same refusal.
+        return { label: '$ OPEN SPENDING LIMITS', run: () => openSettings('budget') };
       case 'skills':
         return { label: '✦ OPEN SKILL LIBRARY', run: () => { try { if (typeof StationUI !== 'undefined' && StationUI.openTerm) StationUI.openTerm('skills'); } catch (_) {} } };   // 'skills' aliases into ABILITIES ▸ SKILL LIBRARY (NAV CONDENSE 2)
       default:
@@ -605,6 +676,6 @@
     }
   }
 
-  return { friendlyError, actionButton, connectorDoor, connectorChipLabel, routeConsoleSearch, KINDS, CAP_INFO,
+  return { friendlyError, actionButton, connectorDoor, connectorChipLabel, routeConsoleSearch, linkStartFailure, KINDS, CAP_INFO,
     _internals: { kindFromRaw, isTransportLoss, isUpstreamFetchFailure, isUserAbort, REASON_TO_KIND, capFromRaw, capdeniedMessage, codexConnected, transportMessage } };
 });

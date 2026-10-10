@@ -1,6 +1,6 @@
 /* node test/hooks.test.js — THE HOOK SPINE.
 
-   StarNet had no extension point of this kind at all: skills add instructions, MCP adds tools, routines add a
+   1Ultra had no extension point of this kind at all: skills add instructions, MCP adds tools, routines add a
    schedule, and nothing let a Commander say "whenever the agent edits a file, run prettier" or "never let it
    run that command". These assertions pin the contract every hook — shell script or JS plugin — rides on.
 

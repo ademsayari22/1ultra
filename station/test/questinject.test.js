@@ -10,7 +10,7 @@ const path = require('path');
 const A = require('./_assert.js');
 const { questBlock, withQuests, _internals } = require('../sidecar/questinject.js');
 
-const SYS = 'You are an autonomous STARNET station agent.';
+const SYS = 'You are an autonomous 1ULTRA station agent.';
 
 /* ---------- empty list → the MINIMAL minting-doctrine block (NOT '' — a no-quest agent should still mint, §E) ---------- */
 {

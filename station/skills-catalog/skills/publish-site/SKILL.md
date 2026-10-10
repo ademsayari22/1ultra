@@ -188,4 +188,4 @@ The live URL, the host and account it went to, the deploy tag to roll back to, a
 
 *Needs the WORKBENCH (shell.exec, verify.run, terminal.start) and the DISH (web_request, browser.navigate). It also needs `git` and the `gh`, `wrangler` or `netlify` command line already installed and signed in on the Commander's machine.*
 
-Adapted for StarNet from publish-site (Nous Research), MIT.
+Adapted for 1Ultra from publish-site (Nous Research), MIT.

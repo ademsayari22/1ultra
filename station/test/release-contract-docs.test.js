@@ -44,7 +44,7 @@ assert.doesNotMatch(runbook, /all five platform keys/i,
 assert.match(website, /release checks do not prove that an installer works on your computer/i,
   'website preserves the evidence boundary');
 
-const stale = /unsigned and un-notarized|isn't Apple-notarized|Until StarNet is Apple-notarized|None of the builds are code-signed|Linux builds come off[\s\S]{0,80}release train|fully supported from day one/i;
+const stale = /unsigned and un-notarized|isn't Apple-notarized|Until 1Ultra is Apple-notarized|None of the builds are code-signed|Linux builds come off[\s\S]{0,80}release train|fully supported from day one/i;
 for (const [name, source] of [
   ['README', readme],
   ['install guide', install],
@@ -58,5 +58,18 @@ assert.match(install, /Do \*\*not\*\* clear quarantine with[\s\S]{0,40}`xattr`/i
   'public Mac instructions do not normalize bypassing a missing notarization verdict');
 assert.match(website, /Do not clear quarantine/i,
   'website treats a public Mac Gatekeeper failure as reportable, not expected');
+
+// The arm64 DMG targets aarch64-apple-darwin with no chip gate, so the public copy describes the family
+// ("M1 or later"), never a closed list that goes stale the day a new chip ships (an M5 Pro customer asked).
+// It must not claim any particular chip was tested either.
+const desktopBuild = read('.github/workflows/desktop-build.yml');
+const searchIndex = read('website/docs/search-index.js');
+const closedChipList = /\bM1\s*(?:[–-]|\/\s*M2\s*\/\s*M3\s*\/)\s*M4\b|\bM1 \/ M2 \/ M3 \/ M4\b/;
+for (const [name, source] of Object.entries({ readme, install, download, website, desktopBuild, searchIndex })) {
+  assert.doesNotMatch(source, closedChipList, name + ' must not hard-code a closed Apple Silicon chip list');
+}
+for (const [name, source] of Object.entries({ readme, install, download, website })) {
+  assert.match(source, /Apple Silicon[\s\S]{0,60}M1 or later/, name + ' describes Apple Silicon as M1 or later');
+}
 
 console.log('release contract docs tests passed');

@@ -5,7 +5,7 @@ const { writeFileDurable } = require('./durable-write.js');
 
 const FORMAT = 'starnet.connector-vault.v1';
 const AAD = Buffer.from(FORMAT);
-const UNAVAILABLE = 'Connector credentials are locked. Restart StarNet with the original OS account and an unlocked credential store.';
+const UNAVAILABLE = 'Connector credentials are locked. Restart 1Ultra with the original OS account and an unlocked credential store.';
 function validState(value) {
   const object = v => !!v && typeof v === 'object' && !Array.isArray(v);
   return object(value) && value.version === 2 && Array.isArray(value.configs) &&

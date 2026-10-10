@@ -22,11 +22,13 @@ test/diagnostics.test.js
 test/diagnostics-support-email.test.js
 test/diagnostics-build.test.js
 test/diagnostics-dead-engine.test.js
+test/diagnostics-copy-gesture.test.js
 test/bootguard.test.js
 test/mac-boot-compat.test.js
 test/live-doctor.test.js
 test/live-doctor-ui.test.js
 test/report-0110-regressions.test.js
+test/consent-full-request.test.js
 test/outbound-failure-diagnosability.test.js
 test/reflect.test.js
 test/memory-corrections.test.js
@@ -37,6 +39,7 @@ test/ledger.test.js
 test/logbound.test.js
 test/budget.test.js
 test/budget-caps.test.js
+test/budget-stop-door.test.js
 test/fallback-chain.test.js
 test/configexport.test.js
 test/harness-import.test.js
@@ -98,6 +101,7 @@ test/media-service.test.js
 test/desktop-voice-bundle.test.js
 test/transcript.compaction.e2e.test.js
 test/provider.anthropic.test.js
+test/provider.anthropic.thinking-binding.test.js
 test/provider.claude-cli.test.js
 test/claude-cli-text-protocol.test.js
 test/provider-accounts.test.js
@@ -123,6 +127,7 @@ test/sanitize.test.js
 test/errorclass.test.js
 test/billing.test.js
 test/credits.test.js
+test/managed-credit-held.test.js
 test/credits-link.test.js
 test/credits-store-recovery.test.js
 test/friendlyerror.test.js
@@ -167,6 +172,7 @@ test/freshstart.test.js
 test/unreachable-browser-mode.test.js
 test/harness.cancel-truth.test.js
 test/desktop-fresh-start-contract.test.js
+test/datareset.test.js
 test/cloudsave-unload.test.js
 test/fullscreen.test.js
 test/titlebar.test.js
@@ -255,7 +261,12 @@ test/embed.test.js
 test/threadstore.test.js
 test/autopilot-threads.test.js
 test/autopilot-focus.test.js
+test/autopilot-focus-veto.test.js
 test/apiauth.test.js
+test/provider-key-check.test.js
+test/engine-credential.test.js
+test/engine-key-sync.test.js
+test/kimi-region.test.js
 test/apitickets.test.js
 test/outputbrowser.test.js
 test/browser-view.test.js
@@ -263,6 +274,7 @@ test/browser-profile-fallback.test.js
 test/browser-station-window.test.js
 test/browser-dead-browser.test.js
 test/browser-single-launch.test.js
+test/browser-held-profile.test.js
 test/browser-install.test.js
 test/browser-station-privacy.test.js
 test/browser-station-login.test.js
@@ -274,6 +286,7 @@ test/skill-frontmatter.test.js
 test/skill-export.test.js
 test/skill-market.test.js
 test/skill-market-catalog.test.js
+test/skill-uploads-pull.test.js
 test/skill-market-signing.test.js
 test/skill-market-tools.test.js
 test/skill-guard-remote-install.test.js
@@ -301,7 +314,9 @@ test/rename-migrate.test.js
 test/update-state-parity.test.js
 test/update-continuity.test.js
 test/update-preparation.test.js
+test/update-drain-wiring.test.js
 test/updates-install.test.js
+test/future-gate-update-door.test.js
 test/roster-clause.test.js
 test/agent-config-target.test.js
 test/notebookrestore.test.js
@@ -319,6 +334,7 @@ test/deliverable-provenance.test.js
 test/deliverable-note.test.js
 test/deliverables-ui.test.js
 test/deliverables-open.test.js
+test/selectable-windows-87.test.js
 test/work-recap.test.js
 test/qa-ledger.test.js
 test/qa-saboteur.test.js
@@ -337,6 +353,7 @@ test/website-pricing-hold.test.js
 test/website-docs-navigation.test.js
 test/website-skill-market.test.js
 test/genesis-starnet-link.test.js
+test/credits-status-wait.test.js
 test/qa-product-perfect-provenance.test.js
 test/qa-cartographer.test.js
 test/golden.test.js
@@ -367,6 +384,7 @@ test/web.reach.test.js
 test/web.pinned-dispatcher.test.js
 test/browser.test.js
 test/browser-proxy.test.js
+test/browser-orphans.test.js
 test/browser.desktop-login-journey.test.js
 test/browser.login-seed.test.js
 test/browser.reach-measure.test.js
@@ -387,6 +405,9 @@ test/inputpolicy.test.js
 test/image.test.js
 test/image-task.test.js
 test/voice-tool.test.js
+test/media-project-placement.test.js
+test/conveyor-image-handoff.test.js
+test/delegated-command-gap.test.js
 test/resolve-tools.test.js
 test/connectors-tool.test.js
 test/attachments.test.js
@@ -485,6 +506,8 @@ test/autopilot.test.js
 test/autopilotstore.test.js
 test/nightshift.test.js
 test/nightshift-driver.test.js
+test/nightshift-localday.test.js
+test/nightshift-decline-edge.test.js
 test/contextpack.test.js
 test/nightreport.test.js
 test/autonomy-write.test.js
@@ -496,6 +519,8 @@ test/folderpick.test.js
 test/pathtrust.test.js
 test/workspace-reserved.test.js
 test/nightfocus.test.js
+test/nightfocus-workflow.test.js
+test/priorwork.test.js
 test/nightpatch.test.js
 test/projectscan.test.js
 test/discovery.test.js
@@ -532,6 +557,7 @@ test/provider-oauth-parity.test.js
 test/personality-no-sample.test.js
 test/modelpicker.test.js
 test/model-provider-reconcile.test.js
+test/managed-model-93.test.js
 test/model-catalog-truth.test.js
 test/agent-model-select.test.js
 test/station-default-wire.test.js
@@ -558,7 +584,9 @@ test/ctx-model-catalog.test.js
 test/ctx-conversation-scope.test.js
 test/floorstats.test.js
 test/insights.test.js
+test/settle-restamps-run.test.js
 test/slaglog.test.js
+test/slag-known-error-kinds.test.js
 test/xp.test.js
 test/xp-crewsplit.test.js
 test/xpstore.test.js
@@ -569,6 +597,8 @@ test/hero-color-resume.test.js
 test/roster-track.test.js
 test/chat-prompt-diet.test.js
 test/returns.test.js
+test/away-briefing.test.js
+test/briefing-frontend.test.js
 test/outbox-window.test.js
 test/notifications-useful.test.js
 test/bell-settles.test.js
@@ -610,19 +640,24 @@ test/tool-withheld-message.test.js
 test/cron-guard.test.js
 test/untrusted-taint.test.js
 test/taint-lineage.test.js
+test/taint-refusal-copy.test.js
 test/taint-entry-origin.test.js
 test/routine-tools.test.js
+test/routine-toolsets.test.js
 test/routine-grant-rebind.test.js
 test/comms-tools.test.js
 test/acp-core.test.js
 test/workstreams.test.js
 test/workstreams.search-perf.test.js
+test/workstreams.latest-visible.test.js
 test/session-power-tools.test.js
 test/session-creation.test.js
 test/projects-view.test.js
 test/prepare-node.test.js
 test/summon.id.test.js
 test/summon-desk-prompt.test.js
+test/desk-assign-easy.test.js
+test/desk-one-per-agent.test.js
 test/recruit-identity-ui.test.js
 test/subagents.test.js
 test/orchestration.test.js
@@ -633,6 +668,7 @@ test/comms-presence.test.js
 test/comms-convo.test.js
 test/comms-busy-age.test.js
 test/comms-link-honesty.test.js
+test/link-down-recovery.test.js
 test/app-boot-provider-truth.test.js
 test/steer-idle-honesty.test.js
 test/model-ack-honesty.test.js
@@ -662,6 +698,7 @@ test/stationbake.seam.test.js
 test/stationbake.connections.test.mjs
 test/stationbake.hull.test.js
 test/canvas-loss-recovery.test.js
+test/render-pacing.test.js
 test/stage-context-loss.test.js
 test/conveyor.test.js
 test/pipeline.test.js
@@ -726,6 +763,7 @@ test/toolsearch.test.js
 test/consent.interactive.test.js
 test/consentwait.test.js
 test/consent-visibility.test.js
+test/consent-full-args.test.js
 test/session-indicators.test.js
 test/estop-persistence-ui.test.js
 test/channels.adapter.test.js
@@ -807,6 +845,8 @@ test/sprite-loading.test.js
 test/textsize-screen-space.test.js
 test/mobile-control-reachability.test.js
 test/station-tooltip.test.js
+test/hint-input-mode.test.js
+test/hints-setting.test.js
 test/toast-live-region.test.js
 test/toast-seat.test.js
 test/channels.discord-wire.test.js
@@ -856,6 +896,10 @@ test/station-bridge.test.js
 test/station-commands.test.js
 test/station-tools.test.js
 test/station-control.test.js
+test/station-show.test.js
+test/station-control-gaps.test.js
+test/station-call-shapes.test.js
+test/gemini-wire-schema.test.js
 test/station-power-consent.test.js
 test/station-control-contracts.test.js
 test/team-configure-guard.test.js
@@ -866,6 +910,7 @@ test/code-mode.test.js
 test/output-artifacts.test.js
 test/station-recovery.test.js
 test/station-recovery-cli.test.js
+test/station-recovery-unreadable.test.js
 test/execution-profiles.test.js
 test/execution-settings.test.js
 test/execution-router.test.js
@@ -956,6 +1001,7 @@ test/spend-authority.test.js
 test/workspace-probe-errors.test.js
 test/cdp-lifecycle.test.js
 test/budget-authority-ui.test.js
+test/settle-managed-copy.test.js
 test/staging-development-closure.test.js
 test/overseer-ui.test.js
 test/workspace-owner-election.test.js
@@ -1012,6 +1058,7 @@ test/fold.user-verbatim.test.js
 test/compaction.images.test.js
 test/skills.on-demand.test.js
 test/manual.on-demand.test.js
+test/manual-concepts.test.js
 test/loop.retry-events.test.js
 test/loop.waiting-heartbeat.test.js
 test/subagents.waiting-is-progress.test.js
@@ -1040,6 +1087,7 @@ test/userprops.test.js
 test/userprops-catalog.test.js
 test/userprops-side.test.js
 test/userprops-sweep.test.js
+test/starnet-door-names.test.js
 test/starnet-run-id-header.test.js
 test/tierlist.test.js
 test/model-tier-badges.test.js

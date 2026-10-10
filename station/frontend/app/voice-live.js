@@ -1,4 +1,4 @@
-/* voice-live.js — persistent local speech session over whichever provider powers the active Starnet agent. */
+/* voice-live.js — persistent local speech session over whichever provider powers the active 1Ultra agent. */
 'use strict';
 
 const VoiceLive = (() => {
@@ -133,7 +133,7 @@ const VoiceLive = (() => {
     panel.hidden = true;
     panel.setAttribute('role', 'dialog');
     panel.setAttribute('aria-modal', 'false');
-    panel.setAttribute('aria-label', 'Starnet local live voice');
+    panel.setAttribute('aria-label', '1Ultra local live voice');
     panel.innerHTML = [
       '<header class="lv-head">',
         '<span class="lv-brand">LOCAL LIVE</span>',
@@ -162,7 +162,7 @@ const VoiceLive = (() => {
         '<option value="2600">PATIENT · 2.6S</option>',
       '</select></label>',
       '<details class="lv-details"><summary>VOICE DETAILS</summary><dl class="lv-rail">',
-        '<div class="lv-row"><dt>ROUTE</dt><dd id="lv-route">LOCAL SPEECH · ACTIVE STARNET AGENT</dd></div>',
+        '<div class="lv-row"><dt>ROUTE</dt><dd id="lv-route">LOCAL SPEECH · ACTIVE 1ULTRA AGENT</dd></div>',
         '<div class="lv-row lv-row-dl"><dt>SPEECH</dt><dd id="lv-model">LOCAL MODELS: CHECKING</dd></div>',
         '<div class="lv-row"><dt>LATENCY</dt><dd id="lv-timing" title="First words: detected speech to transcript. Send: last voiced frame to submission. Speech start: latest spoken chunk queued to actual playback.">Speak to measure this turn.</dd></div>',
         '<div class="lv-row"><dt>TASK</dt><dd id="lv-task" class="lv-task">No active task detected.</dd></div>',
@@ -333,7 +333,7 @@ const VoiceLive = (() => {
     if (!ws) { el.textContent = 'No active workstream.'; return; }
     const busy = Channels.isBusy(ws.id), pending = Channels.pendingOf(ws.id);
     el.textContent = (pending ? 'APPROVAL NEEDED · ' : busy ? 'WORKING · ' : 'READY · ') + (ws.title || 'GENERAL');
-    el.title = pending ? `${pending.tool || 'Action'} needs approval${pending.argsSummary ? `: ${pending.argsSummary}` : ''}` : (Channels.statusOf(ws.id) || ws.title || 'Ready');
+    el.title = pending ? `${pending.tool || 'Action'} needs approval${pending.argsSummary ? `: ${String(pending.argsSummary).replace(/\s+/g, ' ').trim().slice(0, 120)}` : ''}` : (Channels.statusOf(ws.id) || ws.title || 'Ready');
     el.classList.toggle('busy', busy);
     el.classList.toggle('pending', !!pending);
     // hands-free: anything now WAITING on a click gets said aloud, once (see announceWaits)
@@ -635,7 +635,7 @@ const VoiceLive = (() => {
       return true;
     }
     if (typeof Chat === 'undefined' || !Chat.sendOrQueue) {
-      setError('The signed-in Starnet agent is not ready yet.');
+      setError('The signed-in 1Ultra agent is not ready yet.');
       return true;
     }
     const result = Chat.sendOrQueue(value);
@@ -1154,7 +1154,7 @@ const VoiceLive = (() => {
     button.setAttribute('aria-label', on ? 'Stop Local Live hands-free voice' : 'Start Local Live hands-free voice');
     button.title = on
       ? 'Stop Local Live hands-free voice'
-      : 'Local Live hands-free voice — local speech with your active Starnet agent';
+      : 'Local Live hands-free voice — local speech with your active 1Ultra agent';
   }
 
   async function start(retry) {
@@ -1231,7 +1231,7 @@ const VoiceLive = (() => {
       // session (restored on exit if we were the ones who flipped it) — otherwise live voice opens silent and
       // looks broken until the Commander hunts down a toggle.
       if (Voice.forceSpeakOn) Voice.forceSpeakOn();
-      // Local Live is now Starnet's one hands-free surface. A legacy loop can still exist through
+      // Local Live is now 1Ultra's one hands-free surface. A legacy loop can still exist through
       // older saved state or API callers; close it before attaching this persistent microphone.
       if (Voice.inVoiceMode && Voice.inVoiceMode() && Voice.stopConvo) Voice.stopConvo();
       if (Voice.setLocalTts) Voice.setLocalTts(true);
@@ -1335,7 +1335,7 @@ const VoiceLive = (() => {
     // 1) IDENTITY — the agent's own composed prompt, verbatim. It already carries persona, role, dossier and
     //    crew clause, so the spoken agent and the typed agent are the same character rather than two.
     if (agent && agent.systemPrompt) lines.push(String(agent.systemPrompt));
-    lines.push('You are ' + name + ', speaking aloud to the Commander in StarNet. You are the SAME agent they type to — same memory, same work, same voice of character. Never describe yourself as a separate voice assistant or a control layer.');
+    lines.push('You are ' + name + ', speaking aloud to the Commander in 1Ultra. You are the SAME agent they type to — same memory, same work, same voice of character. Never describe yourself as a separate voice assistant or a control layer.');
     /* 2) THE PERSONALITY IS THE POINT, AND SPEAKING IT ALOUD MUST NOT SAND IT DOWN.
        This block used to say "speak naturally and briefly, a sentence or two at a time", which quietly
        overrode the persona above and produced a flat, careful assistant no matter which archetype was

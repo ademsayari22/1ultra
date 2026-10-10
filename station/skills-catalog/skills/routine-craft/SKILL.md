@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Routine Craft"
   category: "Station"
-  author: "StarNet"
+  author: "1Ultra"
 ---
 
 A routine is a saved prompt the scheduler fires on its own. Nobody reads it at run time, nobody answers its questions, and it runs again tomorrow whether or not today's run was any good. Write it for that reader.
@@ -23,7 +23,7 @@ A routine is a saved prompt the scheduler fires on its own. Nobody reads it at r
 10. **Prove one run.** routine.manage action=run_now queues the routine for the scheduler's next tick; it does not run it now. Check routine.list afterwards for lastStatus and lastError, then read the result where `deliver` says it lands.
 
 ## Rules
-- **Never use shell, crontab or the operating system's task scheduler for a StarNet routine.**
+- **Never use shell, crontab or the operating system's task scheduler for a 1Ultra routine.**
 - **Never say "it ran" after run_now.** It is queued; say so, and report the real outcome once routine.list shows it.
 - **Never promise "this runs daily" over a disarmed or E-STOPPED scheduler** — repeat what the tool said.
 - **A routine that fails five times in a row pauses itself.** Find and fix the cause before resuming it.

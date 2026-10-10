@@ -1,5 +1,5 @@
 /* node test/quitguard.test.js
-   Locks the GB-4 quit half: closing StarNet while agents are live must be an explicit
+   Locks the GB-4 quit half: closing 1Ultra while agents are live must be an explicit
    choice, never a click side effect. Drives QuitGuard.handleCloseRequested with injected
    deps (no Tauri, no DOM) and proves: allow-when-idle, block-and-ask-when-busy,
    allow-after-confirm, drain-before-every-allow, and fail-open (a broken Channels can

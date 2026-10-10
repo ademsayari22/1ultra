@@ -101,7 +101,7 @@ async function pollRefresh(B, token, pred, label, ms) {
   const until = Date.now() + (ms || 20000);
   let last = null;
   while (Date.now() < until) {
-    try { last = await (await fetch(B + '/api/quests/refresh', { headers: { 'X-StarNet-Token': token, Origin: B } })).json(); } catch (_) {}
+    try { last = await (await fetch(B + '/api/quests/refresh', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json(); } catch (_) {}
     if (last && pred(last)) return last;
     await sleep(300);
   }
@@ -127,7 +127,7 @@ const CRED = { SKYNET_OPENROUTER_KEY: 'sk-or-v1-questrefresh-fake', SKYNET_DEFAU
         SKYNET_BUDGET_PER_DAY: scope !== 'global' ? '1' : '0', SKYNET_BUDGET_GLOBAL: scope === 'global' ? '1' : '0'
       }), 20); child = up.child;
       const base = 'http://' + HOST + ':' + up.port, token = await bootToken(base, base);
-      const headers = { Origin: base, 'X-StarNet-Token': token, 'Content-Type': 'application/json' };
+      const headers = { Origin: base, 'X-1Ultra-Token': token, 'Content-Type': 'application/json' };
       const post = async (route, body) => (await fetch(base + route, { method: 'POST', headers, body: JSON.stringify(body || {}) })).json();
       const first = await pollRefresh(base, token, s => !s.inFlight && s.ledger.length > 0, 'budget boot decision');
       A.eq(mock.calls.quest, 0, scope + ': boot refresh does not buy a request');
@@ -176,7 +176,7 @@ const CRED = { SKYNET_OPENROUTER_KEY: 'sk-or-v1-questrefresh-fake', SKYNET_DEFAU
         B = 'http://' + HOST + ':' + up.port;
         token = await bootToken(B, B);
         await sleep(3800);   // cross the real three-second boot catch-up on both the original boot and restart
-        const posture = await (await fetch(B + '/api/autonomy/posture', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
+        const posture = await (await fetch(B + '/api/autonomy/posture', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
         A.eq(posture.summary.initiative, 'wait', 'restart ' + (restart + 1) + ': the effective server posture is WAIT');
         A.eq(mock.calls.model, 0, 'restart ' + (restart + 1) + ': WAIT made zero background provider calls');
         A.eq(mock.calls.quest, 0, 'restart ' + (restart + 1) + ': WAIT made zero background quest-provider calls');
@@ -191,7 +191,7 @@ const CRED = { SKYNET_OPENROUTER_KEY: 'sk-or-v1-questrefresh-fake', SKYNET_DEFAU
       child = up.child;
       B = 'http://' + HOST + ':' + up.port;
       token = await bootToken(B, B);
-      const runRes = await (await fetch(B + '/api/quests/refresh/run', { method: 'POST', headers: { 'X-StarNet-Token': token, Origin: B } })).json();
+      const runRes = await (await fetch(B + '/api/quests/refresh/run', { method: 'POST', headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
       A.ok(runRes.ok && runRes.started, 'WAIT preserves explicit manual REFRESH QUESTS authority');
       await pollRefresh(B, token, p => (p.ledger || []).some(e => e.outcome === 'minted'), 'the WAIT-posture manual refresh minting');
       A.eq(mock.calls.model, 1, 'manual refresh made exactly one provider call after two WAIT boots');
@@ -215,7 +215,7 @@ const CRED = { SKYNET_OPENROUTER_KEY: 'sk-or-v1-questrefresh-fake', SKYNET_DEFAU
       let up = await boot(9125 + (process.pid % 10), Object.assign({ SKYNET_WORKSPACES: ws }, CRED, QUIET), 20);
       child = up.child;
       let base = 'http://' + HOST + ':' + up.port, token = await bootToken(base, base);
-      const post = async (route, body) => (await fetch(base + route, { method: 'POST', headers: { Origin: base, 'X-StarNet-Token': token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })).json();
+      const post = async (route, body) => (await fetch(base + route, { method: 'POST', headers: { Origin: base, 'X-1Ultra-Token': token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })).json();
       const minted = await post('/api/quests/mint', { title: 'Attend a practice class', contract: { type: 'attest', key: '' }, domain: 'growth', executionMode: 'commander' });
       A.ok(minted.ok, 'real route creates a Commander action');
       const unauthorized = await fetch(base + '/api/quests/report', { method: 'POST', headers: { Origin: 'https://hostile.invalid', 'Content-Type': 'application/json' }, body: JSON.stringify({ id: minted.id, evidence: 'Unauthorized completion claim' }) });
@@ -225,17 +225,17 @@ const CRED = { SKYNET_OPENROUTER_KEY: 'sk-or-v1-questrefresh-fake', SKYNET_DEFAU
       child.kill(); await new Promise(resolve => child.once('exit', resolve)); child = null;
       up = await boot(up.port, Object.assign({ SKYNET_WORKSPACES: ws }, CRED, QUIET), 20); child = up.child;
       base = 'http://' + HOST + ':' + up.port; token = await bootToken(base, base);
-      const persisted = await (await fetch(base + '/api/quests', { headers: { Origin: base, 'X-StarNet-Token': token } })).json();
+      const persisted = await (await fetch(base + '/api/quests', { headers: { Origin: base, 'X-1Ultra-Token': token } })).json();
       A.eq(persisted.quests.find(q => q.id === minted.id).disposition.reason, 'Need a beginner class first', 'pause survives sidecar restart');
       A.ok((await post('/api/quests/disposition', { id: minted.id, disposition: 'resume' })).ok, 'real route resumes the action');
       const report = await post('/api/quests/report', { id: minted.id, evidence: 'I attended the beginner class this morning' });
       A.ok(report.ok && report.quest.status === 'done' && report.quest.attest.source === 'commander', 'only Commander report completes real-world action with source');
-      const journey = await (await fetch(base + '/api/journey', { headers: { Origin: base, 'X-StarNet-Token': token } })).json();
+      const journey = await (await fetch(base + '/api/journey', { headers: { Origin: base, 'X-1Ultra-Token': token } })).json();
       A.ok(journey.journey.outcomes.some(o => o.questId === minted.id && o.verifiedBy === 'commander-confirmed'), 'life action folds into Journey with Commander-confirmed provenance');
       child.kill(); await new Promise(resolve => child.once('exit', resolve)); child = null;
       up = await boot(up.port, Object.assign({ SKYNET_WORKSPACES: ws }, CRED, QUIET), 20); child = up.child;
       base = 'http://' + HOST + ':' + up.port; token = await bootToken(base, base);
-      const final = await (await fetch(base + '/api/quests', { headers: { Origin: base, 'X-StarNet-Token': token } })).json();
+      const final = await (await fetch(base + '/api/quests', { headers: { Origin: base, 'X-1Ultra-Token': token } })).json();
       const done = final.quests.find(q => q.id === minted.id);
       A.ok(done.status === 'done' && done.attest.confirmed && done.attest.evidence.includes('beginner class'), 'completion evidence survives second sidecar restart');
     } finally {
@@ -257,7 +257,7 @@ const CRED = { SKYNET_OPENROUTER_KEY: 'sk-or-v1-questrefresh-fake', SKYNET_DEFAU
     try {
       const up = await boot(9165 + (process.pid % 10), Object.assign({ SKYNET_WORKSPACES: ws, SKYNET_OPENROUTER_BASE: mock.base }, CRED, QUIET), 20); child = up.child;
       const base = 'http://' + HOST + ':' + up.port, token = await bootToken(base, base);
-      const headers = { Origin: base, 'X-StarNet-Token': token, 'Content-Type': 'application/json' };
+      const headers = { Origin: base, 'X-1Ultra-Token': token, 'Content-Type': 'application/json' };
       const post = async (route, body) => (await fetch(base + route, { method: 'POST', headers, body: JSON.stringify(body || {}) })).json();
       const list = async () => (await (await fetch(base + '/api/quests', { headers })).json()).quests;
       for (let i = 0; i < 3; i++) A.ok((await post('/api/quests/mint', { title: 'Old focus episode ' + i, kind: 'generated', goalId: 'old', contract: { type: 'attest', key: '' } })).ok, 'old focused goal fills its slate');
@@ -332,7 +332,7 @@ const CRED = { SKYNET_OPENROUTER_KEY: 'sk-or-v1-questrefresh-fake', SKYNET_DEFAU
       A.eq(st.ledger.filter(e => e.outcome === 'minted').length, 2, 'both grounded quests minted');
 
       // the quests are REAL ledger quests (GET /api/quests), station-wide, contract-carrying.
-      const q = await (await fetch(B + '/api/quests', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
+      const q = await (await fetch(B + '/api/quests', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
       const minted = (q.quests || []).filter(x => x.createdBy === 'system:quest-refresh');
       A.eq(minted.length, 2, 'GET /api/quests serves the two minted quests');
       const ep = minted.find(x => x.title === 'Publish episode 3');
@@ -351,13 +351,13 @@ const CRED = { SKYNET_OPENROUTER_KEY: 'sk-or-v1-questrefresh-fake', SKYNET_DEFAU
       // MANUAL OVERRIDE: POST /refresh/run fires a real cycle NOW (gates bypassed). The mock replays the
       // same two quests — both titles are now OPEN, so the parse dedup drops them and the cycle records an
       // honest 'rejected' (proving the route ran a full real cycle, and dup-mint spam is impossible).
-      const runRes = await (await fetch(B + '/api/quests/refresh/run', { method: 'POST', headers: { 'X-StarNet-Token': token, Origin: B } })).json();
+      const runRes = await (await fetch(B + '/api/quests/refresh/run', { method: 'POST', headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
       A.ok(runRes.ok && runRes.started, 'the manual refresh route launches a cycle');
       const st2 = await pollRefresh(B, token,
         p => (p.ledger || []).some(e => e.outcome === 'rejected'),
         'the manual cycle deduping the replayed quests');
       A.eq(st2.ledger.filter(e => e.outcome === 'minted').length, 2, 'the manual re-run minted NOTHING new (dedup held)');
-      const q2 = await (await fetch(B + '/api/quests', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
+      const q2 = await (await fetch(B + '/api/quests', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
       A.eq((q2.quests || []).filter(x => x.createdBy === 'system:quest-refresh').length, 2, 'still exactly two quests on the ledger');
     } finally {
       try { child.kill(); } catch (_) {}
@@ -390,7 +390,7 @@ const CRED = { SKYNET_OPENROUTER_KEY: 'sk-or-v1-questrefresh-fake', SKYNET_DEFAU
       A.ok(true, 'HONEST FAILURE: the ungrounded reply was rejected AND the ledger says so');
       A.ok(!(st.ledger || []).some(e => e.outcome === 'minted'), 'nothing minted from the invented pitch');
       A.ok(st.lastCycleAt > 0, 'the failed attempt still spent the cadence (no tick-hammering)');
-      const q = await (await fetch(B + '/api/quests', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
+      const q = await (await fetch(B + '/api/quests', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
       A.eq((q.quests || []).filter(x => x.createdBy === 'system:quest-refresh').length, 0, 'the quest ledger stayed clean');
     } finally {
       try { child.kill(); } catch (_) {}
@@ -474,7 +474,7 @@ const CRED = { SKYNET_OPENROUTER_KEY: 'sk-or-v1-questrefresh-fake', SKYNET_DEFAU
     }));
     const { child, port } = await boot(9025 + (process.pid % 10), Object.assign({ SKYNET_WORKSPACES: ws, SKYNET_OPENROUTER_BASE: mock.base }, CRED, QUIET), 20);
     const B = 'http://' + HOST + ':' + port;
-    const post = (body) => fetch(B + '/api/quests/refresh/northstar', { method: 'POST', headers: { 'X-StarNet-Token': token, Origin: B, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
+    const post = (body) => fetch(B + '/api/quests/refresh/northstar', { method: 'POST', headers: { 'X-1Ultra-Token': token, Origin: B, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json());
     let token;
     try {
       token = await bootToken(B, B);
@@ -489,7 +489,7 @@ const CRED = { SKYNET_OPENROUTER_KEY: 'sk-or-v1-questrefresh-fake', SKYNET_DEFAU
       // only the Commander's confirm may turn it into the open quest ledger.
       A.ok((st.ledger || []).some(e => e.outcome === 'staged'), 'quests inferred under the proposal remain staged');
       A.eq(st.pendingQuestCount, 1, 'status exposes the pending quest count without claiming an open quest');
-      const beforeQuests = await (await fetch(B + '/api/quests', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
+      const beforeQuests = await (await fetch(B + '/api/quests', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
       A.eq((beforeQuests.quests || []).filter(x => x.createdBy === 'system:quest-refresh').length, 0, 'no quest mints before direction confirmation');
       // on-disk: the proposal is durable, the adopted star is still empty (nothing silently persisted as adopted).
       const disk = JSON.parse(fs.readFileSync(path.join(ws, '_station.questrefresh.json'), 'utf8')).state;
@@ -501,16 +501,16 @@ const CRED = { SKYNET_OPENROUTER_KEY: 'sk-or-v1-questrefresh-fake', SKYNET_DEFAU
       A.ok(cRes.ok && cRes.applied, 'the confirm verdict applied');
       A.eq(cRes.minted, 1, 'confirm mints the staged quest batch');
       A.eq(cRes.northStarProposed, false, 'after confirm no proposal is pending');
-      const recs = await (await fetch(B + '/api/recommendations', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
+      const recs = await (await fetch(B + '/api/recommendations', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
       const adoptedDirection = (recs.entries || []).find(e => e.surface === 'northstar' && e.title === STAR);
       A.ok(adoptedDirection && adoptedDirection.outcome.adopted === true, 'confirmed northstar records explicit adoption');
       A.eq(adoptedDirection && adoptedDirection.outcome.quality, 0, 'northstar confirmation does not invent satisfaction');
-      const after = await (await fetch(B + '/api/quests/refresh', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
+      const after = await (await fetch(B + '/api/quests/refresh', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
       A.eq(after.northStar.status, 'adopted', 'the confirmed star reads adopted');
       A.eq(after.northStar.text, STAR, 'the adopted star is the one the Commander confirmed');
       A.eq(after.northStarProposed, false, 'no proposal pending after confirm');
       A.eq(after.pendingQuestCount, 0, 'the staged quest batch clears after confirm');
-      const afterQuests = await (await fetch(B + '/api/quests', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
+      const afterQuests = await (await fetch(B + '/api/quests', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
       A.eq((afterQuests.quests || []).filter(x => x.createdBy === 'system:quest-refresh').length, 1, 'the quest becomes open only after confirmation');
       const disk2 = JSON.parse(fs.readFileSync(path.join(ws, '_station.questrefresh.json'), 'utf8')).state;
       A.ok(disk2.northStar && disk2.northStar.text === STAR && !disk2.proposedNorthStar, 'confirm persisted the adoption + cleared the proposal');
@@ -559,7 +559,7 @@ const CRED = { SKYNET_OPENROUTER_KEY: 'sk-or-v1-questrefresh-fake', SKYNET_DEFAU
       A.ok((st.ledger || []).some(e => e.outcome === 'rejected' && /declined elsewhere/i.test(e.reason) && e.title === 'Publish episode 3'),
         "CROSS-WIRE: the quest whose title was declined as a thread is rejected 'declined elsewhere'");
       A.eq(st.ledger.filter(e => e.outcome === 'minted').length, 1, 'exactly one quest minted (the cross-engine decline suppressed the other)');
-      const q = await (await fetch(B + '/api/quests', { headers: { 'X-StarNet-Token': token, Origin: B } })).json();
+      const q = await (await fetch(B + '/api/quests', { headers: { 'X-1Ultra-Token': token, Origin: B } })).json();
       const minted = (q.quests || []).filter(x => x.createdBy === 'system:quest-refresh');
       A.eq(minted.length, 1, 'GET /api/quests serves only the non-declined quest');
       A.ok(minted.some(x => x.title === 'Put guest research on tap'), 'the non-declined quest minted');

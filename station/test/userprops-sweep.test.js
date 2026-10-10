@@ -104,7 +104,7 @@ const make = (dir, cloud, extra = {}) => makeUserProps({ fs, path, dir, cloud: (
       let t = 1000;
       const up = make(dir, cloud, { setTimer: (fn, ms) => { timers.push(ms); return 0; }, now: () => t });
       const r = await up.start('a kettle');
-      A.eq(r.code, 'unreachable', 'fixture: StarNet did not answer the start');
+      A.eq(r.code, 'unreachable', 'fixture: 1Ultra did not answer the start');
       A.ok(timers.length >= 1, 'the poller is scheduled at once (it used to wait for the next sidecar boot)');
       const again = await up.start('a kettle');
       A.eq([again.code, cloud.state.posts.length], ['busy', 1], 'a second MAKE IT for the same object is refused while the first is unanswered (no second key, no second charge)');

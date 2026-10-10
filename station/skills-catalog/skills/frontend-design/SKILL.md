@@ -93,4 +93,4 @@ The Commander has a design plan that names its palette, type, layout and princip
 
 *No gear needed for the design plan and the critique. Building the page uses the INTEL CAB (fs.write, fs.edit); looking at a live page uses the DISH (browser.navigate, browser.screenshot); remembering past directions uses the NOTEBOOK.*
 
-Adapted for StarNet from frontend-design (Anthropic), Apache-2.0.
+Adapted for 1Ultra from frontend-design (Anthropic), Apache-2.0.

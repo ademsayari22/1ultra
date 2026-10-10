@@ -24,7 +24,7 @@ test('managed images: saved credits route generates, bills, survives restart and
     if (image) {
       if (imageStarted) imageStarted();
       if (imageHold) await imageHold;
-      if (failure) return json({ error: { message: failure === 402 ? 'insufficient StarNet credits' : 'image provider unavailable' } }, failure);
+      if (failure) return json({ error: { message: failure === 402 ? 'insufficient 1Ultra credits' : 'image provider unavailable' } }, failure);
       return json({ id: 'fixture-image-' + calls.length, choices: [{ message: noImage ? { content: 'No image was produced' } : { images: [{ image_url: { url: 'data:image/png;base64,' + PNG } }] } }], usage: { prompt_tokens: 4, completion_tokens: 2, cost: 0.02 } });
     }
     const result = (body.messages || []).some(m => m.role === 'tool');

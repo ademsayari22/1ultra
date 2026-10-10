@@ -180,7 +180,7 @@ function resultFor(events, callId) {
   const B = 'http://' + HOST + ':' + port;
   try {
     const token = await bootToken(B, B);
-    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
 
     // ---- a real routine to manage -----------------------------------------------------------------
     const create = await fetch(B + '/api/cron', {

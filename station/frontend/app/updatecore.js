@@ -1,4 +1,4 @@
-/* STARNET updatecore.js
+/* 1ULTRA updatecore.js
    Pure goal/loop planner for desktop updates. Browser wiring lives in updates.js;
    this file stays deterministic so the autonomous update loop has fast tests. */
 'use strict';

@@ -50,9 +50,9 @@ const throwsMsg = async (fn) => { try { await fn(); return ''; } catch (e) { ret
   try {
     A.throws(() => makeApps({ fsp, path, dir: DIR }), 'apps without an injected clock is refused');
     // the crew finds app.create by searching "app": its description must keep OUTSIDE builds away (a Netlify site and
-    // a React todo became StarNet apps on 10-02 before this line)
+    // a React todo became 1Ultra apps on 10-02 before this line)
     const createDesc = tools.defs.find(d => d.name === 'app.create').description;
-    A.ok(/INSIDE StarNet/.test(createDesc) && /NOT for anything meant to run, be published or be shipped outside StarNet/.test(createDesc) && /framework codebase/.test(createDesc) && /add-on for the Commander's own web browser/.test(createDesc), 'app.create says it is only for apps inside StarNet, never a site/project/script to ship elsewhere');
+    A.ok(/INSIDE 1Ultra/.test(createDesc) && /NOT for anything meant to run, be published or be shipped outside 1Ultra/.test(createDesc) && /framework codebase/.test(createDesc) && /add-on for the Commander's own web browser/.test(createDesc), 'app.create says it is only for apps inside 1Ultra, never a site/project/script to ship elsewhere');
     // (sweep 2026-10-02) …without the words people SEARCH for those asks: tool_search matches description substrings and
     // shows only the first sentence, so "a website, a React project, a browser extension" made it reveal app.create as
     // the top hit for exactly "browser extension" / "host a site" / "react project"
@@ -193,7 +193,7 @@ const throwsMsg = async (fn) => { try { await fn(); return ''; } catch (e) { ret
     A.ok(toolNames().every(n => grants.includes(n)), 'every app tool is granted by the computer');
     const r = await run('app.read', { app: a.id });
     A.ok(/^Today is \w+day, September 29, 2026/.test(r.content), 'app.read opens with the station\'s real date');
-    A.ok(/Data keys: brief/.test(r.content) && /HOW A STARNET APP WORKS/.test(r.content), 'app.read lists the data keys and carries the build guide');
+    A.ok(/Data keys: brief/.test(r.content) && /HOW A 1ULTRA APP WORKS/.test(r.content), 'app.read lists the data keys and carries the build guide');
     A.ok(/OK — no problems/.test((await run('app.check', { app: a.id })).content), 'a good page checks clean');
     await run('app.write', { app: a.id, path: 'index.html', content: '<body style="background:#fff"><script>fetch("https://x"); (</script></body>' });
     const c = (await run('app.check', { app: a.id })).content;

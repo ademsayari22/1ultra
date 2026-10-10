@@ -1,4 +1,4 @@
-/* STARNET — workshopstore.js : the AWAY-WORKSHOP return surface (lane W3, frontend).
+/* 1ULTRA — workshopstore.js : the AWAY-WORKSHOP return surface (lane W3, frontend).
 
    The Commander switched an agent's "build things while I'm away" grant on; while they were gone an
    autonomous shift built a deliverable in that agent's jailed sandbox and wrote a manifest. This store
@@ -12,7 +12,7 @@
 
    DELIVERY REVEAL (2026-07-16, per Andrew): a finished build must GREET the Commander, not hide as an
    unread rail row with a one-line stub ("it puts it all on me to prompt and figure out what it even
-   is"). When a deliverable lands — live push, attach poll, or genuine return — StarNet OPENS the
+   is"). When a deliverable lands — live push, attach poll, or genuine return — 1Ultra OPENS the
    deliverable's OWN session and presents the full return card there (what it built, the honest
    verification line, the summary, the files, the Open-it link, and the decide row). The card still
    renders ONLY inside its own session — never into a random feed — and the reveal stands down (unread
@@ -291,7 +291,7 @@ const WorkshopStore = (() => {
   // W7 — OS launch is intentionally unavailable: neither loopback API possession nor
   // renderer IPC proves a fresh human gesture. The caller presents manual-open guidance.
   async function openFile(agentId, runId, relPath) {
-    return { ok: false, error: 'Open this file manually; StarNet cannot launch desktop applications from a run.' };
+    return { ok: false, error: 'Open this file manually; 1Ultra cannot launch desktop applications from a run.' };
   }
 
   // the sensible default Keep destination (the Commander's Desktop, when the desktop shell knows it).
@@ -314,7 +314,10 @@ const WorkshopStore = (() => {
     if (existing) {
       // re-flag unread (undecided = still owed) WITHOUT re-stamping lastActiveAt — touch() here made the
       // rail's "last worked" time read "now" on every boot/return poll even though nothing new happened.
-      if (Workstreams.markUnread) Workstreams.markUnread(id);
+      // with THE ONE RETURN REPORT live, the briefing session carries the single "still owed" flag — N build rows
+      // re-bolding on every return poll was the pile-of-sessions feeling; the build stays reachable from the briefing
+      if (briefingOwnsReturn()) { /* no re-flag */ }
+      else if (Workstreams.markUnread) Workstreams.markUnread(id);
       else if (Workstreams.touch) Workstreams.touch(id);   // older store without markUnread: keep the unread bump
     } else {
       // DELETED = GONE: the Commander removed this deliverable's session; adopt() refuses the
@@ -384,6 +387,7 @@ const WorkshopStore = (() => {
   // Returns true when the reveal happened; false → the caller keeps the unread-row + toast fallback. The
   // direct presentCard makes the card unconditional on the open (chat.js load() → presentFor also fires and
   // re-fetches; its data-wsrun dedupe keeps exactly one live card).
+  function briefingOwnsReturn() { try { return typeof Briefing !== 'undefined' && !!(Briefing.ownsReturn && Briefing.ownsReturn()); } catch (_) { return false; } }
   function reveal(m) {
     if (!m || !m.runId) return false;
     if (commanderEngaged()) return false;
@@ -511,7 +515,7 @@ const WorkshopStore = (() => {
     // ensureSession returns null for a deliverable whose session the Commander DELETED — never
     // resurrect it, and never reveal it (deleted = gone, the whole point of the tombstone).
     const live = pending.filter(m => ensureSession(m) != null);
-    if (live.length) reveal(live[live.length - 1]);   // backlog order: last = newest build
+    if (live.length && !briefingOwnsReturn()) reveal(live[live.length - 1]);   // backlog order: last = newest build (the briefing greets the return instead when it is live)
   }
 
   /* RETURN RE-PRESENT (2026-07-14, reshaped for session delivery 2026-07-15): a night-shift build lands
@@ -524,7 +528,7 @@ const WorkshopStore = (() => {
     if (!enabled) return;
     const list = (await fetchRaw()).filter(m => m && m.runId && !state.later[m.runId]);
     const live = list.filter(m => ensureSession(m) != null);   // deleted sessions stay deleted
-    if (live.length) reveal(live[live.length - 1]);   // greet the return with the newest build's card
+    if (live.length && !briefingOwnsReturn()) reveal(live[live.length - 1]);   // greet the return with the newest build's card (or let the briefing do it)
   }
 
   /* LIVE PUSH — the attach-time poll above only covers session OPEN, so a deliverable that landed while the
@@ -544,6 +548,8 @@ const WorkshopStore = (() => {
     if (ensureSession(m) == null) return;   // marks seen; a DELETED session never re-forms or re-toasts
     // DELIVERY REVEAL: the moment the build lands, open its session with the full card. Fallback (the
     // Commander is mid-something, or no App yet): unread row + ONE actionable toast that jumps there.
+    // the Commander is AWAY: the build waits in its session and the ONE briefing reports it on return — no focus jump, no toast
+    if (briefingOwnsReturn() && Briefing.isAway && Briefing.isAway()) return;
     const opened = reveal(m);
     if (!opened) try {
       if (typeof StationUI !== 'undefined' && StationUI.notify) {

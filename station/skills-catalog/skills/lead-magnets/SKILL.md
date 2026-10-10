@@ -152,4 +152,4 @@ The plan is saved and re-read; it names one problem, one format and one buyer st
 
 *Needs the INTEL CAB (fs.search, fs.write). The DISH (web_search, web_fetch) adds a check on what competitors already give away.*
 
-Adapted for StarNet from lead-magnets (Corey Haines), MIT.
+Adapted for 1Ultra from lead-magnets (Corey Haines), MIT.

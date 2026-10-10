@@ -1,4 +1,4 @@
-/* STARNET deliverable library: safe preview helpers + backend-backed Workshop/artifact browser. */
+/* 1ULTRA deliverable library: safe preview helpers + backend-backed Workshop/artifact browser. */
 'use strict';
 (function (root, factory) {
   const api = factory();
@@ -234,7 +234,9 @@
     let runFilter = null;
     const openState = { blobUrl: '', previewHost: null };
     const revoke = () => revokePreview(openState);
-    body.innerHTML = '<div class="cfg dlv"><h3>DELIVERABLES</h3><p class="muted">Everything your agents actually made, filed under the project it was made for. Open any one to see what you asked for, what came back, and every file it produced. Previews open safely inside StarNet in a browser; desktop OPEN uses your file app.</p>' +
+    // self-driving lane 5: no second DELIVERABLES heading under the MY WORK tab that already says it, and one short line where
+    // a four-line paragraph sat (TO REVIEW still lands right after this p.muted — stationui's deliverables builder)
+    body.innerHTML = '<div class="cfg dlv"><p class="muted dlv-lead" title="Previews open safely inside 1Ultra in a browser; desktop OPEN uses your file app.">Everything your crew made, filed by project — open one for the ask, the answer and every file.</p>' +
       '<div id="dl-head" class="dlv-head-strip"></div><div id="dl-run-scope" class="cfg-block" hidden></div>' +
       '<div class="deliverables-toolbar"><input id="dl-query" aria-label="Search deliverables" placeholder="search title, agent, project"><select id="dl-status" aria-label="Filter deliverables"><option value="">ALL</option><option value="pending">NEEDS A DECISION</option><option value="produced">DONE</option><option value="kept">KEPT</option><option value="implemented">IMPLEMENTED</option><option value="failed">FAILED</option><option value="discarded">DISCARDED</option></select><button class="bb sm" id="dl-refresh">REFRESH</button><button class="bb sm" id="dl-clean">CLEAN OLD RECORDS</button></div>' +
       '<div id="dl-kinds" class="dlv-kinds"></div>' +
@@ -466,10 +468,22 @@
       if (b.dataset.act === 'session') {
         const sid = r.run && r.run.streamId;
         if (!sid) return say('That run did not record a session to open.', true);
-        if (typeof App !== 'undefined' && App && typeof App.openWorkstream === 'function') {
-          try { App.openWorkstream(sid); if (typeof StationUI !== 'undefined') StationUI.h.workConversation('deliverables'); return; } catch (_) {}
-        }
-        return say('Could not open that session from here.', true);
+        // #87: a workflow step's or routine's stream is not in the COMMS rail yet, and App.openWorkstream
+        // silently no-ops on an id it doesn't know. ReturnStore.openWork adopts the stream and folds in its
+        // durable transcript first (the OUTBOX's ↗ OPEN seam), and says false when it truly can't be read.
+        b.disabled = true;
+        let ok = false;
+        try {
+          if (typeof ReturnStore !== 'undefined' && ReturnStore.openWork) {
+            ok = await ReturnStore.openWork({ runId: r.runId || sid, streamId: sid, agentId: r.agentId || 'agent', title: r.title || '' });
+          } else if (typeof App !== 'undefined' && App && typeof App.openWorkstream === 'function' && typeof Workstreams !== 'undefined' && Workstreams.get(sid)) {
+            App.openWorkstream(sid); ok = true;
+          }
+        } catch (_) { ok = false; }
+        b.disabled = false;
+        if (!ok) return say('Could not read that conversation — its transcript is not on the station any more.', true);
+        if (typeof StationUI !== 'undefined') StationUI.h.workConversation('deliverables');
+        return;
       }
       // a WORKFLOW job's row opens its own record in WORKFLOWS (its line, its steps, NEEDS CHANGES / SEND IT AGAIN)
       if (b.dataset.act === 'workflow') {

@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Skill Authoring"
   category: "Station"
-  author: "StarNet"
+  author: "1Ultra"
 ---
 
 A skill is HOW: a procedure loaded with skill.view when the job comes round again. A fact goes in the notebook; a schedule is a routine; a skill is the steps. Save one only when it will save the next run real work.

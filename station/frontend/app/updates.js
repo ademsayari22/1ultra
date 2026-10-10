@@ -1,4 +1,4 @@
-/* STARNET updates.js
+/* 1ULTRA updates.js
    Desktop Update Center: autonomous check loop + native Tauri updater bridge. */
 'use strict';
 
@@ -152,13 +152,13 @@ const Updates = (() => {
         state.update = r.update;
         state.phase = 'available';
         if (CORE.shouldNotify(prefs, r.update.version, Date.now(), !!r.update.critical)) {
-          notify((r.update.critical ? 'Critical update' : 'StarNet update') + ' v' + r.update.version + ' is ready in Update Center', r.update.critical ? 'warn' : 'gold', undefined, { kind: r.update.critical ? 'alert' : 'result', key: 'update-ready', go: { term: 'updates' } });
+          notify((r.update.critical ? 'Critical update' : '1Ultra update') + ' v' + r.update.version + ' is ready in Update Center', r.update.critical ? 'warn' : 'gold', undefined, { kind: r.update.critical ? 'alert' : 'result', key: 'update-ready', go: { term: 'updates' } });
           prefs = CORE.recordNotified(prefs, r.update.version);
         }
       } else {
         state.update = null;
         state.phase = 'current';
-        if (manual) notify('StarNet is up to date', 'good');
+        if (manual) notify('1Ultra is up to date', 'good');
       }
       savePrefs();
     } catch (e) {
@@ -218,7 +218,7 @@ const Updates = (() => {
     let body = null;
     try { body = await r.json(); } catch (_) {}
     if (!r.ok || !body || body.ok !== true || !body.receipt) {
-      throw new Error((body && (body.error || body.code)) || ('update preparation HTTP ' + r.status));
+      throw Object.assign(new Error((body && (body.error || body.code)) || ('update preparation HTTP ' + r.status)), { code: (body && body.code) || '' });
     }
     state.preparationReceipt = body.receipt;
     return body.receipt;
@@ -253,7 +253,7 @@ const Updates = (() => {
   async function install(opts) {
     opts = opts || {};
     if (!TAURI || !CORE || busy || !state.update) {
-      notify('No StarNet update is ready to install', 'warn');
+      notify('No 1Ultra update is ready to install', 'warn');
       return snapshot();
     }
     const Channel = TAURI.Channel;
@@ -286,7 +286,7 @@ const Updates = (() => {
     const drained = await preInstallDrain();
     if (!drained.ok) {
       state.phase = 'available';
-      state.error = 'State could not be verified on disk. The update was not installed; your current StarNet remains open.';
+      state.error = 'State could not be verified on disk. The update was not installed; your current 1Ultra remains open.';
       busy = false;
       notify('Update paused - state verification failed', 'warn');
       emit();
@@ -296,6 +296,16 @@ const Updates = (() => {
       await prepareUpdate(!!opts.force);
     } catch (e) {
       state.phase = 'available';
+      // The SIDECAR is the authority on live runs: a routine, hop or background worker this window never lit still
+      // refuses a plain install. That is the GB-4 choice (WAIT / INSTALL ANYWAY), never a dead-end error card. At least
+      // one agent is working (the sidecar proved a live run), so the count is the confirmed busy agents or 1.
+      if (e && e.code === 'UPDATE_RUNS_ACTIVE' && !opts.force) {
+        state.confirmRuns = Math.max(1, liveRunCount());
+        busy = false;
+        notify('Update paused - ' + CORE.installBlockReason(state.confirmRuns, false), 'warn');
+        emit();
+        return snapshot();
+      }
       state.error = 'Pre-update recovery point failed - ' + cleanError(e);
       busy = false;
       notify('Update paused - no verified recovery point was created', 'warn');
@@ -308,7 +318,7 @@ const Updates = (() => {
     try {
       await invoke('starnet_update_install', { onEvent });
       state.phase = 'restarting';
-      notify('StarNet update installed - restarting', 'good');
+      notify('1Ultra update installed - restarting', 'good');
     } catch (e) {
       installing = false;   // install failed; the app lives on, so the quit guard resumes normally
       let thawError = null;
@@ -362,7 +372,7 @@ const Updates = (() => {
     savePrefs();
     state.update = null;
     state.phase = 'idle';
-    notify('StarNet v' + prefs.ignoredVersion + ' will be skipped', 'warn');
+    notify('1Ultra v' + prefs.ignoredVersion + ' will be skipped', 'warn');
     schedule();
     emit();
   }
@@ -408,7 +418,7 @@ const Updates = (() => {
 
   function html() {
     if (!TAURI) {
-      return '<div class="fb-empty">DESKTOP UPDATES ARE AVAILABLE IN THE PACKAGED STARNET APP.<br><span>This browser preview cannot install native releases.</span></div>';
+      return '<div class="fb-empty">DESKTOP UPDATES ARE AVAILABLE IN THE PACKAGED 1ULTRA APP.<br><span>This browser preview cannot install native releases.</span></div>';
     }
     const update = state.update;
     const pct = CORE.progress(state.downloaded, state.contentLength);
@@ -429,7 +439,7 @@ const Updates = (() => {
         // Channels-confirmed, and the choice is the Commander's, not a side effect.
         out += '<div class="up-guard">' +
           esc(guardN === 1 ? '1 AGENT IS STILL WORKING' : guardN + ' AGENTS ARE STILL WORKING') +
-          ' - INSTALLING RESTARTS STARNET AND KILLS ' + (guardN === 1 ? 'ITS RUN' : 'THEIR RUNS') + '.</div>' +
+          ' - INSTALLING RESTARTS 1ULTRA AND KILLS ' + (guardN === 1 ? 'ITS RUN' : 'THEIR RUNS') + '.</div>' +
           '<div class="up-actions">' +
           '<button class="bb sm" id="up-guard-wait">WAIT FOR AGENTS</button>' +
           '<button class="bb sm danger" id="up-install-force" ' + (busy ? 'disabled' : '') + '>INSTALL ANYWAY</button>' +
@@ -440,7 +450,7 @@ const Updates = (() => {
           (update.critical ? '' : '<button class="bb sm danger" id="up-ignore">SKIP VERSION</button>') + '</div></div>';
       }
     } else {
-      out += '<div class="up-empty">No update is pending. StarNet will keep checking in the background while automatic checks are on.</div>';
+      out += '<div class="up-empty">No update is pending. 1Ultra will keep checking in the background while automatic checks are on.</div>';
     }
     if (state.phase === 'preparing' || state.phase === 'downloading' || state.phase === 'installing' || state.phase === 'restarting') {
       out += '<div class="up-progress"><div style="width:' + pct + '%"></div></div>' +
@@ -494,6 +504,7 @@ const Updates = (() => {
 
   return {
     init, refreshStatus, check, install, preInstallDrain, snapshot, settingsHtml, wireSettings, render,
+    openReleasesPage,   // the full installer (keeps all data) — the forward-version gate's door, which has no Update Center
     phase: () => state.phase,
     // True once an update install has committed — quitguard.js reads this so it never blocks the
     // macOS/Linux app.restart() close (Windows exits before restart, so it never asks).

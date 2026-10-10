@@ -292,4 +292,4 @@ If the Commander wants the song kept, save it as a text file with `fs.write` and
 
 *No gear needed: this skill is pure text. Saving the song as a file uses the INTEL CAB.*
 
-Adapted for StarNet from songwriting-and-ai-music (Teknium, Hermes Agent), MIT.
+Adapted for 1Ultra from songwriting-and-ai-music (Teknium, Hermes Agent), MIT.

@@ -1084,7 +1084,7 @@
       try { onRecovery(Object.assign({ sequence: ++recoveryAttemptSequence }, row || {})); } catch (e) { failNote('loop.onRecovery', e); }
     }
     // mid-stream retry backoff schedule (same shape as the adapters' pre-stream RETRY_DELAYS).
-    // Widened 2026-08-11 after the installed Hermes parity run: ~16.6s still lost all three StarNet
+    // Widened 2026-08-11 after the installed Hermes parity run: ~16.6s still lost all three 1Ultra
     // attempts inside one real Codex overload window while valid Hermes turns took up to ~102s. The
     // final 30s/60s rungs give the same model turn ~106s of bounded patience. This never re-dispatches
     // completed tools: the retry loop sits wholly inside the current model call, after prior tool
@@ -1488,7 +1488,13 @@
       if (budget) {
         const b = budget.check(spentUsd);
         if (b && b.unknown) {
-          emit('agent.run.error', { agentId, runId, message: 'Spend history is unavailable or not durably saved. Restore the ledger and restart StarNet before continuing with spending limits.', transient: false });
+          // name the fix that works for THIS cause: a restart replays a failed save, but never settles an interrupted run
+          const message = b.cause === 'unsettled'
+            ? 'An earlier run was interrupted before its spend was recorded, so the spending limits you set can’t be checked. Settle it in SETTINGS › SPENDING LIMITS.'
+            : b.cause === 'write'
+              ? 'Spend history could not be saved to disk, so the spending limits you set can’t be checked. Restart 1Ultra to recover it.'
+              : 'Spend history could not be read, so the spending limits you set can’t be checked. See SETTINGS › SPENDING LIMITS.';
+          emit('agent.run.error', { agentId, runId, message, transient: false });
           return end('error', { failureStage: 'budget', failureCode: 'spend_history_unavailable' });
         }
         if (b) return end('budget', { budgetScope: b.scope, budgetCapUsd: b.cap });

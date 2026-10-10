@@ -25,7 +25,7 @@ module.exports = (async () => {
       A.eq(JSON.stringify(messages), original, model + ': durable history unchanged');
     }
   }
-  // Managed StarNet uses this adapter too. An interrupted history must get the same repair as
+  // Managed 1Ultra uses this adapter too. An interrupted history must get the same repair as
   // direct OpenRouter, before it reaches a strict Chat Completions upstream.
   {
     const input = [
@@ -385,7 +385,7 @@ module.exports = (async () => {
   }
 
   /* ---- routed-catalog id on a vendor endpoint gets a way back ----
-     A vendor API 400ing "invalid model ID" for a slash-prefixed id means a STARNET/OpenRouter catalog id
+     A vendor API 400ing "invalid model ID" for a slash-prefixed id means a 1ULTRA/OpenRouter catalog id
      (e.g. openai/gpt-…) reached a direct vendor endpoint — the provider/model pair crossed. The bare vendor
      message is a dead end; the error must name the mismatch and the fix (switch provider in the picker). ---- */
   {
@@ -407,7 +407,7 @@ module.exports = (async () => {
 
   /* ---- managed upstream failures retain safe diagnostic identity ----
      OpenRouter can answer only "Provider returned error" at the top level while carrying the provider, code,
-     and a StarNet correlation id separately. Those fields must survive into diagnostics; raw metadata must not. */
+     and a 1Ultra correlation id separately. Those fields must survive into diagnostics; raw metadata must not. */
   {
     const fetchImpl = async () => new Response(JSON.stringify({
       error: {

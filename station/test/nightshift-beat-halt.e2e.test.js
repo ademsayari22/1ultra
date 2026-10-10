@@ -89,7 +89,7 @@ function hotBeliefs(now) {
   return {
     known: ['goals', 'pain', 'stack', 'ambition'],
     beliefs: {
-      goals: b('ship the StarNet beta to 100 users'),
+      goals: b('ship the 1Ultra beta to 100 users'),
       pain: b('manual release notes eat my fridays'),
       stack: b('node and a pixel-art canvas'),
       ambition: b('a living agent station people watch')
@@ -111,7 +111,7 @@ async function fireBeat(B, headers) {
   const B = 'http://' + HOST + ':' + port;
   try {
     const token = await bootToken(B, B);
-    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     // reach 'observe' keeps the beat on the reason-only path — the propose chat is the model call that wedges.
     await fetch(B + '/api/autonomy/posture', { method: 'POST', headers, body: JSON.stringify({ posture: { initiative: 'leash', reach: 'observe', leashPerDay: 12 }, beliefs: hotBeliefs(Date.now()) }) });
 

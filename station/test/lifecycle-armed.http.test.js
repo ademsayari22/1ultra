@@ -12,7 +12,7 @@
      - CRON E-STOP HALT IS DURABLE (M1): POST /api/halt with an armed recurring routine -> GET /api/cron says
        enabled:true + halted:true, lifecycle armed:false, no further ticks; RESTART the host -> still halted
        (armed intent kept, timer down); explicit POST /api/cron/arm {enabled:true} lifts the halt and re-arms.
-     - TOKEN GUARD: GET without the X-StarNet-Token header is rejected 403 (GET data routes are token-gated).
+     - TOKEN GUARD: GET without the X-1Ultra-Token header is rejected 403 (GET data routes are token-gated).
 
    NOT covered (honest): a channels-connected reason — connecting a real channel needs a live platform endpoint
    or a bespoke mock; channel connectivity is covered by channels.telegram.e2e.test.js, and the snapshot reads
@@ -62,7 +62,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
   let apiToken = await bootToken(B(), B());
   const j = async (m, p, body) => {
     const headers = { 'Content-Type': 'application/json', Origin: B() };
-    if (apiToken) headers['X-StarNet-Token'] = apiToken;
+    if (apiToken) headers['X-1Ultra-Token'] = apiToken;
     const r = await fetch(B() + p, { method: m, headers, body: body ? JSON.stringify(body) : undefined });
     const t = await r.text(); let v; try { v = JSON.parse(t); } catch (_) { v = t; }
     return { status: r.status, body: v };
@@ -89,7 +89,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
       const raw = await new Promise((resolve, reject) => {
         const chunks = [];
         const s = net.connect(port, HOST, () => {
-          s.write('GET /api/lifecycle/armed HTTP/1.1\r\nHost: ' + HOST + '\r\nX-StarNet-Token: ' + apiToken + '\r\nConnection: close\r\n\r\n');
+          s.write('GET /api/lifecycle/armed HTTP/1.1\r\nHost: ' + HOST + '\r\nX-1Ultra-Token: ' + apiToken + '\r\nConnection: close\r\n\r\n');
         });
         s.on('data', d => chunks.push(d));
         s.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
@@ -111,7 +111,7 @@ function boot(port, workspaces, attemptsLeft, extraEnv) {
 
     // ---- TOKEN GUARD ----
     const noTok = await jNoToken('GET', '/api/lifecycle/armed');
-    A.eq(noTok.status, 403, 'GET /api/lifecycle/armed without X-StarNet-Token -> 403 (token-gated)');
+    A.eq(noTok.status, 403, 'GET /api/lifecycle/armed without X-1Ultra-Token -> 403 (token-gated)');
 
     // ---- ARMING A ROUTINE FLIPS IT TRUE (recurring, so ticks never consume it) ----
     const create = await j('POST', '/api/cron', { name: 'Daily digest', prompt: 'summarize', schedule: '0 9 * * *', agentId: 'lc_test' });

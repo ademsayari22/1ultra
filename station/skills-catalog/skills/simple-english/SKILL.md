@@ -335,4 +335,4 @@ This skill is an unofficial aid. It is not affiliated with or endorsed by ASD or
 
 *No gear needed for pasted text. File mode uses the CABINET.*
 
-Adapted for StarNet from simple-english (AminBlg, https://github.com/AminBlg/SimpleEnglish; ported by Hermes Agent), MIT.
+Adapted for 1Ultra from simple-english (AminBlg, https://github.com/AminBlg/SimpleEnglish; ported by Hermes Agent), MIT.

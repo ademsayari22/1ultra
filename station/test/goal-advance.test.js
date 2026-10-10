@@ -34,7 +34,7 @@ const q = (id, status, milestoneId) => ({ id, title: 'quest ' + id, status, goal
   A.eq(GA.slateFinished(Object.assign(goal(), { milestones: null }), [q('a', 'done')]), null, 'a summary-only mirror (older webview) never advances blind');
   const attest = (id, st) => Object.assign(q(id, st), { contract: { type: 'attest' } }), artifact = (id, st) => Object.assign(q(id, st), { contract: { type: 'artifact', key: 'x.md' } });
   A.eq(GA.slateFinished(goal(), [attest('a', 'done'), attest('b', 'dismissed')]).authority, 'commander-confirmed', 'a step settled only by the Commander own reports is THEIR word ("You confirmed"), never a harness proof');
-  A.eq(GA.slateFinished(goal(), [artifact('a', 'done'), attest('b', 'done')]).authority, 'harness-contract', 'a step with mechanically-proven work is a harness record ("StarNet recorded")');
+  A.eq(GA.slateFinished(goal(), [artifact('a', 'done'), attest('b', 'done')]).authority, 'harness-contract', 'a step with mechanically-proven work is a harness record ("1Ultra recorded")');
   A.eq(GA.slateFinished(Object.assign(goal(), { id: 'other' }), [q('a', 'done')]), null, 'quests bound to another goal never settle this one');
 
   // ---- overlay: journey completions fold on, next step recomputes, the Commander's chosen step is honored

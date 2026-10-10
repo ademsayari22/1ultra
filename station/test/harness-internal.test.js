@@ -97,8 +97,8 @@ A.ok(/VERIFY it took effect with a read-back tool/.test(sidecar), 'task doctrine
 A.ok(/never a description, a plan, or a promise of future action/.test(sidecar), 'task doctrine defines the deliverable as a proven outcome');
 A.ok(/\+ taskDoctrineNote/.test(sidecar), 'the task doctrine is actually wired into the composed [HARNESS] prompt');
 
-/* ---------- EGRESS/TOKEN SAFETY (audit 0.6): X-StarNet-Token is SAME-ORIGIN ONLY ----------
-   The fetch monkey-patch attaches the PRIVATE local X-StarNet-Token to every request isApiUrl() accepts.
+/* ---------- EGRESS/TOKEN SAFETY (audit 0.6): X-1Ultra-Token is SAME-ORIGIN ONLY ----------
+   The fetch monkey-patch attaches the PRIVATE local X-1Ultra-Token to every request isApiUrl() accepts.
    A naive substring match on '/api/' would attach it to third-party URLs that merely contain '/api/' — most
    critically the OpenRouter fallback catalog (OR + '/models' = https://openrouter.ai/api/v1/models), leaking the
    local credential cross-origin AND forcing a CORS preflight OpenRouter rejects (so the fallback fails exactly

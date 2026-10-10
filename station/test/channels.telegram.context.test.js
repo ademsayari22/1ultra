@@ -91,7 +91,7 @@ async function run() {
     const q = up(21, { text: 'do it', reply_to_message: { message_id: 5, from: { id: 5, username: 'andro' }, text: 'write the summary' } });
     A.eq(q.message.replyTo.text, 'write the summary', 'quoted TEXT rides through');
 
-    const b = up(22, { text: 'expand on that', reply_to_message: { message_id: 6, from: { id: 42, is_bot: true, first_name: 'StarNet' }, text: 'Here is the plan.' } });
+    const b = up(22, { text: 'expand on that', reply_to_message: { message_id: 6, from: { id: 42, is_bot: true, first_name: '1Ultra' }, text: 'Here is the plan.' } });
     A.eq(b.message.replyTo.fromBot, true, 'a reply to the BOT\'s own message is marked as such');
 
     // a reply whose target is itself a non-file payload still quotes something meaningful

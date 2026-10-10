@@ -14,7 +14,7 @@ const A = require('./_assert.js');
   try {
     fs.writeFileSync(log, 'startup exe=old port=11111\nspawn_sidecar pid=1 port=11111 listening=true\n');
     const mark = desktopStartupLogMark(log);
-    fs.appendFileSync(log, 'startup exe=Ok("StarNet") resource_dir=Ok("root") port=60874\nspawn_sidecar pid=42 port=60874 listening=true\n');
+    fs.appendFileSync(log, 'startup exe=Ok("1Ultra") resource_dir=Ok("root") port=60874\nspawn_sidecar pid=42 port=60874 listening=true\n');
     A.eq(await waitInstalledDesktopPort({ startupLog: log, afterBytes: mark, child: { exitCode: null }, timeoutMs: 1000 }), 60874, 'desktop port discovery uses only the new Tauri launch record');
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
   const performanceSource = fs.readFileSync(path.resolve(__dirname, '../scripts/eval/installed-performance.mjs'), 'utf8');

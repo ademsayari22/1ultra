@@ -252,7 +252,7 @@ for (const r of WINDOW_RULES) {
 A.ok(!/(^|[\s;{])top:\s*50%/.test(rulesFor(styleCss, '.term')[0] || ''),
   'the window shell centres in the band, never on the raw glass');
 
-/* ================= NO SURFACE MAY BE TOO BIG TO FIT IN STARNET =================
+/* ================= NO SURFACE MAY BE TOO BIG TO FIT IN 1ULTRA =================
  * Reported 2026-08-15: at any TEXT SIZE above STANDARD the RECRUITMENT BAY and the RECIPES bay
  * hung off the top AND the bottom of the frame, taking the ✕ with them — the only mouse way out
  * of a modal sat OFF the glass, so the bay could not be used or closed without going back to

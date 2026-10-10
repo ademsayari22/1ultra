@@ -1,4 +1,4 @@
-/* STARNET — returnstore.js : the thin live wiring around the pure return-ritual engine (returns.js).
+/* 1ULTRA — returnstore.js : the thin live wiring around the pure return-ritual engine (returns.js).
 
    Owns what the pure engine can't: the durable lastSeenAt HEARTBEAT (localStorage, stamped every
    30s while the app runs + on unload — so "away" means the app was genuinely CLOSED, and a run that
@@ -90,6 +90,8 @@ const ReturnStore = (() => {
     // an already-open OUTBOX window re-renders with the fresh crates (no-op when closed)
     try { if (typeof OutboxView !== 'undefined' && OutboxView.refresh) OutboxView.refresh(); } catch (_) {}   // DELIVERABLES › TO REVIEW
     if (!rows.length || fired) return;
+    // THE ONE RETURN REPORT owns the welcome-back message; the crates above still land on the OUTBOX
+    try { if (typeof Briefing !== 'undefined' && Briefing.ownsReturn && Briefing.ownsReturn()) { fired = true; return; } } catch (_) {}
     fired = true;
     if (typeof Chat !== 'undefined' && Chat.awayDigest) Chat.awayDigest(rows.slice(0, Returns.DIGEST_CAP), { onRated: resolve, openWork: openWork });
   }

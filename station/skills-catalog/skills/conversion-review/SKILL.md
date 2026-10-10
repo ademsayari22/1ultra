@@ -122,4 +122,4 @@ The review is saved and re-read; it contains first-screen screenshots at both wi
 
 *Needs the DISH (browser.navigate, browser.screenshot, browser.get_text, browser.snapshot, browser.viewport, browser.network) and the INTEL CAB (fs.read, fs.write).*
 
-Adapted for StarNet from cro (Corey Haines), MIT.
+Adapted for 1Ultra from cro (Corey Haines), MIT.

@@ -142,7 +142,7 @@ async function startSseCollector(url, onEvent) {
   let sse = null;
   try {
     const token = await bootToken(B, B);
-    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     const create = await fetch(B + '/api/cron', { method: 'POST', headers,
       body: JSON.stringify({ name: 'AI news', prompt: 'gather relevant AI news', schedule: 'every 1h', agentId: 'research-agent', model: 'test/model', provider: 'openrouter', runsLine: true }) });
     A.eq(create.status, 200, 'created a line routine');

@@ -1,4 +1,4 @@
-/* STARNET — worldmodel.js : the canonical, mutable, serializable STATION document.
+/* 1ULTRA — worldmodel.js : the canonical, mutable, serializable STATION document.
 
    This is the single source of truth the builder edits and that both the renderer
    (via projectGeometry → stationbake.js) and the future AgentOrg runtime read.
@@ -396,7 +396,7 @@ const WorldModel = (() => {
   function freshDoc(createdAt) {
     const doc = {
       schema: 'starnet.station', version: STATION_VERSION, _nid: 1,
-      meta: { name: 'STARNET STATION', createdAt: createdAt || stationId(), tier: 0, spawnRoomId: null, trunkRoomId: null },
+      meta: { name: '1ULTRA STATION', createdAt: createdAt || stationId(), tier: 0, spawnRoomId: null, trunkRoomId: null },
       rooms: {}, order: [], props: [], belts: {}, edges: []
     };
     // seed the shabby starter HAB (18×11 floor — the v7 / world.js starter room), so a new
@@ -3479,6 +3479,25 @@ const WorldModel = (() => {
       const bound = assignPropAgent(res.id, aid);
       return bound.ok ? Object.assign({}, bound, { x: spot.x, y: spot.y, roomId: roomAt(spot.x, spot.y) }) : bound;
     }
+    /* ONE DESK PER AGENT (2026-10-08). world.js seats an agent at the FIRST workstation bound to it (deskPropFor, by
+       capForProp === 'computer'), so binding a second one must take the agent off the others — otherwise the binding
+       reports success while the agent keeps walking to its old desk. BUILD MODE's WHO SITS HERE chips (build.js) and the
+       overseer's station-control 'agent' op (stationbuilder.js) both bind through here: one transaction, one UNDO. A
+       non-workstation prop (a bay) binds exactly as assignPropAgent does, and '' empties just this prop. `released`
+       names the desks the agent left, so a caller can say so instead of implying nothing else moved. */
+    function assignDesk(propId, agentId) {
+      const p = doc.props.find(q => q.id === propId);
+      if (!p) return fail('NOT_FOUND', 'no such prop');
+      const aid = String(agentId || '').trim();
+      if (aid && !AID_RE.test(aid)) return fail('BAD_AGENT', 'agentId must match ' + AID_RE);
+      const seat = t => CAP_PROP_MAP[t] === 'computer';
+      const others = (aid && seat(p.t)) ? doc.props.filter(q => q.id !== propId && q.agentId === aid && seat(q.t)).map(q => q.id) : [];
+      const r = others.length ? transact(() => {
+        for (const id of others) { const u = assignPropAgent(id, ''); if (!u.ok) return u; }
+        return assignPropAgent(propId, aid);
+      }) : assignPropAgent(propId, aid);
+      return r && r.ok ? Object.assign({}, r, { released: others }) : r;
+    }
 
     /* ---------- serialize / subscribe ---------- */
     const serialize = () => { currentLinks(); return clone(doc); };
@@ -3523,7 +3542,7 @@ const WorldModel = (() => {
       },
       // mutations
       addRoom, placeHallway, removeRoom, moveRoom, moveRooms, resizeRoom, setRoomKind, setFloor, setMaterial, setDeck, setWalls, setHull, paintTiles, renameRoom,
-      addProp, removeProp, moveProp, moveProps, rotateProp, faceProp, mirrorProp, assignPropAgent, ensureWorkstation, configureJunction, swapJoinerMerger, bindConnector, bindPlugin, placePluginTerminal, setDoorState, setPropProject, setPropBrief, setPropRole, setPropHands, setPropLabel, setPropLimits,
+      addProp, removeProp, moveProp, moveProps, rotateProp, faceProp, mirrorProp, assignPropAgent, assignDesk, ensureWorkstation, configureJunction, swapJoinerMerger, bindConnector, bindPlugin, placePluginTerminal, setDoorState, setPropProject, setPropBrief, setPropRole, setPropHands, setPropLabel, setPropLimits,
       setBelt, removeBelt, removeBelts, placeBeltRun, connectBelt, connectionPreview, hookedBelts, stampBlueprint, insertBayBetween, canInsertBayBetween, transact, lineGraph, applyLineLayout, blueprintGraph,
       // agent-bay binding queries
       propsByType, propsByAgent, pipelineEdges, setPipelineEdges, addPipelineEdge, removePipelineEdge, agentRoomId, bayObjects,
@@ -3602,7 +3621,7 @@ const WorldModel = (() => {
     else { const clean = {}; for (const k in doc.belts) { const d = doc.belts[k]; if (/^-?\d+,-?\d+$/.test(k) && (d === 'E' || d === 'W' || d === 'N' || d === 'S')) clean[k] = d; } doc.belts = clean; }
     if (!Array.isArray(doc.edges)) doc.edges = [];
     doc.edges = doc.edges.map(cleanPipelineEdge).filter(Boolean);
-    if (!doc.meta || typeof doc.meta !== 'object') doc.meta = { name: 'STARNET STATION', createdAt: 0, tier: 0, spawnRoomId: null };
+    if (!doc.meta || typeof doc.meta !== 'object') doc.meta = { name: '1ULTRA STATION', createdAt: 0, tier: 0, spawnRoomId: null };
     /* ONE-TIME, NON-DESTRUCTIVE BACKFILL of the station id (see freshDoc's note). A doc saved before
        station identity existed carries createdAt 0/absent; give it one now so its per-station latches
        stop colliding with every other station's. It must be SAVED on the same load that stamps it —

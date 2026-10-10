@@ -1,4 +1,4 @@
-/* STARNET — windows/routines.js : the ROUTINES lane of the AUTOMATION window (extracted from stationui.js).
+/* 1ULTRA — windows/routines.js : the ROUTINES lane of the AUTOMATION window (extracted from stationui.js).
    Loads AFTER stationui.js and windows/automation.js (see index.html) and registers itself as an
    AutomationWindow LANE — its two sections (ACTIVE ROUTINES · CREATE ROUTINE) mount inside the shared
    AUTOMATION console rather than a window of their own (NAV CONDENSE 2026-08-04). The only stationui
@@ -101,9 +101,9 @@
           '<div data-auto-panel="1" hidden><p class="sn-menu-note">Optional script and tool restrictions for this job.</p>' +
             '<label class="sn-menu-field">Pre-check script<input id="rt-script" class="key-input" placeholder="Path relative to the project"></label>' +
             '<label class="rt-term"><input type="checkbox" id="rt-no-agent"> Run the script only, without a model</label>' +
-            '<label class="sn-menu-field">Allowed toolsets<input id="rt-toolsets" class="key-input" placeholder="Comma-separated; blank uses station defaults"></label></div>' +
+            '<label class="sn-menu-field">Allowed toolsets<input id="rt-toolsets" class="key-input" placeholder="Toolset ids, e.g. web, cabinet; blank uses station defaults"></label></div>' +
           '<div data-auto-panel="2" hidden><p class="sn-menu-note">Choose where the result goes.</p>' +
-            '<label class="sn-menu-field">Result destination<select id="rt-deliver" class="key-input"><option value="local">Keep in StarNet</option><option value="origin">Return to this conversation</option></select></label>' +
+            '<label class="sn-menu-field">Result destination<select id="rt-deliver" class="key-input"><option value="local">Keep in 1Ultra</option><option value="origin">Return to this conversation</option></select></label>' +
             '<label class="rt-term"><input type="checkbox" id="rt-continue"> Allow follow-up in that conversation</label></div>' +
         '<div data-auto-panel="3" hidden><p class="sn-menu-note">This routine inherits the agent’s existing access. Extra unattended permissions are off unless you grant them below. Placing a WORKBENCH on the floor does not grant them.</p>' +
         // UNATTENDED TERMINAL GRANT — default OFF, and it must stay a deliberate tick: this is the one control

@@ -62,7 +62,7 @@ class SidecarFixture {
     this.workspace = fs.mkdtempSync(path.join(os.tmpdir(), opts.prefix || 'starnet-sidecar-'));
     // HERMETIC PROFILE: the sidecar's boot-time station auto-recovery scans the REAL per-user
     // app-data roots (%APPDATA%/%LOCALAPPDATA%/XDG/~) for a lost station, and a fresh temp
-    // workspace looks exactly like one — so a machine with an installed StarNet station had its
+    // workspace looks exactly like one — so a machine with an installed 1Ultra station had its
     // real save COPIED INTO every test workspace (2026-08-20: broke schema-stamp on the dev box
     // the day the desktop app was first installed there). Point every profile root the candidate
     // scan reads at an empty scratch sibling so fixture boots never see, or touch, real user data.
@@ -179,7 +179,7 @@ class SidecarFixture {
     const headers = Object.assign({}, opts.headers || {});
     if (!Object.keys(headers).some(key => key.toLowerCase() === 'origin')) headers.Origin = this.baseUrl;
     if (this.token && !Object.keys(headers).some(key => key.toLowerCase() === 'x-starnet-token')) {
-      headers['X-StarNet-Token'] = this.token;
+      headers['X-1Ultra-Token'] = this.token;
     }
     opts.headers = headers;
     return fetch(this.baseUrl + route, opts);

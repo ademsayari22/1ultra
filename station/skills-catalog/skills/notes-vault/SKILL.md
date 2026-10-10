@@ -58,4 +58,4 @@ Notes link to each other with `[[Note Name]]` syntax (`[[Note Name|shown text]]`
 
 *Needs the CABINET (file tools); the NOTEBOOK remembers the vault path.*
 
-Adapted for StarNet from obsidian (Teknium), MIT.
+Adapted for 1Ultra from obsidian (Teknium), MIT.

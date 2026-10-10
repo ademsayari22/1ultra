@@ -1,7 +1,7 @@
 'use strict';
-/* Real sidecar proof that RESTRICTED Google data never reaches StarNet Managed (the credits relay):
+/* Real sidecar proof that RESTRICTED Google data never reaches 1Ultra Managed (the credits relay):
    a live Gmail connector (synthetic Google) is offered to an own-key run and returns mail content; on a
-   StarNet Managed run the same agent is NOT offered Gmail tools, and the replayed Gmail result arrives at
+   1Ultra Managed run the same agent is NOT offered Gmail tools, and the replayed Gmail result arrives at
    the relay as the withheld notice — never the mail body. No real Google account, cloud or model is used.
    The same proof runs for Gmail over an APP PASSWORD (IMAP, no OAuth) against a fake local IMAP server
    (test/helpers/fake-gmail.js, routed in by test/fixtures/gmail-imap-preload.cjs). */
@@ -99,7 +99,7 @@ let nextTool = GMAIL_READ;                                       // which tool t
     assert.ok(result && result.payload.ok, 'Gmail read_message ran: ' + JSON.stringify(result && result.payload).slice(0, 200));
     assert.ok(custom.some(b => JSON.stringify(b.messages).includes(MAIL)), 'the own-key provider received the mail (the user chose it)');
 
-    // 2. StarNet Managed run carrying that history: no Gmail tools, and the mail body is withheld
+    // 2. 1Ultra Managed run carrying that history: no Gmail tools, and the mail body is withheld
     const history = [
       { role: 'user', content: 'Read my latest mail' },
       { role: 'assistant', content: '', tool_calls: [{ id: 'mail1', type: 'function', function: { name: GMAIL_READ, arguments: '{"messageId":"message-1"}' } }] },
@@ -112,12 +112,12 @@ let nextTool = GMAIL_READ;                                       // which tool t
     const sent = relay.slice(before).filter(b => Array.isArray(b.messages));
     assert.ok(sent.length > 0, 'the managed run reached the relay');
     for (const b of sent) {
-      assert.ok(!names(b).some(n => /^mcp__gmail__/.test(n)), 'StarNet Managed is never offered Gmail tools');
-      assert.ok(!JSON.stringify(b).includes(MAIL), 'the mail body never reaches the StarNet relay');
+      assert.ok(!names(b).some(n => /^mcp__gmail__/.test(n)), '1Ultra Managed is never offered Gmail tools');
+      assert.ok(!JSON.stringify(b).includes(MAIL), 'the mail body never reaches the 1Ultra relay');
     }
-    assert.ok(sent.some(b => JSON.stringify(b.messages).includes('never sent to StarNet Managed')), 'the relay sees the withheld notice in its place');
+    assert.ok(sent.some(b => JSON.stringify(b.messages).includes('never sent to 1Ultra Managed')), 'the relay sees the withheld notice in its place');
 
-    // 3. the same proof for Gmail over an APP PASSWORD (IMAP): own-key reads mail, StarNet Managed never sees it
+    // 3. the same proof for Gmail over an APP PASSWORD (IMAP): own-key reads mail, 1Ultra Managed never sees it
     nextTool = IMAP_LIST;
     const ownImap = await run('custom', [{ role: 'user', content: 'List my inbox' }], { baseUrl: cloud + '/custom/v1', key: 'fixture-custom-key' });
     assert.ok(custom.some(b => names(b).includes(IMAP_LIST)), 'an own-key run is offered app-password Gmail');
@@ -137,11 +137,11 @@ let nextTool = GMAIL_READ;                                       // which tool t
     const sentImap = relay.slice(beforeImap).filter(b => Array.isArray(b.messages));
     assert.ok(sentImap.length > 0, 'the managed run reached the relay');
     for (const b of sentImap) {
-      assert.ok(!names(b).some(n => /^mcp__gmail-app-password__/.test(n)), 'StarNet Managed is never offered app-password Gmail tools');
-      assert.ok(!JSON.stringify(b).includes(IMAP_MAIL), 'IMAP mail content never reaches the StarNet relay');
-      assert.ok(!JSON.stringify(b).includes(IMAP_PASS), 'the app password never reaches the StarNet relay');
+      assert.ok(!names(b).some(n => /^mcp__gmail-app-password__/.test(n)), '1Ultra Managed is never offered app-password Gmail tools');
+      assert.ok(!JSON.stringify(b).includes(IMAP_MAIL), 'IMAP mail content never reaches the 1Ultra relay');
+      assert.ok(!JSON.stringify(b).includes(IMAP_PASS), 'the app password never reaches the 1Ultra relay');
     }
-    assert.ok(sentImap.some(b => JSON.stringify(b.messages).includes('never sent to StarNet Managed')), 'the relay sees the withheld notice in its place');
-    console.log('google-relay-guard.e2e: PASS (own-key run reads Gmail; StarNet Managed gets no Gmail tools and only the withheld notice; same for app-password Gmail over IMAP)');
+    assert.ok(sentImap.some(b => JSON.stringify(b.messages).includes('never sent to 1Ultra Managed')), 'the relay sees the withheld notice in its place');
+    console.log('google-relay-guard.e2e: PASS (own-key run reads Gmail; 1Ultra Managed gets no Gmail tools and only the withheld notice; same for app-password Gmail over IMAP)');
   } finally { await fakeImap.close(); await fixture.dispose(); server.closeAllConnections(); await new Promise(r => server.close(r)); }
 })().catch(e => { console.error(e); process.exitCode = 1; });

@@ -21,7 +21,7 @@ const html = read('market.html');
 const js = read('market.js');
 
 // ---- the page ----
-A.ok(/<title>Skill Market — StarNet<\/title>/.test(html), 'the page has its own title');
+A.ok(/<title>Skill Market — 1Ultra<\/title>/.test(html), 'the page has its own title');
 A.ok(/<link rel="canonical" href="https:\/\/starnetos\.com\/market\.html">/.test(html), 'and a canonical URL');
 A.ok(!/<script(?![^>]*\bsrc=)[^>]*>/i.test(html), 'no inline <script> (the CSP forbids it)');
 A.ok(!/\son[a-z]+\s*=/i.test(html), 'no inline event handlers');
@@ -29,6 +29,12 @@ A.ok(/<script src="market\.js\?v=[^"]+"><\/script>/.test(html), 'it loads market
 A.ok(!/site\.js/.test(html), 'and never site.js (the only page allowed the api.github.com request is the download page)');
 A.ok(/<a href="market\.html" class="on">Skills<\/a>/.test(html), 'its own nav entry is marked current');
 for (const id of ['mk-list', 'mk-status', 'mk-q', 'mk-count']) A.ok(html.indexOf('id="' + id + '"') >= 0, 'the page has #' + id + ' for market.js');
+// ---- uploads (2026-10-06): SHARE YOUR SKILL sends authors to their account's Skills tab, the only upload door ----
+A.ok(/<section class="section" id="share">[\s\S]*?<a class="btn btn-primary" href="https:\/\/account\.starnetos\.com\/account\/skills">\[ SUBMIT A SKILL \]<\/a>/.test(html), 'SHARE YOUR SKILL links SUBMIT to account.starnetos.com/account/skills');
+A.eq([...html.matchAll(/href="(https:\/\/account\.starnetos\.com[^"]*)"/g)].map(m => m[1]).filter(u => u !== 'https://account.starnetos.com/account/skills'), [], 'and no other account URL');
+A.ok(!/Not yet\. Today the market carries/.test(html), 'the FAQ no longer says publishing is impossible');
+A.eq([...html.matchAll(/<span class="section-no">(\d+)<\/span>/g)].map(m => m[1]), ['01', '02', '03', '04', '05'], 'sections stay numbered in order');
+A.ok(/if \(s\.uploaded === true\) meta\.appendChild\(document\.createTextNode\(/.test(js), 'an uploaded skill\'s card says it was shared by a 1Ultra user (as text)');
 
 // ---- every page links it ----
 const pages = [];

@@ -27,12 +27,12 @@ function proof(hash, bytes, overrides) {
     machineKind: 'windows-sandbox',
     cleanMachine: true,
     installer: { sha256: hash, bytes },
-    install: { succeeded: true, method: 'manual', installLocation: 'C:\\Users\\WDAGUtilityAccount\\AppData\\Local\\Programs\\StarNet' },
+    install: { succeeded: true, method: 'manual', installLocation: 'C:\\Users\\WDAGUtilityAccount\\AppData\\Local\\Programs\\1Ultra' },
     launch: {
       succeeded: true,
-      observedWindowTitle: 'StarNet',
-      exePath: 'C:\\Users\\WDAGUtilityAccount\\AppData\\Local\\Programs\\StarNet\\skynet-desktop.exe',
-      startupRoot: 'C:\\Users\\WDAGUtilityAccount\\AppData\\Local\\Programs\\StarNet',
+      observedWindowTitle: '1Ultra',
+      exePath: 'C:\\Users\\WDAGUtilityAccount\\AppData\\Local\\Programs\\1Ultra\\skynet-desktop.exe',
+      startupRoot: 'C:\\Users\\WDAGUtilityAccount\\AppData\\Local\\Programs\\1Ultra',
       workspaceRoot: 'C:\\Users\\WDAGUtilityAccount\\AppData\\Roaming\\ai.skynet.harness\\workspaces'
     },
     notes: []
@@ -135,7 +135,7 @@ try {
       install: { succeeded: true, method: 'manual', installLocation: 'C:\\Users\\andro\\AppData\\Local\\Programs\\StarNetT4UpdateSmoke-20260628-065002' },
       launch: {
         succeeded: true,
-        observedWindowTitle: 'StarNet',
+        observedWindowTitle: '1Ultra',
         exePath: 'C:\\Users\\andro\\AppData\\Local\\Programs\\StarNetT4UpdateSmoke-20260628-065002\\skynet-desktop.exe',
         startupRoot: 'C:\\Users\\andro\\AppData\\Local\\Programs\\StarNetT4UpdateSmoke-20260628-065002',
         workspaceRoot: 'C:\\Users\\andro\\AppData\\Local\\Programs\\StarNetT4UpdateSmoke-20260628-065002\\sidecar\\workspaces'

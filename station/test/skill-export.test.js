@@ -4,7 +4,7 @@
    everything the Commander or their agents authored. Now:
      A. an authored skill exports as a standard Agent Skills package (spec name, description, metadata.title,
         setup + body, support files)
-     B. it round-trips into another StarNet as a COMMUNITY install under its display title, scanned again
+     B. it round-trips into another 1Ultra as a COMMUNITY install under its display title, scanned again
      C. an edited install exports fresh, keeping license/author and naming what it derived from
      D. an untouched install still exports its exact source bytes (unchanged behavior)
      E. a skill the guard BLOCKED is never packaged for someone else

@@ -47,7 +47,7 @@ function station(name, updatedAt, marker) {
   const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'starnet-lineage-http-'));
   const appData = path.join(sandbox, 'appdata');
   const current = path.join(appData, 'ai.skynet.harness', 'workspaces');
-  const legacyA = path.join(appData, 'StarNet', 'workspaces');
+  const legacyA = path.join(appData, '1Ultra', 'workspaces');
   const legacyB = path.join(appData, 'Skynet', 'workspaces');
   fs.mkdirSync(current, { recursive: true }); fs.mkdirSync(legacyA, { recursive: true }); fs.mkdirSync(legacyB, { recursive: true });
   fs.writeFileSync(path.join(current, '.migration-receipt.json'), JSON.stringify({ version: 1, validated: true, files: [] }));
@@ -74,7 +74,7 @@ function station(name, updatedAt, marker) {
   }
   try {
     const first = await launch();
-    const r = await fetch('http://127.0.0.1:' + first.port + '/api/save?agent=agent', { headers: { 'X-StarNet-Token': TOKEN } });
+    const r = await fetch('http://127.0.0.1:' + first.port + '/api/save?agent=agent', { headers: { 'X-1Ultra-Token': TOKEN } });
     const body = await r.json();
     A.eq(r.status, 200, 'real save route answers');
     A.eq(body.save, null, 'active workspace is definitively empty');
@@ -85,7 +85,7 @@ function station(name, updatedAt, marker) {
     const selected = body.lineage.recovery.candidates.find(row => row.stationName === 'ORION');
     A.ok(selected && selected.id, 'Commander can identify the desired station without exposing save contents');
 
-    const reportRes = await fetch('http://127.0.0.1:' + first.port + '/api/lineage/report', { headers: { 'X-StarNet-Token': TOKEN } });
+    const reportRes = await fetch('http://127.0.0.1:' + first.port + '/api/lineage/report', { headers: { 'X-1Ultra-Token': TOKEN } });
     const reportRaw = await reportRes.text();
     const report = JSON.parse(reportRaw);
     A.eq(reportRes.status, 200, 'redacted recovery report downloads through the real authenticated route');
@@ -94,14 +94,14 @@ function station(name, updatedAt, marker) {
     A.ok(!reportRaw.includes(sandbox) && !reportRaw.includes('private-orion-marker'), 'report contains neither home path nor save contents');
 
     const recover = await fetch('http://127.0.0.1:' + first.port + '/api/lineage/recover', {
-      method: 'POST', headers: { 'X-StarNet-Token': TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify({ candidateId: selected.id })
+      method: 'POST', headers: { 'X-1Ultra-Token': TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify({ candidateId: selected.id })
     });
     A.eq(recover.status, 202, 'authenticated selection is accepted for restart-time recovery');
     const exit = await waitExit(first.child, 5000);
     A.eq(exit.code, 75, 'sidecar exits with the guardian restart code after persisting the request');
 
     const second = await launch();
-    const recoveredRes = await fetch('http://127.0.0.1:' + second.port + '/api/save?agent=agent', { headers: { 'X-StarNet-Token': TOKEN } });
+    const recoveredRes = await fetch('http://127.0.0.1:' + second.port + '/api/save?agent=agent', { headers: { 'X-1Ultra-Token': TOKEN } });
     const recovered = await recoveredRes.json();
     A.eq(recoveredRes.status, 200, 'restarted sidecar answers from the activated generation');
     A.eq(recovered.save && recovered.save.agent && recovered.save.agent.name, 'ORION', 'next pre-store boot activates exactly the selected station');
@@ -120,11 +120,11 @@ function station(name, updatedAt, marker) {
     try { fs.unlinkSync(path.join(current, '.starnet-workspace-owner.json')); } catch (_) {}
     fs.writeFileSync(path.join(current, 'ledger.jsonl'), '{"event":"leftover"}\n');
     const third = await launch();
-    const gated = await (await fetch('http://127.0.0.1:' + third.port + '/api/save?agent=agent', { headers: { 'X-StarNet-Token': TOKEN } })).json();
+    const gated = await (await fetch('http://127.0.0.1:' + third.port + '/api/save?agent=agent', { headers: { 'X-1Ultra-Token': TOKEN } })).json();
     A.eq(gated.save, null, 'fixture: the active save is gone again');
     A.eq(gated.lineage.priorInstallEvidence, true, 'fixture: the gate fires on leftovers + legacy roots');
     const fresh = await fetch('http://127.0.0.1:' + third.port + '/api/lineage/start-fresh', {
-      method: 'POST', headers: { 'X-StarNet-Token': TOKEN, 'Content-Type': 'application/json' }, body: '{}'
+      method: 'POST', headers: { 'X-1Ultra-Token': TOKEN, 'Content-Type': 'application/json' }, body: '{}'
     });
     const freshBody = await fresh.json();
     A.eq(fresh.status, 202, 'START FRESH is accepted over the authenticated route');
@@ -133,7 +133,7 @@ function station(name, updatedAt, marker) {
     const exit3 = await waitExit(third.child, 5000);
     A.eq(exit3.code, 75, 'sidecar exits with the guardian restart code after starting fresh');
     const fourth = await launch();
-    const after = await (await fetch('http://127.0.0.1:' + fourth.port + '/api/save?agent=agent', { headers: { 'X-StarNet-Token': TOKEN } })).json();
+    const after = await (await fetch('http://127.0.0.1:' + fourth.port + '/api/save?agent=agent', { headers: { 'X-1Ultra-Token': TOKEN } })).json();
     A.eq(after.lineage.priorInstallEvidence, false, 'after START FRESH the next boot finds no gating evidence');
     A.eq(after.lineage.onboardingAllowed, true, 'onboarding is allowed — the user is no longer stranded');
     A.eq(fs.readFileSync(path.join(legacyA, 'agent.save.json')).equals(legacyABytes), true, 'legacy A remains byte-exact after START FRESH');

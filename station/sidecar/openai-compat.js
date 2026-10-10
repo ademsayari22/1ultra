@@ -1,7 +1,7 @@
 /* sidecar/openai-compat.js — an OpenAI-compatible HTTP surface (/v1/*) so EXTERNAL local clients and other
-   harnesses can start REAL StarNet agent runs over HTTP. This is the seam where "another harness talks to
-   StarNet" actually runs agent work. An independent implementation, wire-compatible with the reference
-   harness's API server surface, built on StarNet's one-process / runOnce / U.bus architecture.
+   harnesses can start REAL 1Ultra agent runs over HTTP. This is the seam where "another harness talks to
+   1Ultra" actually runs agent work. An independent implementation, wire-compatible with the reference
+   harness's API server surface, built on 1Ultra's one-process / runOnce / U.bus architecture.
 
    ── WHY THIS IS A SEPARATE AUTH SEAM (read before changing) ────────────────────────────────────────────────
    The rest of the sidecar's /api/* routes are fenced by the per-LAUNCH token that index.js injects into the
@@ -17,7 +17,7 @@
    is ALSO applied here (index.js's isApi gate only covers /api/*, so /v1 must enforce it itself).
 
    ── REAL HTTP STATUS CODES (deliberate) ────────────────────────────────────────────────────────────────────
-   Unlike StarNet's media endpoints' 200-always contract, /v1 returns real HTTP codes (401/403/429/400/404/502)
+   Unlike 1Ultra's media endpoints' 200-always contract, /v1 returns real HTTP codes (401/403/429/400/404/502)
    because OpenAI-client compatibility IS the contract here — an OpenAI SDK inspects res.status.
 
    ── RUNS RIDE THE EXISTING AUTONOMOUS SEAM ─────────────────────────────────────────────────────────────────
@@ -282,6 +282,9 @@ function makeOpenAiCompat(deps) {
       key, model: o.model || '', provider, baseUrl,
       system: o.system || '', messages: o.messages || [], agentId: o.agentId,
       emit: sink, signal: o.signal, runId: o.runId,
+      // a /v1 request IS a task (issue #96: without this the model was offered NO tools though this surface's prompt
+      // tells it to use them); the one-turn structured-output repair pass stays tool-less.
+      isTask: !o.outputOnly, toolsOptional: true,   // a model known tool-less still answers in text (pre-#96 behavior)
       trigger: 'event', surface: 'autonomous',   // headless external caller: default-deny ungranted mutation, never stall
       broadcast: true,                            // light the station floor — a user SEES the external harness's run
       taskKey: 'v1:' + o.agentId, taskSource: 'api',
@@ -308,7 +311,7 @@ function makeOpenAiCompat(deps) {
     const key = apiKeyFn();
     if (!keyUsable(key)) {
       json(res, 403, openAiError(
-        'The StarNet /v1 API is disabled. It dispatches terminal-capable agent work, so it refuses to run without a strong bearer key. Set STARNET_API_KEY to a secret of at least ' + MIN_KEY_LEN + ' characters (e.g. `openssl rand -hex 32`) and restart the station to enable /v1.',
+        'The 1Ultra /v1 API is disabled. It dispatches terminal-capable agent work, so it refuses to run without a strong bearer key. Set STARNET_API_KEY to a secret of at least ' + MIN_KEY_LEN + ' characters (e.g. `openssl rand -hex 32`) and restart the station to enable /v1.',
         { type: 'invalid_request_error', code: 'api_disabled' }), { 'WWW-Authenticate': 'Bearer' });
       return true;
     }
@@ -357,7 +360,7 @@ function makeOpenAiCompat(deps) {
         health: '/health'
       },
       streaming: true,
-      session_continuity_header: 'X-StarNet-Session-Id',
+      session_continuity_header: 'X-1Ultra-Session-Id',
       surface: 'autonomous',
       max_concurrent_runs: maxConcurrent(),
       // deliberate follow-ups NOT in this slice (see docs/OPENAI_COMPAT.md):
@@ -388,7 +391,7 @@ function makeOpenAiCompat(deps) {
     const provider = target.provider || 'openrouter';
     // conversation for runOnce = prior turns (history) + the new user directive last (system passed separately).
     const messages = parsed.history.map(m => ({ role: m.role, content: m.content })).concat([{ role: 'user', content: parsed.lastUser }]);
-    let system = parsed.system || 'You are the Commander\'s StarNet agent, reached over an OpenAI-compatible API. Use your REAL tools when given a task and report what you actually did.';
+    let system = parsed.system || 'You are the Commander\'s 1Ultra agent, reached over an OpenAI-compatible API. Use your REAL tools when given a task and report what you actually did.';
 
     if (contract.schema) system += '\nReturn ONLY strict JSON matching this schema: ' + JSON.stringify(contract.schema);
     const id = reservedId || 'chatcmpl-' + String(newId()).replace(/-/g, '').slice(0, 24);
@@ -452,7 +455,7 @@ function makeOpenAiCompat(deps) {
     const response = chatCompletionObject({ id, model: modelField, created, content: acc.buf, finishReason, usage });
     response.starnet = runOutcome(acc.reason, !!acc.buf, acc.errMsg && redact(acc.errMsg));
     if (finishReason === 'error') response.error = { message: response.starnet.error || response.starnet.status, type: 'agent_error' };
-    return json(res, 200, response, { 'X-StarNet-Session-Id': sessionId });
+    return json(res, 200, response, { 'X-1Ultra-Session-Id': sessionId });
   }
 
   // Keyed streams share progress; their terminal frame waits for durable persistence.
@@ -559,7 +562,7 @@ function makeOpenAiCompat(deps) {
     const runModel = target.matched ? (target.model || defaultModel()) : defaultModel();
     const provider = target.provider || 'openrouter';
     const messages = history.map(m => ({ role: m.role, content: m.content })).concat([{ role: 'user', content: lastUser }]);
-    const sys = system || 'You are the Commander\'s StarNet agent, reached over an OpenAI-compatible API. Use your REAL tools when given a task and report what you actually did.';
+    const sys = system || 'You are the Commander\'s 1Ultra agent, reached over an OpenAI-compatible API. Use your REAL tools when given a task and report what you actually did.';
 
     const ac = new AbortController();
     sweepRuns();

@@ -15,17 +15,19 @@ A.ok(main.includes('migrate_credits_token_from_plaintext(&st.workspaces)'), 'a p
 A.ok(main.includes('compare_exchange(false, true'), 'restart and fresh-start commands cannot race each other');
 A.ok(main.includes('window.clear_all_browsing_data()'), 'packaged WebView2/WKWebView state is cleared natively');
 A.ok(native.includes('fs::rename(workspaces, destination)'), 'the prior station is moved, never deleted');
-A.ok(native.includes('const CREDITS_LINK: &str = ".secrets/credits.json"'), 'the StarNet credit-account identity survives the station reset');
+A.ok(native.includes('const CREDITS_LINK: &str = ".secrets/credits.json"'), 'the 1Ultra credit-account identity survives the station reset');
 A.ok(native.includes('owner_pid_alive(owner_pid)'), 'a dead PID stamp cannot strand the fresh-start escape');
 A.ok(native.includes('MIGRATION_MARKER') && native.includes('acknowledged_roots'), 'the clean generation cannot resurrect legacy state on Mac or Windows relaunch');
 A.ok(html.includes('id="btn-unreachable-fresh"'), 'the unreachable screen exposes the escape');
 A.ok(html.includes('id="unreachable-code"') && html.includes('id="btn-unreachable-report"'), 'the unreachable screen exposes screenshot-readable and copyable diagnosis');
-A.ok(html.includes('does not remove your StarNet account link or purchased credits'), 'the screen explains the credit-preserving scope');
+A.ok(html.includes('does not remove your 1Ultra account link or purchased credits'), 'the screen explains the credit-preserving scope');
 A.ok(app.includes('FreshStart.resetDesktop(core)'), 'the two-click UI calls the native transaction rather than dead sidecar HTTP');
 A.ok(app.includes("freshBtn.textContent = '✦ CONFIRM — START COMPLETELY FRESH'"), 'the destructive choice requires an explicit second click');
 A.ok(app.includes('browserResetBlocked = true'), 'an uncleared browser cache cannot silently repopulate the clean station');
 A.ok(app.includes('FreshStart.retryBrowserClear(preservedReset)'), 'a browser-clear retry reuses the original quarantine receipt instead of moving the clean station again');
 A.ok(app.includes('SAVE-403 · STALE WINDOW SESSION') && app.includes('SAVE-NET · SAVE REQUEST LOST'), 'the two save-failure classes have stable support codes');
 A.ok(/Diag\.copy\(\{ notify: false, context: \{ kind: diagnosis\.code[\s\S]{0,500}Diag\.showBlock/.test(app), 'recovery details fall back to selectable on-screen text when clipboard copy fails');
+
+A.ok(!/Diag\.copy\(\{ notify: false, context: \{ kind: diagnosis\.code[^}]*engineAlive/.test(app), 'recovery details measure engine liveness instead of asserting REACHABLE');
 
 A.report('desktop-fresh-start-contract.test');

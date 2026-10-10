@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Fix Failing CI"
   category: "Engineering"
-  author: "StarNet"
+  author: "1Ultra"
 ---
 
 A red check is a claim that something is broken. Your job is to find out whether the claim is true and fix what is broken — not to make the mark turn green. The bar: you can quote the first real error, name its cause, and show the same command failing before your change and passing after.

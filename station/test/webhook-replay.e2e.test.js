@@ -43,7 +43,7 @@ function boot(port, env, attemptsLeft) {
 
 function signedHeaders(token, origin, timestamp, nonce, body) {
   return {
-    'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: origin,
+    'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: origin,
     'x-starnet-timestamp': timestamp, 'x-starnet-nonce': nonce,
     'x-starnet-signature': crypto.createHmac('sha256', SECRET).update(timestamp + '.' + nonce + '.' + body).digest('hex')
   };

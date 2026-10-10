@@ -233,4 +233,4 @@ A short list for the Commander: each item, what you verified, and its outcome (f
 
 *Needs the INTEL CAB (fs.search, fs.read, fs.edit) and the WORKBENCH (verify.run, shell.exec). GitHub replies use a connected GitHub account or the `gh` command line.*
 
-Adapted for StarNet from receiving-code-review (Jesse Vincent, obra/superpowers), MIT.
+Adapted for 1Ultra from receiving-code-review (Jesse Vincent, obra/superpowers), MIT.

@@ -87,6 +87,18 @@ A.ok(/chat:\s*\(o\)\s*=>/.test(appSrc), 'app.js wires Harness.chat into the auto
 A.ok(/present:\s*\(d\)\s*=>/.test(appSrc), 'app.js wires the desk delivery (present) for finished drafts');
 A.ok(/canWriteFiles:\s*\(\)\s*=>/.test(appSrc), 'app.js wires the cabinet:write consent check (B2 write gate)');
 A.ok(/hasCabinet:\s*\(\)\s*=>/.test(appSrc), 'app.js wires the placed-cabinet capability check (object=capability)');
+// RUN the real wired hasCabinet against World.heroCaps' real shape ([{objectType}]): the injected stubs below hid that
+// the old indexOf('cabinet') could never match, so the B2 real write never fired with a cabinet placed.
+{
+  const at = appSrc.indexOf('hasCabinet:');
+  const line = appSrc.slice(at, appSrc.indexOf('\n', at));
+  const arrow = line.slice(line.indexOf('() =>')).replace(/,\s*(\/\/.*)?$/, '');
+  const wired = caps => new Function('World', 'agent', 'return (' + arrow + ')')({ heroCaps: () => (typeof caps === 'function' ? caps() : caps) }, { id: 'a' });
+  A.eq(wired([{ objectType: 'dish' }, { objectType: 'cabinet' }])(), true, 'hasCabinet: a placed cabinet (heroCaps objects) is seen');
+  A.eq(wired([{ objectType: 'dish' }, { objectType: 'plugin', pluginId: 'cabinet' }])(), false, 'hasCabinet: a plugin terminal is not a cabinet');
+  A.eq(wired([])(), false, 'hasCabinet: an empty room has no cabinet');
+  A.eq(wired(() => { throw new Error('x'); })(), false, 'hasCabinet: a heroCaps hiccup is no cabinet');
+}
 A.ok(/\/api\/autonomy\/write/.test(appSrc), 'app.js persists the deliverable via the consent-gated /api/autonomy/write endpoint');
 A.ok(/Autopilot\.digestSummary\(/.test(appSrc), 'B3: the welcome-back digest summarizes files written vs drafted (digestSummary)');
 A.ok(/\/api\/checkpoint\/restore/.test(appSrc), 'B3: the digest offers a one-tap UNDO via the checkpoint restore endpoint');
@@ -110,7 +122,7 @@ A.ok(/value:\s*'undo'/.test(appSrc), 'B3: the undo action is wired into the welc
   let presented = null;
   const hotDossier = { known: ['goals', 'stack', 'pain', 'identity'], blank: [], familiarity: 4 / 7 };
   const hotBeliefs = {
-    goals: [{ text: 'ship the StarNet beta to 100 users', updatedAt: nowMs }],
+    goals: [{ text: 'ship the 1Ultra beta to 100 users', updatedAt: nowMs }],
     pain: [{ text: 'manual release notes eat my fridays', updatedAt: nowMs }],
     stack: [{ text: 'node and plain js', updatedAt: nowMs }],
     identity: [{ text: 'andro, solo builder', updatedAt: nowMs }]
@@ -128,7 +140,7 @@ A.ok(/value:\s*'undo'/.test(appSrc), 'B3: the undo action is wired into the welc
   // a good model: proposes one grounded high-confidence candidate, then produces a titled draft.
   const goodChat = async ({ messages }) => {
     const c = messages[0].content;
-    if (/Propose up to/.test(c)) return { text: 'JOB: Beta launch checklist\nKIND: advance-goal\nGROUNDS: ship the StarNet beta to 100 users\nCONFIDENCE: high\nSPEC: a pre-launch checklist' };
+    if (/Propose up to/.test(c)) return { text: 'JOB: Beta launch checklist\nKIND: advance-goal\nGROUNDS: ship the 1Ultra beta to 100 users\nCONFIDENCE: high\nSPEC: a pre-launch checklist' };
     if (/Do this ONE job/.test(c)) return { text: 'TITLE: Beta launch checklist\n1. Freeze the build\n2. Tag the release\n3. Smoke test' };
     if (/SELF-REVIEW/.test(c)) return { text: 'VERDICT: ship\nNOTE: solid' };
     return { text: '' };
@@ -155,7 +167,7 @@ A.ok(/value:\s*'undo'/.test(appSrc), 'B3: the undo action is wired into the welc
   // CONFIDENCE GATE: all-low candidates → no act, no leash spent, nothing surfaced.
   presented = null;
   const lowChat = async ({ messages }) => /Propose up to/.test(messages[0].content)
-    ? { text: 'JOB: maybe tweak something\nKIND: advance-goal\nGROUNDS: ship the StarNet beta to 100 users\nCONFIDENCE: low\nSPEC: vague' }
+    ? { text: 'JOB: maybe tweak something\nKIND: advance-goal\nGROUNDS: ship the 1Ultra beta to 100 users\nCONFIDENCE: low\nSPEC: vague' }
     : { text: 'TITLE: t\nbody' };
   AutopilotStore.init(baseDeps(lowChat));
   const r2 = await AutopilotStore.act();
@@ -174,7 +186,7 @@ A.ok(/value:\s*'undo'/.test(appSrc), 'B3: the undo action is wired into the welc
   // the agent can DROP its own draft on review (no delivery, no leash spent).
   const dropChat = async ({ messages }) => {
     const c = messages[0].content;
-    if (/Propose up to/.test(c)) return { text: 'JOB: x\nKIND: advance-goal\nGROUNDS: ship the StarNet beta to 100 users\nCONFIDENCE: high\nSPEC: s' };
+    if (/Propose up to/.test(c)) return { text: 'JOB: x\nKIND: advance-goal\nGROUNDS: ship the 1Ultra beta to 100 users\nCONFIDENCE: high\nSPEC: s' };
     if (/Do this ONE job/.test(c)) return { text: 'TITLE: Draft\nbody' };
     if (/SELF-REVIEW/.test(c)) return { text: 'VERDICT: drop\nNOTE: padding, not worth their time' };
     return { text: '' };
@@ -188,7 +200,7 @@ A.ok(/value:\s*'undo'/.test(appSrc), 'B3: the undo action is wired into the welc
   presented = null;
   const reviseChat = async ({ messages }) => {
     const c = messages[0].content;
-    if (/Propose up to/.test(c)) return { text: 'JOB: x\nKIND: advance-goal\nGROUNDS: ship the StarNet beta to 100 users\nCONFIDENCE: high\nSPEC: s' };
+    if (/Propose up to/.test(c)) return { text: 'JOB: x\nKIND: advance-goal\nGROUNDS: ship the 1Ultra beta to 100 users\nCONFIDENCE: high\nSPEC: s' };
     if (/Do this ONE job/.test(c)) return { text: 'TITLE: First draft\noriginal body' };
     if (/SELF-REVIEW/.test(c)) return { text: 'VERDICT: revise\nNOTE: tightened\nTITLE: Revised draft\nbetter body' };
     return { text: '' };
@@ -227,7 +239,7 @@ A.ok(/value:\s*'undo'/.test(appSrc), 'B3: the undo action is wired into the welc
   /* ---------- A3: the learn hook re-weights selection ---------- */
   const tieChat = async ({ messages }) => {
     const c = messages[0].content;
-    if (/Propose up to/.test(c)) return { text: 'JOB: advance\nKIND: advance-goal\nGROUNDS: ship the StarNet beta to 100 users\nCONFIDENCE: high\nSPEC: s\n\nJOB: pain\nKIND: kill-pain\nGROUNDS: manual release notes eat my fridays\nCONFIDENCE: high\nSPEC: s' };
+    if (/Propose up to/.test(c)) return { text: 'JOB: advance\nKIND: advance-goal\nGROUNDS: ship the 1Ultra beta to 100 users\nCONFIDENCE: high\nSPEC: s\n\nJOB: pain\nKIND: kill-pain\nGROUNDS: manual release notes eat my fridays\nCONFIDENCE: high\nSPEC: s' };
     if (/Do this ONE job/.test(c)) return { text: 'TITLE: D\nbody' };
     if (/SELF-REVIEW/.test(c)) return { text: 'VERDICT: ship' };
     return { text: '' };

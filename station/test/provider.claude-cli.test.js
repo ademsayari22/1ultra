@@ -259,7 +259,7 @@ const result = (extra) => Object.assign({ type: 'result', subtype: 'success', is
     const { p, calls } = make({ lines: [init('none'), result({ result: 'ok' })] }, { env });
     await collect(p, { model: 'sonnet', messages: [{ role: 'user', content: 'x' }] });
     const childEnv = calls[0].opts.env;
-    A.ok(childEnv && !Object.keys(childEnv).some(k => /^(STARNET|SKYNET)_/i.test(k)), 'no STARNET_/SKYNET_ variable reaches the CLI');
+    A.ok(childEnv && !Object.keys(childEnv).some(k => /^(1ULTRA|SKYNET)_/i.test(k)), 'no STARNET_/SKYNET_ variable reaches the CLI');
     A.eq([childEnv.CLAUDECODE, childEnv.HOME, childEnv.CLAUDE_CODE_DISABLE_AUTO_MEMORY], [undefined, '/h', '1'], 'not a nested session; user env kept; auto-memory off');
   }
 
@@ -285,17 +285,71 @@ const result = (extra) => Object.assign({ type: 'result', subtype: 'success', is
     A.eq([cls.reason, cls.retryable, cls.shouldRotateCredential], ['quota_exhausted', false, true], 'errorClass rotates to the next account instead of retrying');
   }
 
-  // QA 2026-10-02: the CLI cannot see images, and says so — image_analyze's session fallback asks before it answers
+  // 10-08: a turn with an image rides the CLI's stream-json input as real image blocks (Opus 5.5 read a thumbnail live);
+  // a text-only turn keeps the plain stdin byte-for-byte. image_analyze's session fallback can now use a Claude Code agent.
+  {
+    const png = 'iVBORw0KGgo=';
+    const { p, calls } = make({ lines: [init('none'), result({ result: 'FINAL BOSS?' })] });
+    const out = await collect(p, { model: 'opus', messages: [{ role: 'user', content: [{ type: 'text', text: 'What does it say?' }, { type: 'image_url', image_url: { url: 'data:image/png;base64,' + png } }] }] });
+    A.ok(calls[0].args.join(' ').includes('--input-format stream-json'), 'an image turn asks the CLI for stream-json input');
+    const msg = JSON.parse(calls[0].stdin);
+    A.eq([msg.type, msg.message.role], ['user', 'user'], 'stdin is one stream-json user message');
+    const c = msg.message.content;
+    A.eq(c[0], { type: 'text', text: 'What does it say?\n[image 1 — attached below]' }, 'the text says where the image sat');
+    A.eq(c.slice(1), [{ type: 'text', text: 'Image 1:' }, { type: 'image', source: { type: 'base64', media_type: 'image/png', data: png } }], 'the picture itself is sent as an Anthropic image block');
+    A.ok(out.some(e => e.type === 'text' && /FINAL BOSS/.test(e.delta)), 'the answer streams back as usual');
+
+    const plain = make({ lines: [init('none'), result({ result: 'ok' })] });
+    await collect(plain.p, { model: 'opus', messages: [{ role: 'user', content: 'hi' }] });
+    A.ok(plain.calls[0].args.indexOf('--input-format') < 0 && plain.calls[0].stdin === 'hi', 'a text-only turn is unchanged (no stream-json input)');
+
+    // a screenshot inside a transcript, an http image, an svg the API cannot take, and the cap on old images
+    const t = make({ lines: [init('none'), result({ result: 'ok' })] });
+    const many = [];
+    for (let k = 0; k < 22; k++) many.push({ type: 'image_url', image_url: { url: 'data:image/jpg;base64,QUJD' + k } });
+    await collect(t.p, { model: 'opus', messages: [
+      { role: 'user', content: 'look' },
+      { role: 'assistant', content: 'ok' },
+      { role: 'user', content: [{ type: 'text', text: '[BEGIN EXTERNAL SCREEN CAPTURE]' }, { type: 'image_url', image_url: { url: 'https://x.test/a.png' } }, { type: 'image_url', image_url: { url: 'data:image/svg+xml;base64,PHN2Zz4=' } }].concat(many) }
+    ] });
+    const tc = JSON.parse(t.calls[0].stdin).message.content;
+    const imgs = tc.filter(b => b.type === 'image');
+    A.eq(imgs.length, 20, 'at most 20 images ride one turn (the newest)');
+    A.ok(tc[0].text.includes('[earlier image no longer attached]') && !tc[0].text.includes('https://x.test/a.png'), 'an image past the cap leaves a note');
+    A.ok(tc[0].text.includes('[image attachment omitted — it could not be sent to the Claude Code brain]'), 'an svg (not an API image type) is a note, never a broken block');
+    A.eq(imgs[0].source.media_type, 'image/jpeg', 'image/jpg is normalized to image/jpeg');
+    A.ok(tc[0].text.includes('<conversation>') && tc[0].text.includes('[image 20 — attached below]') && !tc[0].text.includes('\u0000'), 'the transcript is intact and every mark is resolved');
+  }
   {
     const { makeClaudeCliProvider } = require('../sidecar/providers/claude-cli.js');
     const p = makeClaudeCliProvider({ clock: { now: () => Date.now() } });
-    A.eq(typeof p.supportsImages === 'function' ? p.supportsImages() : 'missing', false, 'the Claude Code provider reports it has no image channel');
+    A.eq(typeof p.supportsImages === 'function' ? p.supportsImages() : 'missing', true, 'the Claude Code provider reports an image channel');
     const idx = fs.readFileSync(require('path').join(__dirname, '..', 'sidecar', 'index.js'), 'utf8');
     const aux = idx.slice(idx.indexOf('const auxVisionCall = async (req) => {'), idx.indexOf('const imageTools = makeImageTools('));
     A.ok(/!auxVisionProvider\.supportsImages\(\)\) throw new Error\('no vision route/.test(aux) && aux.indexOf('supportsImages') < aux.indexOf('.stream('),
       'the aux vision route refuses a provider that cannot see images BEFORE asking it to describe one');
     A.ok(aux.includes('AbortSignal.any([ac.signal, signal])') && aux.includes('signal: callSignal'), 'QA 10-02: the aux vision call ends when its run is stopped');
     A.ok(aux.includes("ev.type === 'usage') usage = ev.usage") && aux.includes('recordMediaUsage(usage, model)') && !aux.includes("ev.type === 'done') break"), 'QA 10-02: its usage is booked like media spend (read to the end of the stream)');
+  }
+  // #68: the stable cacheSystemPrefix + tools sit before the CLI's dynamic boundary and the per-run block after it,
+  // so a new run reads the stable part from the CLI prompt cache
+  {
+    const files = [];
+    const fsRec = Object.assign({}, fakeFs, { writeFileSync(p, data) { files.push(data); } });
+    const { p, calls } = make({ lines: [init('none'), result({ result: 'ok' })] }, { fs: fsRec });
+    const prefix = 'You are the researcher.\n';
+    const run = id => ({ model: 'sonnet', cacheSystemPrefix: prefix, messages: [{ role: 'system', content: prefix + '\n\n[RUNTIME]\nRun id: ' + id }, { role: 'user', content: 'hi' }] });
+    await collect(p, run('r1'));
+    await collect(p, run('r2'));
+    const [head1, tail1] = files[0].split('\n__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__\n');
+    const [head2, tail2] = files[1].split('\n__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__\n');
+    A.ok(head1 && head1 === head2 && head1.startsWith('You are the researcher.') && !head1.includes('Run id'), 'the stable part before the boundary is identical across runs');
+    A.ok(tail1 === '[RUNTIME]\nRun id: r1' && tail2 === '[RUNTIME]\nRun id: r2', 'the per-run block stays in the system prompt, after the boundary');
+    A.ok(head1.indexOf('# Tools') > 0, 'the tool catalog sits on the stable side of the boundary');
+    A.eq(calls[0].stdin, 'hi', 'the transcript on stdin is unchanged');
+    const miss = _internals.buildPrompt([{ role: 'system', content: 'other system' }, { role: 'user', content: 'hi' }], [], prefix);
+    const none = _internals.buildPrompt([{ role: 'system', content: 'other system' }, { role: 'user', content: 'hi' }], []);
+    A.eq(miss, none, 'a prefix that does not match the system prompt leaves the prompt exactly as before');
   }
   A.report('provider.claude-cli.test');
 })().catch(e => { console.log('FAIL: provider.claude-cli.test threw -- ' + (e && e.stack || e)); process.exit(1); });

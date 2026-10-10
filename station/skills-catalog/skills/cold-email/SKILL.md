@@ -136,4 +136,4 @@ The draft file is saved and re-read; every personal detail and proof point maps 
 
 *Needs the DISH (web_search, web_fetch, browser.navigate, browser.get_text) for research and the INTEL CAB (fs.write) for the draft file.*
 
-Adapted for StarNet from cold-email (Corey Haines), MIT.
+Adapted for 1Ultra from cold-email (Corey Haines), MIT.

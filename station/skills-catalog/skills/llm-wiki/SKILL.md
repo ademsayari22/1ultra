@@ -301,4 +301,4 @@ The wiki folder works as a vault in Markdown notes apps that understand `[[wikil
 
 *Needs the CABINET (the wiki is files) and the DISH (web sources). The NOTEBOOK remembers the wiki path.*
 
-Adapted for StarNet from llm-wiki (Nous Research, after Andrej Karpathy's LLM Wiki pattern), MIT.
+Adapted for 1Ultra from llm-wiki (Nous Research, after Andrej Karpathy's LLM Wiki pattern), MIT.

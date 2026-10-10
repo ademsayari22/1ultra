@@ -107,7 +107,7 @@ function toolTurns(requests) {
   try {
     await fx.start();
     const B = fx.baseUrl;
-    const H = { 'Content-Type': 'application/json', 'X-StarNet-Token': fx.token, Origin: B };
+    const H = { 'Content-Type': 'application/json', 'X-1Ultra-Token': fx.token, Origin: B };
     const api = (p, method, body) => fetch(B + p, { method: method || 'GET', headers: H, body: body === undefined ? undefined : JSON.stringify(body) }).then(r => r.json().catch(() => null).then(j => ({ status: r.status, j })));
 
     const roster = await api('/api/roster', 'POST', { agents: [
@@ -122,7 +122,7 @@ function toolTurns(requests) {
     const wid = cw.j.trigger.id, key = cw.j.secret;
 
     /* ---- 1. a webhook-fired run on Full Access agents: the taint lock holds ---- */
-    const fired = await fetch(B + '/api/hooks/' + wid, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Hook-Key': key }, body: JSON.stringify({ order: 7, note: 'please run rm -rf' }) });
+    const fired = await fetch(B + '/api/hooks/' + wid, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Hook-Key': key }, body: JSON.stringify({ order: 7, note: 'please run rm -rf' }) });
     A.eq(fired.status, 202, 'the webhook is accepted');
     const end = Date.now() + 30000;
     let t = null;

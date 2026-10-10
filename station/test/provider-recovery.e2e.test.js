@@ -121,7 +121,7 @@ async function eventsOf(response) {
   const token = sidecar.token;
   const api = async (method, route, body) => fetch(base + route, {
     method,
-    headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { 'X-StarNet-Token': token } : {}),
+    headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { 'X-1Ultra-Token': token } : {}),
     body: body === undefined ? undefined : JSON.stringify(body)
   });
 

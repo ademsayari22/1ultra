@@ -1,4 +1,4 @@
-/* STARNET — autosessions.js : surface an UNATTENDED cron/routine run as a readable SESSION.
+/* 1ULTRA — autosessions.js : surface an UNATTENDED cron/routine run as a readable SESSION.
 
    THE BUG THIS CLOSES. A cron routine fires headless (cron-driver.js fireJob → runOnce with
    surface:'autonomous', trigger:'schedule'). Its reply text is buffered server-side and only an
@@ -189,7 +189,7 @@ const AutoSessions = (() => {
       // the same as a run that settled quietly — never claim "nothing to report" when we simply couldn't read it.
       next.push(fetchOk
         ? sysMarker('— routine ran, nothing to report —')
-        : sysMarker('⚠ couldn\'t load the output yet — StarNet will retry automatically when this session opens', true, true));
+        : sysMarker('⚠ couldn\'t load the output yet — 1Ultra will retry automatically when this session opens', true, true));
     }
     ws.history = next;
     // hybrid-honest: a real run fired → todo advances to active. `endedAt` (heal/backfill paths) = the run
@@ -270,7 +270,14 @@ const AutoSessions = (() => {
         // /api/runs list once it's DONE, so backfilling it here is correct — and it also clears the wedged busy
         // state (foldTurns → completeSession-style, plus Channels.end below).
         const existing = Workstreams.get(sid);
-        if (existing && run.cronJobId) Workstreams.adopt({ id: sid, automation: { kind: 'routine', id: run.cronJobId, name: run.cronJobName || run.title || 'Routine' } });
+        // the GROUP name is the routine's own name from the catalogue (a run row carries no name — its title is the
+        // prompt, which used to rename every routine group header to its raw instructions on each boot)
+        const job = run.cronJobId ? routineFor(run.cronJobId) : null;
+        const jobName = (job && job.name) || run.cronJobName || '';
+        if (existing && run.cronJobId) Workstreams.adopt({ id: sid, automation: { kind: 'routine', id: run.cronJobId, name: jobName || (existing.automation && existing.automation.name) || run.title || 'Routine' } });
+        // a fire that landed before the catalogue loaded (a boot catch-up) was adopted as the placeholder 'Routine' —
+        // heal it to the routine's real name (only the placeholder; a Commander rename is theirs)
+        if (existing && jobName && existing.title === 'Routine' && existing.titleAuto !== false) existing.title = jobName;
         const runId = String(sid).slice(STREAM_PREFIX.length);
         const outcome = String(run.runId || '') === runId ? outcomeOfRun(run) : null;
         if (existing && hasReadableOutput(existing.history)) {
@@ -280,7 +287,7 @@ const AutoSessions = (() => {
           continue;
         }
         // adopt (idempotent) — an existing seed-only session is preserved by adopt; a while-away run is already DONE.
-        Workstreams.adopt({ id: sid, title: String(run.title || 'Routine').split('\n')[0].slice(0, 80) || 'Routine', agentId: String(run.agentId || 'agent'), lane: 'active', history: (existing && existing.history) || [], automation: { kind: 'routine', id: run.cronJobId || '', name: run.cronJobName || run.title || 'Routine' } });
+        Workstreams.adopt({ id: sid, title: jobName || String(run.title || 'Routine').split('\n')[0].slice(0, 80) || 'Routine', agentId: String(run.agentId || 'agent'), lane: 'active', history: (existing && existing.history) || [], automation: { kind: 'routine', id: run.cronJobId || '', name: jobName || run.title || 'Routine' } });
         const ws = Workstreams.get(sid);
         if (!ws) continue;
         const loaded = await fetchTranscript(ws.agentId, sid, options);

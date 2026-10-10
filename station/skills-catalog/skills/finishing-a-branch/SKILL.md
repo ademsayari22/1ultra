@@ -216,4 +216,4 @@ One short report: the test result, the option chosen, what now exists (merged co
 
 *Needs the WORKBENCH (shell.exec for git, verify.run for the tests). Pull requests use the `gh` command line or a connected GitHub account.*
 
-Adapted for StarNet from finishing-a-development-branch (Jesse Vincent, obra/superpowers), MIT.
+Adapted for 1Ultra from finishing-a-development-branch (Jesse Vincent, obra/superpowers), MIT.

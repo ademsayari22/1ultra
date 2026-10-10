@@ -1,4 +1,4 @@
-/* node test/remote.core.test.js — StarNet Remote phase 1: the sealed channel, pairing, sessions, the shared
+/* node test/remote.core.test.js — 1Ultra Remote phase 1: the sealed channel, pairing, sessions, the shared
    approvals registry, the verb gateway and the LAN listener, driven end to end with the REAL phone client
    (relay/app/phone-client.js, WebCrypto only) against the REAL station modules. No sidecar boot, no
    model, no network beyond 127.0.0.1. */

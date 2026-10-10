@@ -83,7 +83,7 @@ async function withSidecar(label, portBase, secrets, extraEnv, fn) {
     const B = 'http://' + HOST + ':' + booted.port;
     const token = await bootToken(B, B);
     const api = (method, url, body, headers) => fetch(B + url, {
-      method, headers: Object.assign({ 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B }, headers || {}),
+      method, headers: Object.assign({ 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B }, headers || {}),
       body: body === undefined ? undefined : JSON.stringify(body)
     }).then(async r => ({ status: r.status, j: await r.json().catch(() => ({})) }));
     const disk = () => JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -117,7 +117,7 @@ async function withSidecar(label, portBase, secrets, extraEnv, fn) {
     // the shell later manages to store it (keychain unlocked) and pushes it -> now durable -> the next save strips
     const noIpc = await api('POST', '/api/channels/token', { channel: 'slack', token: SLACK });
     A.eq(noIpc.status, 403, 'the keychain push refuses a caller without the per-launch IPC token');
-    const push = await api('POST', '/api/channels/token', { channel: 'slack', token: SLACK }, { 'X-StarNet-Token': IPC });
+    const push = await api('POST', '/api/channels/token', { channel: 'slack', token: SLACK }, { 'X-1Ultra-Token': IPC });
     A.ok(push.status === 200 && push.j.configured === true, 'keychain push for Slack accepted');
     A.ok(JSON.stringify(push.j).indexOf(SLACK) < 0, 'the push response never echoes the token');
     const sync2 = await api('POST', '/api/channels/slack/sync', { agentName: 'NOVA-3' });

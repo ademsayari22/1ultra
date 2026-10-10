@@ -4,7 +4,7 @@
 'use strict';
 const A = require('./_assert.js');
 const { classifyApiError, REASONS } = require('../sidecar/providers/errorClass.js');
-const { friendlyError, KINDS } = require('../frontend/app/friendlyerror.js');
+const { friendlyError, actionButton, KINDS } = require('../frontend/app/friendlyerror.js');
 
 // openrouter-adapter-shaped error: `new Error('openrouter http <s> — <detail>')` with .status set
 function httpErr(status, detail) { return Object.assign(new Error('openrouter http ' + status + (detail ? ' — ' + detail : '')), { status: status }); }
@@ -48,8 +48,17 @@ const R = (err, ctx) => classifyApiError(err, ctx || {});
   A.eq(R(broke).reason, 'billing', 'xAI no-credits 403 -> billing (was auth: "No model is connected yet")');
   A.eq(R(xaiErr(403, { error: 'Your team has either used all available credits or reached its monthly spending limit.' })).reason, 'billing', 'xAI spent-credits 403 -> billing');
   A.eq(R(xaiErr(403, { error: 'The caller does not have permission to execute the specified operation' })).reason, 'auth', 'a plain permission 403 stays auth');
-  A.ok(R(new Error('An interrupted run has unsettled spend; reconcile its provider usage before continuing with spending limits.')).reason !== 'billing', 'a local spend-ledger error is not provider billing');
+  // Anthropic refuses an empty wallet with a 400 invalid_request_error (2026-10-07 report: three runs read "Something went wrong")
+  const anthroBroke = Object.assign(new Error('anthropic http 400 - Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'), { status: 400 });
+  A.eq(R(anthroBroke).reason, 'billing', 'Anthropic "credit balance is too low" 400 -> billing (was format_error)');
+  A.eq(R(Object.assign(new Error('anthropic http 400 - messages.0.content: field required'), { status: 400 })).reason, 'format_error', 'a malformed-request 400 stays format_error');
+  A.ok(R(new Error('An earlier run was interrupted before its spend was recorded, so the spending limits you set can’t be checked. Settle it in SETTINGS › SPENDING LIMITS.')).reason !== 'billing', 'a local spend-ledger error is not provider billing');
   A.eq(R(httpErr(400, 'Invalid value for messages[0].role')).reason, 'format_error', 'an ordinary malformed 400 is still format_error');
+  // Groq: a badly-sampled tool call (gpt-oss-120b) is a 400 tool_use_failed — resending re-samples, so it is retryable (2026-10-08 report)
+  const groqTool = xaiErr(400, { error: { message: "Failed to call a function. Please adjust your prompt. See 'failed_generation' for more details.", type: 'invalid_request_error', code: 'tool_use_failed', failed_generation: 'x' } });
+  A.eq(R(groqTool).reason, 'unknown', 'Groq tool_use_failed 400 -> unknown (was format_error: the run died at zero tokens)');
+  A.eq(R(groqTool).retryable, true, 'and it is retried (a resend re-samples the tool call)');
+  A.eq(R(httpErr(400, 'Tool call validation failed: parameters for tool fs_write did not match schema')).retryable, true, 'Groq tool-call validation failure is retried too');
 }
 
 // ---- B. 400 ambiguity: context vs format, gated by the cold-catalog guard ----
@@ -147,38 +156,38 @@ const F = (err, status, opts) => friendlyError(err, status, opts);
   A.eq(v.kind, 'server_error', '5xx -> server_error');
   A.eq(v.retryable, true, 'server_error retryable');
   A.eq(v.action, null, 'server_error has no deep-link action');
-  A.ok(/local StarNet service hit an error/i.test(v.userMessage), 'server_error leads with the friendly headline');
+  A.ok(/local 1Ultra service hit an error/i.test(v.userMessage), 'server_error leads with the friendly headline');
   A.ok(/sidecar HTTP 500/.test(v.raw), 'raw technical text preserved for the dim sub-line');
-  // 2026-07-30: this line used to assert the DEFECT (a bare 503 -> the "local StarNet service" copy). A 503
+  // 2026-07-30: this line used to assert the DEFECT (a bare 503 -> the "local 1Ultra service" copy). A 503
   // with no sidecar evidence in the raw is a provider-shaped failure — the local claim owes proof it never has.
   A.eq(F({ status: 503 }).kind, 'provider_server_error', 'a bare 503 status -> the PROVIDER server bucket');
 
   // network / transport loss -> retryable network. The KIND is unchanged by proof; only the COPY moves, because
   // the kind drives behavior (retry, no door) while the copy is the part that names a culprit.
-  v = F(new Error('cannot reach the STARNET sidecar — start it with `npm start`'));
+  v = F(new Error('cannot reach the 1ULTRA sidecar — start it with `npm start`'));
   A.eq(v.kind, 'network', 'transport loss -> network');
   A.eq(v.retryable, true, 'network retryable');
   A.eq(F(new Error('Failed to fetch')).kind, 'network', 'browser "Failed to fetch" -> network');
 
   /* THE COPY OWES PROOF (2026-07-29 regression guard). This block previously asserted that ANY transport loss
-     leads with "Can't reach StarNet's local service" — i.e. the test was pinning the defect in place. That
+     leads with "Can't reach 1Ultra's local service" — i.e. the test was pinning the defect in place. That
      sentence tells the user to restart the app, and it was being shown for an upstream model-stream drop against
      a perfectly healthy sidecar (a real 0.7.0 user report: days lost restarting and reinstalling). The wording
      is now a function of a MEASURED /api/health probe, and the three states must stay distinguishable. */
   v = F(new Error('terminated'), null, { engineAlive: false });
   A.eq(v.kind, 'network', 'proven-dead engine is still the network kind');
   A.eq(v.engineAlive, false, 'measured verdict rides on the verdict object');
-  A.ok(/Can't reach StarNet's local service/i.test(v.userMessage), 'engine proven DOWN earns the restart copy');
+  A.ok(/Can't reach 1Ultra's local service/i.test(v.userMessage), 'engine proven DOWN earns the restart copy');
 
   v = F(new Error('terminated'), null, { engineAlive: true });
   A.eq(v.kind, 'network', 'proven-alive engine is still the network kind (retryable, no door)');
   A.eq(v.engineAlive, true, 'measured alive verdict preserved');
-  A.ok(!/Can't reach StarNet's local service/i.test(v.userMessage), 'engine proven UP must NOT claim it is unreachable');
+  A.ok(!/Can't reach 1Ultra's local service/i.test(v.userMessage), 'engine proven UP must NOT claim it is unreachable');
   A.ok(/reply stream/i.test(v.userMessage), 'engine proven UP names the stream instead');
 
   v = F(new Error('terminated'));
   A.eq(v.engineAlive, null, 'no probe -> engineAlive null (unproven, never coerced to false)');
-  A.ok(!/Can't reach StarNet's local service/i.test(v.userMessage), 'unprobed transport loss must not assert the service is unreachable');
+  A.ok(!/Can't reach 1Ultra's local service/i.test(v.userMessage), 'unprobed transport loss must not assert the service is unreachable');
   A.ok(/connection dropped/i.test(v.userMessage), 'unprobed transport loss states only what was witnessed');
 
   // 429 / rate / quota -> retryable rate_limit
@@ -194,7 +203,7 @@ const F = (err, status, opts) => friendlyError(err, status, opts);
   A.eq(v.retryable, false, 'auth not retryable');
   A.eq(v.action, 'settings', 'auth points at Settings');
   A.ok(/ChatGPT/i.test(v.userMessage) && /key/i.test(v.userMessage), 'auth friendly headline offers a fix path (add a key or sign in with ChatGPT)');
-  // EL-11 FIX 2: a "sidecar HTTP 403" is OUR OWN token gate (stale X-StarNet-Token after a crash+respawn), not
+  // EL-11 FIX 2: a "sidecar HTTP 403" is OUR OWN token gate (stale X-1Ultra-Token after a crash+respawn), not
   // a provider key problem — it takes the reload door, never "🔑 Add a key". Provider 403s still read as auth.
   A.eq(F(new Error('sidecar HTTP 403')).kind, 'stale_session', 'sidecar 403 -> stale_session (the station restarted)');
   A.eq(F(new Error('sidecar HTTP 403')).action, 'reload', 'stale_session offers the reload door');
@@ -274,7 +283,8 @@ const F = (err, status, opts) => friendlyError(err, status, opts);
   for (const k of Object.keys(KINDS)) {
     const def = KINDS[k];
     A.ok(typeof def.retryable === 'boolean' && typeof def.msg === 'string' && def.msg.length > 0, 'kind "' + k + '" has a boolean retryable + a non-empty message');
-    A.ok(def.action === null || def.action === 'settings' || def.action === 'skills' || def.action === 'store' || def.action === 'refit' || def.action === 'reload' || def.action === 'toolsets', 'kind "' + k + '" action is null|settings|skills|store|refit|reload|toolsets');
+    A.ok(def.action === null || def.action === 'settings' || def.action === 'skills' || def.action === 'store' || def.action === 'refit' || def.action === 'reload' || def.action === 'toolsets' || def.action === 'budget', 'kind "' + k + '" action is null|settings|skills|store|refit|reload|toolsets|budget');
+    if (def.action !== null) A.ok(!!actionButton({ kind: k, action: def.action }), 'kind "' + k + '" action "' + def.action + '" has a door');
   }
 }
 
@@ -303,7 +313,7 @@ const F = (err, status, opts) => friendlyError(err, status, opts);
 
   const B = (err, status) => friendlyErrorBrowser(err, status);
   A.eq(B(new Error('sidecar HTTP 500')).kind, 'server_error', 'browser: 5xx -> server_error');
-  A.eq(B(new Error('cannot reach the STARNET sidecar — start it')).kind, 'network', 'browser: unreachable -> network');
+  A.eq(B(new Error('cannot reach the 1ULTRA sidecar — start it')).kind, 'network', 'browser: unreachable -> network');
   A.eq(B(new Error('Failed to fetch')).kind, 'network', 'browser: Failed to fetch -> network');
   A.eq(B(new Error('sidecar HTTP 429')).kind, 'rate_limit', 'browser: 429 -> rate_limit');
   A.eq(B(new Error('sidecar HTTP 401')).kind, 'auth', 'browser: 401 -> auth');
@@ -334,6 +344,11 @@ const F = (err, status, opts) => friendlyError(err, status, opts);
     'browser: xAI bad-key 400 -> auth, not an unknown retry');
   A.eq(B(new Error('openai-compatible http 403 - {"code":"The caller does not have permission to execute the specified operation","error":"Your newly created team doesn\'t have any credits yet. You can purchase credits on https://console.x.ai/team/x."}')).kind, 'billing',
     'browser: xAI no-credits 403 -> billing, not "no model connected"');
+  // Anthropic's empty wallet is a 400: the browser ladder must not call it `unknown` → "try again" (2026-10-07)
+  const anthroBroke = 'anthropic http 400 - Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.';
+  A.eq(B(new Error(anthroBroke)).kind, 'billing', 'browser: Anthropic credit-balance 400 -> billing, not an unknown retry');
+  A.eq(B(new Error(anthroBroke)).retryable, false, 'browser: Anthropic out of credit offers no doomed retry');
+  A.ok(/out of credit/i.test(B(new Error(anthroBroke)).userMessage), 'browser: the Anthropic empty-wallet copy says the account is out of credit');
 }
 
 /* ---- a TRANSPORT status beats a policy WORD in the message ----

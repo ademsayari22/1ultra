@@ -31,7 +31,7 @@ cta.refresh();
 assert.equal(lines[0].removed, true, 'obsolete key text retired');
 assert.equal(rows[0].removed, true, 'obsolete key buttons retired');
 assert.equal(cta.gapOf().kind, 'nomodel');
-assert.match(lines[1].text, /no model is selected for STARNET/);
+assert.match(lines[1].text, /no model is selected for 1ULTRA/);
 rows[1].pick({ value: 'primary' });
 assert.equal(opened, 1, 'model recovery opens the actual picker');
 model = 'anthropic/test';
@@ -40,10 +40,10 @@ assert.equal(cta.gapOf(), null);
 assert.equal(banner.hidden, true);
 assert.equal(lines[1].removed, true);
 assert.equal(rows[1].removed, true);
-// Link loss must offer linking, not a nonexistent StarNet API key or a false ready claim.
+// Link loss must offer linking, not a nonexistent 1Ultra API key or a false ready claim.
 linked = false; model = ''; cta.refresh();
 assert.equal(cta.gapOf().kind, 'unlinked');
-assert.match(rows[2].items[0].label, /LINK STARNET/);
+assert.match(rows[2].items[0].label, /LINK 1ULTRA/);
 // Retire stale statements even while another conversation is streaming; defer new chat prompts.
 busy = true; linked = true; cta.refresh();
 assert.equal(lines[2].removed, true);

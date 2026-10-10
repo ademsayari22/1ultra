@@ -151,7 +151,7 @@ function seedLogs(ws, now) {
   const B = 'http://' + HOST + ':' + port;
   try {
     const token = await bootToken(B, B);
-    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
 
     // ===== 1. THIN-DOSSIER + FABRICATED-ACTIVITY BEAT — reach sandbox + the away grant → a real build. =====
     await fetch(B + '/api/workshop/grant', { method: 'POST', headers, body: JSON.stringify({ agentId: 'agent', on: true }) });
@@ -197,7 +197,7 @@ function seedLogs(ws, now) {
     const B2 = 'http://' + HOST + ':' + boot2.port;
     try {
       const token2 = await bootToken(B2, B2);
-      const headers2 = { 'Content-Type': 'application/json', 'X-StarNet-Token': token2, Origin: B2 };
+      const headers2 = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token2, Origin: B2 };
       // permit acting (initiative leash) so posture/present/leash/cooldown all clear — leaving READINESS as the only
       // thing that can bind. Make the Commander AWAY by setting lastActivity far in the past is not exposed; instead
       // the status route's statusDecision surfaces the binding the tick would hit once away. With an empty dossier +

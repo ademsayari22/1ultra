@@ -963,11 +963,37 @@ const StationCommands = (() => {
       if (/^session\./.test(act)) return sessionControl(act, a);
       if (act === 'look.set') {
         if (typeof StationUI === 'undefined' || !StationUI.setLook) throw new Error('the look settings are not loaded on this page');
+        // an empty look changes nothing — never answer it as saved (it read back "done" while hints stayed on, 2026-10-08)
+        if (!a.look || typeof a.look !== 'object' || !Object.keys(a.look).length) throw new Error('no look setting was named, so nothing changed');
         const r = StationUI.setLook(a.look);
         if (!r.saved) throw new Error('the look changed on screen but this browser did not keep it (local storage refused) — it will reset on restart; do not report it as saved');
         return r;
       }
+      if (act === 'notifications.read' || act === 'notifications.clear') {
+        if (typeof StationUI === 'undefined' || !StationUI.notifsMarkRead) throw new Error('notifications are not loaded on this page');
+        const r = act === 'notifications.read' ? StationUI.notifsMarkRead() : StationUI.notifsClear();
+        if (!r.saved) throw new Error('the notifications changed on screen but this browser did not keep it (local storage refused) — do not report it as saved');
+        return r;
+      }
       throw new Error('this page has no station control "' + act + '"; reload it');
+    },
+
+    /* SHOW THE COMMANDER A PLACE (station.show, 2026-10-04): open one of the PLACES (app/places.js) through the same door
+       its dock button / tab / menu entry uses, raise it to the front, and answer with what is really on screen. Only the
+       run the Commander is watching may move their eyes (requireWatching). */
+    'station.show': async (a) => {
+      requireWatching(a && a.origin);
+      const place = typeof Places !== 'undefined' && Places.get ? Places.get(a && a.place) : null;
+      if (!place) throw new Error('there is no 1Ultra place "' + String((a && a.place) || '') + '"; places: ' + (typeof Places !== 'undefined' ? Places.ids().join(', ') : 'none loaded — reload the page'));
+      if (typeof StationUI === 'undefined' || !StationUI.showTerm) throw new Error('the station windows are not ready yet');
+      const o = place.open;
+      const ag = (o.agent || o.desk) ? resolveAgent(a && a.agent) : null;
+      // the ONE opener (app/places.js): the same doors FIND (Ctrl+K) uses, with this page's own objects
+      const out = await Places.open(place, { ui: StationUI, agentId: ag && ag.id,
+        build: typeof Build !== 'undefined' ? Build : null, app: typeof App !== 'undefined' ? App : null, market: typeof Marketplace !== 'undefined' ? Marketplace : null });
+      if (ag && out) out.agentName = ag.name || ag.id;
+      if (!out || !out.open) throw new Error(place.words + ' did not open on the Commander\'s screen' + (o.term === 'apps' ? ' (no app exists yet)' : '') + '; tell them where it is instead');
+      return Object.assign({ place: place.id, words: place.words }, out);
     },
 
     /* Who is on the roster and what each one is for — the list a delegate call has to choose from. */
@@ -1033,6 +1059,28 @@ const StationCommands = (() => {
     if (typeof Chat === 'undefined' || !Chat.canFocusSession || !Chat.canFocusSession(origin)) {
       throw new Error('session focus was left unchanged: the originating run is no longer current or the Commander has a draft; do not retry the switch automatically');
     }
+  }
+
+  /* station.show moves the Commander's EYES, so only the run they are watching may call it: its session is the focused
+     one and it is that session's live run. A background worker, a routine, a phone/Telegram turn, or a run that ended is
+     refused. Unlike a session switch, a typed draft is no reason to refuse — opening a window leaves the composer alone. */
+  function requireWatching(origin) {
+    const active = typeof Workstreams !== 'undefined' && Workstreams.activeId ? Workstreams.activeId() : null;
+    const live = !!(origin && origin.streamId && origin.runId && active === origin.streamId
+      && typeof Channels !== 'undefined' && Channels.isBusy && Channels.isBusy(origin.streamId)
+      && Channels.runIdOf && Channels.runIdOf(origin.streamId) === origin.runId);
+    if (!live) throw new Error('the Commander is not looking at this conversation right now, so their screen was left alone — tell them where it is instead');
+  }
+  // an agent by exact id or name (case-insensitive) — never a guess: unknown or ambiguous refuses with the real roster
+  function resolveAgent(ref) {
+    const crew = (typeof App !== 'undefined' && App.agents && App.agents()) || [];
+    const want = String(ref || '').trim().toLowerCase();
+    const roster = () => crew.map(x => x.name || x.id).join(', ');
+    if (!want) throw new Error('name which agent (crew: ' + roster() + ')');
+    const byId = crew.filter(x => x && String(x.id).toLowerCase() === want);
+    const hits = byId.length ? byId : crew.filter(x => x && String(x.name || '').trim().toLowerCase() === want);
+    if (hits.length !== 1) throw new Error((hits.length ? 'more than one agent is called "' : 'no agent called "') + ref + '" (crew: ' + roster() + ')');
+    return hits[0];
   }
 
   async function run(id, verb, args) {

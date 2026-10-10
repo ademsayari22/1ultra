@@ -88,6 +88,6 @@ Do not act on the plan until the Commander confirms the shared understanding.
 
 *Uses the CABINET to read the codebase for facts; the WORKBENCH helps for git history.*
 
-Adapted for StarNet from grill-me (Rafael Zendron, with the frontier-rounds mechanic from Matt Pocock's `grilling` in mattpocock/skills), MIT.
+Adapted for 1Ultra from grill-me (Rafael Zendron, with the frontier-rounds mechanic from Matt Pocock's `grilling` in mattpocock/skills), MIT.
 
 *Sub-agent steps (team.spawn) need the ORCHESTRATOR, which every run the Commander starts carries. In a scheduled run, list those updates in the report instead of making them.*

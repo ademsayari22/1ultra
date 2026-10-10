@@ -20,7 +20,7 @@ const { SidecarFixture } = require('./helpers/sidecar-fixture.js');
       assert.equal(c.releaseDeferred, false, c.id + ' is open in early access');
       assert.equal(c.signInAvailable, true, c.id + ' can sign in');
       assert.equal(c.earlyAccess, true, c.id + ' is flagged early access');
-      assert.match(c.blurb, /^Early access — Google has not finished verifying StarNet yet\. When Google says the app isn’t verified, choose Advanced, then Go to StarNet\. /, c.id + ' says so on the card, with the way through');
+      assert.match(c.blurb, /^Early access — Google has not finished verifying 1Ultra yet\. When Google says the app isn’t verified, choose Advanced, then Go to 1Ultra\. /, c.id + ' says so on the card, with the way through');
     }
     const files = (await fixture.json('GET', '/api/connectors/catalog')).body.connectors.find(c => c.id === 'google-files');
     assert.ok(files && !files.earlyAccess && !/^Early access/.test(files.blurb), 'Selected Google files is a verified surface, not early access');

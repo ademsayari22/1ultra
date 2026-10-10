@@ -22,7 +22,7 @@ const PROBE_HASH = 'd'.repeat(64);
 const CHALLENGE = 'w1-' + 'e'.repeat(64);
 const ROOT = path.join(__dirname, '..');
 const OUTPUT = path.join(ROOT, 'qa', 'installed', 'smoke-unit-link', 'receipt.json');
-const ARTIFACT = { path: 'C:\\Program Files\\StarNet\\skynet-desktop.exe', sha256: HASH, size: 456789 };
+const ARTIFACT = { path: 'C:\\Program Files\\1Ultra\\skynet-desktop.exe', sha256: HASH, size: 456789 };
 const ENDPOINT = { endpointOrigin: 'http://127.0.0.1:8787', endpointPath: '/api/channels/events' };
 const INVOCATION = {
   challenge: CHALLENGE, outputPath: OUTPUT, candidateCommit: SHA, candidateTree: TREE,

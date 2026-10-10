@@ -34,7 +34,7 @@ function storage(seed) {
   A.eq(sawCacheBeforeNative, true, 'durable quarantine succeeds before browser cache is cleared');
   A.eq(result.listening, true, 'native listening truth is returned to the gate');
   A.eq(result.browserDataCleared, true, 'the renderer proves its fallback browser clear');
-  A.eq(result.browserKeysCleared, 5, 'dot and legacy underscore StarNet namespaces are cleared');
+  A.eq(result.browserKeysCleared, 5, 'dot and legacy underscore 1Ultra namespaces are cleared');
   A.eq(store.snapshot(), { 'unrelated.host.preference': 'keep' }, 'unrelated origin state is untouched');
 
   const refused = storage({ 'starnet.save': 'last-readable-copy' });

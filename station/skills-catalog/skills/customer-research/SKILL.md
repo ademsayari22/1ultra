@@ -135,4 +135,4 @@ The chosen deliverable is saved and re-read; every insight shows a confidence la
 
 *Needs the DISH (web_search, web_fetch, browser.navigate, browser.get_text) and the INTEL CAB (fs.read, fs.search, fs.append, fs.write). With only pasted or filed material it works without the DISH.*
 
-Adapted for StarNet from customer-research (Corey Haines), MIT.
+Adapted for 1Ultra from customer-research (Corey Haines), MIT.

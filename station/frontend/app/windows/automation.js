@@ -1,4 +1,4 @@
-/* STARNET — windows/automation.js : the AUTOMATION window (ROUTINES + LOOPS, one console).
+/* 1ULTRA — windows/automation.js : the AUTOMATION window (ROUTINES + LOOPS, one console).
 
    NAV CONDENSE (2026-08-04): the WORK dock sold three flavours of "job" — TASKS, ROUTINES, LOOPS —
    and the subtitles were already apologising for it. ROUTINES answer WHEN, LOOPS answer UNTIL; both
@@ -50,7 +50,7 @@
     const railTop = top => {
       const sum = (typeof AutonomyStore !== 'undefined' && AutonomyStore.summary) ? AutonomyStore.summary() : null;
       top.classList.add('auto-init-head');
-      top.innerHTML = '<div class="set-sub"><span class="set-sub-k">INITIATIVE</span><span class="set-sub-d">'
+      top.innerHTML = '<div class="set-sub"><span class="set-sub-k">ON ITS OWN</span><span class="set-sub-d">'
         + (sum ? H.esc(INIT_NAME[sum.initiative] || String(sum.initiative).toUpperCase()) : 'not loaded yet') + '</span></div>'
         + '<button type="button" class="bb sm" id="auto-init-change" data-tip="Whether agents start work nobody asked for. It does not change the schedules here.">CHANGE</button>';
       top.querySelector('#auto-init-change').addEventListener('click', () => H.openTerm('settings', 'autonomy'));

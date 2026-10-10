@@ -24,15 +24,18 @@ const KEY = 'e2e-strong-key-0123456789abcdef';   // >=16 chars so /v1 is allowed
 
 // ---- a mock OpenRouter: /models -> a minimal catalog; /chat/completions -> a short SSE completion ----
 function startMockOpenRouter() {
+  const toolsByPrompt = [];   // issue #96: the tool names each main-run request ADVERTISED, keyed by the last user turn
   return new Promise((resolve) => {
     const server = http.createServer((req, res) => {
       if (req.url.indexOf('/models') >= 0) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ data: [{ id: 'test/model', context_length: 8000, pricing: { prompt: '0', completion: '0' } }] }));
+        res.end(JSON.stringify({ data: [{ id: 'test/model', context_length: 8000, pricing: { prompt: '0', completion: '0' }, supported_parameters: ['tools'] }] }));
         return;
       }
       if (req.url.indexOf('/chat/completions') >= 0) {
         let body = ''; req.on('data', d => { body += d; }); req.on('end', () => {
+          try { const pb = JSON.parse(body); const msgs = pb.messages || []; const lu = [...msgs].reverse().find(m => m && m.role === 'user');
+            toolsByPrompt.push({ user: String((lu && lu.content) || ''), tools: (pb.tools || []).map(t => t && t.function && t.function.name) }); } catch (_) {}
           res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' });
           // DRIPFEED sentinel: a long slow stream so the concurrency test can hold a run in flight.
           if (body.indexOf('DRIPFEED') >= 0) {
@@ -57,7 +60,7 @@ function startMockOpenRouter() {
       }
       res.writeHead(404); res.end();
     });
-    server.listen(0, HOST, () => resolve({ server, base: 'http://' + HOST + ':' + server.address().port + '/api/v1' }));
+    server.listen(0, HOST, () => resolve({ server, toolsByPrompt, base: 'http://' + HOST + ':' + server.address().port + '/api/v1' }));
   });
 }
 
@@ -139,6 +142,10 @@ async function drain(res) {
     A.ok(cc.usage && cc.usage.total_tokens > 0, '(d) usage carries real (non-zero) token counts');
     A.eq(cc.usage.prompt_tokens + cc.usage.completion_tokens, cc.usage.total_tokens, '(d) usage totals are internally consistent (real, not synthesized)');
     A.eq(cc.usage.total_tokens, 6, '(d) usage matches the mock provider numbers exactly (prompt 4 + completion 2)');
+    // issue #96: /v1's own prompt says "use your REAL tools" — the provider request must actually carry them
+    const hiCall = mock.toolsByPrompt.find(r => r.user === 'hi');
+    A.ok(hiCall && hiCall.tools.length > 0, '(d) the /v1 run advertised tools to the model: ' + JSON.stringify(hiCall && hiCall.tools.slice(0, 8)));
+    A.ok(hiCall && hiCall.tools.some(n => /^fs_(read|write)$/.test(n)), '(d) including a real file tool (fs_read/fs_write)');
 
     // ---- (e) stream:true -> chat.completion.chunk deltas then [DONE] --------------------------------------
     const stRes = await fetch(B + '/v1/chat/completions', { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, auth), body: JSON.stringify({ model: 'starnet-agent', stream: true, messages: [{ role: 'user', content: 'hi' }] }) });
@@ -195,6 +202,18 @@ async function drain(res) {
   } finally {
     try { child.kill(); } catch (_) {}
     try { mock.server.close(); } catch (_) {}
+  }
+  // #96 follow-up: tools ride /v1, but a model the catalog KNOWS is tool-less still answers in text (pre-#96), never refused
+  {
+    const compat = fs.readFileSync(path.resolve(__dirname, '..', 'sidecar', 'openai-compat.js'), 'utf8');
+    const core = fs.readFileSync(INDEX, 'utf8');
+    A.ok(/isTask: !o\.outputOnly, toolsOptional: true/.test(compat), '/v1 runs are tasks with tools OPTIONAL');
+    A.ok(/if \(isTask && o\.toolsOptional && provider\.supportsTools\(model\) === false\) isTask = false;/.test(core), 'a tools-optional run on a known tool-less model drops to text instead of the "can\'t run tasks" refusal');
+    A.ok(core.indexOf('o.toolsOptional && provider.supportsTools(model) === false') < core.indexOf('fallbackChain.promoteToolCapable('), 'the text downgrade happens before any fallback promotion (the caller named its model)');
+    // review findings: /v1 keeps its pre-#96 admission and never shares a per-agent durable brief or fires paid aux passes
+    A.ok(/const imageTask = isTask && !o\.toolsOptional \?/.test(core) && /const directDomainTask = isTask && !o\.toolsOptional \?/.test(core), 'a /v1 request is never classified as an image/domain task ("Image task blocked: no STUDIO" on a text model)');
+    A.ok(/if \(isTask && o\.taskKey && !o\.toolsOptional\) \{/.test(core), 'a /v1 request never prepares the per-agent durable brief (one client\'s open question cannot swallow the next client\'s request)');
+    A.ok(/isTask && !o\.toolsOptional && !internal && _skillToolsOn/.test(core) && /SKYNET_SCOUT !== '0' && isTask && !o\.toolsOptional && _auxDone/.test(core), 'external /v1 traffic never fires skill review or scout on the user\'s key');
   }
   A.report('openai-compat.e2e');
 })().catch(e => { console.error(e); process.exit(1); });

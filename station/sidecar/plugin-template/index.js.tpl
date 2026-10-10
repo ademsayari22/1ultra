@@ -1,4 +1,4 @@
-/* {{NAME_COMMENT}} — a StarNet plugin.
+/* {{NAME_COMMENT}} — a 1Ultra plugin.
  *
  * THIS FILE runs in the station, in its own process, once you approve the plugin in ABILITIES → EXTENSIONS.
  * It has your computer's permissions. register(api) runs once; everything is registered inside it:
@@ -11,8 +11,8 @@
  *   api.every(ms, fn)      a background job (10 s minimum)
  *   api.store              the SAME storage the window uses (get / set / delete / keys)
  *
- * ui/index.html is the plugin's WINDOW: any HTML/JS you like, opened in a real StarNet window with the station
- * kit loaded (glass sn-* classes + `starnet`). docs/PLUGINS.md in the StarNet repo lists every class and call.
+ * ui/index.html is the plugin's WINDOW: any HTML/JS you like, opened in a real 1Ultra window with the station
+ * kit loaded (glass sn-* classes + `starnet`). docs/PLUGINS.md in the 1Ultra repo lists every class and call.
  * Delete this file (and "main" in plugin.json) for a window-only plugin. Any edit turns the plugin off until
  * you approve the new code.
  */

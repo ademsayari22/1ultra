@@ -26,7 +26,7 @@ const text = content => typeof content === 'string' ? content : (content || []).
       bodies.length=0;
       const model=provider==='anthropic'?'claude-test':provider==='openrouter'?'anthropic/claude-test':'audit-model';
       for(let i=0;i<2;i++) {
-        const r=await fetch(fixture.baseUrl+'/api/run',{method:'POST',headers:{'Content-Type':'application/json','X-StarNet-Token':fixture.token,Origin:fixture.baseUrl},body:JSON.stringify({provider,baseUrl,key:'fixture-key',model,reasoningEffort:'low',agentId:'agent',streamId:'cache-'+provider,isTask:true,placed:[],system:'CACHE_PROOF_IDENTITY: Preserve all required checks.',messages:[{role:'user',content:'Please acknowledge this request.'}]})});
+        const r=await fetch(fixture.baseUrl+'/api/run',{method:'POST',headers:{'Content-Type':'application/json','X-1Ultra-Token':fixture.token,Origin:fixture.baseUrl},body:JSON.stringify({provider,baseUrl,key:'fixture-key',model,reasoningEffort:'low',agentId:'agent',streamId:'cache-'+provider,isTask:true,placed:[],system:'CACHE_PROOF_IDENTITY: Preserve all required checks.',messages:[{role:'user',content:'Please acknowledge this request.'}]})});
         assert.equal(r.status,200);
         const events=(await r.text()).trim().split('\n').map(l=>JSON.parse(l));
         assert.equal(events.findLast(e=>e.name==='agent.run.end')?.payload.reason,'done');

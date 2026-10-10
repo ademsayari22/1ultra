@@ -53,7 +53,7 @@ function kill(child) { return new Promise(r => { try { child.on('exit', () => r(
 // raise the autonomy dial (arms the shift + clears the posture gate), let the 1ms away threshold elapse, read status.
 async function armAndStatus(B) {
   const token = await bootToken(B, B);
-  const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+  const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
   const arm = await (await fetch(B + '/api/autonomy/posture', { method: 'POST', headers, body: JSON.stringify({ posture: { initiative: 'leash', reach: 'observe', leashPerDay: 3 } }) })).json();
   A.ok(arm.ok === true && arm.nightshiftArmed === true, 'raising the dial arms the night shift');
   await sleep(40);   // let the 1ms away threshold elapse so the pure gates get PAST 'present' → the precheck runs
@@ -99,6 +99,26 @@ async function armAndStatus(B) {
     }
   }
 
+  // ===== 2b. spend history UNKNOWN (an interrupted run's dispatch receipt) under a CHOSEN cap → 'spend-unknown', never
+  //          'budget': the budget is not exhausted, and no resume or cap change would clear it =====
+  {
+    const ws = fs.mkdtempSync(path.join(os.tmpdir(), 'sk-nsbudget-unknown-'));
+    const dir = path.join(ws, '.spend-pending');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, require('crypto').createHash('sha256').update('interrupted').digest('hex') + '.json'), JSON.stringify({ runId: 'interrupted', agentId: 'agent' }));
+    const env = { SKYNET_WORKSPACES: ws, SKYNET_DEV: '1', SKYNET_NIGHTSHIFT_AWAY_MS: '1', SKYNET_BUDGET_PER_DAY: '40' };
+    let { child, port } = await boot(9000 + (process.pid % 25), env, 20);
+    const B = 'http://' + HOST + ':' + port;
+    try {
+      const s = await armAndStatus(B);
+      A.eq(s.binding, 'spend-unknown', 'unknown spend history under a chosen cap → binding:spend-unknown (not an "exhausted" budget)');
+      A.eq(s.beatsUsedToday, 0, 'the spend-unknown stand-down spent no leash');
+    } finally {
+      await kill(child);
+      try { fs.rmSync(ws, { recursive: true, force: true }); } catch (_) {}
+    }
+  }
+
   // ===== 3. PRECHECK INSPECTION FAILURE -> fail closed, spend nothing, and leave a truthful durable decision =====
   {
     const ws = fs.mkdtempSync(path.join(os.tmpdir(), 'sk-nsbudget-precheck-fault-'));
@@ -111,7 +131,7 @@ async function armAndStatus(B) {
       A.eq(s.beatsUsedToday, 0, 'the unproven safety gate spends no leash');
       await sleep(80); // let the real server-owned tick persist at least one decline
       const token = await bootToken(B, B);
-      const headers = { 'X-StarNet-Token': token, Origin: B };
+      const headers = { 'X-1Ultra-Token': token, Origin: B };
       const body = await (await fetch(B + '/api/autonomy/ledger', { headers })).json();
       const decline = (body.entries || []).find(e => e.source === 'nightshift' && e.kind === 'decline' && e.binding === 'precheck-error');
       A.ok(decline && decline.detail && decline.detail.preSpend === true, 'the real sidecar ledger records the failed inspection as a pre-spend decline');

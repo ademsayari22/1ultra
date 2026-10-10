@@ -59,6 +59,11 @@
       // station.inspect and the same always-present object, so the prompt's "call manual.read" can never name a
       // tool the run lacks. A constant text lookup: no IO, no network, no consent.
       { capId: 'stationinfo', tool: 'manual.read', scope: 'read', requiresConsent: false, network: false },
+      // SHOWING the station (2026-10-04): station.show opens a 1Ultra window/tab on the Commander's screen (frontend/app/places.js).
+      // Read scope + no consent: it changes only what they LOOK at (no harness state), so neither an approval card nor the Task
+      // Brief gate stands between "show me" and the window; the page obeys only the run they are watching. Deferred: found by
+      // tool_search "show open window" (the manual's navigation section names it), so it costs no prompt bytes.
+      { capId: 'stationinfo', tool: 'station.show', scope: 'read', requiresConsent: false, network: false, deferred: true },
       // Host-scoped scheduled scratchpad: the computer is present on every runnable station, while the tool
       // itself refuses any run without a host-minted cronJobId. This does not grant general notebook access.
       { capId: 'routinescratch', tool: 'routine.notepad', scope: 'write', requiresConsent: false, network: false },
@@ -145,6 +150,9 @@
          which is also the moment a human is around to answer its consent card. */
       { capId: 'web', tool: 'browser.attach', scope: 'execute', requiresConsent: true, network: true, deferred: true },
       { capId: 'web', tool: 'browser.detach', scope: 'execute', requiresConsent: false, network: true, deferred: true },
+      /* #61: the supported recovery for a wedged station browser (ends only 1Ultra's own orphaned browser on the
+         station profile). Deferred: a repair move, found through tool.search when a browser error names it. */
+      { capId: 'web', tool: 'browser.reset', scope: 'execute', requiresConsent: false, network: true, deferred: true },
       /* Deferred, same reasoning as attach: specialist moves, not the ordinary browse loop. pdf is a
          READ (render what is already on screen into the jail); intercept/emulate reshape only the
          STATION browser and both refuse in attached mode (ownership — the Commander's own Chrome is
@@ -224,7 +232,7 @@
     workbench: [
       { capId: 'workbench', tool: 'shell.exec', scope: 'execute', requiresConsent: true, network: true },
       { capId: 'workbench', tool: 'verify.run', scope: 'execute', requiresConsent: true, network: true },
-      // Local UI/game verification stays inside StarNet's headless CDP session. Pointer/keyboard
+      // Local UI/game verification stays inside 1Ultra's headless CDP session. Pointer/keyboard
       // lock is emulated in-page, and coordinate/key input is synthetic — never Win32 input.
       // Deferred: a run that places the workbench is usually there to run shell, not to drive the local UI
       // harness. Still granted and dispatchable — tool.search reveals the set when a UI check is what's needed.
@@ -266,7 +274,7 @@
       { capId: 'orchestrator', tool: 'team.steer', scope: 'write', requiresConsent: false, network: false },
       { capId: 'orchestrator', tool: 'team.interrupt', scope: 'write', requiresConsent: false, network: false },
       { capId: 'orchestrator', tool: 'team.resume', scope: 'execute', requiresConsent: false, network: true },
-      // ROUTINES: create StarNet scheduled jobs through the built-in cron store (the same surface as the
+      // ROUTINES: create 1Ultra scheduled jobs through the built-in cron store (the same surface as the
       // ROUTINES panel), never through OS crontab / Windows Task Scheduler. Lead-only like the rest of
       // orchestration; creation is consent-gated because it persists autonomous future work.
       { capId: 'orchestrator', tool: 'routine.list', scope: 'read', requiresConsent: false, network: false },
@@ -288,6 +296,9 @@
       // "what did the researcher do?" answered from assumption and denied real finished work (2026-07-30).
       { capId: 'orchestrator', tool: 'session.peek', scope: 'read', requiresConsent: false, network: false },
       { capId: 'orchestrator', tool: 'session.focus', scope: 'write', requiresConsent: false, network: false },
+      // station.status: the page's station-wide snapshot (busy / awaiting approval per session), read-only (#55). Deferred:
+      // the tool budget is spent, so it costs every run one name in the deferred index, not a schema (tool_search "status").
+      { capId: 'orchestrator', tool: 'station.status', scope: 'read', requiresConsent: false, network: false, deferred: true },
       // TASK BOARD: cards are the page's canonical kind:'task' Workstreams and are persisted through the same
       // agent save the board renders. Creation is reversible and spends nothing; management is consent-gated
       // because its action set includes shipping, archiving, reassignment, and deletion.
@@ -305,7 +316,7 @@
       { capId: 'orchestrator', tool: 'station.map', scope: 'read', requiresConsent: false, network: false, deferred: true },
       { capId: 'orchestrator', tool: 'station.plan', scope: 'read', requiresConsent: false, network: false, deferred: true },
       { capId: 'orchestrator', tool: 'station.build', scope: 'write', requiresConsent: true, network: false, deferred: true },
-      // MAKE A PROP (2026-10-01): a new piece drawn by StarNet's prop maker, paid with StarNet credits (consent, the card names the price)
+      // MAKE A PROP (2026-10-01): a new piece drawn by 1Ultra's prop maker, paid with 1Ultra credits (consent, the card names the price)
       { capId: 'orchestrator', tool: 'station.make_prop', scope: 'write', requiresConsent: true, network: true, deferred: true },
       { capId: 'orchestrator', tool: 'station.test_line', scope: 'write', requiresConsent: true, network: true, deferred: true },
       { capId: 'orchestrator', tool: 'station.start_line', scope: 'write', requiresConsent: true, network: false, deferred: true },

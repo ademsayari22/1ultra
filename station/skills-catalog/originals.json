@@ -1,6 +1,6 @@
 {
   "format": "starnet-skill-originals/v1",
-  "note": "StarNet-authored recipes from sidecar/skills/library published to the Skill Market. The version lives in each recipe's frontmatter (version:): bump it when the recipe text changes; a published version is never rewritten.",
+  "note": "1Ultra-authored recipes from sidecar/skills/library published to the Skill Market. The version lives in each recipe's frontmatter (version:): bump it when the recipe text changes; a published version is never rewritten.",
   "skills": {
     "accessibility-audit": {},
     "ad-copy-testing": {},

@@ -78,7 +78,7 @@ function boot(port, env, attemptsLeft) {
   const B = 'http://' + HOST + ':' + port;
   try {
     const token = await bootToken(B, B);
-    const hdr = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    const hdr = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
 
     // the browser's own push shape (frontend/app/app.js pushRoster) — a PROVEN specialist and a NEW one
     const push = async agents => {

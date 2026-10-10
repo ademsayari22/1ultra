@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Notebook Gardening"
   category: "Station"
-  author: "StarNet"
+  author: "1Ultra"
 ---
 
 The notebook is recalled into future runs automatically. A wrong belief in it is worse than a missing one: it gets repeated with confidence until someone notices. Gardening is a correction pass, not tidying for its own sake.

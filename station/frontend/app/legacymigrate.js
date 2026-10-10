@@ -1,6 +1,6 @@
-/* STARNET — legacymigrate.js : one-time localStorage key migration for the Skynet→StarNet rename.
+/* 1ULTRA — legacymigrate.js : one-time localStorage key migration for the Skynet→1Ultra rename.
 
-   The project was renamed Skynet → StarNet. Every browser-side key the app owns moved from the
+   The project was renamed Skynet → 1Ultra. Every browser-side key the app owns moved from the
    `skynet.*` prefix to `starnet.*`. This script runs FIRST (before any store reads localStorage —
    it is the very first <script> in index.html) and copies each legacy `skynet.*` key forward to its
    `starnet.*` name when the new key is absent. The OLD keys are LEFT IN PLACE as a rollback, so a

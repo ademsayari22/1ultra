@@ -1,4 +1,4 @@
-/* node test/rename-migrate.test.js — Skynet→StarNet localStorage migration (data-safety net).
+/* node test/rename-migrate.test.js — Skynet→1Ultra localStorage migration (data-safety net).
    Proves the boot pass copies every legacy `skynet.*` key forward to `starnet.*` WITHOUT losing the
    old keys (rollback), never clobbers an existing new key, ignores foreign keys, and is idempotent. */
 'use strict';
@@ -52,7 +52,7 @@ function memStorage(init) {
   A.eq(s.getItem('starnet.save'), 'A', 'value intact after re-run');
 }
 
-// ---- E. an already-StarNet store (fresh install, no legacy keys) migrates nothing ----
+// ---- E. an already-1Ultra store (fresh install, no legacy keys) migrates nothing ----
 {
   const s = memStorage({ 'starnet.save': 'A', 'starnet.byok.key': 'K' });
   A.eq(LM.run(s), 0, 'no legacy keys -> nothing to do');

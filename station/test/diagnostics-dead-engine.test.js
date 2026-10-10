@@ -1,6 +1,6 @@
-/* STARNET — the DEAD-ENGINE diagnostic fallback (2026-07-29).
+/* 1ULTRA — the DEAD-ENGINE diagnostic fallback (2026-07-29).
 
-   WHY THIS TEST EXISTS. A 0.7.0 user sat on "Can't reach StarNet's local service" for a day. All support ever
+   WHY THIS TEST EXISTS. A 0.7.0 user sat on "Can't reach 1Ultra's local service" for a day. All support ever
    received was a screenshot of that sentence — because the app's one self-service diagnostic door,
    "⧉ copy diagnostics for a bug report", fetched GET /api/diagnostics FROM THE SIDECAR. So in the exact failure
    the door is offered under, it returned nothing and the user had nothing to send. Worse, that one sentence
@@ -45,6 +45,18 @@ const Diag = require('../frontend/app/diagnostics.js');
     const unproven = await Diag.localReport({});
     A.ok(/UNPROVEN/.test(verdictLine(unproven)), 'an unanswered probe is reported UNPROVEN...');
     A.ok(!/NOT REACHABLE/.test(verdictLine(unproven)), '...and is NEVER upgraded into a claim that the engine is down');
+
+    // The SAVE-NET gate passes no engineAlive (10-08): the verdict must come from the real probe, so a dead
+    // sidecar behind a rendered gate reads NOT REACHABLE — never the REACHABLE the gate used to hardcode.
+    const hadHarness = Object.prototype.hasOwnProperty.call(global, 'Harness');
+    const savedHarness = global.Harness;
+    try {
+      global.Harness = { pingEngine: () => Promise.resolve(false) };
+      const gateDead = await Diag.localReport({ kind: 'SAVE-NET · SAVE REQUEST LOST', error: 'the app loaded, but its saved-station request did not return' });
+      A.ok(/NOT REACHABLE/.test(verdictLine(gateDead)), 'with no engineAlive the report measures, and a dead probe reads NOT REACHABLE');
+      global.Harness = { pingEngine: () => Promise.resolve(null) };
+      A.ok(/UNPROVEN/.test(verdictLine(await Diag.localReport({ kind: 'SAVE-NET · SAVE REQUEST LOST' }))), 'a timed-out probe stays UNPROVEN');
+    } finally { if (hadHarness) global.Harness = savedHarness; else delete global.Harness; }
 
     // ---- (2) the failure text + kind ride along, so the paste identifies the fault, not just the symptom ----
     const withCtx = await Diag.localReport({ engineAlive: true, kind: 'network', error: 'terminated' });

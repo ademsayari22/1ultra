@@ -84,6 +84,6 @@ Offer to make this a standing ritual with `routine.create` (for example Friday a
 
 *Needs the NOTEBOOK (standing preferences and commitments) and the CABINET (notes files). Works best with a calendar and a task source connected.*
 
-Adapted for StarNet from weekly-review-planning (Ben Barclay), MIT.
+Adapted for 1Ultra from weekly-review-planning (Ben Barclay), MIT.
 
 *Task-board and routine steps (task.create, task.manage, routine.create) need the ORCHESTRATOR, which every run the Commander starts carries. In a scheduled run, list those updates in the report instead of making them.*

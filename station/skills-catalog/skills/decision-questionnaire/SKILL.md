@@ -86,4 +86,4 @@ Every question gets an answer stub (`>`) directly beneath it.
 
 *Needs the CABINET to save the questionnaire file.*
 
-Adapted for StarNet from decision-questionnaire (Matt Pocock, originally `to-questionnaire` in mattpocock/skills; ported by Hermes Agent), MIT.
+Adapted for 1Ultra from decision-questionnaire (Matt Pocock, originally `to-questionnaire` in mattpocock/skills; ported by Hermes Agent), MIT.

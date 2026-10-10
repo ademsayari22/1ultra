@@ -1,8 +1,8 @@
-/* sidecar/tools/builtin/routines.js -- StarNet ROUTINES tools.
+/* sidecar/tools/builtin/routines.js -- 1Ultra ROUTINES tools.
 
    These tools let the lead/orchestrator create and inspect scheduled routines through the SAME server-owned
    cron store that backs the ROUTINES panel. They intentionally do not use shell, crontab, Windows Task
-   Scheduler, or any OS-level scheduler: a created job is a StarNet CronJob and fires through the harness. */
+   Scheduler, or any OS-level scheduler: a created job is a 1Ultra CronJob and fires through the harness. */
 'use strict';
 (function (root, factory) {
   const api = factory();
@@ -244,7 +244,7 @@
 
     const listTool = {
       name: 'routine.list', capability: 'orchestrator', scope: 'read', requiresConsent: false,
-      description: 'List StarNet ROUTINES scheduled jobs. Use this to check existing routines before creating another one.',
+      description: 'List 1Ultra ROUTINES scheduled jobs. Use this to check existing routines before creating another one.',
       schema: { type: 'object', properties: { agentId: { type: 'string' } } },
       run: async (args) => {
         const agentId = clean(args && args.agentId, 80);
@@ -262,7 +262,7 @@
          to a shell, and the check-first rule. Dropped: the agentId auto-routing and `arm` default, both of
          which the schema below already states at the point of use, and the explanation that the server
          rejects a duplicate name — it says so itself, at call time, more precisely than a remembered note. */
-      description: 'Create a StarNet ROUTINE: work an agent runs on a schedule (digests, research, monitoring, reports, drafts, reminders). Use it whenever the Commander wants anything recurring, scheduled or automated — never shell.exec, crontab or an OS scheduler. Results come back to this chat by default; do not ask where to send them. Write a self-contained prompt: task, sources, format, what to flag. Asked to automate something broadly? Create 2-5 routines your own tools can run now (web research, writing, checks; no connection needed), then list them. Call routine.list first; never duplicate.',
+      description: 'Create a 1Ultra ROUTINE: work an agent runs on a schedule (digests, research, monitoring, reports, drafts, reminders). Use it whenever the Commander wants anything recurring, scheduled or automated — never shell.exec, crontab or an OS scheduler. Results come back to this chat by default; do not ask where to send them. Write a self-contained prompt: task, sources, format, what to flag. Asked to automate something broadly? Create 2-5 routines your own tools can run now (web research, writing, checks; no connection needed), then list them. Call routine.list first; never duplicate.',
       schema: {
         type: 'object',
         required: ['prompt', 'schedule'],
@@ -283,7 +283,7 @@
           ,skills: { type: 'array', items: { type: 'string' }, maxItems: 8, description: 'Saved runtime skills to preload on every run.' }
           ,contextFrom: { type: 'array', items: { type: 'string' }, maxItems: 8, description: 'Routine ids whose latest successful outputs feed this routine.' }
           ,monitorMode: { type: 'boolean', description: 'When true with contextFrom, run only after the durable upstream source hash changes.' }
-          ,enabledToolsets: { type: 'array', items: { type: 'string' }, maxItems: 16, description: 'Optional restriction-only list of capability families for this routine.' }
+          ,enabledToolsets: { type: 'array', items: { type: 'string' }, maxItems: 16, description: 'Only these toolset ids (e.g. web, cabinet); omit = station defaults.' }
         }
       },
       run: async (args, ctx) => {
@@ -316,7 +316,7 @@
           skills: Array.isArray(args && args.skills) ? args.skills.slice(0, 8) : [],
           contextFrom: Array.isArray(args && args.contextFrom) ? args.contextFrom.slice(0, 8) : null,
           monitorMode: !!(args && args.monitorMode),
-          enabledToolsets: Array.isArray(args && args.enabledToolsets) ? args.enabledToolsets.slice(0, 16) : null,
+          enabledToolsets: Array.isArray(args && args.enabledToolsets) && args.enabledToolsets.length ? args.enabledToolsets.slice(0, 16) : null,   // [] = no restriction, never "no tools"
           repeat: { times: repeatTimes == null ? null : Math.max(1, parseInt(repeatTimes, 10) || 1) }
         };
         const job = await createRoutine(spec);
@@ -383,7 +383,7 @@
        reference harness's trigger_job does. It reports the armed time, never "it ran". */
     const manageTool = {
       name: 'routine.manage', capability: 'orchestrator', scope: 'write', requiresConsent: true, timeoutMs: 15000,
-      description: 'Edit, pause, resume, delete, or queue an immediate fire of an existing StarNet ROUTINES job. Call routine.list first to see what exists; reference a routine by its exact id, or by name when that name is unambiguous.',
+      description: 'Edit, pause, resume, delete, or queue an immediate fire of an existing 1Ultra ROUTINES job. Call routine.list first to see what exists; reference a routine by its exact id, or by name when that name is unambiguous.',
       schema: {
         type: 'object',
         required: ['action'],

@@ -6,5 +6,5 @@
   "tags": ["csv", "spreadsheet", "data-cleaning", "analysis", "charts"],
   "requires": ["cabinet"],
   "license": "MIT",
-  "authors": ["StarNet"]
+  "authors": ["1Ultra"]
 }

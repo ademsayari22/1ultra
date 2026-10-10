@@ -1,4 +1,4 @@
-/* node test/remote.relay.test.js — StarNet Remote over the RELAY (phase 3), in one process, on 127.0.0.1.
+/* node test/remote.relay.test.js — 1Ultra Remote over the RELAY (phase 3), in one process, on 127.0.0.1.
 
    The real relay (relay/server.js + its dependency-free WebSocket server), the real station side
    (sidecar/remote/relay-client.js over Node's built-in WebSocket, with the real devices/sessions/approvals/

@@ -121,7 +121,7 @@ const openCtx = () => ({ canRun: () => true, canUse: () => ({ ok: true }), agent
   }
 
   // (2a-live-parity) The installed Hermes comparison exposed a longer overload window after a successful
-  //     host action: StarNet's four-rung (~16.6s) ladder ended the run while Hermes kept working for up to
+  //     host action: 1Ultra's four-rung (~16.6s) ladder ended the run while Hermes kept working for up to
   //     ~102s. Repeating the CURRENT model turn is safe here because the prior turn's tool result is already
   //     paired in messages; the completed host effect must never be dispatched a second time.
   {

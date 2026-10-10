@@ -59,7 +59,7 @@ const { makeFsTools } = require('../sidecar/tools/builtin/fs.js');
     A.eq(first.diagnostics.added[0].code, 'BROKEN', 'the new diagnostic is identified');
     A.ok(!first.content.includes('pre-existing problem'), 'pre-existing diagnostics do not reach the model result');
     A.ok(first.content.includes('newly introduced problem'), 'the newly introduced diagnostic reaches the model result');
-    A.ok(!first.content.includes('SECRET_LEAK'), 'the language-server child receives no StarNet secret environment');
+    A.ok(!first.content.includes('SECRET_LEAK'), 'the language-server child receives no 1Ultra secret environment');
     const ev = events.find(e => e.name === 'verify.result');
     A.ok(ev && ev.payload.passed === false && ev.payload.added === 1, 'existing verify.result semantics carry the failed edit check');
 

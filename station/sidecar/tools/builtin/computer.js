@@ -19,7 +19,7 @@
   const ACTIONS = ['screenshot', 'move', 'click', 'double_click', 'drag', 'scroll', 'type', 'key', 'hotkey', 'wait'];
   // Keyboard input lands in whatever window has FOCUS — these are the actions the focus-truth guard covers.
   const KEYBOARD_ACTIONS = ['type', 'key', 'hotkey'];
-  // The harness's own window (desktop shell exe or a browser tab titled STARNET). Typing into it is never the
+  // The harness's own window (desktop shell exe or a browser tab titled 1ULTRA). Typing into it is never the
   // intent — it means the target app lost focus (the 2026-07-08 "typed the song into its own chat box" incident).
   const SELF_WINDOW_RE = /starnet/i;
   const DESTRUCTIVE_HOTKEYS = [
@@ -72,7 +72,7 @@
   }
   // FOCUS-TRUTH GUARD: keyboard input is only delivered when we can prove (or the driver cannot know) which
   // window will receive it. Returns a human-readable foreground note for the tool result; throws when input
-  // must NOT be sent: foreground is StarNet's own window, or it doesn't match the model's declared expectApp.
+  // must NOT be sent: foreground is 1Ultra's own window, or it doesn't match the model's declared expectApp.
   async function checkFocus(driver, action) {
     if (KEYBOARD_ACTIONS.indexOf(action.action) < 0) return '';
     if (typeof driver.foreground !== 'function') {
@@ -82,7 +82,7 @@
     const fg = (await driver.foreground()) || {};
     const title = String(fg.title || ''), proc = String(fg.process || '');
     if (SELF_WINDOW_RE.test(title) || SELF_WINDOW_RE.test(proc)) {
-      throw new Error('refused: the foreground window is StarNet itself ("' + (title || proc) + '") — the target app lost focus, so input was NOT sent; re-focus the target app (click it) before typing');
+      throw new Error('refused: the foreground window is 1Ultra itself ("' + (title || proc) + '") — the target app lost focus, so input was NOT sent; re-focus the target app (click it) before typing');
     }
     if (action.expectApp) {
       const want = action.expectApp.toLowerCase();
@@ -119,7 +119,7 @@
     return d || makeInertDriver('computer-use unavailable: native desktop control needs Windows');
   }
 
-  // Fail-closed driver injected into every ordinary StarNet run. It throws instead of
+  // Fail-closed driver injected into every ordinary 1Ultra run. It throws instead of
   // returning success, so telemetry never claims an input action that policy prevented.
   function makeInertDriver(reason) {
     const why = reason || 'physical input is disabled for agent runs';

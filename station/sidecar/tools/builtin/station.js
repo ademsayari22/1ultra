@@ -42,22 +42,34 @@
 
     // one shape for every verb: bridge absent / page silent / page refused / page answered.
     async function ask(verb, args) {
-      if (!station) return { ok: false, error: 'this run has no station bridge — session actions need the live StarNet page' };
+      if (!station) return { ok: false, error: 'this run has no station bridge — session actions need the live 1Ultra page' };
       let out;
       try { out = await station.request(verb, args || {}); }
       catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
       return out && out.ok ? { ok: true, result: out.result } : { ok: false, error: String((out && out.error) || 'the station did not answer') };
     }
     const refuse = (error, summary) => ({ content: 'REFUSED: ' + error + ' — do not report this action as done.', summary: summary || 'refused' });
+    // {from, to} when `next` is `prev` with ONE word replaced everywhere (a name swap), else null — the first differing word decides
+    function nameSwap(prev, next) {
+      if (typeof prev !== 'string' || typeof next !== 'string' || prev === next) return null;
+      let i = 0; while (i < prev.length && i < next.length && prev[i] === next[i]) i++;
+      while (i > 0 && /[\w-]/.test(prev[i - 1])) i--;
+      const from = (prev.slice(i).match(/^[\w-]+/) || [])[0], to = (next.slice(i).match(/^[\w-]+/) || [])[0];
+      return from && to && from !== to && prev.split(from).join(to) === next ? { from, to } : null;
+    }
 
     const listTool = {
       name: 'session.list', capability: 'orchestrator', scope: 'read', requiresConsent: false,
       description: 'List the sessions (workstreams) open on this station: id, title, bound agent, and which one the Commander has focused. Use the TITLES when talking to the Commander and when passing `session` to team.dispatch or session.focus. Read this before creating a session so you never mint a duplicate title.',
       schema: { type: 'object', properties: {} },
-      run: async () => {
+      run: async (args, ctx) => {
         const out = await ask('station.sessions', {});
         if (!out.ok) return refuse(out.error);
         const r = out.result || {};
+        // the caller's OWN conversation, marked (real-model run 2026-10-08: "can you pin this conversation?" listed three
+        // sessions, guessed "General", and pinned the wrong one) — the run's session id, never a guess from the titles
+        const mine = ctx && ctx.streamId ? String(ctx.streamId) : '';
+        if (mine && Array.isArray(r.sessions)) r.sessions = r.sessions.map(s => (s && s.id === mine) ? Object.assign({ thisConversation: true }, s) : s);
         return { content: JSON.stringify(r), summary: (r.count != null ? r.count : (r.sessions || []).length) + ' session(s)' };
       }
     };
@@ -112,6 +124,23 @@
         if (!out.ok) return refuse(out.error);
         const r = out.result || {};
         return { content: JSON.stringify(r), summary: 'focused "' + (r.title || ref) + '"' };
+      }
+    };
+
+    /* station.status (issue #55, idea by @xLagerFeuer): the page's own station-wide snapshot — the SAME
+       VoiceLive.statusSnapshot() voice answers from (stationcommands.js 'station.status'), passed through
+       unchanged, so a lead asked "is anything waiting on me?" reads which sessions are busy or held at an approval
+       instead of guessing from its own thread. No page → REFUSED, never an implied state. */
+    const statusTool = {
+      name: 'station.status', capability: 'orchestrator', scope: 'read', requiresConsent: false,
+      description: 'Read the live station snapshot: the Commander\'s active session and, per open session, whether it is busy and whether it waits on an approval. Call it before answering what the station or crew is doing or what waits on the Commander; never infer other sessions\' state from your own thread.',
+      schema: { type: 'object', properties: {} },
+      run: async () => {
+        const out = await ask('station.status', {});
+        if (!out.ok) return refuse(out.error);
+        const ws = (out.result && out.result.workstreams) || [];
+        const busy = ws.filter(w => w && w.busy).length, held = ws.filter(w => w && w.approvalRequired).length;
+        return { content: JSON.stringify(out.result), summary: ws.length + ' session(s), ' + busy + ' busy' + (held ? ', ' + held + ' awaiting approval' : '') };
       }
     };
 
@@ -176,12 +205,21 @@
     const scanText = typeof deps.scanText === 'function' ? deps.scanText : null;
     const agentConfigureTool = {
       name: 'team.configure', capability: 'orchestrator', consentKey: 'team.configure', taintLocked: true, scope: 'write', requiresConsent: true,
-      description: 'Edit one existing crew member Dossier document, using the exact agentId and previousText from team.config. Preserve unrelated instructions in the replacement text. An empty text explicitly clears the document. Uses the Dossier save path; applies to the next run, not a currently running turn. Requires an open station page. Does not change skills, permissions, Bay briefs, or layout. Never substitute notebook.write for this edit.',
+      description: 'Edit one existing crew member Dossier document, using the exact agentId and previousText from team.config. Preserve unrelated instructions in the replacement text. An empty text explicitly clears the document. Uses the Dossier save path; applies to the next run, not a currently running turn. Requires an open station page. Does not change the name (station.control agent.rename), skills, permissions, Bay briefs or layout. Never substitute notebook.write for this edit.',
       schema: { type: 'object', additionalProperties: false, required: ['agentId', 'field', 'previousText', 'text'], properties: {
         agentId: { type: 'string' }, field: { type: 'string', enum: ['identity', 'purpose', 'manual', 'context'] },
         previousText: { type: 'string' }, text: { type: 'string', maxLength: 20000 }
       } },
       run: async (args) => {
+        /* A RENAME IS NOT A PERSONA EDIT (approval-mode run 2026-10-08, Claude Haiku 4.5): "rename NOVA to VEGA" rewrote the
+           identity text ("You are NOVA…" → "You are VEGA…") and reported "renamed" while the crew list still said NOVA. An
+           identity edit whose ONLY change is one word swapped everywhere is refused toward the real rename. */
+        const swap = args && args.field === 'identity' ? nameSwap(args.previousText, args.text) : null;
+        if (swap) {
+          return refuse('this edit only swaps "' + swap.from + '" for "' + swap.to + '" inside the identity text, which does not rename the agent — '
+            + 'its name is changed with station.control {"action": "agent.rename", "args": {"agent": "' + String(args.agentId || '') + '", "name": "' + swap.to + '"}} '
+            + '(tool.search "station control" if you do not have it)', 'a rename, not a persona edit');
+        }
         if (scanText && args && typeof args.text === 'string') {
           let scan; try { scan = scanText(args.text); } catch (e) { scan = { ok: false, error: 'the instruction scan failed' }; }
           if (!scan || scan.ok !== true) {
@@ -367,7 +405,7 @@
           if (typeof v.data !== 'string' || !v.data || !/^image\/(webp|jpeg|png)$/.test(String(v.mime))) return refuse('The page sent no picture of ' + (look === true ? 'the station' : look) + '.');
           const note = 'A picture of ' + v.look + ' as it renders now (' + v.width + ' x ' + v.height + ' px' + (v.shows ? '; it shows tiles x ' + v.shows.x1 + '-' + v.shows.x2 + ', y ' + v.shows.y1 + '-' + v.shows.y2 + ' with the wall faces above, about ' + v.tilePx + ' px a tile' : '') + '). '
             + 'Judge it as a designer: balance, walkways, doorways clear, empty or crowded floor, pieces that clash. If you cannot see images, use station.map { room } for the same room tile by tile.'
-            + (Array.isArray(v.issues) ? (v.issues.length ? ' Issues StarNet sees in this room (fix every one): ' + v.issues.join(' ') : ' The checks StarNet runs (desk seats, what each seat faces) find nothing; judge the rest by eye.') : ' For detail (chairs, desks, what faces what), look at one room at a time: the whole station is for its shape.');
+            + (Array.isArray(v.issues) ? (v.issues.length ? ' Issues 1Ultra sees in this room (fix every one): ' + v.issues.join(' ') : ' The checks 1Ultra runs (desk seats, what each seat faces) find nothing; judge the rest by eye.') : ' For detail (chairs, desks, what faces what), look at one room at a time: the whole station is for its shape.');
           return { content: note, summary: 'looked at ' + v.look, images: [{ mime: v.mime, data: v.data }], control: { revealTools: BUILDER } };
         }
         if (a.room != null) q.room = String(a.room).slice(0, 60);
@@ -394,16 +432,16 @@
     const planTool = {
       name: 'station.plan', capability: 'orchestrator', scope: 'read', requiresConsent: false,
       get description() {
-        return 'STATION BUILDER, step 2: plan a change to the station floor. You are the station\'s designer: the Commander\'s words are the brief, and the design is yours to decide (where each room goes, its shape and size, how rooms join, where every piece stands and which way it faces), as freely as the Commander can in Refit mode. A plan is built on a copy and checked against the station\'s own rules (walls, doorways, what stands on what); nothing changes until station.build. Two ways to work, mixed freely: design it yourself, tile by tile, or use a shortcut and let StarNet place things. '
+        return 'STATION BUILDER, step 2: plan a change to the station floor. You are the station\'s designer: the Commander\'s words are the brief, and the design is yours to decide (where each room goes, its shape and size, how rooms join, where every piece stands and which way it faces), as freely as the Commander can in Refit mode. A plan is built on a copy and checked against the station\'s own rules (walls, doorways, what stands on what); nothing changes until station.build. Two ways to work, mixed freely: design it yourself, tile by tile, or use a shortcut and let 1Ultra place things. '
           + 'RESHAPE THE WHOLE STATION (spread it out, a wider or better shape, rooms re-oriented, more hallways joining things up): { rearrange: "diamond" } re-lays every room where it stands, with everything in it (furniture, lines, desks, agents), on the diamond grid round the main room (wide by default; { rearrange: { shape: "tall" | "even", links: false } }), takes up every old hallway and lays clean ones, planted and lit, joining neighbouring rooms. Never reshape a station by moving rooms one by one and drawing corridors by hand: a moved room leaves its hallways behind, and a refit that leaves a hallway leading nowhere is refused. '
           + 'DESIGN IT YOURSELF with a REFIT: { refit: [ edits ] }, the Commander\'s own Refit-mode tools on exact tiles, as many edits as the design needs (up to 1500 in one plan), applied in order, one approval, one undo. Read before you design: station.map (the floor), station.map { room } (every piece\'s id, type, place, size; belts; doorways; the room drawn) and station.map { catalog: true } (every piece type and size, room types, floors, walls, bay roles, lines, line edits). Tiles are world x, y (x east, y south; a piece\'s x, y is its top-left). Edits: '
           + '{ op: "room", name, kind, x, y, w, h } (or rects: [ {x, y, w, h}, … ] for an L or U; kind hab, bridge, lab, factory, quarters, storage) · { op: "hall", x, y, w, h } (one straight run, 1-3 wide; several make any route) · { op: "resize", room, x, y, w, h } · { op: "move", room, x, y } · { op: "delete", room | hall | prop } (a hall by the name station.map or a refusal gives it) · { op: "rename", room, name } · { op: "type", room, kind } · { op: "floor" | "walls" | "hull", room, style, mat } · { op: "paint", room, style, tiles: [[x, y], …] } · { op: "style", room, style } (furnish in a room style) · '
           + '{ op: "place", t, x, y, toward | r, m, as } (any piece or machine: intake, bay, filter, merger, splitter, joiner, loop, outbox; toward: the piece or tile it faces, and the builder turns it, so give every chair, sofa and seat toward its table, desk or screen (a seat set right beside a table or desk with no toward is turned to face it; a left/right pair such as recliner, which faces west, and recliner_r, east, takes toward too and the builder picks the one that faces that way); r 0 faces south, 1 west, 2 north, 3 east; m: 1 flips; as names it for later edits; a desk or any workstation draws its OWN chair when an agent works it, so never place a chair at a desk) · { op: "move", prop, x, y } · { op: "rotate", prop, toward | r } · { op: "mirror", prop } · { op: "delete", prop } · { op: "agent", prop, agent } · { op: "door", prop, state } · '
           + '{ op: "belt", from: [x, y], to: [x, y] } (a straight run) · { op: "unbelt", tiles } · { op: "connect", from: prop, to: prop } (belts one machine into the next) · SET A LINE UP (everything the Workflow panel sets): { op: "role" | "brief" | "label", prop, role | text } (a step\'s role, its instructions, the line\'s name) · { op: "hands", prop: a bay, text } (what that step hands on) · { op: "budget", prop: any machine on the line, stages, perJob, perDay } (null = the default) · { op: "loop", prop: a loop, passes, until: approved | revise | code | research | general, done, escalate } (done, escalate: the side work leaves by) · { op: "wait", prop: a joiner, minutes } · { op: "swap", prop: a joiner or a merger } (a joiner waits for every branch, so the splitter copies to each; a merger takes them as they come, so the branches take turns) · { op: "routes", prop: a filter, routes: { code | research | general: side }, def } · { op: "folder", prop, project: one of the Commander\'s trusted projects, or null } · { op: "bind", prop: a connector portal or a plugin terminal, connector | plugin: its name } (its room\'s agents get that service\'s tools) · sides are north, east, south, west · { op: "stamp", line, x, y } (a shelf line at an exact spot) · { op: "edit", prop, edit, args } (the Workflow panel\'s own line edits on the line that prop is on: insertStep { from, to, role }, appendStep { after, role }, addBranch, addLoop, addSorter, addRoute, removeStep { id }, moveStep, tidy, addOutbox …). '
           + 'prop is an id from station.map { room }, a name given with as, or a tile [x, y]; room is a name or an as. The first edit that fails refuses the plan and names it with Refit mode\'s reason: fix that edit and plan again. '
-          + 'A piece the catalog does not have: station.make_prop makes it with the Commander\'s StarNet credits; then place it by its id. '
+          + 'A piece the catalog does not have: station.make_prop makes it with the Commander\'s 1Ultra credits; then place it by its id. '
           + 'LOOK at your work: after station.build, station.map { look: the room } shows it as it really renders, and station.map { room } lists the issues a designer would fix (a piece on a desk\'s seat, a seat turned away from its table): read them and fix every one. If it is not right yet (crowded, bare, lopsided, a doorway or walkway blocked, pieces that clash; for the whole station: hallways that overlap, run side by side, end in nothing or wander, rooms piled together or stranded), fix it; a design is finished when it looks finished. TEST a line you built or set up: station.test_line sends one real job down it and reads each step back; fix what went wrong and test again. station.start_line sets what starts it (a schedule, a folder, a webhook). A good station: every room reached by a hallway or open to a neighbour, doorways and walkways clear, each room furnished for what it is for, lines with room to run, nothing piled up. '
-          + 'SHORTCUTS, when StarNet should place things for you (quick, and right when the Commander just wants it done; refit the result by hand afterwards if you want it your way): ' + PLAN_HOW + ' '
+          + 'SHORTCUTS, when 1Ultra should place things for you (quick, and right when the Commander just wants it done; refit the result by hand afterwards if you want it your way): ' + PLAN_HOW + ' '
           + '1 LAYOUT, the way to a beautiful station: { "layout": { "pattern": "diamond" | "concourse", "rooms": [ { "name", "style", "size", "lines" } ] }, "replace": true? }. diamond (the usual one) = every room on an even grid all round the main room, each the bridge\'s size and a hallway apart, filled in diamond order (the four sides, then the corners and far sides, then the next ring out) so the station keeps its shape at any size, with a corridor loop round the bridge at its centre; big rooms (a conveyor hall, size giant) take the east and west wings; up to 40 rooms. To ADD rooms later, send a layout again with only the new rooms: they take the next free places of the same diamond, or go down the same concourse. concourse = a wide corridor from one side of the main room, rooms down both sides, a big room at the far end (up to 24; "side" picks the direction). '
           + 'Each room is furnished wall to wall in its style (floor, walls, feature wall, centrepiece, plants) and the corridors are planted and lit. Room styles: ' + roomText() + '. A room given lines is a conveyor hall (works); a works room without lines is kept clear for lines to come. '
           + 'replace: true lays the whole station out again around the main room: every other room is replaced, the main room, agents and conversations stay, and the old layout is backed up for RESTORE PREVIOUS. Use it when the Commander wants the station redone, or when there is no clear space round the main room. '
@@ -419,7 +457,7 @@
       schema: { type: 'object', properties: {
         layout: { type: 'object', properties: { pattern: { type: 'string' }, around: { type: 'string' }, side: { type: 'string' }, rooms: { type: 'array', items: { type: 'object' } } } },
         replace: { type: 'boolean' }, rooms: { type: 'array', items: { type: 'object' } }, hallways: { type: 'array', items: { type: 'object' } },
-        line: { type: 'string' }, shape: { type: 'array' }, purpose: { type: 'string' }, steps: { type: 'array', items: { type: 'object' } }, dailyCap: {}, tries: { type: 'integer' },
+        line: { type: 'string' }, shape: { type: 'array', items: {} }, purpose: { type: 'string' }, steps: { type: 'array', items: { type: 'object' } }, dailyCap: {}, tries: { type: 'integer' },
         kit: { type: 'string' }, preset: { type: 'string' }, zones: { type: 'array', items: { type: 'object' } }, restyle: { type: 'object' }, remove: {}, refurnish: { type: 'object' }, clear: {}, add: { type: 'object' }, seat: { type: 'object' }, move: { type: 'object' }, staff: { type: 'object' }, undo: { type: 'boolean' }, refit: { type: 'array', items: { type: 'object' } },
         where: { type: 'string' }, name: { type: 'string' }, size: {}, beside: { type: 'string' }, side: { type: 'string' }, hallway: {}, type: { type: 'string' }, floorStyle: { type: 'string' }, floorMat: { type: 'string' } } },
       run: async (args) => {
@@ -454,8 +492,8 @@
       }
     };
 
-    /* MAKE A PROP (2026-10-01): a NEW piece the catalog does not have, drawn by StarNet's prop maker in the station's own
-       style (the very pipeline REFIT's MAKE A PROP runs: deps.userProps), paid with the Commander's StarNet credits, so
+    /* MAKE A PROP (2026-10-01): a NEW piece the catalog does not have, drawn by 1Ultra's prop maker in the station's own
+       style (the very pipeline REFIT's MAKE A PROP runs: deps.userProps), paid with the Commander's 1Ultra credits, so
        it asks first (the card names the object and the price). It waits for the prop to land, has the page load it into
        the MADE BY YOU library, and answers its name and id, so station.plan places it like any piece. A side view (so it
        turns) is a second paid step, asked for with sideView. */
@@ -476,10 +514,10 @@
     }
     const makePropTool = {
       name: 'station.make_prop', capability: 'orchestrator', scope: 'write', requiresConsent: true,
-      // it spends the Commander's StarNet credits: a run that read untrusted content may not
+      // it spends the Commander's 1Ultra credits: a run that read untrusted content may not
       taintLocked: true, timeoutMs: PROP_WAIT_MS + 60000,
-      description: 'STATION BUILDER: make a NEW piece of furniture when no catalog piece is what the Commander wants (a hot-dog stand, a robot butler, a neon arcade sign), with the Commander\'s StarNet credits. StarNet\'s prop maker draws it in the station\'s own style; it joins the Commander\'s MADE BY YOU library and then places like any piece: station.plan { add: { room, pieces: ["its name"] } } or a refit { op: "place", t: "its id" }. '
-        + 'It costs StarNet credits (about $0.35 a prop; sideView: true adds about $0.30 for the side view it turns with), needs this station linked to StarNet credits, and asks the Commander first. Look in station.map { catalog: true } first: props already made show as yours, and cost nothing to place again. describe is the object in a few words (under 60 characters). It waits while the prop is drawn (a minute or two) and answers its name and id; if StarNet is still drawing when the wait ends, it says so and the prop appears in MADE BY YOU when it lands.',
+      description: 'STATION BUILDER: make a NEW piece of furniture when no catalog piece is what the Commander wants (a hot-dog stand, a robot butler, a neon arcade sign), with the Commander\'s 1Ultra credits. 1Ultra\'s prop maker draws it in the station\'s own style; it joins the Commander\'s MADE BY YOU library and then places like any piece: station.plan { add: { room, pieces: ["its name"] } } or a refit { op: "place", t: "its id" }. '
+        + 'It costs 1Ultra credits (about $0.35 a prop; sideView: true adds about $0.30 for the side view it turns with), needs this station linked to 1Ultra credits, and asks the Commander first. Look in station.map { catalog: true } first: props already made show as yours, and cost nothing to place again. describe is the object in a few words (under 60 characters). It waits while the prop is drawn (a minute or two) and answers its name and id; if 1Ultra is still drawing when the wait ends, it says so and the prop appears in MADE BY YOU when it lands.',
       schema: { type: 'object', properties: { describe: { type: 'string' }, sideView: { type: 'boolean' } }, required: ['describe'] },
       run: async (args, ctx) => {
         if (!userProps) return refuse('Making props is not available on this station.');
@@ -487,11 +525,11 @@
         const noun = String(a.describe == null ? '' : a.describe).replace(/\s+/g, ' ').trim();
         const signal = ctx && ctx.signal;
         const r = await userProps.start(noun);
-        if (!r || !r.ok) return refuse((r && r.message) || 'StarNet could not start that prop.');
+        if (!r || !r.ok) return refuse((r && r.message) || '1Ultra could not start that prop.');
         const left = { ticks: Math.ceil(PROP_WAIT_MS / PROP_TICK_MS) };
         const j = await waitJob(r.job.id, signal, left);
-        if (j.status === 'failed') return refuse('StarNet could not make "' + noun + '": ' + ((j.error && j.error.message) || 'it failed') + (Number(j.costUsd) > 0 ? ' (' + '$' + Number(j.costUsd).toFixed(2) + ' was spent on the tries)' : ''));
-        if (j.status !== 'done' || !j.propId) return { content: JSON.stringify({ made: false, stillDrawing: true, jobId: r.job.id, note: 'StarNet is still drawing it. It appears in the MADE BY YOU library when it lands; place it then by its name.' }), summary: 'still drawing ' + noun };
+        if (j.status === 'failed') return refuse('1Ultra could not make "' + noun + '": ' + ((j.error && j.error.message) || 'it failed') + (Number(j.costUsd) > 0 ? ' (' + '$' + Number(j.costUsd).toFixed(2) + ' was spent on the tries)' : ''));
+        if (j.status !== 'done' || !j.propId) return { content: JSON.stringify({ made: false, stillDrawing: true, jobId: r.job.id, note: '1Ultra is still drawing it. It appears in the MADE BY YOU library when it lands; place it then by its name.' }), summary: 'still drawing ' + noun };
         const entry = (userProps.list() || []).find(p => p.id === j.propId) || { id: j.propId, label: noun.toUpperCase() };
         let cost = Number(j.costUsd) || Number(entry.costUsd) || 0, side = false, sideNote = null;
         if (a.sideView && entry.symmetric) sideNote = 'it is round, so it turns with its own front view (no side view needed)';
@@ -563,7 +601,7 @@
 
     /* WHAT STARTS A LINE (2026-10-01): a schedule, a folder or a webhook, set the way the line's Workflow panel sets it
        (deps.startLine = the panel's own cores in the sidecar). It runs the line unattended from then on, so it asks first.
-       A webhook's key is never in the answer: StarNet shows a key once, to the Commander, in the panel. */
+       A webhook's key is never in the answer: 1Ultra shows a key once, to the Commander, in the panel. */
     const startLine = typeof deps.startLine === 'function' ? deps.startLine : null;
     const START_KINDS = ['schedule', 'folder', 'webhook', 'off'];
     const startLineTool = {
@@ -592,16 +630,16 @@
         if (!r || !r.ok) return refuse(String((r && r.error) || 'the start was not saved').replace(/[.\s]*$/, '.'));
         const said = kind === 'schedule' ? 'The line ' + L.name + ' now runs ' + r.when + (r.halted ? ', but automation is stopped (E-STOP): nothing fires until the Commander resumes it' : r.armed ? '' : ', once the Commander turns the scheduler on') + '. Its routine is ' + r.id + ' (routine.manage pauses or removes it).'
           : kind === 'folder' ? 'The line ' + L.name + ' now starts whenever a new file lands in ' + r.path + ' (files already there never fire)' + (r.blockedBy ? '; it is waiting on: ' + r.blockedBy : '') + '. Its trigger is ' + r.id + '.'
-          : kind === 'webhook' ? 'The line ' + L.name + ' now starts whenever its webhook is called. Tell the Commander to open the line\'s Workflow panel and press NEW KEY on this trigger for its address and key (StarNet shows a key once, to the Commander only). Its trigger is ' + r.id + '.'
+          : kind === 'webhook' ? 'The line ' + L.name + ' now starts whenever its webhook is called. Tell the Commander to open the line\'s Workflow panel and press NEW KEY on this trigger for its address and key (1Ultra shows a key once, to the Commander only). Its trigger is ' + r.id + '.'
           : 'The ' + (r.was || '') + ' trigger ' + r.id + ' on ' + L.name + ' is off.';
         return { content: JSON.stringify({ line: L.name, kind, id: r.id, said }), summary: kind === 'off' ? 'turned off a trigger on ' + L.name : L.name + ' starts ' + (kind === 'schedule' ? r.when : 'from a ' + kind), control: { revealTools: BUILDER } };
       }
     };
 
     return {
-      agentConfigTool, agentConfigureTool, layoutTool, mapTool, planTool, buildTool, makePropTool, testLineTool, startLineTool, planSummaryFor,
+      statusTool, agentConfigTool, agentConfigureTool, layoutTool, mapTool, planTool, buildTool, makePropTool, testLineTool, startLineTool, planSummaryFor,
       listTool, createTool, peekTool, focusTool, taskListTool, taskCreateTool, taskManageTool,
-      register(reg) { [listTool, createTool, peekTool, focusTool, taskListTool, taskCreateTool, taskManageTool, agentConfigTool, agentConfigureTool, layoutTool, mapTool, planTool, buildTool, makePropTool, testLineTool, startLineTool].forEach(t => reg.register(t)); return reg; }
+      register(reg) { [listTool, createTool, peekTool, focusTool, statusTool, taskListTool, taskCreateTool, taskManageTool, agentConfigTool, agentConfigureTool, layoutTool, mapTool, planTool, buildTool, makePropTool, testLineTool, startLineTool].forEach(t => reg.register(t)); return reg; }
     };
   }
 

@@ -133,7 +133,7 @@ function twoStagePlan() {
   try {
     const token = await bootToken(B, B);
     A.ok(token.length >= 32, 'got a session API token');
-    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     const call = (method, p, body) => fetch(B + p, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) })
       .then(r => r.text().then(t => { let j = null; try { j = JSON.parse(t); } catch (_) { j = null; } return { status: r.status, j }; }));
     const t0 = Date.now() - 1;

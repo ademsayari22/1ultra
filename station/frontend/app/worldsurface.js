@@ -1,4 +1,4 @@
-/* StarNet — authored station materials.
+/* 1Ultra — authored station materials.
  *
  * Pure, deterministic pixel painters. The renderer owns the cached station/chunk
  * canvases; this module owns their surface art. It never reads clock, room names,

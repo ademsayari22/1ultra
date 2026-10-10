@@ -74,7 +74,7 @@ const INDEX = path.resolve(__dirname, '..', 'sidecar', 'index.js');
     let apiToken = await bootToken(B(), B());
     const j = async (m, p, body) => {
       const headers = { 'Content-Type': 'application/json', Origin: B() };
-      if (apiToken) headers['X-StarNet-Token'] = apiToken;
+      if (apiToken) headers['X-1Ultra-Token'] = apiToken;
       const r = await fetch(B() + p, { method: m, headers, body: body ? JSON.stringify(body) : undefined });
       const t = await r.text(); let v; try { v = JSON.parse(t); } catch (_) { v = t; }
       return { status: r.status, body: v };

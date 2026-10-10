@@ -47,8 +47,8 @@ const SEARCH_URL = 'https://duckduckgo.com/?q=';
                what Hermes does: its agent drives a real browser window on its own profile, and people sign in, type
                and paste there natively). The BROWSER window follows it. Where no window can open (no screen, no
                Chromium-family browser installed, or a headless pin) the station browses built-in and says so;
-     builtin — hidden inside StarNet: the BROWSER window is the browser; nothing opens on the desktop;
-     chrome  — YOUR own Chrome with your logins, through the StarNet extension, asking per site. Not available
+     builtin — hidden inside 1Ultra: the BROWSER window is the browser; nothing opens on the desktop;
+     chrome  — YOUR own Chrome with your logins, through the 1Ultra extension, asking per site. Not available
                until the extension is paired; until then the station says so and browses built-in. */
 const BROWSER_MODES = ['builtin', 'window', 'chrome'];
 function normalizeMode(m) { return BROWSER_MODES.indexOf(String(m || '')) >= 0 ? String(m) : 'window'; }
@@ -284,13 +284,14 @@ function makeBrowserViews(deps) {
     } catch (e) {
       // a session that never got a page is not "open": close it so the profile lease is not held by a blank browser
       if (station === st && !st.driver && !surfaceOf(st.session)) await closeStation();
-      return { ok: false, error: String((e && e.message) || e), url: addr.url };
+      // a held station profile (BROWSER_PROFILE_HELD) carries the repair in its message; never the raw CDP hand-off text
+      return Object.assign({ ok: false, error: String((e && e.message) || e), url: addr.url }, e && e.code === 'BROWSER_PROFILE_HELD' ? { code: e.code } : {});
     }
     if (station !== st) return { ok: false, error: 'the browser was closed' };
     const s = surfaceOf(st.session);
     const ch = chans.get('station'); if (ch) ch.pageAt = 0;
     if (s && s.visible && typeof s.front === 'function') { try { await s.front(); } catch (e) { failNote('view.front', e); } }   // they typed it: show it
-    return { ok: true, url: finalUrl || addr.url, search: !!addr.search, remembered: !!(s && s.remembered), visible: !!(s && s.visible) };
+    return { ok: true, url: finalUrl || addr.url, search: !!addr.search, remembered: !!(s && s.remembered), visible: !!(s && s.visible), profileNote: (s && s.profileNote) || '' };
   }
   async function nav(action) {
     const busy = driving(); if (busy) return busy;
@@ -454,14 +455,37 @@ function makeBrowserViews(deps) {
     const st = station;
     const s = st ? surfaceOf(st.session) : null;
     const d = st && st.driver ? { agentId: st.driver.agentId, runId: st.driver.runId, signIn: !!st.signIn } : null;
-    return { agents, settings: settings(), station: { available: !!makeSession, open: !!s, mode: st ? st.mode : effectiveMode(), visible: !!(s && s.visible), driver: d, handoff: !!(d && handoffLive(d.runId)), remembered: !!(s && s.remembered), setup: setupState() } };
+    return { agents, settings: settings(), station: { available: !!makeSession, open: !!s, mode: st ? st.mode : effectiveMode(), visible: !!(s && s.visible), driver: d, handoff: !!(d && handoffLive(d.runId)), remembered: !!(s && s.remembered), profileNote: (s && s.profileNote) || '', setup: setupState() } };
+  }
+  /* RESET STATION BROWSER (#61, Settings > BROWSER): close the station browser, then end any ORPHANED 1Ultra browser
+     on the durable profile (one an earlier 1Ultra process started and left behind, its proxy dead) and clear the
+     profile's stale locks (deps.sweepStationProfile -> tools/builtin/browser-orphans.js). Refused while an agent is
+     driving: STOP that run first. The receipt is what happened, never what was hoped. */
+  async function reset() {
+    const out = { ok: false, closed: false, driving: null, sweep: null, error: null };
+    if (station && station.driver) {
+      out.driving = { agentId: station.driver.agentId, runId: station.driver.runId };
+      out.error = 'an agent is driving the browser right now - stop that run, then reset';
+      return out;
+    }
+    const wasOpen = !!station;
+    const r = await closeStation();
+    if (!(r && r.ok)) { out.error = (r && r.error) || 'the station browser did not close'; return out; }
+    out.closed = wasOpen;   // "closed" only when there was a browser to close
+    if (typeof deps.sweepStationProfile === 'function') {
+      try { out.sweep = await deps.sweepStationProfile(); }
+      catch (e) { out.sweep = { ok: false, error: String((e && e.message) || e), found: 0, killed: [], survivors: [], ours: [], locks: { removed: [], failed: [] } }; }
+    }
+    out.ok = !out.sweep || out.sweep.ok === true;
+    if (!out.ok) out.error = (out.sweep && out.sweep.error) || 'an orphaned browser is still running';
+    return out;
   }
   async function closeAll() {
     for (const k of Array.from(chans.keys())) dropChan(k, k !== 'station');
     if (station) { station.driver = null; await closeStation(); }
   }
 
-  return { sessionForRun, releaseRun, registerRun, unregisterRun, open, nav, input, front, warm, frame, list, setMode, settings, signInOpen, signInClose, close: closeStation, closeAll,
+  return { sessionForRun, releaseRun, registerRun, unregisterRun, open, nav, input, front, warm, frame, list, setMode, settings, signInOpen, signInClose, close: closeStation, closeAll, reset,
     _internals: { runs, chans, station: () => station } };
 }
 
@@ -481,6 +505,7 @@ function makeViewRoutes(deps) {
     respondJson(res, r.ok ? 200 : 409, r);
   }
   async function close(req, res) { const r = await views.close(); respondJson(res, r.ok ? 200 : 409, r); }
+  async function reset(req, res) { const r = await views.reset(); respondJson(res, r.ok ? 200 : 409, r); }
   async function front(req, res) { const r = await views.front(); respondJson(res, r.ok ? 200 : 409, r); }
   async function warm(req, res) { const r = views.warm(); respondJson(res, r.ok ? 200 : 409, r); }
   async function getSettings(req, res) { respondJson(res, 200, Object.assign({ ok: true }, views.settings())); }
@@ -515,6 +540,7 @@ function makeViewRoutes(deps) {
       { m: 'POST', exact: '/api/browser/view/open', h: open },
       { m: 'POST', exact: '/api/browser/view/nav', h: nav },
       { m: 'POST', exact: '/api/browser/view/close', h: close },
+      { m: 'POST', exact: '/api/browser/reset', h: reset },   // #61: Settings > BROWSER > RESET STATION BROWSER
       { m: 'POST', exact: '/api/browser/view/front', h: front },
       { m: 'POST', exact: '/api/browser/view/warm', h: warm },
       { m: 'GET', exact: '/api/browser/settings', h: getSettings },

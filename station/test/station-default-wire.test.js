@@ -1,6 +1,6 @@
 /* node test/station-default-wire.test.js — issue #24: "Follow station default" must follow the STATION, not the
    last pinned agent that was focused. focusAgent writes the focused agent's wire into the one global Harness wire
-   every COMMS run reads; an unpinned agent used to keep whatever pin was there, so a specialist summoned on StarNet
+   every COMMS run reads; an unpinned agent used to keep whatever pin was there, so a specialist summoned on 1Ultra
    credits and later un-pinned kept sending runs as `starnet` — refused at 0s with "Out of managed credit" on a funded
    OpenRouter station. app.js is not node-loadable, so the wire helpers are lifted from source and run against a fake
    roster, and the call sites that must use them are locked against the source. */
@@ -67,7 +67,7 @@ A.eq((appjs.match(/Harness\.setProv\(saved\.prov\)/g) || []).length, 0, 'no resu
 A.eq((appjs.match(/Harness\.setProv\(savedStationProv\(saved\)\)/g) || []).length, 3, 'all three resume paths restore the station provider');
 
 // SETTINGS -> PROVIDERS moves the station default (the Overseer's pin), so unpinned agents follow the switch instead
-// of the provider the station just left (a StarNet-credits station switched to a BYOK key kept sending `starnet`).
+// of the provider the station just left (a 1Ultra-credits station switched to a BYOK key kept sending `starnet`).
 {
   const calls = [];
   const src2 = ['stationDefaultWire', 'focusWire', 'setStationProvider'].map(lift).join('\n');

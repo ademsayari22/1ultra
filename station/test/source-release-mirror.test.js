@@ -26,8 +26,8 @@ function asset(name, n) {
 function distribution(overrides = {}) {
   return {
     tag_name: 'v1.2.3',
-    name: 'StarNet 1.2.3',
-    body: '# StarNet v1.2.3\n\nA truthful release.',
+    name: '1Ultra 1.2.3',
+    body: '# 1Ultra v1.2.3\n\nA truthful release.',
     draft: false,
     prerelease: false,
     assets: [
@@ -48,7 +48,7 @@ function distribution(overrides = {}) {
 
   const plan = buildMirrorPlan(distribution());
   eq(plan.tag, 'v1.2.3', 'stable tag is preserved');
-  eq(plan.title, 'StarNet v1.2.3', 'source title uses the source-repo convention');
+  eq(plan.title, '1Ultra v1.2.3', 'source title uses the source-repo convention');
   eq(plan.assets.map(item => item.name).join(','),
     'StarNet_1.2.3_x64-setup.exe,StarNet_1.2.3_aarch64.dmg,StarNet_1.2.3_x64.dmg',
     'only human installers are mirrored in platform order');

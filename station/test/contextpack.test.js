@@ -23,7 +23,7 @@ const redact = (s) => String(s == null ? '' : s).replace(/sk-secret-[A-Za-z0-9]+
 function baseInputs(over) {
   return Object.assign({
     runs: [
-      { title: 'Ship the StarNet beta', ts: ago(1), streamId: '' },            // user run (empty stream = default)
+      { title: 'Ship the 1Ultra beta', ts: ago(1), streamId: '' },            // user run (empty stream = default)
       { title: 'Refactor the belt router', ts: ago(2), streamId: 'ws-main' },  // user run (named workstream)
       { title: 'night-shift: Busywork', ts: ago(0), streamId: 'nightshift-abc' }, // INTERNAL — must be excluded
       { title: 'cron digest', ts: ago(0), streamId: 'cron-xyz' },              // INTERNAL — must be excluded
@@ -54,7 +54,7 @@ function baseInputs(over) {
 (function exclusions() {
   const pack = CP.assemble(baseInputs(), { now: T });
   const worked = (pack.sections.find(s => s.label === 'What they worked on recently') || {}).lines || [];
-  A.ok(worked.some(l => /Ship the StarNet beta/.test(l)), 'a user run appears');
+  A.ok(worked.some(l => /Ship the 1Ultra beta/.test(l)), 'a user run appears');
   A.ok(worked.some(l => /Refactor the belt router/.test(l)), 'a named-workstream user run appears');
   A.ok(!worked.some(l => /Busywork|cron digest|workshop build/.test(l)), 'internal-stream runs are excluded');
   A.ok(!worked.some(l => /Ancient task/.test(l)), 'out-of-window (>7d) run is excluded');

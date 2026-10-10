@@ -1,6 +1,6 @@
 # Lead magnet benchmarks
 
-**Read this first.** These are general ranges from the upstream author, given without sources. StarNet has not verified them. Real results depend on the audience, the niche, the traffic and the quality of the offer. Use the ranges to sanity-check a plan and to set a first target, label them as rough whenever you show them, and replace them with the Commander's own numbers as soon as those exist.
+**Read this first.** These are general ranges from the upstream author, given without sources. 1Ultra has not verified them. Real results depend on the audience, the niche, the traffic and the quality of the offer. Use the ranges to sanity-check a plan and to set a first target, label them as rough whenever you show them, and replace them with the Commander's own numbers as soon as those exist.
 
 ## Sign-up rate on a landing page
 

@@ -2,7 +2,7 @@
    2026-07-17).
 
    THE BUG: /api/run stamped the away clock ONCE at run start. A long "watch the model work" session (the
-   Commander commissioning real work and watching it stream) had no pointer/keyboard input in the StarNet window,
+   Commander commissioning real work and watching it stream) had no pointer/keyboard input in the 1Ultra window,
    so 15 minutes into their OWN run the sidecar flipped away:true and night-shift beats started firing WHILE the
    Commander sat there working — "starnet constantly thinks I'm idle when clearly I'm working".
 
@@ -85,7 +85,7 @@ function kill(child) { return new Promise(r => { try { child.on('exit', () => r(
   const B = 'http://' + HOST + ':' + port;
   try {
     const token = await bootToken(B, B);
-    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     const status = async () => (await fetch(B + '/api/nightshift/status', { headers })).json();
 
     // arm the shift by raising the dial (the same call a live station makes).

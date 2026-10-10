@@ -1,6 +1,6 @@
 /* node test/browser-station-privacy.test.js — ONLY the Commander at COMMS may drive the shared station browser.
    Release review 2026-09-30: the station browser carries the Commander's sign-ins and open tabs, and 'interactive' is
-   also the surface of Telegram/Discord chats with approvals on (including allowed group chats), STARNET REMOTE phone
+   also the surface of Telegram/Discord chats with approvals on (including allowed group chats), 1ULTRA REMOTE phone
    runs and group sessions. Those must browse in a private browser. Pins the composition-root wiring (an injected-deps
    unit test cannot see it): the station view is granted only on surface 'interactive' AND stationBrowser:true, and only
    the COMMS /api/run call passes stationBrowser. Plus the view itself: a non-interactive request gets no station view. */

@@ -72,7 +72,7 @@ module.exports = (async () => {
     A.eq(I.reasoningPresetsFor(item('gpt-5.5')).map(x => x.effort), ['low', 'medium', 'high', 'xhigh'], 'dock: MAX reaches xhigh');
     A.eq(I.effortShown('none', item('gpt-5.5')).label, 'OFF', 'dock: gpt-5.5 OFF is real');
     A.eq(I.clampEffortForModel('none', item('gpt-5')), 'medium', 'dock: gpt-5 has no OFF — lands on its default');
-    A.eq(I.effortShown('none', item('gpt-5.6-sol')).label, 'OFF', 'dock: gpt-5.6 says OFF (StarNet sends none), not AUTO');
+    A.eq(I.effortShown('none', item('gpt-5.6-sol')).label, 'OFF', 'dock: gpt-5.6 says OFF (1Ultra sends none), not AUTO');
     A.eq(I.effortShown('none', item('gpt-4.1')).label, 'OFF', 'dock: gpt-4.1 says OFF (it does not reason)');
     A.eq(I.effortShown('none', item('gpt-5.5-pro')).label, 'AUTO', 'dock: an unknown model is AUTO');
     A.ok(/can't combine/.test(publicModel(m['gpt-5.6-sol']).reasoningNote), 'the note reaches the listing');
@@ -165,7 +165,7 @@ module.exports = (async () => {
     await collect(run, { model: 'deepseek-flash', messages: next, tools: TOOLS, reasoningEffort: 'high' });
     const sent = ep.posts[1].messages.find(x => x.tool_calls);
     A.eq(sent.reasoning_content, 'I should read the file first.', 'the captured reasoning rides back on its own turn');
-    A.eq(sent.reasoning, undefined, 'StarNet\'s parking field never reaches the wire');
+    A.eq(sent.reasoning, undefined, '1Ultra\'s parking field never reaches the wire');
     A.eq(JSON.stringify(next), before, 'the durable transcript is never mutated');
     // thinking OFF: plain schema, nothing owed
     ep.posts.length = 0;

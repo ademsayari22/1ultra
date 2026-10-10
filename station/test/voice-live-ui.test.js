@@ -34,8 +34,8 @@ assert.match(source, /noiseFloor\s*\+\s*\(outputActive\s*\?\s*0\.025\s*:\s*0\.00
 assert.doesNotMatch(source, /durationMs\s*>=\s*20000/, 'the former 20-second hard cutoff is removed');
 assert.match(source, /scheduleReconnect\(/, 'lost microphones enter the reconnect state machine');
 assert.match(source, /approvalCommand\(lower\)/, 'run-scoped approvals can be answered by an explicit voice command');
-assert.match(source, /agentCommand\(value,\s*lower\)/, 'voice can select the active Starnet agent without provider coupling');
-assert.match(source, /Harness\.getProv/, 'the controller reports the active Starnet provider');
+assert.match(source, /agentCommand\(value,\s*lower\)/, 'voice can select the active 1Ultra agent without provider coupling');
+assert.match(source, /Harness\.getProv/, 'the controller reports the active 1Ultra provider');
 assert.doesNotMatch(source, /CODEX OAUTH/, 'provider-agnostic voice UI does not claim Codex is required');
 assert.match(source, /attachCoordinator\(\{\s*onState,\s*onAssistant,\s*onOutputLevel,\s*onTiming[\s\S]*?onSpeechInterrupted[\s\S]*?\}\)/, 'live controller subscribes to real agent output levels');
 assert.match(source, /bar\.dataset\.src\s*=\s*cell\.src/, 'wave history preserves which side of the conversation produced each sample');
@@ -48,7 +48,7 @@ assert.match(chatSource, /Local Live voice stopped\./, '/voice live toggles the 
 assert.doesNotMatch(chatSource, /Hands-free voice mode toggled\./, 'slash command no longer activates the legacy hands-free loop');
 assert.match(voiceSource, /const endFailed\s*=\s*error\s*=>[\s\S]*?onSpeakEnd\(\)[\s\S]*?onFail/, 'media failures clear speaking and meter state before the queue advances');
 assert.match(voiceSource, /currentAudioCleanup/, 'interrupted blob playback has an explicit URL cleanup path');
-assert.match(css, /\.live-voice-panel\s*\{[^}]*position:\s*fixed/s, 'controller follows the user across StarNet views');
+assert.match(css, /\.live-voice-panel\s*\{[^}]*position:\s*fixed/s, 'controller follows the user across 1Ultra views');
 assert.match(css, /\.lv-head\s*\{[^}]*cursor:\s*grab/s, 'header advertises the drag affordance');
 assert.match(css, /\.lv-wave i\[data-src="self"\]/, 'the user side of the shared waveform has an explicit visual contract');
 assert.match(css, /\.lv-wave i\[data-src="agent"\]/, 'the agent side of the shared waveform has an explicit visual contract');

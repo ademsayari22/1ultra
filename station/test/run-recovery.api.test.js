@@ -145,14 +145,14 @@ function fakeProvider(argsRaw, browserFixture) {
   async function refreshToken() { apiToken = await bootToken(base(), base()); }
   await refreshToken();
   async function request(method, route, body) {
-    const headers = { 'Content-Type': 'application/json' }; if (apiToken) headers['X-StarNet-Token'] = apiToken;
+    const headers = { 'Content-Type': 'application/json' }; if (apiToken) headers['X-1Ultra-Token'] = apiToken;
     const response = await fetch(base() + route, { method, headers, body: body == null ? undefined : JSON.stringify(body) });
     const text = await response.text(); let value; try { value = JSON.parse(text); } catch (_) { value = text; }
     return { status: response.status, body: value };
   }
   async function streamRun(body) {
     const response = await fetch(base() + '/api/run', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': apiToken }, body: JSON.stringify(body)
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': apiToken }, body: JSON.stringify(body)
     });
     if (!response.ok) return { status: response.status, events: [], text: await response.text() };
     const events = []; const reader = response.body.getReader(); const decoder = new TextDecoder(); let buf = '';

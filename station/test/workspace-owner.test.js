@@ -1,4 +1,4 @@
-/* node test/workspace-owner.test.js — process-wide ownership for StarNet's single-writer stores. */
+/* node test/workspace-owner.test.js — process-wide ownership for 1Ultra's single-writer stores. */
 'use strict';
 const fs = require('node:fs');
 const os = require('node:os');

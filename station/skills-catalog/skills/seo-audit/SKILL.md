@@ -131,4 +131,4 @@ The report exists and you re-read it; every finding has a URL and an observation
 
 *Needs the DISH (web_fetch, web_request, web_search, browser.navigate, browser.get_text, browser.network, browser.screenshot) and the INTEL CAB (fs.write).*
 
-Adapted for StarNet from seo-audit (Corey Haines), MIT.
+Adapted for 1Ultra from seo-audit (Corey Haines), MIT.

@@ -1,4 +1,4 @@
-/* STARNET — recipefit.test.js : locks the CONTEXT-DRIVEN recipe shelf.
+/* 1ULTRA — recipefit.test.js : locks the CONTEXT-DRIVEN recipe shelf.
 
    The point of RecipeFit is that a card on the READY shelf makes a CLAIM about this station ("2 projects
    granted, and nothing watches them"). Every claim is a promise the harness has to be able to back, so the

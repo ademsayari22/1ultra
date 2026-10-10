@@ -1,6 +1,6 @@
 /* node test/plugin-windows.test.js — PLUGIN WINDOWS (plugin extensions phase 1, 2026-09-29).
 
-   A plugin's `screens` open as real StarNet windows around a sandboxed page the sidecar serves from /plugin-ui/.
+   A plugin's `screens` open as real 1Ultra windows around a sandboxed page the sidecar serves from /plugin-ui/.
    These assertions pin what makes that safe and honest:
      - the manifest's screens are validated (an id keys a window, a title is rendered, an entry becomes a path);
      - a window-only plugin (screens, no code) is valid and never require()d;

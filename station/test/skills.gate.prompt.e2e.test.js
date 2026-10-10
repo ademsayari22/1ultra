@@ -102,7 +102,7 @@ function seed(ws) {
   const B = 'http://' + HOST + ':' + port;
   try {
     const token = await bootToken(B, B);
-    const hdr = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    const hdr = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     /* One /api/run POST produces MORE than one upstream call: the run itself plus aux self-talk
        (session titling and friends), which carry their own minimal system prompts. Taking the LAST
        captured request reads the titling call and finds no skill index — that cost a debugging pass,

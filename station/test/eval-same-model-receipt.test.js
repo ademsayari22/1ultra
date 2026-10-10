@@ -18,7 +18,7 @@ try {
     platform: { platform: process.platform, arch: process.arch }, provenance: { verified: true }
   } });
   const subjectFile = join(temp, 'subject.json'), referenceFile = join(temp, 'reference.json');
-  writeFileSync(subjectFile, JSON.stringify(manifest('StarNet', '0.8.5', 'a'.repeat(40), 'b'.repeat(40))));
+  writeFileSync(subjectFile, JSON.stringify(manifest('1Ultra', '0.8.5', 'a'.repeat(40), 'b'.repeat(40))));
   writeFileSync(referenceFile, JSON.stringify(manifest('Hermes Agent', contract.reference.version, contract.reference.commit, contract.reference.sourceTree)));
   const probe = index => ({
     schemaVersion: 'starnet.eval.same-model-probe.v1', generatedAt: new Date().toISOString(),
@@ -36,7 +36,7 @@ try {
   A.eq(green.status, 0, 'three exact same-model attempts produce a green receipt' + (green.stderr ? `: ${green.stderr.trim()}` : ''));
   const receipt = JSON.parse(readFileSync(receiptFile, 'utf8'));
   A.ok(receipt.result.pass && receipt.candidateBound && receipt.referenceBound, 'receipt is green and binds both executable identities');
-  A.eq(receipt.result.measurements.starnet.firstOutputMs.median, 202, 'receipt reports the StarNet median');
+  A.eq(receipt.result.measurements.starnet.firstOutputMs.median, 202, 'receipt reports the 1Ultra median');
   A.eq(receipt.result.measurements.reference.totalMs.median, 602, 'receipt reports the reference median');
   A.eq(receipt.evidence.probes.length, 3, 'receipt hashes every raw probe');
   const verify = spawnSync(process.execPath, ['scripts/eval/runner.mjs', 'verify-receipt', '--receipt', receiptFile], { cwd: root, encoding: 'utf8' });

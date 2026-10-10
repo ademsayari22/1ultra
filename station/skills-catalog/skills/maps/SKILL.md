@@ -28,7 +28,7 @@ Services: Nominatim (OpenStreetMap geocoding), the Overpass API (OpenStreetMap p
 ## Rules for every call
 
 - **Use `web_request`** (GET unless stated). Each call can ask the Commander for approval, so plan the fewest calls that answer the question.
-- **Identify yourself.** Always send the header `"User-Agent": "StarNet maps skill"`. The OpenStreetMap services refuse or throttle anonymous browser-like clients.
+- **Identify yourself.** Always send the header `"User-Agent": "1Ultra maps skill"`. The OpenStreetMap services refuse or throttle anonymous browser-like clients.
 - **Rate limits:** at most 1 request per second to Nominatim and to the routing server, no bulk geocoding, no scraping. Reuse results you already have in this conversation instead of asking again.
 - **URL-encode** every value you put in a query string (spaces, commas, quotes, brackets, semicolons, newlines).
 - **Response window:** `web_request` returns about 8,000 characters of body. Keep `limit` small (3-5 for geocoding, about 10 for places) and use the compact CSV output for place lists.
@@ -111,7 +111,7 @@ Same request as **distance**, with `steps=true`. The steps sit in `routes[0].leg
 Step lists are large: a 4 km walk is about 30,000 characters, far past the `web_request` window. So:
 - For a short trip (under about 1 km), `web_request` with `steps=true` works.
 - For a longer trip, report the totals from **distance** and give the Commander a directions link that opens the full route: `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=<lat1>%2C<lon1>%3B<lat2>%2C<lon2>` (`fossgis_osrm_foot` for walking, `fossgis_osrm_bike` for cycling). Note that this link uses latitude,longitude.
-- If the WORKBENCH is placed and the Commander wants the steps in chat, save the response with `shell.exec` (`curl -s -A "StarNet maps skill" -o route.json "<the routing URL>"`) and page through it with `fs.read`.
+- If the WORKBENCH is placed and the Commander wants the steps in chat, save the response with `shell.exec` (`curl -s -A "1Ultra maps skill" -o route.json "<the routing URL>"`) and page through it with `fs.read`.
 
 ## timezone: timezone for coordinates
 
@@ -162,4 +162,4 @@ Put the smaller latitude and longitude first. Sort by distance from the box cent
 
 *Needs the DISH for `web_request`. The WORKBENCH is optional, for long turn-by-turn lists.*
 
-Adapted for StarNet from maps (Mibayy), MIT.
+Adapted for 1Ultra from maps (Mibayy), MIT.

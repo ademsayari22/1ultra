@@ -1,5 +1,5 @@
 /* node test/reasoning-migration-0125.test.js — the 0.12.5 reasoning migration keeps what an upgraded station RAN.
-   0.12.4's dock showed every OpenAI-API / xAI / Grok / DeepSeek / StarNet Managed model locked at OFF and saved it,
+   0.12.4's dock showed every OpenAI-API / xAI / Grok / DeepSeek / 1Ultra Managed model locked at OFF and saved it,
    while the adapter sent no reasoning_effort. 0.12.5 sends the saved level, so without this migration an upgrade
    would silently turn reasoning OFF for OpenAI/xAI/DeepSeek users and switch paid thinking ON for Managed users.
    app.js is not node-loadable, so the migration is lifted from source (like station-default-wire.test.js). */
@@ -62,7 +62,7 @@ function migrate(saved) {
   A.eq(r.calls[1], ['set', 'none', 'starnet'], 'Managed keeps OFF on the page wire');
 }
 
-// ---- StarNet Managed station: nothing was sent in 0.12.4, so the onboarding MEDIUM must not switch thinking on ----
+// ---- 1Ultra Managed station: nothing was sent in 0.12.4, so the onboarding MEDIUM must not switch thinking on ----
 {
   const r = migrate({ prov: 'starnet', reasoningEffort: 'medium',
     agent: { id: 'agent', model: 'anthropic/claude-sonnet-5', provider: 'starnet', reasoningEffort: 'medium' },

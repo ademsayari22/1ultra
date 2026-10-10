@@ -160,7 +160,7 @@ fs.renameSync = function(src,dst){
   const B = 'http://' + HOST + ':' + live.port;
   try {
     const token = await bootToken(B, B);
-    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     const post = (p, b) => fetch(B + p, { method: 'POST', headers, body: JSON.stringify(b) });
     await post('/api/workshop/grant', { agentId: 'builder', on: true });
     await post('/api/workshop/queue', { agentId: 'builder', id: 'item-plan-' + mode, title: 'Durability plan ' + mode });
@@ -197,7 +197,7 @@ fs.renameSync = function(src,dst){
   const B = 'http://' + HOST + ':' + firstBoot.port;
   try {
     const token = await bootToken(B, B);
-    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     const post = (p, b) => fetch(B + p, { method: 'POST', headers, body: JSON.stringify(b) });
 
     // 1. build the PLAN — the deliverable shape that used to make Implement a pure file copy.

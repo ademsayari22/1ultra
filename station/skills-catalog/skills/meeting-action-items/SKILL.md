@@ -85,6 +85,6 @@ Create or update only the approved records, each carrying meeting provenance (ti
 
 *Needs the CABINET to read notes files. Uses the station task board or a connected tracker for the records.*
 
-Adapted for StarNet from meeting-action-items (Ben Barclay), MIT.
+Adapted for 1Ultra from meeting-action-items (Ben Barclay), MIT.
 
 *Task-board steps (task.list, task.create) need the ORCHESTRATOR, which every run the Commander starts carries. In a scheduled run, list those updates in the report instead of making them.*

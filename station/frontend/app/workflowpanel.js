@@ -1,4 +1,4 @@
-/* STARNET — workflowpanel.js : the DOCKED WORKFLOW PANEL of REFIT (2026-09-22, Andrew's rulings).
+/* 1ULTRA — workflowpanel.js : the DOCKED WORKFLOW PANEL of REFIT (2026-09-22, Andrew's rulings).
 
    One card for the whole line, docked to the side of build mode — NOT a modal. The floor stays visible
    and interactive: clicking the INBOX, any BAY or a LOOP/JOINER/MERGER/SPLITTER gate of a line (or the
@@ -1089,7 +1089,7 @@ const WorkflowPanel = (() => {
       if (rv) html += '<div class="lt-reveal" role="status"><div class="trg-form-k">YOUR KEY — SHOWN ONCE</div>'
         + '<code class="lt-code lt-key">' + esc(rv.secret) + '</code>'
         + '<div class="wf-row"><button type="button" class="bb sm refit-primary" data-lt-copy="' + esc(rv.secret) + '">COPY KEY</button><button type="button" class="bb sm" id="lt-reveal-done">I SAVED IT</button></div>'
-        + '<p class="wf-help">Send it as the <b>X-StarNet-Hook-Key</b> header (or <b>Authorization: Bearer …</b>, or <b>?key=</b> on the URL). StarNet keeps only a fingerprint of it: once this box closes it cannot be shown again. Lost it? Make a new key.</p></div>';
+        + '<p class="wf-help">Send it as the <b>X-1Ultra-Hook-Key</b> header (or <b>Authorization: Bearer …</b>, or <b>?key=</b> on the URL). 1Ultra keeps only a fingerprint of it: once this box closes it cannot be shown again. Lost it? Make a new key.</p></div>';
     }
     html += '<div class="wf-row lt-acts"><button type="button" class="bb sm" data-lt-act="toggle">' + (t.enabled ? 'PAUSE' : 'RESUME') + '</button>'
       + '<button type="button" class="bb sm" data-lt-act="edit">EDIT</button>'
@@ -1257,8 +1257,10 @@ const WorkflowPanel = (() => {
       const ln = lineName();
       const name = (ln ? ln + ' — ' : '') + (prompt.length > 48 ? prompt.slice(0, 45) + '…' : prompt);
       const refuse = m => { hold(false); H.sfx('bad'); say('✕ ' + m, true); };
-      // FIRES AT a bay: the agent that runs + WHICH of its bays (multi-bay; cron-store keeps dockId additively)
-      api('/api/cron', 'POST', { name, prompt, schedule, agentId, dockId, provider: H.provider(), tz, runsLine: true }).then(async ({ status, j: r }) => {
+      // FIRES AT a bay: the agent that runs + WHICH of its bays (multi-bay; cron-store keeps dockId additively).
+      // No provider: the routine inherits its agent's (or the station default's) model AND provider together, exactly
+      // like the ROUTINES window — freezing the dock's current wire here paired one provider with another's model (#24 class).
+      api('/api/cron', 'POST', { name, prompt, schedule, agentId, dockId, tz, runsLine: true }).then(async ({ status, j: r }) => {
         if (r && r.error) return refuse(r.error);
         if (r && r.declined) return refuse(r.message || 'this routine name was deleted before — reword the task');
         if (r && r.duplicate) return refuse('a similar routine already exists' + (r.job && r.job.name ? ' ("' + r.job.name + '")' : '') + ' — reword the task; nothing new was created');

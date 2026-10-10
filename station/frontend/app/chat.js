@@ -1,4 +1,4 @@
-/* STARNET — chat.js : the in-game COMMS panel.
+/* 1ULTRA — chat.js : the in-game COMMS panel.
    Talking to your agent is a REAL streaming model call (via Harness). While a reply
    the agent walks to its workstation and types (World.setActivity('task')).
    Supports: preloaded history (resume), and an "awaiting purpose" first-message mode. */
@@ -494,7 +494,7 @@ const Chat = (() => {
     const ask = index => {
       if (!isActiveWs(ws) || index >= calls.length) return;
       const call = calls[index];
-      toolLine('before the restart, did ' + String(call.name || 'this action') + ' actually happen? StarNet will not run it again while the answer is uncertain.', true);
+      toolLine('before the restart, did ' + String(call.name || 'this action') + ' actually happen? 1Ultra will not run it again while the answer is uncertain.', true);
       choices([
         { label: 'It happened', value: 'happened' },
         { label: 'It did not happen', value: 'did_not_happen' },
@@ -528,7 +528,7 @@ const Chat = (() => {
       if (review && announce && isActiveWs(ws) && !recoveryNotices.has(review.runId)) {
         recoveryNotices.add(review.runId);
         const names = (review.uncertain || []).map(x => x.name || 'action').join(', ');
-        toolLine('recovery paused — ' + (names || 'an action') + ' may already have happened. StarNet will not repeat it; verify the outcome before continuing.', true);
+        toolLine('recovery paused — ' + (names || 'an action') + ' may already have happened. 1Ultra will not repeat it; verify the outcome before continuing.', true);
         offerRecoveryReview(review, ws);
       }
       return review ? 'review' : 'none';
@@ -547,11 +547,18 @@ const Chat = (() => {
     return 'started';
   }
 
+  let lastDegradedLine = '';   // the degraded reason already named in COMMS (once per reason, reset when the service answers)
   async function probeReconnect() {
     if (!interruptedStreams.size) { reconnectTimer = 0; return; }
-    let alive = false;
-    try { const r = await fetch('/api/health', { cache: 'no-store' }); alive = !!(r && r.ok); } catch (_) { alive = false; }
+    let alive = false, degraded = '';
+    try {
+      const r = await fetch('/api/health', { cache: 'no-store' }); alive = !!(r && r.ok);
+      // A service that is up but holding itself degraded (crash-loop breaker, workspace-owner hold) says why in its
+      // 503 text. Name it once instead of polling silently forever (link-down 2026-10-07).
+      if (r && r.status === 503) { const t = String(await r.text() || '').trim(); if (/^degraded/i.test(t)) degraded = t; }
+    } catch (_) { alive = false; }
     if (alive) {
+      lastDegradedLine = '';
       // report each interrupted stream once. Only the DISPLAYED stream draws a line (same rule as tool/error
       // lines); a background stream's flag is cleared quietly — its error row already recorded the failure.
       const wasActive = activeWs && interruptedStreams.has(activeWs.id);
@@ -563,6 +570,10 @@ const Chat = (() => {
         if (outcome === 'none' || outcome === 'unavailable') toolLine('connection restored — no safe automatic continuation was available; use Try again.', true);
       }
     } else {
+      if (degraded && degraded !== lastDegradedLine && activeWs && interruptedStreams.has(activeWs.id)) {
+        lastDegradedLine = degraded;
+        toolLine('station service ' + degraded + (Harness.canRestartEngine && Harness.canRestartEngine() ? ' — restart it from LINK DOWN at the top.' : ''), true);
+      }
       reconnectTimer = setTimeout(probeReconnect, 3000);   // still down — keep watching
     }
   }
@@ -1031,14 +1042,14 @@ const Chat = (() => {
       return;
     }
     // LARGE-PASTE CONTEXT GUARD: the 100K composer ceiling is a transport allowance, not a promise that every
-    // model has room for 100K characters plus StarNet's system/tool context. When the live catalog or an honest
+    // model has room for 100K characters plus 1Ultra's system/tool context. When the live catalog or an honest
     // per-conversation projection proves the selected model is too small, keep the paste byte-for-byte in the
     // composer and explain the remedy instead of clearing it into a provider context-overflow failure.
     const contextIssue = t ? composerContextIssue(activeWs, t) : null;
     if (contextIssue) {
       const model = (typeof Harness !== 'undefined' && Harness.getModel) ? Harness.getModel() : 'this model';
       const limit = (typeof U !== 'undefined' && U.tokens) ? U.tokens(contextIssue.limit) : contextIssue.limit;
-      const note = 'Paste kept — it may exceed ' + model + '\'s ' + limit + '-token context once StarNet\'s working context is included. Choose a larger-context model or split the text; nothing was sent.';
+      const note = 'Paste kept — it may exceed ' + model + '\'s ' + limit + '-token context once 1Ultra\'s working context is included. Choose a larger-context model or split the text; nothing was sent.';
       localLine(note);
       if (typeof StationUI !== 'undefined' && StationUI.notify) StationUI.notify('paste kept — selected model context is too small', 'warn');
       return;
@@ -1268,7 +1279,7 @@ const Chat = (() => {
     const dataUrl = await readAsDataUrl(file);
     const tok = (typeof Harness !== 'undefined' && Harness.apiToken) ? String(Harness.apiToken() || '') : '';
     const headers = { 'Content-Type': 'application/json' };
-    if (tok) headers['X-StarNet-Token'] = tok;
+    if (tok) headers['X-1Ultra-Token'] = tok;
     const res = await fetch('/api/attachments', { method: 'POST', headers, body: JSON.stringify({ agent: attachAgentId(), name: file.name || 'file', dataUrl }) });
     const j = await res.json().catch(() => ({}));
     if (!res.ok || !j || !j.ok) throw new Error((j && j.error) || ('upload HTTP ' + res.status));
@@ -1310,7 +1321,7 @@ const Chat = (() => {
     // best-effort: prune the uploaded bytes so an attach-then-remove doesn't orphan a file in the workspace
     if (entry.ref && entry.ref.path) {
       const tok = (typeof Harness !== 'undefined' && Harness.apiToken) ? String(Harness.apiToken() || '') : '';
-      const headers = { 'Content-Type': 'application/json' }; if (tok) headers['X-StarNet-Token'] = tok;
+      const headers = { 'Content-Type': 'application/json' }; if (tok) headers['X-1Ultra-Token'] = tok;
       fetch('/api/attachments', { method: 'POST', headers, body: JSON.stringify({ op: 'delete', agent: attachAgentId(), path: entry.ref.path }) }).catch(() => {});
     }
     pendingAtts.splice(i, 1);
@@ -1617,8 +1628,8 @@ const Chat = (() => {
     if (cronSession && !busy && !readable) next.push({
       role: 'system', sys: true, error: true, transcriptPending: true,
       content: reachable
-        ? '⚠ output has not arrived yet — StarNet will retry automatically when this session opens'
-        : '⚠ couldn\'t load the output yet — StarNet will retry automatically when this session opens'
+        ? '⚠ output has not arrived yet — 1Ultra will retry automatically when this session opens'
+        : '⚠ couldn\'t load the output yet — 1Ultra will retry automatically when this session opens'
     });
     if (JSON.stringify(next) === JSON.stringify(ws.history || [])) return reachable;
     ws.history = next;
@@ -1628,6 +1639,7 @@ const Chat = (() => {
     if (log) log.innerHTML = '';
     renderHistory(); replayChannel(); syncStatus(); maybeEmptyState();
     read.repaint = false;
+    if (typeof Briefing !== 'undefined' && Briefing.presentFor) { try { Briefing.presentFor(ws.id).catch(() => {}); } catch (_) {} }   // the repaint wiped the chips
     pinLoadedHistoryAfterLayout(loadToken);
     return reachable;
   }
@@ -1689,6 +1701,10 @@ const Chat = (() => {
     // every other id, re-checks the server (undecided only), and the card itself is pinned to this session.
     if (activeWs && typeof WorkshopStore !== 'undefined' && WorkshopStore.presentFor) {
       try { WorkshopStore.presentFor(activeWs.id).catch(() => {}); } catch (_) {}
+    }
+    // THE ONE RETURN REPORT: opening the briefing session offers each briefed item's own session as a chip
+    if (activeWs && typeof Briefing !== 'undefined' && Briefing.presentFor) {
+      try { Briefing.presentFor(activeWs.id).catch(() => {}); } catch (_) {}
     }
     pinLoadedHistoryAfterLayout(historyPin);
     // Reconcile a run that died while this page was closed or the sidecar restarted. Only the server's durable
@@ -1763,7 +1779,7 @@ const Chat = (() => {
     }
     return kept;
   }
-  // char/4 is StarNet's calibrated dialogue estimate, but it can undercount dense Unicode. Half the real UTF-8
+  // char/4 is 1Ultra's calibrated dialogue estimate, but it can undercount dense Unicode. Half the real UTF-8
   // bytes is a deliberately cautious second lens that still lets a full 100K English paste fit a 128K model.
   function contextEstimateMessages(messages) {
     const src = Array.isArray(messages) ? messages : [];
@@ -2109,7 +2125,7 @@ const Chat = (() => {
     // click drops the desk. 'later' just dismisses this view of it — the step is still owed, so the next open
     // of this session says so again (it stops for good the moment the desk exists).
     const chips = choices([{ label: '▤ PLACE ITS DESK', value: 'desk' }, { label: 'later', value: 'later', skip: true }], item => {
-      if (item && item.value === 'desk' && App.openDeskPlacement) App.openDeskPlacement();
+      if (item && item.value === 'desk' && App.openDeskPlacement) App.openDeskPlacement(id);
     });
     if (chips) chips.classList.add('comms-desk-prompt');
   }
@@ -2731,7 +2747,7 @@ const Chat = (() => {
   function workspaceDir(agentId) {
     const aid = agentId || 'agent';
     if (_wsDirCache.has(aid)) return _wsDirCache.get(aid);
-    // header auth only: the hardened window.fetch (harness.js) attaches X-StarNet-Token to every /api/ URL
+    // header auth only: the hardened window.fetch (harness.js) attaches X-1Ultra-Token to every /api/ URL
     const p = fetch('/api/workspace/dir?agent=' + encodeURIComponent(aid), { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null).then(j => (j && j.dir) ? String(j.dir) : '').catch(() => '');
     _wsDirCache.set(aid, p);
@@ -3051,6 +3067,27 @@ const Chat = (() => {
   // a live consent prompt: the agent wants to do something that needs approval (a file write today). The run is
   // PAUSED on the sidecar until the Commander answers — once / always (this kind) / full access (everything this
   // session) / deny. Answering resumes the stream automatically.
+  /* THE GLANCE LINE (user report 10-08). argsSummary is the WHOLE request now (consentSummary stopped clipping it at
+     77 chars, which hid a long command's tail), so it never goes into a phrase, a toast or a notification raw: those
+     get one short line, and the card carries the whole thing in INSPECT COMPLETE REQUEST (permissionRow). */
+  function glance(s, n) { const one = String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); n = n || 96; return one.length > n ? one.slice(0, n - 1) + '…' : one; }
+  function requestArgs(s) { try { const o = JSON.parse(String(s || '')); return o && typeof o === 'object' && !Array.isArray(o) ? o : null; } catch (_) { return null; } }
+  // what a consent card's INSPECT panel holds: { label, text } or null. A file change shows the mutation, a routine what
+  // it runs each time; any other request shows its arguments in full. Cards the sidecar words itself (station build /
+  // control, folder trust, a login host, a question) and a bare short value the phrase already shows get no panel.
+  function consentInspect(p) {
+    const t = String((p && p.tool) || ''), raw = String((p && p.argsSummary) || '');
+    if (/^fs[._](?:write|append|edit|patch)$/.test(t)) return { label: 'Inspect proposed change (secret patterns redacted)', text: raw || '(payload unavailable)' };
+    if (/^routine[._](?:create|manage)$/.test(t)) { const o = requestArgs(raw); return { label: 'What it will do each run', text: (o && o.prompt) ? String(o.prompt) : raw || '(payload unavailable)' }; }
+    if (!raw.trim() || /^station[._]/.test(t) || /^(?:path\.trust|browser\.login(?:\.done)?|brief\.ask)$/.test(t)) return null;
+    const o = requestArgs(raw), label = 'Inspect complete request (secret patterns redacted)';
+    if (!o) return glance(raw) === raw.trim() ? null : { label, text: raw };
+    // read as written, not as JSON: a Windows path shows C:\Users, never C:\\Users, and a command is the exact text
+    // that will run — so COPY COMMAND hands over something you can paste into a terminal
+    const text = Object.keys(o).map(k => k + ': ' + (typeof o[k] === 'string' ? o[k] : JSON.stringify(o[k], null, 2))).join('\n');
+    const command = /^(?:shell|terminal)[._]/.test(t) ? [o.cmd, o.command, o.input, o.data].find(v => typeof v === 'string' && v) : '';
+    return command ? { label, text, copy: command, copyLabel: 'COPY COMMAND' } : { label, text };
+  }
   function actionPhrase(ev) {
     const t = ev.tool || 'act';
     // a PLUGIN tool (plugin__<id>__<tool>): say whose code it is before what it does — checked first, so a plugin
@@ -3060,7 +3097,7 @@ const Chat = (() => {
       const host = typeof PluginHost !== 'undefined' ? PluginHost : null;
       const san = (s) => String(s || '').replace(/[^A-Za-z0-9_-]+/g, '_').replace(/^[_-]+|[_-]+$/g, '');   // plugin-tools.js sanitizePart
       const p = host && host.list ? host.list().find(x => x.id === pm[1] || san(x.id) === pm[1]) : null;
-      return 'use the ' + ((p && p.name) || pm[1]) + ' plugin tool “' + pm[2] + '”' + (ev.argsSummary ? ' ' + ev.argsSummary : '');
+      return 'use the ' + ((p && p.name) || pm[1]) + ' plugin tool “' + pm[2] + '”' + (ev.argsSummary ? ' ' + glance(ev.argsSummary) : '');
     }
     // the crew INSTALLING a plugin it wrote: say that it stays off until the Commander's own approval
     if (/^plugin[._]submit$/.test(t)) {
@@ -3069,7 +3106,13 @@ const Chat = (() => {
       return 'install the plugin it built' + (id ? ' “' + id + '”' : '') + ' — it stays OFF until you approve its code in ABILITIES → EXTENSIONS';
     }
     if (/notebook/.test(t)) return 'save a note to its memory';
-    if (/summon/.test(t)) return 'summon a new agent onto the crew' + (ev.argsSummary ? ' (' + ev.argsSummary + ')' : '');
+    if (/summon/.test(t)) return 'summon a new agent onto the crew' + (ev.argsSummary ? ' (' + glance(ev.argsSummary) + ')' : '');
+    // a command: name it in words, its text clipped to a glance; the card's inspect panel holds every character of it
+    if (/^(?:shell|terminal)[._]/.test(t)) {
+      const o = requestArgs(ev.argsSummary) || {};
+      const typed = /write$/.test(t), text = o.cmd || o.command || o.input || o.data;
+      return (typed ? 'type into a running process' : 'run a command') + (typeof text === 'string' && text ? ': ' + glance(text) : ev.argsSummary ? ' ' + glance(ev.argsSummary) : '');
+    }
     // NS-5 conversational path trust: a file was referenced OUTSIDE the agent's workspace — "Always" blesses
     // the whole project folder for future reads (revocable in Permissions); argsSummary is the proposed root.
     if (t === 'path.trust') return 'work with files in ' + (ev.argsSummary || 'a project folder') + ' (reads; "Always" or "Full access" trusts it for later)';
@@ -3082,7 +3125,7 @@ const Chat = (() => {
       try { target = JSON.parse(target).path || 'a file'; } catch (_) {}
       return 'change ' + target;
     }
-    if (/write|append|edit/.test(t)) return 'write ' + (ev.argsSummary || 'a file');
+    if (/write|append|edit/.test(t)) return 'write ' + (glance(ev.argsSummary) || 'a file');
     if (t === 'brief.ask') return 'ask you a quick question about the task';   // clarify card renders its own body
     // ROUTINES: say WHAT will run and WHEN, never the raw JSON (argsSummary may be clipped mid-object, so read fields
     // by pattern rather than JSON.parse). "Always" here lets the agent add and change routines without asking.
@@ -3097,14 +3140,14 @@ const Chat = (() => {
     // THE STATION BUILDER (2026-09-29): the card IS the plan — what gets built, where, who works each step. The sidecar
     // sends the plan's own summary (its dry run on a copy of the station), never the model's words.
     if (/^station[._]build$/.test(t)) { const plan = String(ev.argsSummary || '').split('\n')[0] || 'a planned change'; return 'build this on your station: ' + plan + (/\bUNDO\b/.test(plan) ? '' : ' One UNDO in Build mode takes it back.'); }
-    // MAKE A PROP (2026-10-01): the card names the object and what it costs in StarNet credits (the sidecar's own words)
+    // MAKE A PROP (2026-10-01): the card names the object and what it costs in 1Ultra credits (the sidecar's own words)
     if (/^station[._]make_prop$/.test(t)) return 'make a new prop: ' + (String(ev.argsSummary || '').split('\n')[0] || 'a new prop');
     // TEST A LINE (2026-10-01): the card names the line and the job it will send (the sidecar's own words)
     if (/^station[._]test_line$/.test(t)) return 'test ' + (String(ev.argsSummary || '').split('\n')[0] || 'a workflow line');
     if (/^station[._]start_line$/.test(t)) return 'set what starts ' + (String(ev.argsSummary || '').split('\n')[0] || 'a workflow line');
     // STATION CONTROL (2026-10-02): a settings change asked for in chat — the sidecar's catalog sentence, never raw JSON
     if (/^station[._](?:control|power)$/.test(t)) return String(ev.argsSummary || 'change a station setting').split('\n')[0];
-    return t.replace(/_/g, '.') + (ev.argsSummary ? ' ' + ev.argsSummary : '');
+    return t.replace(/_/g, '.') + (ev.argsSummary ? ' ' + glance(ev.argsSummary) : '');
   }
 
   /* IN-TURN CLARIFY CARD (2026-07-31, Hermes-parity). A brief.ask prompt rides the consent transport but is
@@ -3229,7 +3272,7 @@ const Chat = (() => {
       btns.appendChild(rest);
     }
     r.body.appendChild(btns);
-    // STARNET REMOTE: a paired phone can answer this question too (the sidecar then puts permission.response on this
+    // 1ULTRA REMOTE: a paired phone can answer this question too (the sidecar then puts permission.response on this
     // run's stream, as for an approval). Settle the card to what happened — it used to keep live options and "awaiting
     // your answer…" after the run had moved on, and a tap then did nothing while the card claimed it answered.
     if (typeof U !== 'undefined' && U.bus && U.bus.on && U.bus.off) {
@@ -3267,13 +3310,20 @@ const Chat = (() => {
     if (p && p.tool === 'brief.ask') return clarifyRow(p, ws);   // a question, not a grade — its own card
     const r = row('agent'); r.d.classList.add('tool'); r.d.classList.add('consent');
     r.body.appendChild(document.createTextNode('▣ ' + name + ' wants to ' + actionPhrase(p) + ' '));
-    if (/^(?:fs[._](?:write|append|edit|patch)|routine[._](?:create|manage))$/.test(String(p.tool || ''))) {
+    // INSPECT: an approval carries the request it approves, every character of it, one click away (user report 10-08:
+    // a long shell command showed 77 chars and a "…", and nothing on the card held the rest)
+    const inspect = consentInspect(p);
+    if (inspect) {
       const detail = document.createElement('details'); detail.className = 'consent-payload';
-      const label = document.createElement('summary');
-      label.textContent = /^routine/.test(String(p.tool)) ? 'What it will do each run' : 'Inspect proposed change (secret patterns redacted)';
-      const payload = document.createElement('pre'); payload.textContent = p.argsSummary || '(payload unavailable)';
-      if (/^routine/.test(String(p.tool))) { try { const o = JSON.parse(p.argsSummary || '{}'); if (o.prompt) payload.textContent = String(o.prompt); } catch (_) { /* clipped payload: the raw text above stays */ } }
-      detail.appendChild(label); detail.appendChild(payload); r.body.appendChild(detail);
+      const label = document.createElement('summary'); label.textContent = inspect.label;
+      const payload = document.createElement('pre'); payload.textContent = inspect.text;
+      const idle = inspect.copyLabel || 'COPY';
+      const copy = document.createElement('button'); copy.type = 'button'; copy.className = 'consent-btn quiet consent-copy'; copy.textContent = idle;
+      copy.onclick = () => copyText(inspect.copy || inspect.text).then(ok => {
+        copy.textContent = ok ? '✓ COPIED' : 'COPY FAILED: select the text above';
+        clearTimeout(copy.__t); copy.__t = setTimeout(() => { copy.textContent = idle; }, 1400);
+      });
+      detail.appendChild(label); detail.appendChild(payload); detail.appendChild(copy); r.body.appendChild(detail);
     }
     // the station builder's card: every step's instructions, one click away (the summary line is in the phrase above)
     if (/^station[._]build$/.test(String(p.tool || '')) && String(p.argsSummary || '').indexOf('\n') > 0) {
@@ -3351,7 +3401,7 @@ const Chat = (() => {
       mk('Deny', 'deny', 'deny', '✕ denied', true);
     }
     r.body.appendChild(btns);
-    // STARNET REMOTE: a paired phone can answer this same prompt. The sidecar then puts permission.response on
+    // 1ULTRA REMOTE: a paired phone can answer this same prompt. The sidecar then puts permission.response on
     // this run's own stream (harness re-emits it on U.bus). Settle the card to what actually happened, so the
     // desk never keeps live buttons on a question that was already answered elsewhere. The desk's own answer
     // also emits permission.response, but by then `decided` is set and this listener just unsubscribes.
@@ -4350,7 +4400,7 @@ const Chat = (() => {
             let j = null;
             try {
               const tok = (typeof Harness !== 'undefined' && Harness.apiToken) ? String(Harness.apiToken() || '') : '';
-              const headers = { 'Content-Type': 'application/json' }; if (tok) headers['X-StarNet-Token'] = tok;
+              const headers = { 'Content-Type': 'application/json' }; if (tok) headers['X-1Ultra-Token'] = tok;
               const rr = await fetch('/api/workshop/undo', { method: 'POST', headers, body: JSON.stringify({ agentId: agentId, runId: m.runId, destPath: destPath }) });
               j = await rr.json().catch(() => null);
               if (!rr.ok || !j || j.ok === false) j = null;
@@ -4397,7 +4447,7 @@ const Chat = (() => {
     implBtn.title = (plan && plan.action === 'apply') ? ('applies this patch to a new branch in ' + plan.root)
       : patchSaveOnly ? 'saves the .patch file only — it will NOT be applied to your project'
       : buildable ? ('has ' + who + ' BUILD what this describes — nothing is copied to a folder')
-      : ('saves the files to ' + ((plan && plan.dest) || 'your StarNet deliverables folder'));
+      : ('saves the files to ' + ((plan && plan.dest) || 'your 1Ultra deliverables folder'));
     // why a build can be refused, in the Commander's words — never a raw reason code.
     const implFailCopy = (reason) => {
       const r = String(reason || '');
@@ -4454,8 +4504,8 @@ const Chat = (() => {
       const saved = res.applied
         ? ('✓ implemented — applied to branch ' + (res.branch || '?') + (res.root ? (' in ' + res.root) : ''))
         : res.savedOnly
-          ? ('⚠ patch file saved to ' + (res.destPath || 'your StarNet deliverables folder') + ' — NOT applied to your project')
-          : ('✓ implemented — files saved to ' + (res.destPath || 'your StarNet deliverables folder'));
+          ? ('⚠ patch file saved to ' + (res.destPath || 'your 1Ultra deliverables folder') + ' — NOT applied to your project')
+          : ('✓ implemented — files saved to ' + (res.destPath || 'your 1Ultra deliverables folder'));
       decideNote(saved); sendNote(); settle(saved, false, res.applied ? '' : (res.destPath || ''));
     };
     acts.appendChild(implBtn);
@@ -7390,26 +7440,33 @@ const Chat = (() => {
   // Budget-stop legibility (2026-07-23): a 'budget' stop names WHICH spend cap fired and how big it is, in money
   // words — the old "reached this run's limit" read as a runtime setting and sent users hunting in the wrong
   // panel. Scope/cap ride the additive agent.run.end fields; an old sidecar omits them and gets the generic line.
-  function budgetStopLine(scope, capUsd) {
+  function budgetStopLine(scope, capUsd, atBalance) {
     // only show the $ figure when it renders honestly at cent precision (a sub-cent test cap would read "$0.00")
     const cap = (typeof capUsd === 'number' && isFinite(capUsd) && capUsd >= 0.01) ? '$' + capUsd.toFixed(2).replace(/\.00$/, '') + ' ' : '';
+    // atBalance (agent.run.end budgetCapIsBalance, additive): admission clamped this 1Ultra run's ceiling to the
+    // reported balance, so the run spent the wallet, not a cap the user chose — raising PER RUN would do nothing.
+    if (scope === 'run' && atBalance === true) return (cap ? 'used the ' + cap + 'left on your 1Ultra balance' : 'used what was left on your 1Ultra balance') + ' — add credits under SETTINGS → AI & MODELS to keep going';
     const what = scope === 'run' ? 'hit the ' + cap + 'per-run spend cap'
       : scope === 'agent' ? 'this agent hit its ' + cap + 'lifetime spend cap'
       : scope === 'day' ? 'hit the ' + cap + 'daily spend cap'
       : scope === 'global' ? 'hit the ' + cap + 'all-time spend cap'
       : 'hit a spend cap';
-    // A per-RUN stop says "raise", never "remove": a StarNet-credit run with PER RUN at 0 still stops at the
+    // A per-RUN stop says "raise", never "remove": a 1Ultra-credit run with PER RUN at 0 still stops at the
     // managed default (issue #53), so "remove it" would be an instruction that does nothing there.
-    return what + (scope === 'run' ? ' — raise it' : ' — raise or remove it') + ' in MISSION CONTROL → BUDGET';
+    // the caps live in SETTINGS › SPENDING LIMITS (MISSION CONTROL is only a room label; there is no BUDGET tab)
+    return what + (scope === 'run' ? ' — raise it' : ' — raise or remove it') + ' in SETTINGS › SPENDING LIMITS';
   }
-  // the budget stop's door: open SETTINGS straight on the BUDGET section (the same openTerm(key, section)
-  // mechanism friendlyerror's doors use), with retry alongside for after the user has raised the cap.
-  function offerBudgetDoor() {
+  // the budget stop's door: open SETTINGS straight on the SPENDING LIMITS section (the same openTerm(key, section)
+  // mechanism friendlyerror's doors use), with retry alongside for after the user has raised the cap. A stop at the
+  // 1Ultra balance gets the top-up door instead — Friendly's 'store' door, the one managed_credit already opens.
+  function offerBudgetDoor(atBalance) {
+    const topUp = (atBalance === true && typeof Friendly !== 'undefined' && Friendly.actionButton) ? Friendly.actionButton({ action: 'store' }) : null;
     choices([
-      { label: '$ OPEN BUDGET SETTINGS', value: 'budget' },
+      topUp ? { label: topUp.label, value: 'store' } : { label: '$ OPEN SPENDING LIMITS', value: 'budget' },
       { label: '↻ Try again', value: 'retry', quiet: true }
     ], it => {
       if (it && it.value === 'retry') { retryLast(); return; }
+      if (topUp) { topUp.run(); return; }
       try { if (typeof StationUI !== 'undefined' && StationUI.openTerm) StationUI.openTerm('settings', 'budget'); } catch (_) {}
     });
   }
@@ -7447,12 +7504,16 @@ const Chat = (() => {
     b.textContent = '⧉ copy diagnostics for a bug report';   // ⧉ = the house copy glyph (not the 📋 emoji)
     b.addEventListener('click', () => {
       b.disabled = true;
-      Diag.copy({ notify: false, context: context }).then(ok => {
-        b.textContent = ok ? '✓ diagnostics copied — paste into your report' : 'copy failed — try again';
-        if (!ok) { b.disabled = false; return; }
+      // onDone carries the report text: when the clipboard refuses (WebKit after the fetch), the report renders
+      // in this row as selectable text with its own in-gesture "copy again" — a retry of this button would only
+      // repeat the refusal, so it stays disabled and says where the report went.
+      Diag.copy({ notify: false, context: context, onDone: (ok, text) => {
+        b.textContent = ok ? '✓ diagnostics copied — paste into your report' : (text ? 'copy blocked — report shown below' : 'could not read diagnostics');
+        if (!ok && !text) { b.disabled = false; return; }   // nothing was read — a later retry can still succeed
+        if (!ok) { if (Diag.showBlock) { Diag.showBlock(rowEl, { text: text }); autoscroll(); } return; }
         if (typeof SFX !== 'undefined' && SFX.click) SFX.click();
         setTimeout(() => { try { rowEl.remove(); } catch (_) {} }, 2600);
-      });
+      } });
     });
     rowEl.appendChild(b);
     log.appendChild(rowEl); autoscroll();
@@ -7479,7 +7540,7 @@ const Chat = (() => {
      runs immediately. ↑/↓ move, Enter/Tab run, Esc closes. */
   let slashItems = [], slashSel = 0;
   let slashServerCommands = null, slashCatalogLoading = null, slashCatalogLoaded = null;
-  /* ---------- /goal AUTONOMOUS LOOP (StarNet's "Ralph loop") ----------
+  /* ---------- /goal AUTONOMOUS LOOP (1Ultra's "Ralph loop") ----------
      The loop STATE (goal / status / turnsUsed / subgoals / …) rides on the workstream record as ws.goalLoop, so a
      standing goal survives a reload/switch exactly like the thread history (workstreams.js carries the field through
      serialize()). GoalLoop (goalloop.js) owns the PURE parse + state machine; here we own the aux JUDGE model call
@@ -7541,7 +7602,7 @@ const Chat = (() => {
     Object.freeze({ name: 'reload-mcp', aliases: ['reload_mcp'], desc: 'refresh configured MCP connectors', argsHint: '[connector-id]', action: 'reload-mcp' }),
     Object.freeze({ name: 'reload-skills', aliases: ['reload_skills'], desc: 'refresh the slash skill catalog', action: 'reload-skills' }),
     Object.freeze({ name: 'debug', desc: 'show chat and slash debug state', action: 'debug' }),
-    Object.freeze({ name: 'version', aliases: ['v'], desc: 'show StarNet version information', action: 'version' })
+    Object.freeze({ name: 'version', aliases: ['v'], desc: 'show 1Ultra version information', action: 'version' })
   ]);
   function isSlashOpen() { const p = el('chat-slash'); return !!(p && !p.hidden); }
   function copyLastReply() {
@@ -7918,7 +7979,7 @@ const Chat = (() => {
       }
       return localLine('Loop: every ' + cur.label + ', ' + cur.fired + '/' + LOOP_MAX_ITERS + ' runs done'
         + (cur.skipped ? ', ' + cur.skipped + ' tick' + (cur.skipped === 1 ? '' : 's') + ' skipped (a run, a question or another stream had the floor)' : '')
-        + ' — "' + String(cur.prompt).slice(0, 60) + '". It stops if you close StarNet; /routine makes it permanent.');
+        + ' — "' + String(cur.prompt).slice(0, 60) + '". It stops if you close 1Ultra; /routine makes it permanent.');
     }
 
     const sp = raw.search(/\s/);
@@ -8136,7 +8197,7 @@ const Chat = (() => {
     } else localLine('Could not change approval mode.');
   }
   /* ---- reasoning effort — a REAL dial, not a status readout.
-     The old handler answered "Reasoning effort is not a separate StarNet toggle yet", which was simply false:
+     The old handler answered "Reasoning effort is not a separate 1Ultra toggle yet", which was simply false:
      Harness stores it per PROVIDER, persists it, the model dock sets it alongside model+provider, and every run
      payload carries it (harness.js chat()). The command just never reached any of that. */
   const REASONING_LEVELS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
@@ -8181,7 +8242,7 @@ const Chat = (() => {
       + '. Takes effect on your next message.' + reasoningModelNote());
   }
   /* ---- /fast — a shortcut onto that SAME dial.
-     StarNet has no separate "fast mode", and inventing one would be a lie — the old handler admitted as much and
+     1Ultra has no separate "fast mode", and inventing one would be a lie — the old handler admitted as much and
      then did nothing at all. Minimal reasoning effort IS what makes replies come back quickly and cheaply, so
      /fast drives the real control instead of pretending to be its own switch. */
   function fastCommand() {
@@ -8382,7 +8443,7 @@ const Chat = (() => {
       const j = r.ok ? await r.json() : null;
       if (j) {
         const bits = [];
-        if (j.app) bits.push('StarNet ' + j.app);
+        if (j.app) bits.push('1Ultra ' + j.app);
         if (j.harness && j.harness !== j.app) bits.push('harness ' + j.harness);
         if (j.node) bits.push('Node ' + j.node);
         return localLine('Version: ' + (bits.length ? bits.join(', ') : 'unknown') + '.');
@@ -8801,7 +8862,7 @@ const Chat = (() => {
   async function nextStageOf(agentId, tag, lineId, dockId) {
     try {
       const h = {}, tok = (typeof window !== 'undefined' && window.__STARNET_API_TOKEN__) || '';
-      if (tok) h['X-StarNet-Token'] = String(tok);
+      if (tok) h['X-1Ultra-Token'] = String(tok);
       // `lineId` = the line this work ENTERED on (work belongs to a line, 2026-08-07). The sidecar's plan is
       // still the decider — it refuses any id that is not this dock's own line — so this only ever narrows.
       const r = await fetch('/api/routing/chain?agentId=' + encodeURIComponent(agentId) + '&tag=' + encodeURIComponent(tag || '')
@@ -9081,6 +9142,9 @@ const Chat = (() => {
     const callNames = {};   // callId -> tool name (the frozen agent.tool_result has no name field)
     const seenDeliv = {};   // title -> true (one openable row per produced file)
     let runToolsOk = 0, runDeliv = 0, thisRunId = null;   // per-run work tally → the "rate the work" beat's size + delivery gate
+    // this run's own station.control estop.engage came back OK (its result names the action): the halt it scheduled is what
+    // cancels it a moment later, so its stop line says so and offers no TRY AGAIN (a retry would press the E-STOP again)
+    let runPressedEstop = false;
     let runStartedAt = 0;   // P3.2: this lead run's start wall-clock → the window claimCrew uses to attribute forwarded worker spend
     activeLiveRow = streamingAgent();
     let acc = '';
@@ -9169,7 +9233,7 @@ const Chat = (() => {
         renderHistory(); syncStatus();
         activeLiveRow = streamingAgent(); historyRead.repaint = false;
       }
-      const { text: reply, error, endReason, finishReason, completionVerdict, effectVerdict, budgetScope, budgetCapUsd } = await Harness.chat({
+      const { text: reply, error, endReason, finishReason, completionVerdict, effectVerdict, budgetScope, budgetCapUsd, budgetCapIsBalance } = await Harness.chat({
         system: sys, messages: retry ? endOnUserTurn(historyWindow(ws)) : historyWindow(ws), agentId: ws.agentId || 'agent', isTask, recurring, signal: ac.signal, streamId: ws.id,
         taskAction: taskAction || undefined,
         postconditions: opts && opts.postconditions != null ? opts.postconditions : undefined,
@@ -9200,7 +9264,7 @@ const Chat = (() => {
         // sse.js:runTeeView — so the in-band stream stays the richest source for the page that started the run.)
         // callId joins it to its tool_call; isError drives the success-vs-failure surge. `summary`/`ms` ride
         // along per the frozen event shape so any consumer sees the result's own words, never a bare 'error'.
-        onToolResult: ev => { if (!ev.isError) runToolsOk++; const nm = callNames[ev.callId] || 'tool'; Channels.addToolResult(ws.id, { callId: ev.callId, name: nm, summary: ev.summary, isError: ev.isError, ms: ev.ms }); presenceToolResult(ws); if (isActiveWs(ws)) resolveChip(ev, nm); if (typeof U !== 'undefined' && U.bus && ev.callId) U.bus.emit('agent.tool_result', { name: nm, agentId: ws.agentId, runId: ev.runId, callId: ev.callId, ok: !ev.isError, isError: !!ev.isError, summary: ev.summary, ms: ev.ms }); },   // runId rides along: a runId-less copy reset xp.js's per-run buffer (freshRun(undefined)) and wiped buffered memory-reuse credit
+        onToolResult: ev => { if (!ev.isError) runToolsOk++; const nm = callNames[ev.callId] || 'tool'; if (!ev.isError && /^station[._]control$/.test(nm) && ev.summary === 'estop.engage') runPressedEstop = true; Channels.addToolResult(ws.id, { callId: ev.callId, name: nm, summary: ev.summary, isError: ev.isError, ms: ev.ms }); presenceToolResult(ws); if (isActiveWs(ws)) resolveChip(ev, nm); if (typeof U !== 'undefined' && U.bus && ev.callId) U.bus.emit('agent.tool_result', { name: nm, agentId: ws.agentId, runId: ev.runId, callId: ev.callId, ok: !ev.isError, isError: !!ev.isError, summary: ev.summary, ms: ev.ms }); },   // runId rides along: a runId-less copy reset xp.js's per-run buffer (freshRun(undefined)) and wiped buffered memory-reuse credit
         onDeliverable: ev => {
           // BROWSER window: every write (not just the first per run) — it live-reloads the page on screen and, with
           // FOLLOW on, shows a new web page as it's made. Before the per-run dedupe on purpose.
@@ -9323,16 +9387,16 @@ const Chat = (() => {
           // below it. Emit this line only when it carries something the card can't: what to do next (step limit,
           // budget door) or a reason the label doesn't name. Your own interrupt → the card alone tells the truth.
           const stopLine = endReason === 'max_iters' ? 'reached the step limit — say "continue" to keep going'
-            : endReason === 'budget' ? budgetStopLine(budgetScope, budgetCapUsd)
-            : endReason === 'cancelled' ? (interrupted.has(ws.id) ? '' : 'run cancelled')
+            : endReason === 'budget' ? budgetStopLine(budgetScope, budgetCapUsd, budgetCapIsBalance)
+            : endReason === 'cancelled' ? (interrupted.has(ws.id) ? '' : runPressedEstop ? 'stopped by the E-STOP this run pressed — RESUME AUTOMATION (top bar) is yours alone' : 'run cancelled')
             : 'stopped (' + endReason + ')';
           if (isActiveWs(ws)) { breakLive(); if (stopLine) toolLine('⏹ ' + stopLine); }
           markStoppedTurn(ws, replyText);
-          // a budget stop's honest door is the BUDGET settings section, not a doomed retry (the same cap fires
-          // again immediately); every other stop keeps the plain retry chip.
-          if (isActiveWs(ws)) { if (endReason === 'budget') offerBudgetDoor(); else offerTryAgain(); }
+          // a budget stop's honest door is SETTINGS › SPENDING LIMITS (the top-up door when the ceiling was the 1Ultra
+          // balance), not a doomed retry (the same cap fires again immediately); every other stop keeps the plain retry chip.
+          if (isActiveWs(ws) && !(endReason === 'cancelled' && runPressedEstop)) { if (endReason === 'budget') offerBudgetDoor(budgetCapIsBalance); else offerTryAgain(); }
           if (typeof StationUI !== 'undefined') StationUI.notify(isActiveWs(ws) ? 'run stopped: ' + endReason
-            : whoOf(ws) + ' stopped' + sessionNote(ws) + ' — ' + (endReason === 'budget' ? 'hit a spending limit' : endReason === 'max_iters' ? 'reached the step limit; say "continue" to keep going' : endReason === 'cancelled' ? 'cancelled' : endReason),
+            : whoOf(ws) + ' stopped' + sessionNote(ws) + ' — ' + (endReason === 'budget' ? (budgetCapIsBalance === true ? 'used the rest of your 1Ultra balance' : 'hit a spending limit') : endReason === 'max_iters' ? 'reached the step limit; say "continue" to keep going' : endReason === 'cancelled' ? 'cancelled' : endReason),
             'warn', undefined, isActiveWs(ws) || endReason === 'cancelled' ? undefined : { kind: 'alert', go: { ws: ws.id } });
         } else if (cutShort) {
           // distinct honest "cut short" recap: the reply is truncated/filtered, not a clean delivery.
@@ -9457,7 +9521,7 @@ const Chat = (() => {
       } else {
         // A throw that is NOT a deliberate Stop: an unexpected disconnect or a hard fetch/network error. Persist
         // whatever streamed FIRST — before the await below (ordering locked by test/comms-presence.test.js).
-        // NEVER synthesize 'cannot reach the STARNET sidecar' here again (2026-07-29): it forced the "restart the
+        // NEVER synthesize 'cannot reach the 1ULTRA sidecar' here again (2026-07-29): it forced the "restart the
         // app" copy onto every abort, including a dead PROVIDER stream on a healthy install. Say only what we
         // witnessed and let Harness.pingEngine measure the rest — full rationale in harness.js + friendlyerror.js.
         persistPartial(ws, acc);
@@ -9801,5 +9865,5 @@ const Chat = (() => {
   // only" gate maybeStandaloneRate uses — so a pure-chat run is never bottle-offered. Used by App.runBottleInfo (R5).
   function runDidWork(id) { const w = id ? runWork.get(id) : null; return !!(w && ((w.toolsOk || 0) >= 1 || (w.delivered || 0) >= 1)); }
 
-  return { init, load, send, continuityDiagnostics, refreshStarters, sendOrQueue, continueConnectorTask, stopActive, status, localLine, broadcast, renderProse, setSystem, getHistory, contextRef, abort, isBusy, beatBusy: skillBeatBusy, beginInterview, endInterview, echoUser, prefill, autoGrowInput, choices, clearChoices, retireDeskPrompt, typeLine, nudge, clearNudge, offerCuriosity, offerFork, planGoalPath, briefingReceipt, isComposerEngaged, canFocusSession, runMeta, runDidWork, awayDigest, awayReview, awayRate, sampleCard, workshopReturn, refreshIdBar: renderIdBar, refreshGroupControls: updateControls, refreshAgentIdentity, setRosterStatus, askBudgetSpent, spendAsk, clockLabel: fmtClock, breakLabel: fmtBreak };
+  return { init, load, send, consentInspect, copyText, continuityDiagnostics, refreshStarters, sendOrQueue, continueConnectorTask, stopActive, status, localLine, broadcast, renderProse, setSystem, getHistory, contextRef, abort, isBusy, beatBusy: skillBeatBusy, beginInterview, endInterview, echoUser, prefill, autoGrowInput, choices, clearChoices, retireDeskPrompt, typeLine, nudge, clearNudge, offerCuriosity, offerFork, planGoalPath, briefingReceipt, isComposerEngaged, canFocusSession, runMeta, runDidWork, awayDigest, awayReview, awayRate, sampleCard, workshopReturn, refreshIdBar: renderIdBar, refreshGroupControls: updateControls, refreshAgentIdentity, setRosterStatus, askBudgetSpent, spendAsk, clockLabel: fmtClock, breakLabel: fmtBreak };
 })();

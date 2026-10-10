@@ -2,7 +2,7 @@
    Locks the G1 packaged-lifecycle gate's classification + verdict logic (scripts/qa/packaged-lifecycle.mjs)
    with fakes — no PowerShell, no user32, no installed app, virtual clock. Proves:
      - process classification uses the shell's full-path rule (foreign node.exe never counts)
-     - window detection = visible + exact "StarNet" title + shell-owned (the `-siw` single-instance
+     - window detection = visible + exact "1Ultra" title + shell-owned (the `-siw` single-instance
        window and hidden windows never count)
      - startup.log parsing takes the LAST spawn record after a marker and names the close branch
      - idle-close verdict fails on a lingering shell, an orphan sidecar, the wrong branch, or a
@@ -17,7 +17,7 @@ const A = require('./_assert.js');
 
 (async () => {
   const M = await import('../scripts/qa/packaged-lifecycle.mjs');
-  const INSTALL = 'C:\\Users\\runneradmin\\AppData\\Local\\StarNet';
+  const INSTALL = 'C:\\Users\\runneradmin\\AppData\\Local\\1Ultra';
   const EXE = INSTALL + '\\skynet-desktop.exe';
   const NODE = INSTALL + '\\node.exe';
 
@@ -40,11 +40,11 @@ const A = require('./_assert.js');
   // ---- starnetWindows
   {
     const wins = [
-      { hwnd: 1, pid: 100, visible: true, title: 'StarNet' },
-      { hwnd: 2, pid: 100, visible: false, title: 'StarNet' },
+      { hwnd: 1, pid: 100, visible: true, title: '1Ultra' },
+      { hwnd: 2, pid: 100, visible: false, title: '1Ultra' },
       { hwnd: 3, pid: 100, visible: true, title: 'ai.skynet.harness-siw' },
-      { hwnd: 4, pid: 999, visible: true, title: 'StarNet' },
-      { hwnd: 5, pid: 100, visible: true, title: ' StarNet ' },
+      { hwnd: 4, pid: 999, visible: true, title: '1Ultra' },
+      { hwnd: 5, pid: 100, visible: true, title: ' 1Ultra ' },
     ];
     A.eq(M.starnetWindows(wins, [100]).map((w) => w.hwnd), [1, 5], 'visible + exact title + shell-owned only');
     A.eq(M.starnetWindows(wins, []).length, 0, 'no shell pids → no windows');
@@ -76,7 +76,7 @@ const A = require('./_assert.js');
   const snap = (o) => Object.assign({ shell: [], sidecar: [], windows: [], health: null }, o);
   const shell = (pid) => ({ pid, path: EXE, ppid: 1 });
   const side = (pid) => ({ pid, path: NODE, ppid: 100 });
-  const win = (pid) => ({ hwnd: 9, pid, visible: true, title: 'StarNet' });
+  const win = (pid) => ({ hwnd: 9, pid, visible: true, title: '1Ultra' });
   const idleLog = { closeLines: ['close-request: close_to_tray=false'] };
   const trayLog = { closeLines: ['close-request: close_to_tray=true', 'close-request: staying resident (close-to-tray preference)'] };
 
@@ -93,7 +93,7 @@ const A = require('./_assert.js');
     const wrongBranch = M.judgeIdleClose({ after: snap(), relaunch: snap({ shell: [shell(200)], windows: [win(200)], health: true }), log: trayLog });
     A.ok(!wrongBranch.pass && wrongBranch.reasons.some((r) => /branch was "tray-preference"/.test(r)), 'idle case that took the tray branch FAILS (the 08-19 wrong-branch lesson)');
     const noWin = M.judgeIdleClose({ after: snap(), relaunch: snap({ shell: [shell(200)], windows: [], health: true }), log: idleLog });
-    A.ok(!noWin.pass && noWin.reasons.some((r) => /no visible "StarNet" window after relaunch/.test(r)), 'relaunch without a window FAILS');
+    A.ok(!noWin.pass && noWin.reasons.some((r) => /no visible "1Ultra" window after relaunch/.test(r)), 'relaunch without a window FAILS');
     const noHealth = M.judgeIdleClose({ after: snap(), relaunch: snap({ shell: [shell(200)], windows: [win(200)], health: false }), log: idleLog });
     A.ok(!noHealth.pass && noHealth.reasons.some((r) => /health/.test(r)), 'relaunch without health FAILS');
     A.eq(M.judgeIdleClose({ after: null, relaunch: null, log: null }).pass, false, 'missing snapshots FAIL loudly');
@@ -171,7 +171,7 @@ const A = require('./_assert.js');
       launches.push('first');
       const pid = nextPid++;
       procs.push({ pid, name: 'skynet-desktop.exe', path: EXE, ppid: 1 });
-      windows.push({ hwnd: pid * 10, pid, visible: true, title: 'StarNet' });
+      windows.push({ hwnd: pid * 10, pid, visible: true, title: '1Ultra' });
       windows.push({ hwnd: pid * 10 + 1, pid, visible: true, title: 'ai.skynet.harness-siw' });
       const sp = nextPid++;
       procs.push({ pid: sp, name: 'node.exe', path: NODE, ppid: pid });

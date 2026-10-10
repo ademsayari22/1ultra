@@ -1,4 +1,4 @@
-/* node test/remote-push.test.js — StarNet Remote phase 4: the station's own Web Push.
+/* node test/remote-push.test.js — 1Ultra Remote phase 4: the station's own Web Push.
    The payload must be readable ONLY by the phone that subscribed (RFC 8291 aes128gcm, checked here by decrypting
    it the way a browser does), the VAPID token must verify against the key the phone subscribed with (RFC 8292),
    and a subscription the push service dropped (404/410) must be forgotten. No network: fetch is captured. */

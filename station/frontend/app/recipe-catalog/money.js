@@ -1,4 +1,4 @@
-/* STARNET — recipe-catalog/money.js : MONEY persona recipes — the money admin a person actually has.
+/* 1ULTRA — recipe-catalog/money.js : MONEY persona recipes — the money admin a person actually has.
 
    Registered in index.js by the aggregator — this file only EXPORTS the array. Same UMD-light module
    pattern as its siblings: a `RecipeCatalogMoney` global in the browser, module.exports under node.

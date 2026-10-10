@@ -1,8 +1,8 @@
 /* sidecar/providers/claude-cli-login.js — SIGN IN WITH CLAUDE for the claude-cli brain.
 
-   StarNet never holds a Claude subscription credential. This driver only runs the user's own Claude Code CLI:
+   1Ultra never holds a Claude subscription credential. This driver only runs the user's own Claude Code CLI:
    `claude auth login --claudeai` opens the browser, completes the OAuth handshake itself and stores the token in
-   the CLI's own credential store. StarNet watches that child and asks `claude auth status` for the verdict.
+   the CLI's own credential store. 1Ultra watches that child and asks `claude auth status` for the verdict.
 
    The CLI offers two ways to finish (both proven on v2.1.284 with no terminal attached):
      1. automatic — the browser it opened calls back to the CLI, and the child exits 0.

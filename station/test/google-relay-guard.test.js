@@ -1,4 +1,4 @@
-/* node test/google-relay-guard.test.js — restricted-tier Google data never rides the StarNet relay
+/* node test/google-relay-guard.test.js — restricted-tier Google data never rides the 1Ultra relay
    (sidecar/mcp/google-relay-guard.js + its index.js wiring). Offline + deterministic. */
 'use strict';
 const A = require('./_assert.js');
@@ -24,10 +24,10 @@ A.ok(!guard.restrictedToolNames().has(mcpToolName('google-calendar', 'list_event
 A.ok(!guard.restrictedToolNames().has(mcpToolName('gmail-send', 'send_email')), 'send-only Gmail stays usable');
 
 /* B. LIVE: projection */
-A.eq(guard.projectable('gmail', 'starnet'), false, 'StarNet Managed is not offered Gmail');
+A.eq(guard.projectable('gmail', 'starnet'), false, '1Ultra Managed is not offered Gmail');
 A.eq(guard.projectable('my-mail', 'starnet'), false, 'nor a custom-id Gmail');
 A.eq(guard.projectable('google-drive', 'starnet'), false, 'nor whole-Drive');
-A.eq(guard.projectable('google-calendar', 'starnet'), true, 'Calendar is fine on StarNet Managed');
+A.eq(guard.projectable('google-calendar', 'starnet'), true, 'Calendar is fine on 1Ultra Managed');
 A.eq(guard.projectable('notion', 'starnet'), true, 'non-Google connectors are untouched');
 A.eq(guard.projectable('gmail', 'openrouter'), true, 'own-key providers keep Gmail');
 
@@ -68,7 +68,7 @@ A.eq(wrapped.priceOf(), 1, 'other provider methods pass through');
   /* E. wiring: index.js routes EVERY provider build through the guard, and filters connector projection */
   const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '../sidecar/index.js'), 'utf8');
   A.ok(/selectProvider: selectProviderRaw,/.test(src), 'the factory import is the raw builder');
-  A.ok(/normalizeProvider\(opts\.provider\) === 'starnet' \? googleRelayGuard\(\)\.guardProvider\(built\) : built/.test(src), 'StarNet Managed providers are wrapped');
+  A.ok(/normalizeProvider\(opts\.provider\) === 'starnet' \? googleRelayGuard\(\)\.guardProvider\(built\) : built/.test(src), '1Ultra Managed providers are wrapped');
   A.eq((src.match(/selectProviderRaw\(/g) || []).length, 1, 'nothing else builds a provider around the guard');
   A.ok(/toolDefsForObjects\(projectableObjects\)/.test(src) && /googleRelayGuard\(\)\.projectable\(/.test(src), 'connector projection consults the guard');
 
@@ -82,7 +82,7 @@ A.eq(wrapped.priceOf(), 1, 'other provider methods pass through');
   ];
   const apGuard = makeGoogleRelayGuard({ googleClient: google, tools: TOOLS, mcpToolName, configs: () => apConfigs, extraRestricted: extra });
   A.eq([...apGuard.restrictedConnectors().keys()].sort(), ['gmail-app-password', 'work-mail'], 'app-password Gmail is restricted by endpoint, whatever its id');
-  A.eq(apGuard.projectable('gmail-app-password', 'starnet'), false, 'StarNet Managed is not offered app-password Gmail');
+  A.eq(apGuard.projectable('gmail-app-password', 'starnet'), false, '1Ultra Managed is not offered app-password Gmail');
   A.eq(apGuard.projectable('work-mail', 'starnet'), false, 'nor a custom-id copy');
   A.eq(apGuard.projectable('gmail-app-password', 'openrouter'), true, 'own-key providers keep it');
   for (const t of imapGmail.TOOLS) A.ok(apGuard.restrictedToolNames().has(mcpToolName('gmail-app-password', t.name)), 'restricted tool: ' + t.name);

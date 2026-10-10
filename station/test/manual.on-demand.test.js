@@ -35,13 +35,18 @@ const inline = M.MANUAL_SECTIONS.filter(s => s.kind !== 'reference');
 // Re-pinned 2026-10-02 (overnight sweep) for ONE deliberate change: NAVIGATION / CONNECTING / TROUBLESHOOTING name the 0.13 dock
 // (MY WORK · AUTOMATE · QUESTS, BUILD MODE · CONNECT · NEW APP, ABILITIES tabs INSTALLED / DISCOVER / CREATE / ADVANCED) — the
 // agent was sending Commanders to 0.12.5 dock buttons that no longer exist.
-A.eq(full.length, 9674, 'the whole manual keeps its length (+30: REFIT is named BUILD MODE; +2: SETTINGS › AI & MODELS; +308: the 0.13 dock, 2026-10-02)');
-A.eq(crypto.createHash('sha256').update(full, 'utf8').digest('hex'), '168648899c6994cb6953b97ad3ca9cd54a71cc854a32d97605ca3d85b1e41193',
+// Re-pinned 2026-10-04 (self-driving) for ONE deliberate change: the APPROVALS hotspot and its Alt+A are gone (approvals render
+// in COMMS where the agent paused), and NAVIGATION tells the agent to OPEN a place with station.show instead of describing clicks.
+// Re-pinned 2026-10-05 (self-driving lane 2) for ONE deliberate addition: the agent learns EVERYTHING on demand — a CONCEPTS
+// reference section (every 1Ultra thing, its place, its tool, its trap), NAVIGATION's generated EVERY PLACE list (frontend/app/
+// places.js), and the dossier's CAN DO replaces the gone SKILLS tab. All reference: the inline form got SHORTER.
+A.eq(full.length, 26279,'the whole manual keeps its length (+30: REFIT is named BUILD MODE; +2: SETTINGS › AI & MODELS; +308: the 0.13 dock, 2026-10-02; +494: station.show + approvals in COMMS, 2026-10-04; +13388: CONCEPTS + EVERY PLACE + the lane-3 actions + FIND, 2026-10-05; +1803: CONCEPTS learns the trunk since 10-04 (desk seats, SETTLE, held credits, browser reset, HINTS, ERASE EVERYTHING) + "conveyor" + the budget.set call shape, 2026-10-08; +287: NAVIGATION says changing is not opening, 2026-10-08; +143: never around the station tools via shell/files/web, 2026-10-08; +160: the SESSIONS rule (pin = a rail session, never a memory note) inline, 2026-10-08)');
+A.eq(crypto.createHash('sha256').update(full, 'utf8').digest('hex'), 'dc4932389a4d14728fd3ebbdf5cf1f44ad9e383909c389820a24d3f9aa4e837f',
   'the whole manual is byte-identical to the literal that shipped before the split');
 
 // ---- B. the sections partition the manual ----
-A.eq(ids, ['about', 'live-state', 'navigation', 'props', 'connectors', 'approval', 'connecting', 'troubleshooting'], 'sections in manual order');
-A.eq(reference.map(s => s.id), ['navigation', 'props', 'troubleshooting'], 'reference sections: navigation, props, troubleshooting');
+A.eq(ids, ['about', 'live-state', 'navigation', 'props', 'connectors', 'approval', 'connecting', 'troubleshooting', 'concepts'], 'sections in manual order');
+A.eq(reference.map(s => s.id), ['navigation', 'props', 'troubleshooting', 'concepts'], 'reference sections: navigation, props, troubleshooting, concepts');
 A.eq(inline.map(s => s.kind), ['orientation', 'rule', 'rule', 'rule', 'rule'], 'everything else is orientation or a behaviour rule');
 const body = full.replace('\n<starnet_operator_manual>\n', '').replace('</starnet_operator_manual>', '');
 A.eq(ids.map(id => M.manualSection(id)).join('').replace(/\n/g, ''), body.replace(/\n/g, ''), 'the sections, joined in order, ARE the manual (only blank separator lines differ)');
@@ -57,7 +62,7 @@ for (const s of reference) {
   A.ok(index.indexOf(M.manualSection(s.id)) < 0, s.id + ': the reference body is NOT inline');
   A.ok(index.indexOf('\n- ' + s.id + ': ' + s.summary + '\n') >= 0, s.id + ': has a TOC line with its summary');
 }
-A.eq(M.INLINE_RULE_EXCERPTS.length, 1, 'one rule lives inside a reference section');
+A.eq(M.INLINE_RULE_EXCERPTS.length, 2, 'two rules live inside a reference section (SESSIONS, AUTOMATE)');
 for (const r of M.INLINE_RULE_EXCERPTS) {
   A.ok(M.manualSection('navigation').indexOf(r) >= 0, 'the excerpt is a verbatim line of its reference section');
   A.ok(index.indexOf(r) >= 0, 'and rides inline on its own');

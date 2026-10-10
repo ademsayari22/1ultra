@@ -171,7 +171,7 @@ module.exports = (async () => {
     try { factory.selectProvider({ provider: 'starnet', key: 'device-token', fetch: async () => new Response('', { status: 200 }) }); }
     catch (e) { threw = e; }
     A.ok(threw, 'an unlinked starnet selection refuses instead of defaulting to api.openai.com');
-    A.ok(/link/i.test(String(threw && threw.message)) && /STARNET/i.test(String(threw && threw.message)), 'the refusal names linking the station');
+    A.ok(/link/i.test(String(threw && threw.message)) && /1ULTRA/i.test(String(threw && threw.message)), 'the refusal names linking the station');
     const linked = factory.selectProvider({ provider: 'starnet', key: 'device-token', baseUrl: 'https://account.starnetos.example/v1', fetch: async () => new Response('', { status: 200 }) });
     A.ok(linked && typeof linked.stream === 'function', 'a linked starnet (dynamic baseUrl supplied) constructs normally');
   }

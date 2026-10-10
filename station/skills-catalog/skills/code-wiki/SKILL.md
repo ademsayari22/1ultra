@@ -323,7 +323,7 @@ Only for a library or an API server:
   "source_path": "<local path or clone path>",
   "source_sha": "<sha or uncommitted>",
   "generated_at": "<UTC timestamp, e.g. 2026-01-31T14:05:00Z>",
-  "generator": "StarNet code-wiki skill 1.0.0",
+  "generator": "1Ultra code-wiki skill 1.0.0",
   "modules_documented": ["<module>", "..."]
 }
 ```
@@ -389,4 +389,4 @@ After writing, check:
 
 *Needs the CABINET (reading the code, writing the wiki) and the WORKBENCH (git).*
 
-Adapted for StarNet from code-wiki (Teknium), MIT.
+Adapted for 1Ultra from code-wiki (Teknium), MIT.

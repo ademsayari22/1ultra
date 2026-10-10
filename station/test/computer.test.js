@@ -75,7 +75,7 @@ const ATTENDED = { surface: 'interactive', isTask: true, ownerTrusted: true, rem
   A.eq(T.win32DriverActive({ STARNET_DESKTOP_SHELL: '1', STARNET_COMPUTER_DRIVER: 'win32' }, 'win32'), true, 'desktop host can load the native driver while the lease still gates every call');
   A.eq(T.win32DriverActive({ STARNET_COMPUTER_DRIVER: 'win32' }, 'linux'), false, 'win32 driver can never activate off Windows');
 
-  // RUN-CONTEXT ESCAPE TEST: no normal StarNet task/autonomous/test/missing-context call may
+  // RUN-CONTEXT ESCAPE TEST: no normal 1Ultra task/autonomous/test/missing-context call may
   // reach even an injected fake driver. Full/standing consent is intentionally irrelevant here.
   {
     const isolated = fakeDriver();
@@ -100,13 +100,13 @@ const ATTENDED = { surface: 'interactive', isTask: true, ownerTrusted: true, rem
     await FT.run({ action: 'type', text: 'hi', expectApp: 'notepad' }, ATTENDED);
     A.eq(fgDriver.log.length, 2, 'mismatched expectApp is advisory and does not narrow remote-owner control');
 
-    // typing into StarNet's own window is always refused, even without expectApp
+    // typing into 1Ultra's own window is always refused, even without expectApp
     const selfDriver = fakeDriver();
-    selfDriver.foreground = async () => ({ title: 'STARNET — station', process: 'msedge' });
+    selfDriver.foreground = async () => ({ title: '1ULTRA — station', process: 'msedge' });
     const ST = makeComputerTools({ driver: selfDriver, allowPhysicalInput: true }).useTool;
     await ST.run({ action: 'type', text: 'hi' }, ATTENDED);
     await ST.run({ action: 'hotkey', keys: ['Ctrl', 'l'] }, ATTENDED);
-    A.eq(selfDriver.log.length, 2, 'the paired owner may intentionally control the StarNet window too');
+    A.eq(selfDriver.log.length, 2, 'the paired owner may intentionally control the 1Ultra window too');
 
     // mouse/screenshot are NOT focus-gated (clicking is how you restore focus)
     const clicked = await ST.run({ action: 'click', x: 5, y: 5 }, ATTENDED);

@@ -5,7 +5,7 @@ const { SidecarFixture } = require('./helpers/sidecar-fixture');
   const host = SidecarFixture.create({ env: { STARNET_DESKTOP_SHELL: '1', STARNET_COMPUTER_DRIVER: '1' } });
   try {
     await host.start();
-    assert.equal((await host.request('/api/computer-control', { headers: { 'X-StarNet-Token': '' } })).status, 403);
+    assert.equal((await host.request('/api/computer-control', { headers: { 'X-1Ultra-Token': '' } })).status, 403);
     const before = await host.json('GET', '/api/computer-control');
     assert.equal(before.status, 200); assert.equal(before.body.backend, 'win32');
     const bad = await host.json('POST', '/api/computer-control', { action: 'select', backend: 'arbitrary-exe' });

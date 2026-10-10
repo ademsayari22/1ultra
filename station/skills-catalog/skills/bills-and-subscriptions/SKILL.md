@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Bills and Subscriptions"
   category: "Planning"
-  author: "StarNet"
+  author: "1Ultra"
 ---
 
 Recurring charges hide in plain sight. Build one list the Commander can trust: every line traced to a statement or receipt, every total computed rather than estimated, and nothing cancelled or paid on your own.

@@ -24,7 +24,7 @@ A.ok(breaksMachineState('pkill -9 node'), 'pkill blocked');
 A.ok(breaksMachineState('killall Safari'), 'killall blocked');
 A.ok(breaksMachineState('Stop-Process -Name explorer'), 'Stop-Process cmdlet blocked');
 
-// ---- BLOCKED: persistence that outlives StarNet ----
+// ---- BLOCKED: persistence that outlives 1Ultra ----
 A.ok(breaksMachineState('schtasks /create /tn evil /tr calc.exe /sc onlogon'), 'schtasks create blocked');
 A.ok(breaksMachineState('schtasks /change /tn x /tr y'), 'schtasks change blocked');
 A.ok(breaksMachineState('reg add HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run /v x /d game.exe'), 'reg add Run key blocked');

@@ -110,7 +110,7 @@ async function until(B, headers, pred, label, ms) {
     SKYNET_FULL_ACCESS: '1'
   };
   // scrub any inherited budget env so the assertion is about the shipped default, not this machine's shell
-  for (const k of Object.keys(process.env)) if (/^(SKYNET|STARNET)_BUDGET_/.test(k)) env[k] = '';
+  for (const k of Object.keys(process.env)) if (/^(SKYNET|1ULTRA)_BUDGET_/.test(k)) env[k] = '';
   let child, port;
   try {
     const OBJ = 'keep the release folder complete and correct';
@@ -119,7 +119,7 @@ async function until(B, headers, pred, label, ms) {
     ({ child, port } = await boot(9040 + (process.pid % 25), env, 20));
     let B = 'http://' + HOST + ':' + port;
     let token = await bootToken(B, B);
-    let headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    let headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
 
     // ---- RAIL 1: the shipped day cap is real, visible, honest about its source, and dial-able --------------
     const bs = await (await fetch(B + '/api/budget/status', { headers })).json();
@@ -184,7 +184,7 @@ async function until(B, headers, pred, label, ms) {
     await sleep(600);
     ({ child, port } = await boot(port, env, 20));
     B = 'http://' + HOST + ':' + port;
-    token = await bootToken(B, B); headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    token = await bootToken(B, B); headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     const revived = (await (await fetch(B + '/api/loops', { headers })).json()).loops[0];
     A.eq(revived.state, 'paused', 'a restart does not quietly resume a parked loop');
     A.eq(revived.stallStreak, 3, 'the streak is durable');

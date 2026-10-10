@@ -1,4 +1,4 @@
-/* node test/workspace-safety.test.js — DEV/QA roots can never alias canonical StarNet user data. */
+/* node test/workspace-safety.test.js — DEV/QA roots can never alias canonical 1Ultra user data. */
 'use strict';
 const A = require('./_assert.js');
 const win = require('node:path').win32;
@@ -11,7 +11,7 @@ const winDeps = {
   env: { LOCALAPPDATA: 'C:\\Users\\Ada\\AppData\\Local', APPDATA: 'C:\\Users\\Ada\\AppData\\Roaming' },
   homedir: () => 'C:\\Users\\Ada'
 };
-A.eq(classifyWorkspace('c:\\users\\ada\\appdata\\local\\STARNET\\workspaces\\', winDeps).protected, true,
+A.eq(classifyWorkspace('c:\\users\\ada\\appdata\\local\\1ULTRA\\workspaces\\', winDeps).protected, true,
   'current Windows root is protected case-insensitively');
 A.eq(classifyWorkspace('C:\\Users\\Ada\\AppData\\Roaming\\Skynet\\workspaces', winDeps).protected, true,
   'legacy rename root is protected');
@@ -23,7 +23,7 @@ A.eq(classifyWorkspace('D:\\scratch\\starnet-eval-123', winDeps).protected, fals
   'an unrelated scratch root is allowed');
 
 const posixDeps = { path: posix, platform: 'linux', env: {}, homedir: () => '/home/ada' };
-A.eq(classifyWorkspace('/home/ada/.local/share/StarNet/workspaces', posixDeps).protected, true,
+A.eq(classifyWorkspace('/home/ada/.local/share/1Ultra/workspaces', posixDeps).protected, true,
   'POSIX fallback production root is protected');
 A.eq(classifyWorkspace('/tmp/starnet-test', posixDeps).protected, false, 'POSIX scratch root is allowed');
 
@@ -31,7 +31,7 @@ const macDeps = { path: posix, platform: 'darwin', env: {}, homedir: () => '/Use
 const macCandidates = workspaceCandidates(macDeps);
 A.ok(macCandidates.includes('/Users/ada/Library/Application Support/ai.skynet.harness/workspaces'),
   'macOS desktop bundle-id root is a canonical protected candidate');
-A.ok(macCandidates.includes('/Users/ada/.local/share/StarNet/workspaces'),
+A.ok(macCandidates.includes('/Users/ada/.local/share/1Ultra/workspaces'),
   'manual-sidecar POSIX root remains a recoverable protected candidate on macOS');
 A.eq(classifyWorkspace('/Users/ada/Library/Application Support/ai.skynet.harness/workspaces', macDeps).protected, true,
   'macOS desktop production root is protected');

@@ -50,7 +50,7 @@ const SERVICE_KEY = 'svcKeyCanaryPw4417Exported0Value';
     const names = seen.split(/\r?\n/).map(l => l.split('=')[0]);
     A.ok(seen.indexOf(STATION_CANARY) < 0, 'the planted station secret never reached the repo');
     A.ok(seen.indexOf(SERVICE_KEY) < 0, 'the exported service key never reached the repo');
-    A.eq(names.filter(n => /^(STARNET|SKYNET)_/i.test(n)), [], 'no STARNET_/SKYNET_ variable reached the repo (API/IPC tokens, keys, workspace)');
+    A.eq(names.filter(n => /^(1ULTRA|SKYNET)_/i.test(n)), [], 'no STARNET_/SKYNET_ variable reached the repo (API/IPC tokens, keys, workspace)');
     A.ok(names.some(n => /^PATH$/i.test(n)), 'PATH is kept');
     A.ok(/MY_USER_VAR=user-value-keep-me/.test(seen), 'the user\'s own var is kept');
     A.ok(/NPM_TOKEN=npm-user-own-token-keep-me/.test(seen), 'the user\'s own NPM_TOKEN is kept (theirs, not the station\'s)');

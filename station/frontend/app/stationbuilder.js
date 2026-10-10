@@ -3,7 +3,7 @@
    WHY IT IS SHAPED THIS WAY: models are bad at spatial layout, and a weak one laying belts by hand would break a
    Commander's station. So the model never sends a position, a belt or a piece of furniture. It fills a FIXED MENU —
    one of the Lines shelf's tested lines, where it goes, a name, what each step does and who works it, a daily spending
-   cap, review tries — and StarNet does all the placing with the same code Build mode uses (roomSpots, stampBlueprint).
+   cap, review tries — and 1Ultra does all the placing with the same code Build mode uses (roomSpots, stampBlueprint).
 
    plan(doc, request, env) builds the request on a PROBE COPY and checks it: every new machine reachable, no new routing
    error anywhere, every existing line's compiled routing unchanged. It returns a plain summary and the new line's
@@ -336,7 +336,7 @@
     if (!WM || !P || !W || !doc) return refuse('the station builder is not loaded on this page');
     if (!req || typeof req !== 'object' || Array.isArray(req)) return refuse('Send the request as an object with: ' + MENU.join(', ') + '.');
     const extra = Object.keys(req).filter(k => MENU.indexOf(k) < 0);
-    if (extra.length) return refuse('StarNet chooses every position, belt and piece of furniture itself, so these fields are not accepted: '
+    if (extra.length) return refuse('1Ultra chooses every position, belt and piece of furniture itself, so these fields are not accepted: '
       + extra.slice(0, 8).join(', ') + '. Use only: ' + MENU.join(', ') + '.');
     /* NOWHERE NAMED: a line goes into the station's conveyor hall when one has room for it (that is what the hall is for),
        and only then into a room of its own on the grid */
@@ -361,7 +361,7 @@
       const l = r.plan.lines[0] || {};
       return { ok: true, plan: Object.assign(r.plan, { line: { id: null, name: l.plain || 'a custom line', label: l.label || null }, ready: !!l.ready, blocking: l.blocking || [] }) };
     }
-    // purpose: the Commander's own words. With no line named, StarNet picks one with the reader behind FOR YOUR GOAL
+    // purpose: the Commander's own words. With no line named, 1Ultra picks one with the reader behind FOR YOUR GOAL
     // (WorkflowLine.suggestLineFor: the SHAPE of the work), and every step's standard instructions carry those words
     if (req.purpose != null && typeof req.purpose !== 'string') return refuse('purpose is the Commander\'s own words for what the line is for, as text.');
     const purpose = typeof req.purpose === 'string' ? req.purpose.replace(/\s+/g, ' ').trim().slice(0, 300) : '';
@@ -370,7 +370,7 @@
     if (!bp && req.line == null && purpose) {
       const s = W.suggestLineFor ? W.suggestLineFor(purpose) : null;
       bp = s ? resolveLine(WM, s.id) : null;
-      if (!bp) return refuse('StarNet picks a line from the shape of the work (research then writing, a draft and a reviewer, code with tests or a review, two takes to compare), and "'
+      if (!bp) return refuse('1Ultra picks a line from the shape of the work (research then writing, a draft and a reviewer, code with tests or a review, two takes to compare), and "'
         + purpose.slice(0, 80) + '" names no such shape. Choose a line: ' + lineList(WM) + '.', lines);
       picked = s.why;
     }
@@ -416,7 +416,7 @@
     const reqSteps = req.steps == null ? [] : req.steps;
     const sl = stepsListOk(reqSteps); if (!sl.ok) return sl;
 
-    // placement: StarNet's own choice, first one that passes every check
+    // placement: 1Ultra's own choice, first one that passes every check
     const before = floorFacts(live, P);
     const base = { bpId: bp.id, opts, label: hasIntake ? label : '' };
     let placed = null, spec = null;
@@ -712,7 +712,7 @@
       return planSwap(doc, req, env);
     }
     const extra = Object.keys(req).filter(k => ROOM_MENU.indexOf(k) < 0);
-    if (extra.length) return refuse('StarNet chooses every position and piece of furniture itself, so these fields are not accepted: ' + extra.slice(0, 8).join(', ') + '. Use only: ' + ROOM_MENU.join(', ') + '.');
+    if (extra.length) return refuse('1Ultra chooses every position and piece of furniture itself, so these fields are not accepted: ' + extra.slice(0, 8).join(', ') + '. Use only: ' + ROOM_MENU.join(', ') + '.');
     const presetNames = presetsOf(env).map(c => c.name).join(', ');
     if (!!req.kit === !!req.preset) return refuse('Choose one: kit (one room) or preset (every room of a preset, added beside your station). Kits: ' + kitMenu(env) + '. Presets: ' + presetNames + '.');
     const style = styleOf(WM, req); if (!style.ok) return style;
@@ -1021,7 +1021,7 @@
     if (!q || typeof q !== 'object' || Array.isArray(q)) return refuse('add is { room, pieces }: pieces such as ["a tv", "three plants"].');
     const bad = Object.keys(q).filter(k => ['room', 'pieces'].indexOf(k) < 0); if (bad.length) return refuse('add only takes room and pieces. Not accepted: ' + bad.slice(0, 6).join(', ') + '.');
     const t = roomNamed(live, q.room); if (!t.ok) return t;
-    const room = t.room; if (room.rects.length > 1) return refuse(room.name + ' is not a plain rectangle, so StarNet cannot place pieces in it.');
+    const room = t.room; if (room.rects.length > 1) return refuse(room.name + ' is not a plain rectangle, so 1Ultra cannot place pieces in it.');
     const pa = piecesAsked(env, q.pieces, false); if (!pa.ok) return pa;
     const scratch = env.WorldModel.create(clone(live.serialize())), pl = placePieces(scratch, env, room.id, pa.items);
     if (!pl.ok) return pl;
@@ -1337,11 +1337,15 @@
         if (o.room != null) { const t = roomRef(o.room); if (!t.ok) return t; if (isMain(t.room)) return refuse(t.room.name + ' is the main room, so it stays'); const g = goes(t.room), n = g.n; return did(st.removeRoom(t.room.id), t.room.name + ' removed, with the ' + n + (n === 1 ? ' piece' : ' pieces') + ' on it' + g.named); }
         const t = propRef(o.prop); if (!t.ok) return t; const p = t.p; return did(st.removeProp(p.id), 'the ' + nm(p.t) + ' at ' + at(p.x, p.y) + inRoom(p.x, p.y) + ' removed' + (p.agentId ? ' (it was ' + nameOf(env, p.agentId) + '\'s)' : ''));
       }
-      case 'agent': { const t = propRef(o.prop); if (!t.ok) return t; let aid = ''; if (o.agent != null && !/^(nobody|none|no one|clear)$/i.test(String(o.agent))) { const a = agentOf(env, o.agent); if (!a.ok) return a; aid = a.id; } const as = st.assignPropAgent(t.p.id, aid); if (!as || !as.ok) return refuse(wmMsg(as));
+      case 'agent': { const t = propRef(o.prop); if (!t.ok) return t; let aid = ''; if (o.agent != null && !/^(nobody|none|no one|clear)$/i.test(String(o.agent))) { const a = agentOf(env, o.agent); if (!a.ok) return a; aid = a.id; } const as = st.assignDesk(t.p.id, aid); if (!as || !as.ok) return refuse(wmMsg(as));
+        // one desk per agent (the station's assignDesk, the same rule as BUILD MODE's WHO SITS HERE): an agent given a desk
+        // leaves the one it had — world.js seats it at its FIRST bound desk, so a second binding moved nobody — and the line says so
+        const left = (as.released || []).map(id => st.propById(id)).filter(Boolean);
         // a desk seats its agent in its own chair: a chair already standing on its seat would make two, so it goes
         const gone = [];
         if (aid && isWorkstation(st, t.p.t)) { const row = seatRow(st.propById(t.p.id) || t.p, S), isSeat = isSeatPiece(env); for (const q of st.props().slice()) if (isSeat(q.t) && row.some(([x, y]) => x >= q.x && x < q.x + (q.w || 1) && y >= q.y && y < q.y + (q.h || 1))) { const rm = st.removeProp(q.id); if (rm && rm.ok) gone.push('the ' + nm(q.t) + ' at ' + at(q.x, q.y)); } }
-        return { ok: true, text: 'the ' + nm(t.p.t) + ' at ' + at(t.p.x, t.p.y) + (aid ? ' is ' + nameOf(env, aid) + '\'s' : ' has nobody') + (gone.length ? ' (' + gone.join(', ') + ' removed: the desk brings its own chair)' : '') }; }
+        return { ok: true, text: 'the ' + nm(t.p.t) + ' at ' + at(t.p.x, t.p.y) + (aid ? ' is ' + nameOf(env, aid) + '\'s' : ' has nobody') + (gone.length ? ' (' + gone.join(', ') + ' removed: the desk brings its own chair)' : '')
+          + (left.length ? '; ' + nameOf(env, aid) + ' leaves its ' + left.map(q => nm(q.t) + ' at ' + at(q.x, q.y)).join(' and its ') : '') }; }
       case 'door': { const t = propRef(o.prop); if (!t.ok) return t; return did(st.setDoorState(t.p.id, String(o.state || '')), 'the airlock at ' + at(t.p.x, t.p.y) + ' ' + o.state); }
       case 'belt': { const a = tileOf(o.from), b = tileOf(o.to); if (!a || !b) return refuse('a belt is { from: [x, y], to: [x, y] }, one straight run'); return did(st.placeBeltRun({ tx: a.x, ty: a.y }, { tx: b.x, ty: b.y }), 'a belt from ' + at(a.x, a.y) + ' to ' + at(b.x, b.y)); }
       case 'unbelt': { const tiles = (Array.isArray(o.tiles) ? o.tiles : []).map(tileOf).filter(Boolean).map(q => [q.x, q.y]); if (!tiles.length) return refuse('unbelt needs tiles: [[x, y], …]'); return did(st.removeBelts(tiles), tiles.length + ' belt tiles taken up'); }
@@ -1482,8 +1486,8 @@
      station is exactly as that build left it, so it never takes back someone else's edit; one step, as Build mode's UNDO. */
   function planUndo(doc, last, opts) {
     if (!doc) return refuse('the station builder is not loaded on this page');
-    if (!last) return refuse('There is nothing of the lead\'s to undo: StarNet only takes back a build the lead made on this station. The Commander can press UNDO in Build mode.');
-    if (sigOf(doc) !== last.resultSig) return refuse('The station has changed since the lead\'s last build, so StarNet will not undo it (that could take back someone else\'s edit). The Commander can press UNDO in Build mode.');
+    if (!last) return refuse('There is nothing of the lead\'s to undo: 1Ultra only takes back a build the lead made on this station. The Commander can press UNDO in Build mode.');
+    if (sigOf(doc) !== last.resultSig) return refuse('The station has changed since the lead\'s last build, so 1Ultra will not undo it (that could take back someone else\'s edit). The Commander can press UNDO in Build mode.');
     if (opts && opts.canUndo === false) return refuse('The page was reloaded since that build, so its one-step UNDO is gone. Take it back with an edit instead: a new room with { remove: room }, added pieces with { remove: { room, pieces } }, a new line with { remove: { line } }, a restaffing with { staff } as it was.');
     return { ok: true, plan: { floorSig: sigOf(doc), resultSig: last.floorSig, spec: { kind: 'undo' }, notes: [], steps: [], line: null, where: 'the undo of the last build', rooms: [],
       summary: 'Undo the last build (' + String(last.summary || 'the lead\'s last change').replace(/\s+/g, ' ').slice(0, 260).replace(/[.\s]+$/, '') + '): the station goes back exactly as it was before it.' + (last.recruited ? ' The agents it recruited stay on the crew (DELETE AGENT in a Dossier removes one).' : '') } };
@@ -1560,7 +1564,7 @@
       if (isRefurnish) { const bad = Object.keys(q).filter(k => ['room', 'style', 'name'].indexOf(k) < 0); if (bad.length) return refuse('refurnish only takes room, style and name. Not accepted: ' + bad.slice(0, 6).join(', ') + '.'); }
       const t = roomNamed(live, nameOfRoom(q)); if (!t.ok) return t;
       const room = t.room;
-      if (room.rects.length > 1) return refuse(room.name + ' is not a plain rectangle, so StarNet cannot furnish it. Build a new room instead.');
+      if (room.rects.length > 1) return refuse(room.name + ' is not a plain rectangle, so 1Ultra cannot furnish it. Build a new room instead.');
       const old = furnitureIn(live, room.id);
       if (!isRefurnish) {
         if (!old.length) return refuse(room.name + ' has no furniture to clear (its workflow lines and agents\' desks always stay).');
@@ -1599,7 +1603,7 @@
 
   /* ================= VIBE DESIGN (2026-09-29): the Commander describes the room, part by part =================
      "The left side cozy, the right side a line that builds and tests code." The lead turns the words into ZONES: a part of
-     the room (an AREA on a 2 × 2 grid) and what goes there, either a STYLE (RoomStyles: StarNet furnishes it from a
+     the room (an AREA on a 2 × 2 grid) and what goes there, either a STYLE (RoomStyles: 1Ultra furnishes it from a
      hand-arranged set of the presets' own furniture) or a LINE (a shelf line, one picked from the Commander's words, or a
      custom SHAPE of steps), laid out inside that zone by the same layout engine the Workflow panel builds lines with. A new
      room is sized to hold what its zones need; an existing room is split down the middle. Lines go in first, then the
@@ -1724,7 +1728,7 @@
     if (!bp && z.line == null && purpose) {
       const s = W.suggestLineFor ? W.suggestLineFor(purpose) : null;
       bp = s ? resolveLine(WM, s.id) : null;
-      if (!bp) return refuse('StarNet picks a line from the shape of the work (research then writing, a draft and a reviewer, code with tests or a review, two takes to compare), and "'
+      if (!bp) return refuse('1Ultra picks a line from the shape of the work (research then writing, a draft and a reviewer, code with tests or a review, two takes to compare), and "'
         + purpose.slice(0, 80) + '" names no such shape. Choose a line: ' + lineList(WM) + ', or give the zone a shape of its own.');
       picked = s.why;
     }
@@ -1810,9 +1814,9 @@
      The first builder could not say WHERE a room goes: every room landed flush against the station's east wall, and the
      station grew into one long strip with no hallways (Andrew's test, 09-30). Now a room is placed on a named SIDE of a
      named ROOM, at a named SIZE, joined by a HALLWAY the way the presets join their wings (or flush, open plan). With no
-     side given StarNet takes the one that keeps the station compact. One plan may hold several rooms, a later one attached
+     side given 1Ultra takes the one that keeps the station compact. One plan may hold several rooms, a later one attached
      to an earlier one; a room may stay EMPTY (floor for lines to come), be furnished by zones, or be filled with lines.
-     The model names intent; StarNet computes every tile and refuses with what IS free. */
+     The model names intent; 1Ultra computes every tile and refuses with what IS free. */
   const SIZES = { small: [12, 8], medium: [18, 11], large: [24, 14], giant: [36, 20] };
   const SIZE_WORDS = { tiny: 'small', little: 'small', normal: 'medium', standard: 'medium', regular: 'medium', big: 'large', huge: 'giant', massive: 'giant', enormous: 'giant' };
   const SIZE_MENU = 'small (12 × 8), medium (18 × 11), large (24 × 14), giant (36 × 20), or { "w": 6-' + DESIGN_MAX[0] + ', "h": 5-' + DESIGN_MAX[1] + ' }';
@@ -2163,7 +2167,7 @@
   }
   /* The floor a list of lines takes, laid the way the layout engine fills a room: left to right in a row while they fit,
      then a new row, a clear tile between neighbours. Of every row width it answers the one nearest a room's usual shape
-     (about 1.7 wide to 1 tall) that StarNet can build at once. */
+     (about 1.7 wide to 1 tall) that 1Ultra can build at once. */
   function packLines(lines) {
     const shelf = maxW => { let w = 0, h = 0, rw = 0, rh = 0; for (const l of lines) { const lw = l.need.w, lh = l.need.h; if (rw && rw + 1 + lw > maxW) { w = Math.max(w, rw); h += rh + 1; rw = 0; rh = 0; } rw = rw ? rw + 1 + lw : lw; rh = Math.max(rh, lh); } return { w: Math.max(w, rw), h: h + rh }; };
     const widths = new Set(); let acc = 0;
@@ -2371,7 +2375,7 @@
     const HOW = 'Send { "rooms": [ … ] }: 1 to 24 rooms, each with ' + ROOM_KEYS.join(', ') + '; and/or { "hallways": [ { "from": room, "to": room } ] } to join rooms that face each other.';
     if (!req || typeof req !== 'object' || Array.isArray(req)) return refuse(HOW);
     const extra = Object.keys(req).filter(k => BUILD_MENU.indexOf(k) < 0);
-    if (extra.length) return refuse('StarNet computes every tile itself, so these fields are not accepted: ' + extra.slice(0, 8).join(', ') + '. ' + HOW);
+    if (extra.length) return refuse('1Ultra computes every tile itself, so these fields are not accepted: ' + extra.slice(0, 8).join(', ') + '. ' + HOW);
     const reqRooms = req.rooms == null ? [] : req.rooms, reqHalls = req.hallways == null ? [] : req.hallways;
     if (!Array.isArray(reqRooms) || reqRooms.length > 24 || !Array.isArray(reqHalls) || reqHalls.length > 24 || !(reqRooms.length + reqHalls.length)) return refuse(HOW);
     const notes = [], live = WM.create(clone(doc)), before = floorFacts(live, P);
@@ -2381,7 +2385,7 @@
       const q = reqRooms[i], nth = 'Room ' + (i + 1);
       if (!q || typeof q !== 'object' || Array.isArray(q)) return refuse(HOW);
       const bad = Object.keys(q).filter(k => ROOM_KEYS.indexOf(k) < 0);
-      if (bad.length) return refuse('StarNet computes every tile itself, so a room does not take: ' + bad.slice(0, 8).join(', ') + '. A room takes: ' + ROOM_KEYS.join(', ') + '.');
+      if (bad.length) return refuse('1Ultra computes every tile itself, so a room does not take: ' + bad.slice(0, 8).join(', ') + '. A room takes: ' + ROOM_KEYS.join(', ') + '.');
       const style = styleOf(WM, q); if (!style.ok) return style;
       // what goes in it: zones (by part of the room), or lines (anywhere in it), or nothing yet
       if (q.zones != null && q.lines != null) return refuse(nth + ' takes zones (what goes in each part of it) or lines (workflow lines anywhere in it), not both.');
@@ -2443,7 +2447,7 @@
       // a conveyor hall with no size asked is a hall: giant, with floor for the lines to come (as a layout's is)
       const hallMin = rstyle === 'works' ? SIZES.giant : minWH;
       const RW = sz.size ? sz.size[0] : Math.max(need.w, minWH[0], hallMin[0]), RH = sz.size ? sz.size[1] : Math.max(need.h, minWH[1], hallMin[1]);
-      if (RW > DESIGN_MAX[0] || RH > DESIGN_MAX[1]) return refuse('What goes in ' + (given || nth) + ' needs a ' + RW + ' × ' + RH + ' room, larger than the ' + DESIGN_MAX[0] + ' × ' + DESIGN_MAX[1] + ' StarNet builds at once. Split it into two rooms.');
+      if (RW > DESIGN_MAX[0] || RH > DESIGN_MAX[1]) return refuse('What goes in ' + (given || nth) + ' needs a ' + RW + ' × ' + RH + ' room, larger than the ' + DESIGN_MAX[0] + ' × ' + DESIGN_MAX[1] + ' 1Ultra builds at once. Split it into two rooms.');
       const tq = q.beside != null ? roomNamed(probe, q.beside) : { ok: true, room: null };   // no room named: beside whichever keeps the station compact
       if (!tq.ok) return tq;
       const kind = (style.type && style.type.id) || (rec && rec.kind) || 'hab';
@@ -2455,7 +2459,7 @@
       for (let k = 2; !given && taken(name) && k < 50; k++) name = (auto.slice(0, 21) + ' ' + k);
       usedNames[norm(name)] = 1;
       const roomSpec = { kind, name, floorStyle: style.floorStyle || (rec && !style.type ? rec.deck.style : undefined), floorMat: style.floorMat || (rec && !style.type ? rec.deck.mat : undefined), walls: rec ? rec.walls : undefined };
-      // a size StarNet chose is an estimate: when the contents do not fit it, the room grows and tries again
+      // a size 1Ultra chose is an estimate: when the contents do not fit it, the room grows and tries again
       const tries = sz.size ? [[RW, RH]] : [[RW, RH], [RW + 2, RH + 1], [RW + 4, RH + 3], [RW + 7, RH + 5]].filter(([w, h], i) => !i || (w <= DESIGN_MAX[0] && h <= DESIGN_MAX[1]));
       let got = null, why = null;
       const onGrid = q.beside == null && q.side == null && q.align == null && q.hallway == null;   // a size asked keeps the grid too, at that size
@@ -2493,7 +2497,7 @@
     // hallways between rooms that already stand, or that this plan has just added
     const halls = [];
     for (const h of reqHalls) {
-      if (!h || typeof h !== 'object' || Array.isArray(h) || h.from == null || h.to == null || Object.keys(h).some(k => k !== 'from' && k !== 'to')) return refuse('Each hallway is { "from": a room, "to": another room }. StarNet lays it straight between them.');
+      if (!h || typeof h !== 'object' || Array.isArray(h) || h.from == null || h.to == null || Object.keys(h).some(k => k !== 'from' && k !== 'to')) return refuse('Each hallway is { "from": a room, "to": another room }. 1Ultra lays it straight between them.');
       const A = roomNamed(probe, h.from); if (!A.ok) return A;
       const B = roomNamed(probe, h.to); if (!B.ok) return B;
       if (A.room.id === B.room.id) return refuse('A hallway joins two different rooms.');
@@ -2572,7 +2576,7 @@
 
   /* ================= STATION LAYOUTS (2026-09-30): a whole station composed the way the hand-built showcases were =========
      Andrew, after seeing two stations laid out by hand ("this is so much better, can the agent reliably do this?"): the
-     lead names a PATTERN and the rooms; StarNet composes the floor plan — the corridors, where every room sits, the halls
+     lead names a PATTERN and the rooms; 1Ultra composes the floor plan — the corridors, where every room sits, the halls
      that join them — furnishes each room from wall to wall in its style (floor, walls, feature wall, centrepiece, plants),
      and dresses the corridors. Two patterns:
        ring       a corridor loop around the hub room (the bridge) with a spoke in from each side; rooms around the outside
@@ -3046,7 +3050,7 @@
       const q = list[i];
       if (!q || typeof q !== 'object' || Array.isArray(q)) return refuse(HOW);
       const bad = Object.keys(q).filter(k => LAYOUT_ROOM_KEYS.indexOf(k) < 0);
-      if (bad.length) return refuse('StarNet places and furnishes every room itself, so a layout room does not take: ' + bad.slice(0, 6).join(', ') + '. It takes: ' + LAYOUT_ROOM_KEYS.join(', ') + '.');
+      if (bad.length) return refuse('1Ultra places and furnishes every room itself, so a layout room does not take: ' + bad.slice(0, 6).join(', ') + '. It takes: ' + LAYOUT_ROOM_KEYS.join(', ') + '.');
       let style = null;
       if (q.style != null) { style = RS.resolveRoom(q.style); if (!style) return refuse('There is no room style "' + String(q.style).slice(0, 40) + '". Styles: ' + RS.ROOM_ORDER.join(', ') + '.'); }
       else if (typeof q.name === 'string' && q.zones == null && q.lines == null) style = RS.resolveRoom(q.name);   // "Arcade", "Conveyor Hall"
@@ -3071,7 +3075,7 @@
       const need = contentNeed(zones, lines);
       let w = sz.size ? sz.size[0] : Math.max(def[0], need.w), h = sz.size ? sz.size[1] : Math.max(def[1], need.h);
       if (sz.size && (need.hardW || need.w) > w) return refuse('Room ' + (i + 1) + ' at ' + w + ' × ' + h + ' is too small for what goes in it. Leave size out, or ask for a bigger one.');
-      if (w > DESIGN_MAX[0] || h > DESIGN_MAX[1]) return refuse('What goes in room ' + (i + 1) + ' needs more than the ' + DESIGN_MAX[0] + ' × ' + DESIGN_MAX[1] + ' StarNet builds at once.');
+      if (w > DESIGN_MAX[0] || h > DESIGN_MAX[1]) return refuse('What goes in room ' + (i + 1) + ' needs more than the ' + DESIGN_MAX[0] + ' × ' + DESIGN_MAX[1] + ' 1Ultra builds at once.');
       const given = typeof q.name === 'string' ? q.name.replace(/\s+/g, ' ').trim().toUpperCase().slice(0, 24) : '';
       const taken = nm => live.rooms().some(r => r.kind !== 'corridor' && norm(r.name) === norm(nm)) || usedNames[norm(nm)];
       let name = given || (style ? AUTO_NAME[style] : 'ROOM ' + (i + 1));
@@ -3332,7 +3336,7 @@
     const L = req.layout;
     if (!L || typeof L !== 'object' || Array.isArray(L)) return refuse(HOW);
     const bad = Object.keys(L).filter(k => LAYOUT_KEYS.indexOf(k) < 0);
-    if (bad.length) return refuse('StarNet computes every tile itself, so a layout does not take: ' + bad.slice(0, 6).join(', ') + '. It takes: ' + LAYOUT_KEYS.join(', ') + '.');
+    if (bad.length) return refuse('1Ultra computes every tile itself, so a layout does not take: ' + bad.slice(0, 6).join(', ') + '. It takes: ' + LAYOUT_KEYS.join(', ') + '.');
     const pattern = PATTERNS[norm(L.pattern)] || (L.pattern == null ? 'diamond' : null);
     if (!pattern) return refuse('pattern is diamond (rooms on an even grid all round the main room, a corridor loop at its centre) or concourse (a wide corridor with rooms down both sides and a big room at the end).');
     if (req.replace != null && typeof req.replace !== 'boolean') return refuse('replace is true (lay out the whole station again) or left out (add the layout beside what stands).');
@@ -3509,7 +3513,7 @@
   function planDesign(doc, req, env) {
     if (!req || typeof req !== 'object' || Array.isArray(req)) return refuse('Send the request as an object with: ' + DESIGN_MENU.join(', ') + '.');
     const extra = Object.keys(req).filter(k => DESIGN_MENU.indexOf(k) < 0);
-    if (extra.length) return refuse('StarNet chooses every position and piece of furniture itself, so these fields are not accepted with zones: ' + extra.slice(0, 8).join(', ') + '. Use only: ' + DESIGN_MENU.join(', ') + '.');
+    if (extra.length) return refuse('1Ultra chooses every position and piece of furniture itself, so these fields are not accepted with zones: ' + extra.slice(0, 8).join(', ') + '. Use only: ' + DESIGN_MENU.join(', ') + '.');
     const into = req.where != null && !/^(a )?new( room)?$/i.test(String(req.where).trim());
     const room = { zones: req.zones };
     for (const k of ['type', 'floorStyle', 'floorMat', 'beside', 'side', 'hallway', 'size']) if (req[k] !== undefined) room[k] = req[k];
@@ -3616,7 +3620,7 @@
         let a = null;
         const before = new Set(st.props().map(p => p.id));
         try { a = env.recruit(rc.role); } catch (_) { a = null; }
-        if (!a || !a.id) return refuse('StarNet could not recruit a ' + rc.role + ', so nothing was built.');
+        if (!a || !a.id) return refuse('1Ultra could not recruit a ' + rc.role + ', so nothing was built.');
         recruited.push({ id: a.id, name: a.name || a.id, role: rc.role });
         if (rc.desk) {
           const slot = st.propAt(rc.desk.x, rc.desk.y), sp = slot ? st.propById(slot) : null;

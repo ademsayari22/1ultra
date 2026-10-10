@@ -1,1 +1,1 @@
-StarNet v0.9.0 Intel manual-sidecar generation: preserve byte-for-byte.
+1Ultra v0.9.0 Intel manual-sidecar generation: preserve byte-for-byte.

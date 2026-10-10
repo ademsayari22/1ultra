@@ -1,6 +1,6 @@
 # Benchmarks and common mistakes
 
-**Read this first.** The figures below are the ones the upstream skill reports from vendor studies dated 2024 to 2025 (Belkins, Snov.io, Reachoutly, Digital Bloom, Instantly, Lavender, Gong, Woodpecker). StarNet has not re-checked them and they age quickly. Use them to choose between options and to set rough expectations. Do not quote them to a prospect, and when you show one to the Commander, say where it comes from.
+**Read this first.** The figures below are the ones the upstream skill reports from vendor studies dated 2024 to 2025 (Belkins, Snov.io, Reachoutly, Digital Bloom, Instantly, Lavender, Gong, Woodpecker). 1Ultra has not re-checked them and they age quickly. Use them to choose between options and to set rough expectations. Do not quote them to a prospect, and when you show one to the Commander, say where it comes from.
 
 ## Rough performance ranges
 

@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Address PR Comments"
   category: "Engineering"
-  author: "StarNet"
+  author: "1Ultra"
 ---
 
 A review comment is a claim about the code, and the reviewer may be right, wrong or unclear. Check each one against the code before you act, and leave no thread without an honest answer. The bar: every open thread ends as a change with its commit, a reasoned reply, or a question.

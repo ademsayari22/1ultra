@@ -1,6 +1,6 @@
 /* node test/mcp.resources-prompts.test.js — MCP RESOURCES + PROMPTS.
 
-   StarNet's MCP client spoke `tools/list` and `tools/call` and nothing else, so it saw a THIRD of what a
+   1Ultra's MCP client spoke `tools/list` and `tools/call` and nothing else, so it saw a THIRD of what a
    connected server actually offers. A server whose whole point is publishing documents (resources) or reusable
    prompt templates (prompts) connected fine, reported zero tools, and looked broken.
 

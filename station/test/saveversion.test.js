@@ -1,6 +1,6 @@
 /* node test/saveversion.test.js — FORWARD-VERSION GUARDS (update-safety audit P0.3).
 
-   A save written by a NEWER StarNet must never be silently adopted, migrated, re-stamped, or clobbered by this
+   A save written by a NEWER 1Ultra must never be silently adopted, migrated, re-stamped, or clobbered by this
    older code. This locks the three seams that used to violate that:
 
      • frontend/app/save.js   — load()/loadStatus() REFUSE a doc whose version > CURRENT and leave the stored
@@ -123,14 +123,14 @@ function futureRaw(over) {
 }
 
 // ============================================================================
-// 3. backup.js validate() — refuse a backup file from a newer StarNet
+// 3. backup.js validate() — refuse a backup file from a newer 1Ultra
 // ============================================================================
 {
   const goodStore = { 'starnet.save': JSON.stringify({ schema: 'starnet.save', version: Save.CURRENT, agent: { name: 'NOVA' } }) };
 
   // future backup version → refused with a clear string the import UI surfaces.
   const err = Backup.validate({ schema: 'starnet.backup', version: Backup.VERSION + 1, store: goodStore });
-  A.ok(typeof err === 'string' && /newer StarNet/i.test(err), 'validate() refuses a future-version backup with a clear message');
+  A.ok(typeof err === 'string' && /newer 1Ultra/i.test(err), 'validate() refuses a future-version backup with a clear message');
 
   // applyBundle refuses it too (never writes any key) — validate() gates it.
   localStorage.clear();

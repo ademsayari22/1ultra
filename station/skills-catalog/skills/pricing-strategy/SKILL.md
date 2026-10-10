@@ -144,4 +144,4 @@ The recommendation is saved and re-read; each competitor price in it has a URL a
 
 *Needs the DISH (web_fetch, web_search, browser.navigate, browser.get_text, browser.screenshot) and the INTEL CAB (fs.write).*
 
-Adapted for StarNet from pricing (Corey Haines), MIT.
+Adapted for 1Ultra from pricing (Corey Haines), MIT.

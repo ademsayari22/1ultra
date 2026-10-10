@@ -31,7 +31,7 @@ function waitFor(fn, ms, label) {
 async function call(base, route, method, body) {
   const r = await fetch(base + route, {
     method: method || 'GET',
-    headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': TOKEN },
+    headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': TOKEN },
     body: body === undefined ? undefined : JSON.stringify(body)
   });
   let json = null; try { json = await r.json(); } catch (_) {}

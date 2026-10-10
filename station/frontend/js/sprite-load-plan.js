@@ -1,4 +1,4 @@
-/* STARNET — pure sprite-manifest load planning. Browser + CommonJS so startup budgets are testable. */
+/* 1ULTRA — pure sprite-manifest load planning. Browser + CommonJS so startup budgets are testable. */
 'use strict';
 
 (function expose(root, factory) {

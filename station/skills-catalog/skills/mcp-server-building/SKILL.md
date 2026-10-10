@@ -211,4 +211,4 @@ The project folder (name its README or entry file with `deliverable_note`), the 
 
 *Needs the DISH (web_fetch, web_search), the INTEL CAB (fs.write, fs.edit) and the WORKBENCH (shell.exec, verify.run, terminal.start), plus Node.js or Python already installed on the Commander's machine.*
 
-Adapted for StarNet from mcp-builder (Anthropic), Apache-2.0.
+Adapted for 1Ultra from mcp-builder (Anthropic), Apache-2.0.

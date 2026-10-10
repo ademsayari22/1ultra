@@ -170,7 +170,7 @@ function boot(port, env, attemptsLeft) {
   try {
     const token = await bootToken(B, B);
     A.ok(token.length >= 32, 'got a session API token');
-    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     const status = async () => ((await (await fetch(B + '/api/connectors', { headers })).json()).connectors || []).find(c => c.id === 'demo') || null;
 
     const upsert = await (await fetch(B + '/api/connectors', { method: 'POST', headers,

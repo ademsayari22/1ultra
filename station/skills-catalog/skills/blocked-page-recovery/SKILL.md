@@ -88,4 +88,4 @@ Generic "web proxy" relays are man-in-the-middle by construction. Never send coo
 
 *Needs the DISH (`web_fetch`, `web_request`, the station browser).*
 
-Adapted for StarNet from blocked-page-recovery (Nous Research), MIT.
+Adapted for 1Ultra from blocked-page-recovery (Nous Research), MIT.

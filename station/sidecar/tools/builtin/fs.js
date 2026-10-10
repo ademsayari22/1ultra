@@ -84,7 +84,40 @@ const { note: failNote } = require('../../failopen');
       const r = String(rel == null ? '' : rel);
       if (P.win32.isAbsolute(r) || P.posix.isAbsolute(r) || /^[A-Za-z]:/.test(r)) return '';
       const scoped = !!(ctx && typeof ctx.projectRoot === 'string' && ctx.projectRoot.trim());
-      return '\n[location: ' + abs + (scoped ? '' : ' (your private workspace, not a project folder)') + ']';
+      // the private case names the way into a project, like outputPlacement (#77): the bare fact left the agent stuck
+      return '\n[location: ' + abs + (scoped ? '' : ' (your private workspace, not a project folder; a shell working in a project '
+        + 'will not find it here. To write into a project folder, give "path" as an absolute path inside it, or work from a '
+        + 'conversation scoped to that project)') + ']';
+    }
+    /* WHERE A PRODUCED FILE LANDED (issue #77) — locationLine's counterpart for the tools that MAKE a file
+       (image_generate, voice_generate). `resolved` is resolveInside's { base, abs }. Returns the sentence that
+       names the absolute location and the viewer URL that really opens it: a file in a trusted project opens
+       through /api/file?project=, a private one through ?agent=. The private case also says how to export,
+       because no other agent (a lead included) can read another agent's private workspace: path trust denies
+       it. A bare "saved thumb.png" read as "handed over", and the lead then found "no such file". */
+    async function outputPlacement(agentId, resolved) {
+      const aid = safeAgentId(agentId || 'agent');
+      const abs = resolved && resolved.abs, base = resolved && resolved.base;
+      const enc = encodeURIComponent;
+      const rel = (root) => P.relative(root, abs).split(P.sep).join('/');
+      const ws = await workspaceRoot(aid);
+      const wsReal = await realpathOrSelf(ws);
+      if (pathInside(abs, ws) || pathInside(abs, wsReal)) {
+        const r = pathInside(abs, ws) ? rel(ws) : rel(wsReal);
+        return {
+          abs, private: true, viewer: '/api/file?agent=' + enc(aid) + '&path=' + enc(r),
+          line: 'Saved at: ' + abs + ' (your PRIVATE workspace, not a project folder: other agents, including a lead you report to, cannot read it there). '
+            + 'To save into a trusted project folder instead, give "path" as an absolute path inside that project, or work from a conversation scoped to the project, where a relative "path" lands in the project folder.'
+        };
+      }
+      if (base && !(resolved && resolved.unrestrictedHost)) {
+        const r = rel(base);
+        return {
+          abs, private: false, viewer: '/api/file?agent=' + enc(aid) + '&path=' + enc(r) + '&project=' + enc(base),
+          line: 'Saved at: ' + abs + ' (project folder ' + base + '; any agent working in this project reads it as "' + r + '").'
+        };
+      }
+      return { abs, private: false, viewer: '', line: 'Saved at: ' + abs + '.' };
     }
     function receiptError(message, receipt) {
       const error = new Error(message + ' ' + receiptLine(receipt));
@@ -752,7 +785,7 @@ const { note: failNote } = require('../../failopen');
 
     /* CATASTROPHIC-BACKTRACKING FLOOR (measured 2026-07-26).
        `fs.search { regex: true }` compiles the MODEL's string and runs it synchronously over every line of
-       every candidate file. StarNet is ONE process — UI, API, SSE bus and every agent run — and a
+       every candidate file. 1Ultra is ONE process — UI, API, SSE bus and every agent run — and a
        backtracking blow-up pegs the event loop, so a single call froze the entire station indefinitely:
        `(a|a)+$` against a 41-character line never returned, and the tool's own timeoutMs could not help
        (registry withTimeout REJECTS the promise; it cannot stop synchronous work). Only killing the process
@@ -1162,7 +1195,7 @@ const { note: failNote } = require('../../failopen');
 
     return {
       writeTool, readTool, listTool, appendTool, editTool, patchTool, searchTool,
-      _internals: { resolveInside, workspaceRoot, safeAgentId, walk, collectFiles, globToRe, pathInside, parsePatch, fuzzyFindAndReplace, parseGitignore, gitignored, rgBinary },
+      _internals: { resolveInside, outputPlacement, workspaceRoot, safeAgentId, walk, collectFiles, globToRe, pathInside, parsePatch, fuzzyFindAndReplace, parseGitignore, gitignored, rgBinary },
       register(reg) { [writeTool, readTool, listTool, appendTool, editTool, patchTool, searchTool].forEach(t => reg.register(t)); return reg; }
     };
   }

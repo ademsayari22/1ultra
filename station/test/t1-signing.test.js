@@ -20,8 +20,8 @@ function run(args, env) {
 
 function mockSignatures(app, installer, status) {
   return JSON.stringify([
-    { path: app, status, statusMessage: status, signerSubject: status === 'Valid' ? 'CN=StarNet Test' : '', signerThumbprint: status === 'Valid' ? 'ABC' : '' },
-    { path: installer, status, statusMessage: status, signerSubject: status === 'Valid' ? 'CN=StarNet Test' : '', signerThumbprint: status === 'Valid' ? 'ABC' : '' }
+    { path: app, status, statusMessage: status, signerSubject: status === 'Valid' ? 'CN=1Ultra Test' : '', signerThumbprint: status === 'Valid' ? 'ABC' : '' },
+    { path: installer, status, statusMessage: status, signerSubject: status === 'Valid' ? 'CN=1Ultra Test' : '', signerThumbprint: status === 'Valid' ? 'ABC' : '' }
   ]);
 }
 

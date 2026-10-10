@@ -43,7 +43,7 @@ function seedTokens(ws, envelope) {
   let B = fixture.baseUrl;
   try {
     let token = fixture.token;
-    let headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    let headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     const status = async () => (await fetch(B + '/api/auth/codex/status', { headers })).json();
 
     let raw = await (await fetch(B + '/api/auth/codex/status', { headers })).text();
@@ -72,7 +72,7 @@ function seedTokens(ws, envelope) {
     await fixture.restart();
     B = fixture.baseUrl;
     token = fixture.token;
-    headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     s = await status();
     A.eq(s.connected, false, 'logout remains disconnected after a real sidecar restart');
     A.eq(s.expired, false, 'restart cannot recover the old dead credential from .bak');
@@ -83,7 +83,7 @@ function seedTokens(ws, envelope) {
     await fixture.start();
     B = fixture.baseUrl;
     token = fixture.token;
-    headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     s = await status();
     A.eq(s.connected, true, 'a healthy persisted sign-in still reads connected:true');
     A.eq(s.expired, false, 'a healthy sign-in is not expired');

@@ -1,4 +1,4 @@
-/* node test/remote.e2e.test.js — StarNet Remote phase 1 against a REAL booted sidecar.
+/* node test/remote.e2e.test.js — 1Ultra Remote phase 1 against a REAL booted sidecar.
 
    A mock provider plays the model (zero spend). The phone is relay/app/phone-client.js, the WebCrypto-only
    client a phone browser runs. What this proves, in order:

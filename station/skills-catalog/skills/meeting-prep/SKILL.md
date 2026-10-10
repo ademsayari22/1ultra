@@ -5,7 +5,7 @@ license: MIT
 metadata:
   title: "Meeting Prep"
   category: "Productivity"
-  author: "StarNet"
+  author: "1Ultra"
 ---
 
 A meeting brief is read in the two minutes before the call. One page, every fact traceable to where it came from, and an honest "unknown" wherever you found nothing.

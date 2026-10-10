@@ -46,7 +46,7 @@ function makeStationBridge(opts) {
       };
       const timer = setTimer(() => settle({
         ok: false,
-        error: 'no station page answered — open StarNet to run station commands',
+        error: 'no station page answered — open 1Ultra to run station commands',
         verb,
         unattended: true
       }), timeoutMs);

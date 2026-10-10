@@ -56,7 +56,7 @@ module.exports = (async () => {
     A.eq(t2({ error: 'boom' }), { error: { message: 'boom' } }, 'a mid-stream error line becomes an error chunk');
   }
   // ---- window sizing ----
-  A.eq(N.pickNumCtx(25000, {}), 32768, 'a StarNet task (~21k prompt + 4k output) lands on 32k');
+  A.eq(N.pickNumCtx(25000, {}), 32768, 'a 1Ultra task (~21k prompt + 4k output) lands on 32k');
   A.eq(N.pickNumCtx(25000, { modelMax: 16384 }), 16384, 'never past the model\'s trained window');
   A.eq(N.pickNumCtx(900000, {}), N.DEFAULT_MAX_CTX, 'never past the ceiling');
   A.eq(N.pickNumCtx(1000, { floor: 32768 }), 32768, 'never steps down from a window the model already runs at (a reload)');
@@ -215,7 +215,7 @@ module.exports = (async () => {
     await collect(mk(), { model: 'q', messages: [{ role: 'user', content: 'hello' }] });
     A.eq(sizes, [32768, 32768], 'a small turn on a NEW provider instance keeps the window the task loaded');
   }
-  // StarNet restarted while Ollama still holds the model at a larger window: adopt it instead of reloading smaller.
+  // 1Ultra restarted while Ollama still holds the model at a larger window: adopt it instead of reloading smaller.
   {
     const sizes = [];
     const fetch = async (url, init) => {

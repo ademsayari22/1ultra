@@ -244,7 +244,7 @@ function retryable(t, opts) {
     const copyBtn = (function find(el) { if (el.tagName === 'BUTTON' && /COPY/.test(el.textContent)) return el; for (const c of el.children) { const r = find(c); if (r) return r; } return null; })(b);
     copyBtn.onclick();
     await new Promise(r => setTimeout(r, 10));
-    A.ok(copied.includes('STARNET BOOT GUARD') && copied.includes('Chat (app/chat.js)') && copied.endsWith('SIDECAR REPORT'), 'copy = page-side boot report + the sidecar report via Diag');
+    A.ok(copied.includes('1ULTRA BOOT GUARD') && copied.includes('Chat (app/chat.js)') && copied.endsWith('SIDECAR REPORT'), 'copy = page-side boot report + the sidecar report via Diag');
     A.eq(copyBtn.textContent, '✓ DIAGNOSTICS COPIED', 'button confirms the copy');
   }
   {
@@ -275,6 +275,23 @@ function retryable(t, opts) {
     A.eq(t.guard.PROBES.map(p => p.name), CRITICAL, 'the critical probe list is exactly the documented set');
     t.guard.PROBES.forEach(p => A.ok(fs.existsSync(path.join(ROOT, 'frontend', p.file)), 'probe file exists: ' + p.file));
     A.ok(!/new Function\s*\(|[^\w.'"]eval\s*\(/.test(SRC), 'no eval() / new Function() — the desktop CSP forbids it, probes are literal typeofs');
+  }
+  /* ---- 10. an OUTDATED web engine (macOS 10.15 / Safari 13, 2026-10-08 report) is named, not called a broken file ---- */
+  {
+    const OldRegExp = function (src, flags) { if (/\(\?<[=!]/.test(String(src))) throw new SyntaxError('Invalid regular expression: invalid group specifier name'); return new RegExp(src, flags); };
+    const g = allGlobals(); delete g[CRITICAL[0]];
+    const t = boot(Object.assign(g, { RegExp: OldRegExp }));
+    t.sandbox.navigator = { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)' };
+    t.ready();
+    const b = t.banner();
+    A.ok(!!b, 'a missing module on an outdated engine still renders the banner');
+    const txt = b ? textOf(b) : '';
+    A.ok(txt.includes('NEEDS A NEWER macOS') && /macOS 11 Big Sur/.test(txt) && /Safari 16\.4/.test(txt), 'the banner names the real cause: a newer macOS / Safari');
+    A.ok(!txt.includes('broken or blocked file'), 'an outdated engine is never called a broken or blocked file');
+    A.ok(!txt.includes('RELOAD'), 'no RELOAD (it can never update a web engine)');
+    A.ok(/web engine:\s+TOO OLD/.test(t.guard.report()), 'the copied report says the web engine is too old');
+    A.ok(b && !/inset:/.test(b.style.cssText) && /top:0;left:0;right:0;bottom:0/.test(b.style.cssText), 'the overlay avoids inset (Safari 14.1+) so it covers an old window');
+    const modern = boot(allGlobals()); A.eq(modern.guard._internals.webviewTooOld(), false, 'a modern engine is not flagged');
   }
   A.report('bootguard');
 })();

@@ -13,7 +13,7 @@ const threads = [
   { id: 'th_aaa', title: 'GPU price watcher', spec: 'build a price watcher for GPUs someday' },
   { id: 'th_bbb', title: 'Discord moderation bot', spec: 'I want a Discord bot for my server' }
 ];
-const beliefs = { goals: ['ship StarNet v1'] };
+const beliefs = { goals: ['ship 1Ultra v1'] };
 
 // ---- 1. the THREADS block appears in the candidate directive, with citable tags ----
 {
@@ -58,7 +58,7 @@ const beliefs = { goals: ['ship StarNet v1'] };
   const dir = AP.buildCandidateDirective({ beliefs, eligible: AP.ARCHETYPES });
   A.ok(dir.indexOf('OPEN THREADS') < 0, 'no THREADS block when no threads are passed (back-compat)');
   const cands = AP.parseCandidates(
-    'JOB: Ship v1\nKIND: advance-goal\nGROUNDS: ship StarNet v1\nCONFIDENCE: high\nSPEC: a checklist',
+    'JOB: Ship v1\nKIND: advance-goal\nGROUNDS: ship 1Ultra v1\nCONFIDENCE: high\nSPEC: a checklist',
     { eligible: AP.ARCHETYPES, beliefs });
   A.eq(cands.length, 1, 'belief-grounded candidate still works with no threads');
   A.ok(!cands[0].threadId, 'no threadId when nothing was cited');

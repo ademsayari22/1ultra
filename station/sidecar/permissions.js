@@ -182,7 +182,7 @@
 
     function consent(call, tool) {
       const scope = scopeOf(tool);
-      // FULL POWER: the Commander's explicit host-wide authority outranks StarNet policy floors.
+      // FULL POWER: the Commander's explicit host-wide authority outranks 1Ultra policy floors.
       // Input/schema validity, OS permissions and downstream service prerequisites still report normally.
       if (unrestrictedNow()) return { allow: true, scope: scope, reason: 'full-power' };
       // 1. HARDLINE — unreachable past any flag.

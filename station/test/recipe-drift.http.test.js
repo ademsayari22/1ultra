@@ -54,7 +54,7 @@ const row = (o) => Object.assign({
   const B = 'http://' + HOST + ':' + port;
   try {
     const token = await bootToken(B, B);
-    const get = (u, h) => fetch(B + u, { headers: Object.assign({ 'X-StarNet-Token': token, Origin: B }, h || {}) });
+    const get = (u, h) => fetch(B + u, { headers: Object.assign({ 'X-1Ultra-Token': token, Origin: B }, h || {}) });
     const noTok = await fetch(B + '/api/recipes/drift');
     A.ok(noTok.status === 401 || noTok.status === 403, 'the drift route is token-gated like /api/runs (' + noTok.status + ')');
     const all = await (await get('/api/recipes/drift')).json();

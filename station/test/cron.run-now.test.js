@@ -1,7 +1,7 @@
 /* node test/cron.run-now.test.js - source-locks manual routine Run Now visibility.
 
    The reference harness had this exact class of bug: a manual cron run reported success but did
-   not actually fire through the same observable path. In StarNet the important
+   not actually fire through the same observable path. In 1Ultra the important
    contract is that /api/cron/run is not only a panel-local NDJSON stream: it
    must also place a cron work item and mirror lifecycle over SSE so the floor
    moves immediately when the user presses Run Now. */
@@ -76,5 +76,15 @@ A.ok(/entryUsd:\s*state\.usd/.test(runNowBlock), "Run Now seeds the chain ceilin
    add line.usd to the entry spend and hand it to markRun. */
 A.ok(/state\.usd \+= line\.usd/.test(runNowBlock), "Run Now adds the line's hop spend to the entry run's spend");
 A.ok(/cronDriver\.settleRun\(job\.id, runId, state, null\)/.test(runNowBlock), "Run Now passes the line's full state into the shared durable settlement path");
+
+/* SAME TOOLS AS THE SCHEDULED FIRE (B5 per-bay isolation). Run Now's stage one passed no `station`, so runOnce fell
+   back to the broad autonomous default office (dish, cabinet, notebook, studio…) while the scheduled fire runs in the
+   routine's bay room only — "test it now" showed web tools the 9:00 fire did not have (or the reverse). Lock stage
+   one to the exact resolveStation expression the driver uses, and the driver to its side of it. */
+const runNowStageOne = sliceBetween(runNowBlock, /await runOnce\(\{/, /chainRunner\.advance\(/);
+A.ok(/station:\s*\(\s*job\.dockId\s*\?\s*router\.stationFor\(job\.agentId,\s*job\.dockId\)\s*:\s*router\.stationFor\(job\.agentId\)\s*\)\s*\|\|\s*undefined/.test(runNowStageOne), "Run Now stage one runs in the routine's bay room, exactly like the scheduled fire (B5)");
+const driverSrc = fs.readFileSync(path.resolve(__dirname, '..', 'sidecar', 'cron-driver.js'), 'utf8');
+A.ok(/job\.dockId \? resolveStation\(job\.agentId, job\.dockId\) : resolveStation\(job\.agentId\)/.test(driverSrc), 'the scheduled fire resolves the same bay station (cron-driver.js)');
+A.ok(/resolveStation:\s*\(agentId, dockId\)\s*=>\s*router\.stationFor\(agentId, dockId\)/.test(driverBlock), "the driver's resolveStation is router.stationFor — the seam Run Now calls directly");
 
 if (require.main === module) A.report('cron.run-now.test');

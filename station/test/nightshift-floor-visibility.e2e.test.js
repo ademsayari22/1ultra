@@ -47,7 +47,7 @@ function startMockOpenRouter() {
           } else if (/Do this ONE job now/.test(prompt)) {
             text('TITLE: Beta launch checklist\nA real draft body the Commander can read.');
           } else if (/Propose up to/.test(prompt)) {
-            text(['JOB: Beta launch checklist', 'KIND: advance-goal', 'GROUNDS: ship the StarNet beta to 100 users', 'CONFIDENCE: high', 'SPEC: a checklist draft toward the beta'].join('\n'));
+            text(['JOB: Beta launch checklist', 'KIND: advance-goal', 'GROUNDS: ship the 1Ultra beta to 100 users', 'CONFIDENCE: high', 'SPEC: a checklist draft toward the beta'].join('\n'));
           } else {
             text('ok');
           }
@@ -111,7 +111,7 @@ function hotBeliefs(now) {
   return {
     known: ['goals', 'pain', 'stack', 'ambition'],
     beliefs: {
-      goals: b('ship the StarNet beta to 100 users'),
+      goals: b('ship the 1Ultra beta to 100 users'),
       pain: b('manual release notes eat my fridays'),
       stack: b('node and a pixel-art canvas'),
       ambition: b('a living agent station people watch')
@@ -129,7 +129,7 @@ function hotBeliefs(now) {
   try {
     const token = await bootToken(B, B);
     A.ok(token.length >= 32, 'got a session API token');
-    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
 
     sse = attachSse(B, token);
     await sleep(300);   // let the SSE stream open before the beat fires

@@ -570,7 +570,7 @@ A.eq(Policy.canMutate({ status: 'executing' }, { scope: 'execute' }).ok, true, '
     threads: [{ title: 'finish the changelog verifier' }],
     worksignal: 'dominant lane: workbench; 4 completed task-runs',
     verdicts: { kinds: { research: { weight: 0.4, positive: 3, negative: 0 } } },
-    activity: ['Ship the StarNet beta (yesterday)']
+    activity: ['Ship the 1Ultra beta (yesterday)']
   });
   A.ok(/<commander_evidence provenance="observed; weak; never override the current request">/.test(evidenceCx), 'one provenance-labelled evidence block composes the learned model for every execution lane');
   A.ok(/release automation/.test(evidenceCx) && /automate release notes/.test(evidenceCx), 'topic claims carry their stored evidence quote');

@@ -143,7 +143,7 @@ function makeRepo() {
     ({ child, port } = await boot(8980 + (process.pid % 15), env, 20));
     const B = 'http://' + HOST + ':' + port;
     const token = await bootToken(B, B);
-    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
 
     const bless = await fetch(B + '/api/projects/bless', { method: 'POST', headers, body: JSON.stringify({ path: repo, surface: 'interactive' }) });
     A.eq(bless.status, 200, 'the project blessed');

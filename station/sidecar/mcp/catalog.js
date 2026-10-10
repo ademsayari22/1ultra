@@ -63,8 +63,8 @@
       clientSecretRequired: false,
       developerPreview: false,
       setupUrl: 'https://developers.google.com/identity/protocols/oauth2/native-app',
-      setupName: 'StarNet publisher setup',
-      setupNote: 'StarNet supplies the Google application registration. Users only sign in and approve access.'
+      setupName: '1Ultra publisher setup',
+      setupNote: '1Ultra supplies the Google application registration. Users only sign in and approve access.'
     };
   }
 
@@ -142,7 +142,7 @@
     // ── OAuth tier — LISTED but not installable until the OAuth slice ships (honest, not a dead click) ──
     /* `via` (url-less oauth entries only): the catalog id of the AGGREGATOR that reaches this platform today.
        The panel renders it as a live "VIA <name>" jump to that card instead of a mute disabled button. */
-    /* StarNet implements MCP tools locally over stable Google APIs. The publisher supplies
+    /* 1Ultra implements MCP tools locally over stable Google APIs. The publisher supplies
        an installed-app OAuth registration; customers never configure a Google Cloud project. */
     { id: 'google-files', name: 'Selected Google files', category: 'Productivity', authType: 'oauth', transport: 'http',
       url: 'https://www.googleapis.com/drive/v3#selected-files', googleApi: true, official: false, homepage: 'https://drive.google.com',
@@ -151,7 +151,7 @@
         scopes: ['https://www.googleapis.com/auth/drive.file'],
         extraAuthParams: { access_type: 'offline', prompt: 'consent', trigger_onepick: 'true', include_granted_scopes: 'false', allow_multiple: 'true', mimetypes: 'application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet' }
       }),
-      blurb: 'Choose Google Docs and Sheets in Google’s file picker. Agents can read and edit files you grant to StarNet and create new ones. Other Drive files, Gmail and Calendar are not included.' },
+      blurb: 'Choose Google Docs and Sheets in Google’s file picker. Agents can read and edit files you grant to 1Ultra and create new ones. Other Drive files, Gmail and Calendar are not included.' },
     { id: 'gmail', name: 'Gmail', category: 'Productivity', authType: 'oauth', transport: 'http',
       url: 'https://gmail.googleapis.com/gmail/v1/users/me', googleApi: true, official: false, homepage: 'https://mail.google.com',
       aliases: ['google', 'gmail', 'google mail', 'email', 'gsuite', 'g suite', 'google workspace'],
@@ -165,7 +165,7 @@
       staticOauth: GOOGLE_OAUTH(['https://www.googleapis.com/auth/gmail.send']),
       blurb: 'Send plain-text email from your Gmail account after you approve each message. Cannot read, search, or draft mail. Sign in with Google to connect your account.' },
     /* Gmail through a Google APP PASSWORD (IMAP + SMTP from this computer, transport.gmail-imap.js). No OAuth, so it
-       works while Google's verification of StarNet's OAuth app is pending (restricted Gmail scopes are hard-blocked
+       works while Google's verification of 1Ultra's OAuth app is pending (restricted Gmail scopes are hard-blocked
        for unverified apps). The owner's own mail-client credential: needs 2-Step Verification; a Workspace admin can
        disable app passwords. Mailbox read => held to the restricted relay rule (google-relay-guard.js extraRestricted).
        Not googleApi: no Google sign-in, no deferral. The card never claims Google verification. */
@@ -204,7 +204,7 @@
     { id: 'atlassian', name: 'Jira & Confluence', category: 'Productivity', authType: 'oauth', transport: 'http',
       url: '', official: true, homepage: 'https://atlassian.com', via: 'zapier',
       aliases: ['atlassian', 'jira', 'confluence'],
-      blurb: 'Atlassian Jira issues and Confluence pages. A newer direct OAuth endpoint is under verification; use the proven Zapier route until StarNet completes an authenticated tool call.' },
+      blurb: 'Atlassian Jira issues and Confluence pages. A newer direct OAuth endpoint is under verification; use the proven Zapier route until 1Ultra completes an authenticated tool call.' },
     // Registered public device client: GitHub has no dynamic client registration.
     { id: 'github', name: 'GitHub', category: 'Developer Tools', authType: 'oauth', deviceFlow: true, transport: 'http',
       url: 'https://api.githubcopilot.com/mcp', official: true, homepage: 'https://github.com',
@@ -286,9 +286,15 @@
       url: 'https://mcp.squareup.com/mcp', official: true, homepage: 'https://squareup.com',
       blurb: 'Payments, catalog, and orders on Square. Needs Square sign-in (OAuth).' },
     // CRM & Sales
-    { id: 'intercom', name: 'Intercom', category: 'CRM & Sales', authType: 'apikey', transport: 'http',
+    /* intercom: retiered apikey → oauth 2026-10-07. Live probe: the server 401s a keyless initialize but answers
+       initialize + tools/list 200 for ANY bearer and only rejects a bad one at tools/call ("Access Token Invalid"
+       inside an isError result) — so a mistyped pasted token showed a green, fully-listed connector whose every
+       call failed. OAuth+DCR live-probed the same day: RFC 7591 registration MINTS a public PKCE client against
+       the loopback redirect, and the authorize URL renders Intercom's "1Ultra wants to access your Intercom
+       workspace" consent page. A signed-in grant is a real account, so `up` means usable again. */
+    { id: 'intercom', name: 'Intercom', category: 'CRM & Sales', authType: 'oauth', transport: 'http', keyAuthRetired: true,
       url: 'https://mcp.intercom.com/mcp', official: true, homepage: 'https://intercom.com',
-      blurb: 'Search Intercom conversations, contacts, and articles. Paste an Intercom access token.' },
+      blurb: 'Search Intercom conversations, contacts, and articles. Needs Intercom sign-in (OAuth).' },
 
     /* ── WAVE 4 (all live-probed 2026-08-28 with the sidecar's own handshake — initialize → RFC 9728/8414
        discovery → RFC 7591 registration MINTING a real PKCE client against the loopback redirect; the open
@@ -389,7 +395,7 @@
 
     // ── Hermes-catalog parity (2026-09-22) — the hosted MCP servers the Hermes Agent plugin catalog wraps,
     //    read out of each plugin's pinned source (mcp.json / plugin code), then probed + mint-proven here.
-    //    Hermes ships these as Python/npx plugin packages; StarNet only needs the endpoint row.
+    //    Hermes ships these as Python/npx plugin packages; 1Ultra only needs the endpoint row.
     { id: 'corpus-law', name: 'Corpus (US law)', category: 'Docs & Knowledge', authType: 'none', transport: 'http',
       url: 'https://corpuslaw.us/api/mcp', official: true, homepage: 'https://corpuslaw.us',
       aliases: ['corpus', 'law', 'legal', 'statutes', 'us code', 'llc formation'],
@@ -430,6 +436,9 @@
       id: e.id, name: e.name, category: e.category, authType: e.authType, transport: e.transport,
       url: e.url || '', googleApi: !!e.googleApi, deviceFlow: !!e.deviceFlow, official: !!e.official, homepage: e.homepage || '', blurb: e.blurb || '',
       via: e.via || '', keyHeader: e.keyHeader || '', local: !!e.local, appPassword: !!e.appPassword, installable: isInstallable(e),
+      // keyAuthRetired: this row USED to take a pasted key; saved key rows may switch to its sign-in (oauth-target.js).
+      // Emitted only where true so 70+ other cards carry no extra bytes.
+      ...(e.keyAuthRetired === true ? { keyAuthRetired: true } : {}),
       // staticOauth: fixed OAuth endpoints for an AS with no dynamic registration (Google). Deep-cloned.
       staticOauth: e.staticOauth ? {
         authorizationServer: e.staticOauth.authorizationServer,

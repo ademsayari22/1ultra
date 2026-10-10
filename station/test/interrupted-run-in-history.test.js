@@ -128,7 +128,7 @@ function seedJournals(ws) {
     apiToken = await bootToken(base(), base());
   }
   async function request(method, route, body) {
-    const headers = { 'Content-Type': 'application/json' }; if (apiToken) headers['X-StarNet-Token'] = apiToken;
+    const headers = { 'Content-Type': 'application/json' }; if (apiToken) headers['X-1Ultra-Token'] = apiToken;
     const response = await fetch(base() + route, { method, headers, body: body == null ? undefined : JSON.stringify(body) });
     const text = await response.text(); let value; try { value = JSON.parse(text); } catch (_) { value = text; }
     return { status: response.status, body: value };
@@ -189,7 +189,7 @@ function seedJournals(ws) {
     const prepared = await request('POST', '/api/run-recoveries/continue', { runId: 'auto-int', agentId: AGENT, recoveryToken: autoRec.recoveryToken, continuationId: 'hist-continuation-1', mode: 'automatic' });
     A.eq(prepared.status, 200, 'the interrupted run is prepared for automatic continuation');
     const response = await fetch(base() + '/api/run', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': apiToken },
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': apiToken },
       body: JSON.stringify({
         model: 'fixture-model', provider: 'custom', baseUrl: 'http://' + HOST + ':' + provider.port + '/v1', system: '', messages: [],
         agentId: AGENT, isTask: true, streamId: 'hist-auto',

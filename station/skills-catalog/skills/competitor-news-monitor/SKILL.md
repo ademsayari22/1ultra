@@ -110,6 +110,6 @@ The Commander changes the watchlist, the categories or the threshold; you do not
 
 *Needs the DISH (web_search, web_fetch) and the INTEL CAB (fs.write, fs.read, fs.append). routine.notepad works inside any scheduled run.*
 
-Adapted for StarNet from competitor-news-monitor (Ben Barclay, Hermes Agent), MIT.
+Adapted for 1Ultra from competitor-news-monitor (Ben Barclay, Hermes Agent), MIT.
 
 *Setup steps (routine.list, routine.create, routine.manage) need the ORCHESTRATOR, which every run the Commander starts from chat carries. A scheduled run cannot create or change routines.*

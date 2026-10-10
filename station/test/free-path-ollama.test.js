@@ -1,7 +1,7 @@
 'use strict';
 // free-path-ollama.test.js — the zero-key path is a real, honest choice (GitHub issue #6).
 //
-// A user who unlinked their StarNet account (hero provider still `starnet`) was shown "no STARNET key — ADD IN
+// A user who unlinked their 1Ultra account (hero provider still `starnet`) was shown "no 1ULTRA key — ADD IN
 // SETTINGS": a key that does not exist, for a provider they no longer wanted, with no way to pick another brain
 // or the free local one. This locks:
 //   1. KeyCTA names the REAL gap (unlinked vs no key) and offers three doors: fix it · switch provider · run
@@ -42,7 +42,7 @@ const KeyCTA = require('../frontend/app/keycta.js');
 
 // 1. an UNLINKED starnet station is a LINK gap, never a "key" gap
 prov = 'starnet'; starnetConfigured = false;
-eq(KeyCTA.gapOf() && KeyCTA.gapOf().kind, 'unlinked', 'starnet + not linked → gap kind is unlinked (there is no STARNET key to add)');
+eq(KeyCTA.gapOf() && KeyCTA.gapOf().kind, 'unlinked', 'starnet + not linked → gap kind is unlinked (there is no 1ULTRA key to add)');
 starnetConfigured = true;
 eq(KeyCTA.gapOf(), null, 'starnet + linked → no gap');
 // 2. a keyed provider without a stored credential is a key gap
@@ -85,7 +85,7 @@ global.App.currentAgent = () => ({ name: 'NOVA', onboarded: true });
   ok(/RUN FREE LOCALLY \(OLLAMA\)/.test(keycta) && /SET UP OLLAMA/.test(keycta), 'the free door has a proven label and an honest unproven label');
   ok(/ollamaReady \? '◇ RUN FREE LOCALLY/.test(keycta), 'the "run free" label is gated on the sidecar probe verdict (truthful telemetry)');
   ok(/Harness\.probeProvider\('ollama'\)/.test(keycta), 'the verdict comes from the sidecar probe route, not a local guess');
-  ok(/LINK STARNET/.test(keycta), 'an unlinked starnet station is offered a LINK, not a key');
+  ok(/LINK 1ULTRA/.test(keycta), 'an unlinked starnet station is offered a LINK, not a key');
   ok(/openTerm\('settings', 'providers'\)/.test(keycta), 'every door lands on the PROVIDERS section of settings');
 
   const index = read('frontend/index.html');

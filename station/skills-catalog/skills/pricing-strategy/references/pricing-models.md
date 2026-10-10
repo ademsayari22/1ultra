@@ -47,4 +47,4 @@ Related: customers who negotiate a discount tend to churn at a much higher rate 
 
 So, when in doubt, price higher. It is easier to bring a price down for someone than to pull it up.
 
-Treat these as the upstream author's summary of others' findings, not as figures StarNet has verified.
+Treat these as the upstream author's summary of others' findings, not as figures 1Ultra has verified.

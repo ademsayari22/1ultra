@@ -130,7 +130,7 @@
       // is known, so the error names the actual remedy instead of a generic construction failure.
       if (!(opts.baseUrl || profile.baseUrl)) {
         throw new Error(id === 'starnet'
-          ? 'STARNET is not linked on this station — link it in SETTINGS to run on credits (relink if you recently unlinked or reinstalled)'
+          ? '1ULTRA is not linked on this station — link it in SETTINGS to run on credits (relink if you recently unlinked or reinstalled)'
           : 'provider ' + id + ' has no endpoint configured (base URL missing)');
       }
       const mergedHeaders = (profile.extraHeaders || opts.headers)

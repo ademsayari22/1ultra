@@ -172,4 +172,4 @@ The Commander will tell you how they like to be taught, or things to keep in min
 
 *Needs the INTEL CAB (fs.read, fs.list, fs.write, fs.edit). The DISH (web_search, web_fetch) finds the sources, and the NOTEBOOK (notebook.read, notebook.write) remembers the workspace path and how the Commander likes to be taught.*
 
-Adapted for StarNet from teach (Matt Pocock, mattpocock/skills), MIT.
+Adapted for 1Ultra from teach (Matt Pocock, mattpocock/skills), MIT.

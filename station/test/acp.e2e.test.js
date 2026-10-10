@@ -1,4 +1,4 @@
-/* node test/acp.e2e.test.js — StarNet's ACP agent, end to end, as an EDITOR would drive it.
+/* node test/acp.e2e.test.js — 1Ultra's ACP agent, end to end, as an EDITOR would drive it.
 
    test/acp-core.test.js proves the protocol decisions against fakes. This is the honest proof that the surface
    exists: it boots the REAL sidecar, SPAWNS the real bridge process (sidecar/acp/serve.js) exactly the way an
@@ -58,6 +58,14 @@ function startMockOpenRouter(script) {
         req.on('end', () => {
           let parsed = null; try { parsed = JSON.parse(body); } catch (_) {}
           const turn = decide(parsed);
+          // issue #96: an editor prompt must OFFER the model its tools. Before the fix the harness still executed
+          // an unadvertised call, so only this check proves the model was actually told the tool exists.
+          // (only the run's OWN request: the aux reflection passes quote the prompt too, and are tool-less by design)
+          const lastMsg = ((parsed && parsed.messages) || []).slice(-1)[0] || {};
+          if (turn.tool && lastMsg.role === 'user' && String(lastMsg.content || '').trim().toLowerCase() === turn.when) {
+            const offered = ((parsed && parsed.tools) || []).map(t => t && t.function && t.function.name);
+            A.ok(offered.indexOf(turn.tool.name.replace(/\./g, '_')) >= 0, 'the ACP run advertised ' + turn.tool.name + ' before the model called it: ' + JSON.stringify(offered.slice(0, 8)));
+          }
           res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' });
           if (turn.hold) {
             // stream one delta then PARK: the run is provably in flight until release() is called
@@ -313,8 +321,8 @@ function makeAcpClient(port, onPermission) {
     /* ---- 5. cancel: the turn stops, resolves, and is reported as a CANCEL — not a failure -------
        The first cut accepted either 'cancelled' or 'end_turn' here, and that looseness hid a real bug: the
        cancel destroyed the socket immediately, racing ahead of the station's own settle, so the turn came back
-       as 'end_turn' with "(StarNet could not complete this turn: aborted)" AND "(stopped: the run failed inside
-       StarNet — check the station log)". Pressing Esc told the user their work had crashed. Assert the exact
+       as 'end_turn' with "(1Ultra could not complete this turn: aborted)" AND "(stopped: the run failed inside
+       1Ultra — check the station log)". Pressing Esc told the user their work had crashed. Assert the exact
        reason, and assert the failure wording is ABSENT. */
     {
       client.clear();
@@ -332,7 +340,7 @@ function makeAcpClient(port, onPermission) {
       A.eq(r.result.stopReason, 'cancelled', 'a user cancel reports stopReason CANCELLED, not a generic end_turn');
       const said = client.textFor(sessionId);
       A.ok(!/could not complete this turn/.test(said), 'a deliberate cancel is NOT reported as a transport failure: ' + JSON.stringify(said).slice(0, 200));
-      A.ok(!/the run failed inside StarNet/.test(said), 'and does NOT tell the user to go check the station log');
+      A.ok(!/the run failed inside 1Ultra/.test(said), 'and does NOT tell the user to go check the station log');
       mock.release();   // drop the parked completion so the next phase starts from a clean inflight count
     }
 
@@ -395,7 +403,7 @@ function makeAcpClient(port, onPermission) {
       A.ok(r.result, 'a prompt against a dead station still resolves the turn');
       const said = lonely.textFor(s.result.sessionId);
       A.ok(/could not complete this turn/.test(said), 'and says plainly that it could not run: ' + JSON.stringify(said).slice(0, 300));
-      A.ok(/StarNet is not running|not reachable/.test(said), 'naming the real cause rather than inventing an answer');
+      A.ok(/1Ultra is not running|not reachable/.test(said), 'naming the real cause rather than inventing an answer');
     } finally { lonely.kill(); await sleep(150); }
   }
 

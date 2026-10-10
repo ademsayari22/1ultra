@@ -151,4 +151,4 @@ Report to the Commander in this shape: the claim, the check you ran, and what it
 
 *No gear needed for the rule itself. Code checks use the WORKBENCH (verify.run, shell.exec); file checks use the INTEL CAB (fs.read, fs.search); live checks use the DISH (web_request, browser.navigate).*
 
-Adapted for StarNet from verification-before-completion (Jesse Vincent, obra/superpowers), MIT.
+Adapted for 1Ultra from verification-before-completion (Jesse Vincent, obra/superpowers), MIT.

@@ -1,4 +1,4 @@
-/* sidecar/workspace-lineage.js — bounded evidence that this machine had StarNet state before this boot. */
+/* sidecar/workspace-lineage.js — bounded evidence that this machine had 1Ultra state before this boot. */
 'use strict';
 const { note: failNote } = require('./failopen.js');
 

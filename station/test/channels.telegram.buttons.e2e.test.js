@@ -201,7 +201,7 @@ const lastUserTurn = (req) => {
     // Enrol the Telegram account through the same explicit local pairing flow as the desktop UI.
     const pair = await (await fetch(B + '/api/channels/telegram/owner/pair', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
+      headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
       body: '{}'
     })).json();
     A.ok(/^[-A-Z0-9]{11}$/.test(String(pair.code || '')), 'local owner pairing issued a code');
@@ -280,7 +280,7 @@ const lastUserTurn = (req) => {
     // without a placed cabinet there is no fs.write for the broker to pause on, and a bay projects PURE room objects with no baseline, so it needs its own computer to run at all (a bare workspace offers only
     // the consent-free skill tools) and this would silently prove nothing.
     const rr = await fetch(B + '/api/routing', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B },
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B },
       body: JSON.stringify({ errors: [], hash: 'buttons-e2e', bays: [], dockBays: [{ agentId: 'tg_4242', objects: ['computer', 'cabinet'] }] })
     });
     A.eq(rr.status, 200, 'routing plan accepted (computer + cabinet projected onto tg_4242)');

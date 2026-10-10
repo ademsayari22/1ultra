@@ -1,4 +1,4 @@
-/* STARNET — stationui.js : the station-management HUD.
+/* 1ULTRA — stationui.js : the station-management HUD.
    Ports the v7 pip-boy chrome (floating terminal windows, crew manifest,
    bottom-bar panels) but wires every readout to REAL harness data — the
    present agent, the current measured context window, the real tool
@@ -94,6 +94,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
      a NEW Set each time and the row you just opened slams shut. Measured exactly that before moving it
      here. Ids only: an agent that is deleted simply stops being asked about. */
   const permCrewOpen = new Set();
+  const permExactOpen = new Set();   // which crew rows have MORE OPTIONS open (survives the wholesale repaint, like permCrewOpen)
   let lastStageSummary = '';         // #8: last screen-reader summary text, so we only update the live region on change
   let access = {};           // { totals(), activity() } injected by app.js
   let sel = 0;               // selected agent index (dossier / crew)
@@ -110,7 +111,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
   // panelBright (−100…100, default 0) is the tube's BRIGHTNESS knob: above 0 it lifts the panel glass's black
   // level toward the phosphor colour (never toward white); below 0 it takes the panels DOWN toward true black
   // (Andrew 10-01: "it doesnt get dark enough"). 0 = the shipped look, untouched.
-  function defaults() { return { theme: 'amber', themeHue: 35, themeSat: 100, themeGlow: 100, panelBright: 0, roomLighting: 'low', textScale: 0, flicker: true, crtGlass: 'full', staticLevel: 100, sound: true, backdrop: 'void', sessionRow: 'compact', keepComputerAwake: false, notifyPrefs: notifyDefaults() }; }
+  function defaults() { return { theme: 'amber', themeHue: 35, themeSat: 100, themeGlow: 100, panelBright: 0, roomLighting: 'low', textScale: 0, flicker: true, crtGlass: 'full', staticLevel: 100, sound: true, hints: true, backdrop: 'void', sessionRow: 'compact', keepComputerAwake: false, notifyPrefs: notifyDefaults() }; }
   // Raise overall room exposure without changing the distribution of its lights.
   // Existing saves retain their chosen level; missing values start at LOW.
   const ROOM_LIGHTING_STEPS = [
@@ -261,6 +262,66 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
   const PRESET_HS = { amber: [35, 100], green: [136, 100], blue: [198, 100], purple: [270, 100], red: [3, 100], white: [120, 8] };
 
   /* ---------- settings → DOM ---------- */
+  /* SCREEN FLICKER clock (#69): the station's 7s CRT flicker used to be an `infinite` CSS opacity animation on the
+     whole game screen, which made the compositor redraw the full window every vsync all day for a dip that lasts
+     280ms. Now this clock plays the dip once per 7s (app.css .flick-dip) and the compositor rests in between.
+     Same look; the SETTINGS toggle (body.no-flicker) still turns it off; a hidden page skips it. */
+  let flickerClock = 0;
+  function armFlickerClock() {
+    if (flickerClock || typeof setInterval !== 'function' || typeof document === 'undefined') return;
+    flickerClock = setInterval(() => { try {
+      if (document.hidden || document.body.classList.contains('no-flicker')) return;
+      const g = document.getElementById('screen-game');
+      if (!g || !g.classList.contains('active')) return;
+      g.classList.add('flick-dip');
+      setTimeout(() => g.classList.remove('flick-dip'), 400);
+    } catch (_) {} }, 7000);
+    if (flickerClock && flickerClock.unref) flickerClock.unref();   // never hold a headless test process open
+  }
+
+  /* MOTION REST (#69): any running `infinite` CSS animation — a status pulse, a blinking caret, the stale save-dot —
+     makes the compositor produce a new frame every vsync, and a station left open all day on a high-refresh panel
+     spent most of a GPU core on that alone (measured: one 2.4s pulse on a 12px dot = ~0.6 GPU-process cores).
+     While the window is visible but NOT focused and untouched for REST_AFTER_MS, the decorative loops hold still;
+     focus, a pointer or a key resumes every one of them immediately. Only infinite loops are touched: one-shot
+     entrances/vanishes (which other code waits on via animationend) always run to completion, and no class or
+     text changes — the state a loop decorates stays exactly what the harness reported. A hidden page needs none
+     of this (the browser stops animating it). */
+  const REST_AFTER_MS = 2500;
+  let motionRestClock = 0, motionEngagedUntil = 0;
+  const restingAnims = new Set();
+  function motionAtRest() {
+    try { return !document.hidden && !document.hasFocus() && performance.now() >= motionEngagedUntil; } catch (_) { return false; }
+  }
+  function motionWake() {
+    for (const a of restingAnims) { try { if (a.playState === 'paused') a.play(); } catch (_) {} }
+    restingAnims.clear();
+  }
+  function motionSweep() {
+    if (!motionAtRest()) { if (restingAnims.size) motionWake(); return; }
+    // a held loop whose node left the page (a finished run's card) is dropped, never kept alive all day
+    for (const a of restingAnims) { const el = a.effect && a.effect.target; if (a.playState === 'idle' || !el || !el.isConnected) restingAnims.delete(a); }
+    for (const a of document.getAnimations()) {
+      if (a.playState !== 'running' || restingAnims.has(a)) continue;
+      const t = a.effect && a.effect.getTiming ? a.effect.getTiming() : null;
+      if (!t || t.iterations !== Infinity) continue;
+      try { a.pause(); restingAnims.add(a); } catch (_) {}
+    }
+  }
+  function motionEngage() { try { motionEngagedUntil = performance.now() + REST_AFTER_MS; } catch (_) {} if (restingAnims.size) motionWake(); }
+  function armMotionRest() {
+    if (motionRestClock || typeof setInterval !== 'function' || typeof document === 'undefined' || typeof document.getAnimations !== 'function') return;
+    motionEngage();
+    motionRestClock = setInterval(() => { try { motionSweep(); } catch (_) {} }, 1000);
+    if (motionRestClock && motionRestClock.unref) motionRestClock.unref();
+    try {
+      window.addEventListener('focus', motionEngage);
+      for (const ev of ['pointermove', 'pointerdown', 'wheel', 'keydown']) window.addEventListener(ev, motionEngage, { passive: true, capture: true });
+    } catch (_) {}
+  }
+  /** test/QA readout: how many decorative loops are holding still right now */
+  function motionRestState() { return { atRest: motionAtRest(), resting: restingAnims.size }; }
+
   function applySettings() {
     const s = store.settings;
     applyRoomLighting(s.roomLighting);
@@ -375,6 +436,10 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       });
     }
     document.body.classList.toggle('no-flicker', !s.flicker);
+    armFlickerClock(); armMotionRest();
+    // HINTS off: hint.js shows no glossary bubble (it reads this class); clear one already on screen
+    document.body.classList.toggle('no-hints', !s.hints);
+    if (!s.hints && typeof Hint === 'object' && Hint.hide) Hint.hide();
     if (typeof SFX === 'object') SFX.on = !!s.sound;
     syncKeepAwake(!!s.keepComputerAwake);
   }
@@ -1178,7 +1243,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       screen.appendChild(head); screen.appendChild(body);
       w.appendChild(screen);
       w.appendChild(mkEl('div', 'term-plate',
-        '<span>STARNET DYNAMICS</span><span class="term-knobs"><i class="knob"></i><i class="knob"></i></span>'));
+        '<span>1ULTRA DYNAMICS</span><span class="term-knobs"><i class="knob"></i><i class="knob"></i></span>'));
     } else {
       w.appendChild(head); w.appendChild(body);
       // Phase-2 chrome (generic, plain windows only — feature windows carry their own casing):
@@ -1326,7 +1391,22 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         } catch (_) { /* a rebuilt control that refuses restore is no worse than the old wipe */ }
       }
     };
+    /* REENTRANCY: a builder that resyncs stores can make one of them poke rerender(key) for THIS window while
+       it is still building. rerender is synchronous, so that poke used to recurse into the builder until the stack
+       overflowed — and the swallowed RangeError then let every one of those ~1,600 frames finish a full paint
+       (QUEST LOG, 2026-10-07: "the whole program started lagging … 10-20 seconds to even click"). A poke landing
+       mid-build is now owed ONE follow-up paint after this build finishes; pokes during that follow-up are
+       already reflected in it or ride the next tick, so no store can ever loop the window. */
+    let building = false, owed = false;
     w._render = (swap) => {
+      if (building) { owed = true; return; }
+      building = true;
+      try {
+        paint(swap);
+        if (owed) { owed = false; paint(false); }
+      } finally { building = false; owed = false; }
+    };
+    const paint = (swap) => {
       const keep = swap === false ? captureForms() : null;   // background poke: preserve what the Commander typed
       builder(body);
       if (keep && keep.length) restoreForms(keep);
@@ -2554,13 +2634,13 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       purpose ? fileCard(a, purpose) : '',
       CONFIG_FILES.filter(f => f.key !== 'purpose').map(f => fileCard(a, f)).join(''),
       modelCard(a), personaCard(a),
-      agSkills(a.id) + executionProfileCard(a) + approvalCard(a), agCommand(a)
+      agSkills(a.id) + accessAnswerCard(a), agCommand(a)
     ];
     const summaries = [a.purpose || 'What should this agent accomplish?', 'Identity, context and operating rules · edit each source file',
       a.model || 'Follow station default', (typeof Personas !== 'undefined' && Personas.get(a.personaId)?.name) || 'Station personality',
-      'Effective reach, execution and approval settings',
+      (() => { const AP = agentPostureOf(a); return AP ? AP.label + ' — ' + AP.agentBlurb : 'Custom — its own mix of reach and asking'; })(),
       ((typeof DATA !== 'undefined' && DATA.SKINS && DATA.SKINS[a.skin]) || {}).name || 'Choose a skin'];
-    return '<p class="cf-grp-note">Choose what to change. Instructions, model and personality tuning use SAVE; personality presets, appearance and access controls apply when selected.</p>' +
+    return '<p class="cf-grp-note">Choose what to change. Text you edit needs SAVE; buttons apply right away.</p>' +
       CF_GROUPS.map((g, i) => {
         const key = a.id + ':' + g.id;
         return '<details class="cf-group" id="' + g.id + '" data-cf-group="' + esc(key) + '"' + (cfOpen.get(key) ? ' open' : '') + '><summary><span class="cf-group-title">' + g.label + '</span><span class="cf-group-summary">' + esc(summaries[i]) + '</span></summary><div class="cf-group-body">' + content[i] + '</div></details>';
@@ -2625,14 +2705,21 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
   const STATION_POSTURES = [
     { id: 'careful', label: 'CHECK WITH ME', approval: 'ask', profile: 'station-gear', level: 'suggest',
       blurb: 'It asks you before every risky step, and only touches what you placed on the station.',
-      who: 'Best if you are just starting out.' },
+      who: 'Best if you are just starting out.',
+      agentBlurb: 'Asks before every risky step. Uses only what you placed on the station.' },
     { id: 'balanced', label: 'LET IT WORK', approval: 'ask', profile: 'trusted-project', level: 'draft',
       blurb: 'It still asks before risky steps, but it can work in your project folders and leave drafts while you are away.',
-      who: 'The everyday setting.' },
+      who: 'The everyday setting.',
+      agentBlurb: 'Asks before risky steps. Can work in your approved project folders.' },
     { id: 'open', label: 'FULL POWER', approval: 'full', profile: 'this-computer', level: 'full',
       blurb: 'It never asks and may use the whole local computer to complete your requests.',
-      who: 'Only when you trust it completely.' }
+      who: 'Only when you trust it completely.',
+      agentBlurb: 'Never asks. Can use the whole local computer.' }
   ];
+  // the posture ONE agent matches (approval + reach profile), or null = its own custom mix. The station-wide
+  // unattended level is not part of a single agent's answer — only the whole-station cards set that.
+  const agentPostureOf = (a) => STATION_POSTURES.find(P =>
+    (a && a.approvalMode === 'full' ? 'full' : 'ask') === P.approval && executionProfileId(a) === P.profile) || null;
   // the fallback is the DEFAULT profile by id, never EXECUTION_PROFILES[0] — the array is ordered by reach,
   // so an index-based fallback would silently relabel an unknown profile as the narrowest one.
   const executionProfileOf = (id) => EXECUTION_PROFILES.find(x => x.id === id) ||
@@ -2671,6 +2758,25 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       '<div class="cf-desc pc-plain" id="ag-execution-plain">' + esc(p.plain) + '</div>' +
       '<div class="mc-hint" id="ag-execution-truth">ROUTES NEXT COMMAND TO <b>' + esc(p.backend.toUpperCase()) + '</b> · FILES: ' + esc(p.files) + ' · TOOLS: ' + esc(p.tools) + ' · DESKTOP: ' + esc(p.desktop) + ' · checking availability…</div>' +
       '<div id="ag-execution-msg" class="msg"></div>' +
+    '</div>';
+  }
+
+  /* ACCESS = the SAME three answers as SETTINGS › PERMISSIONS (2026-10-04, "make it less confusing"). This card used
+     to open on two separate controls — a five-rung execution-profile ladder and an ASK / FULL POWER pair — so the
+     dossier asked a different question than the settings pane about the same agent. Now it asks the same one; the
+     two exact controls (unchanged ids + wiring) fold under MORE OPTIONS for the rare case an answer is not enough. */
+  function accessAnswerCard(a) {
+    const AP = agentPostureOf(a);
+    const chips = STATION_POSTURES.map(P =>
+      '<button type="button" class="ov-vchip' + (AP && AP.id === P.id ? ' sel' : '') + '" data-access-posture="' + P.id + '" data-name="' + esc(P.label) + '" title="' + esc(P.agentBlurb) + '" aria-pressed="' + (AP && AP.id === P.id ? 'true' : 'false') + '">' + esc(P.label) + '</button>').join('');
+    return '<div class="cf-card" id="ag-access-card">' +
+      '<div class="cf-head"><span class="cf-file">How much can it do?</span></div>' +
+      '<div class="ov-vchips" id="ag-access-chips">' + chips + '</div>' +
+      '<div class="cf-desc pc-plain" id="ag-access-plain">' + esc(AP ? AP.agentBlurb : 'A custom mix — open More options to see exactly what it can reach and whether it asks first.') + '</div>' +
+      '<div id="ag-access-msg" class="msg"></div>' +
+      '<details class="cf-access-more"' + (executionProfileId(a) === 'remote-ssh' ? ' open' : '') + '><summary>More options — exact reach and asking</summary>' +
+        executionProfileCard(a) + approvalCard(a) +
+      '</details>' +
     '</div>';
   }
 
@@ -2947,6 +3053,30 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         notify(id === 'full' ? '⚡ ' + ((a && a.name) || 'agent') + ' now has Full Power over the local computer' : '✋ ' + ((a && a.name) || 'agent') + ' will ask before risky moves again', id === 'full' ? 'warn' : 'good');
         sfx('click'); rerender('agents');
       }));
+    }
+    // THE THREE ANSWERS (ACCESS card) — the same two write paths the settings rows use (reach first, then asking),
+    // reporting what actually landed; FULL POWER keeps the two-press confirm; the held answer is a no-op.
+    const accWrap = body.querySelector('#ag-access-chips');
+    if (accWrap) {
+      const accMsg = body.querySelector('#ag-access-msg');
+      const held = agentPostureOf(a);
+      accWrap.querySelectorAll('[data-access-posture]').forEach(chip => {
+        const P = STATION_POSTURES.find(x => x.id === chip.dataset.accessPosture);
+        if (!P || (held && held.id === P.id)) return;
+        const apply = () => {
+          if (!(access.config && access.config.setExecutionProfile && access.config.setApproval)) { if (accMsg) accMsg.textContent = 'access change unavailable'; sfx('bad'); return; }
+          chip.disabled = true;
+          Promise.resolve(access.config.setExecutionProfile(a && a.id, P.profile))
+            .then(okP => !!okP && !!access.config.setApproval(a && a.id, P.approval))
+            .catch(() => false)
+            .then(ok => {
+              notify(ok ? ((a && a.name) || 'agent') + ' set to ' + P.label : 'could not change ' + ((a && a.name) || 'agent') + ' — it kept its previous setting', ok ? (P.id === 'open' ? 'warn' : 'good') : 'bad');
+              sfx(ok ? 'click' : 'bad'); rerender('agents');
+            });
+        };
+        if (P.id === 'open') ArmConfirm.wire(chip, { armedLabel: 'SURE? WHOLE COMPUTER', restLabel: P.label, timeoutMs: 4000, onArm: () => sfx('bad'), onConfirm: apply });
+        else chip.addEventListener('click', apply);
+      });
     }
     body.querySelectorAll('[data-away-open]').forEach(b => { b.onclick = () => { if (window.AutomationWindow) window.AutomationWindow.openAway(a.id); }; });
   }
@@ -3471,6 +3601,35 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
   }
   function openAgent(i) { sel = i; if (open.agents) { if (minimized.agents) restoreTerm('agents'); rerender('agents'); } else toggleTerm('agents', 'AGENT DOSSIER', buildAgents, { console: true, className: 'dossier' }); }
 
+  /* SHOW A PLACE (station.show, 2026-10-04 — the agent puts a window in front of the Commander). Opens through the
+     window's own door (openTerm: aliases, the ONE MENU tab swap, a minimized window restored), then RAISES it when
+     another window buries it — openTerm leaves an already-open window where it sits. Returns what is really on screen,
+     so the agent's "it's open" is a read-back, never a hope. */
+  function shown(key) {
+    const w = open[key];
+    if (!w || w._closing) return { open: false, key };
+    if (minimized[key]) restoreTerm(key);
+    w.style.zIndex = U.zTop();
+    return { open: !minimized[key] && w.isConnected, key, title: (BUILDERS[key] || [])[0] || key, section: consoleSection[key] || null };
+  }
+  function showTerm(key, section) {
+    if (key === 'work') key = 'tasks';
+    const al = TERM_ALIAS[key];
+    openTerm(key, section);
+    if (al) key = al.term;
+    return shown(key);
+  }
+  function showAgent(agentId, section, desk) {
+    const i = present.findIndex(x => x && x.id === agentId);
+    if (i < 0) return { open: false, key: desk ? 'desk' : 'agents' };
+    if (desk) return openDesk(agentId) ? shown('desk') : { open: false, key: 'desk' };
+    if (section) consoleSection.agents = section;
+    openAgent(i);
+    const out = shown('agents');
+    out.agent = (present[sel] && present[sel].id) || null;
+    return out;
+  }
+
   /* ============== SKILLS — capability readout (mirrors the sidecar CAP_REGISTRY) ==============
      The agent's real tools come from the OBJECTS at its workstation (object = capability — see
      sidecar/capability/registry.js). This is an honest readout of that grant set: the real tool
@@ -3514,7 +3673,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       '<p class="sk-note sk-lib-intro">Reusable procedures this agent created or learned. These appear as a compact index in future runs; the agent loads the full body only when a task matches.</p>' +
       '<div id="sk-agent" class="sk-lib"><div class="sk-loading">loading agent skills…</div></div>';
     const secExchange =
-      '<p class="sk-note sk-lib-intro">Install a complete open skill package from a public HTTPS or GitHub <b>SKILL.md</b>. StarNet freezes the instructions and support files under one SHA-256 before review. Missing, oversized, unsafe, or partial packages are refused.</p>' +
+      '<p class="sk-note sk-lib-intro">Install a complete open skill package from a public HTTPS or GitHub <b>SKILL.md</b>. 1Ultra freezes the instructions and support files under one SHA-256 before review. Missing, oversized, unsafe, or partial packages are refused.</p>' +
       '<div class="sk-exchange-form"><label for="sk-exchange-url">SKILL.MD SOURCE</label>' +
         '<div class="sk-exchange-row"><input id="sk-exchange-url" type="url" autocomplete="off" spellcheck="false" placeholder="https://github.com/owner/repo/blob/main/SKILL.md">' +
         '<button id="sk-exchange-inspect" class="consent-btn" type="button">INSPECT</button></div>' +
@@ -3531,13 +3690,13 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
        offering choices that would do nothing, and the note about WHEN a change takes effect is shown
        because a live session cannot switch voice mid-call. */
 
-    // SKILL MARKET (2026-09-29): the curated StarNet catalog, browsed as the same glass card grid the connectors
+    // SKILL MARKET (2026-09-29): the curated 1Ultra catalog, browsed as the same glass card grid the connectors
     // CATALOG uses. The catalog is fetched when this section loads, never in the background.
     const secMarket =
-      '<p class="set-about"><b>Add skills to your whole crew.</b> StarNet Originals are written by StarNet for your station; community picks are credited to their authors. Installing adds the skill to your SKILL LIBRARY and switches it on.</p>' +
+      '<p class="set-about"><b>Add skills to your whole crew.</b> 1Ultra Originals are written by 1Ultra for your station; community picks are credited to their authors. Installing adds the skill to your SKILL LIBRARY and switches it on.</p>' +
       '<div class="cc-filters" id="skm-filters" role="group" aria-label="Filter the skill market">' +
         '<button type="button" class="cc-filter active" data-skm-filter="all" aria-pressed="true">ALL</button>' +
-        '<button type="button" class="cc-filter" data-skm-filter="originals" aria-pressed="false">STARNET ORIGINALS</button>' +
+        '<button type="button" class="cc-filter" data-skm-filter="originals" aria-pressed="false">1ULTRA ORIGINALS</button>' +
         '<button type="button" class="cc-filter" data-skm-filter="community" aria-pressed="false">COMMUNITY</button>' +
         '<button type="button" class="cc-filter" data-skm-filter="installed" aria-pressed="false">INSTALLED</button>' +
         '<button type="button" class="cc-filter" data-skm-filter="update" aria-pressed="false">UPDATES</button>' +
@@ -3548,8 +3707,8 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
 
     const frag = html => (el => { el.innerHTML = html; });
     const sections = [
-      { id: 'market', label: 'SKILL MARKET', glyph: '▦', desc: 'Browse StarNet Originals and credited community skills, and install one for the whole crew in one click.', build: frag(secMarket) },
-      { id: 'library', label: 'SKILL LIBRARY', glyph: '▤', desc: 'The procedures your agents follow when a task matches: the ones built into StarNet and the ones you installed from the market.', build: frag(secLibrary) },
+      { id: 'market', label: 'SKILL MARKET', glyph: '▦', desc: 'Browse 1Ultra Originals and credited community skills, and install one for the whole crew in one click.', build: frag(secMarket) },
+      { id: 'library', label: 'SKILL LIBRARY', glyph: '▤', desc: 'The procedures your agents follow when a task matches: the ones built into 1Ultra and the ones you installed from the market.', build: frag(secLibrary) },
       { id: 'agent', label: 'AGENT SKILLS', glyph: '✎', desc: 'Procedures this agent created or learned itself.', build: frag(secAgent) },
       { id: 'exchange', label: 'SKILL EXCHANGE', glyph: '⇩', desc: 'Inspect and install open SKILL.md procedures with provenance and guard review.', build: frag(secExchange) }
     ];
@@ -3565,7 +3724,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
   window.AbilityLanes = window.AbilityLanes || [];
   window.AbilityLanes.push(abilitySkillsLane);
 
-  /* SKILL MARKET — the curated StarNet catalog as a card grid (the connectors CATALOG's cc-card glass cards, reused
+  /* SKILL MARKET — the curated 1Ultra catalog as a card grid (the connectors CATALOG's cc-card glass cards, reused
      so the two catalogs look and behave the same, search included). Every status a card shows comes from the
      sidecar's /api/skill-market listing: available, installed, built in (our bundled copy IS the published
      version), update, or tampered (its files changed on disk, so agents are not given it). */
@@ -3598,7 +3757,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     const gear = missing.map(skmGear);
     const slug = esc(e.slug);
     const origin = e.shelf === 'originals'
-      ? '<span class="cc-badge cc-official">STARNET ORIGINAL</span>'
+      ? '<span class="cc-badge cc-official">1ULTRA ORIGINAL</span>'
       : '<span class="cc-badge cc-community">community · ' + esc(e.author || 'credited') + '</span>';
     const btn = (act, text, cls) => {
       const busy = skmBusy.get(e.slug);
@@ -3614,11 +3773,11 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       action = btn('uninstall', 'REMOVE'); hint = 'Installed · v' + esc(e.installedVersion || e.version) + '.' + needs;
     } else if (e.status === 'bundled') {
       action = '<span class="cc-badge cc-official">BUILT IN</span>';
-      hint = 'Came with StarNet (v' + esc(e.builtInVersion || e.version) + '). Switch it on or off in SKILL LIBRARY.';
+      hint = 'Came with 1Ultra (v' + esc(e.builtInVersion || e.version) + '). Switch it on or off in SKILL LIBRARY.';
     } else if (e.status === 'update') {
       action = btn('install', 'UPDATE');
       hint = e.builtIn && !e.delisted && e.installedVersion === e.builtInVersion
-        ? 'A newer version than the one built into StarNet: v' + esc(e.builtInVersion) + ' → v' + esc(e.version) + '.'
+        ? 'A newer version than the one built into 1Ultra: v' + esc(e.builtInVersion) + ' → v' + esc(e.version) + '.'
         : 'v' + esc(e.installedVersion) + ' → v' + esc(e.version) + '.';
     } else if (e.status === 'tampered') {
       action = btn('install', 'REINSTALL'); warn = true;
@@ -3689,15 +3848,15 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       // a catalog that failed its signature or serial check was reached but REFUSED — say that, not "couldn't reach"
       const refused = /^the skill market (.+?) was not trusted: (.+)$/.exec(err);
       // "http 403" / "took too long" come from THIS app talking to its own station, not from the market
-      const local = /^http \d{3}$/i.test(err) ? 'your station didn\'t answer the request (' + err.toUpperCase() + '); reload StarNet and try again'
+      const local = /^http \d{3}$/i.test(err) ? 'your station didn\'t answer the request (' + err.toUpperCase() + '); reload 1Ultra and try again'
         : /took too long/i.test(err) ? 'your station took too long to answer' : '';
       host.innerHTML = (refused
-        ? '<p class="mc-notice"><b>StarNet refused the skill market\'s ' + esc(refused[1]) + '</b>' + esc(refused[2]) + '. Nothing from it was used, and skills you already installed keep working.</p>'
+        ? '<p class="mc-notice"><b>1Ultra refused the skill market\'s ' + esc(refused[1]) + '</b>' + esc(refused[2]) + '. Nothing from it was used, and skills you already installed keep working.</p>'
         : '<p class="mc-hint">' + (local ? 'Couldn\'t load the skill market: ' + esc(local) : 'Couldn\'t reach the skill market: ' + esc(err)) + '. Skills you already installed keep working.</p>') +
         '<button class="bb xs" type="button" data-skm-act="retry">TRY AGAIN</button>';
       return;
     }
-    const shelves = [['originals', 'StarNet Originals', 'Written by StarNet for your station\'s gear and tools.'], ['community', 'Community picks', 'Open skills by other authors, adapted for StarNet and credited.']];
+    const shelves = [['originals', '1Ultra Originals', 'Written by 1Ultra for your station\'s gear and tools.'], ['community', 'Community picks', 'Open skills by other authors, adapted for 1Ultra and credited.']];
     const html = shelves.map(([id, label, note]) => {
       const rows = d.entries.filter(e => e.shelf === id);
       if (!rows.length) return '';
@@ -3924,7 +4083,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
           '</div>' +
           '<div class="sk-card-actions"><button class="sk-expand" data-expand="' + esc(s.slug) + '" aria-expanded="false" aria-label="Read instructions for ' + esc(s.name) + '">Read instructions</button>' + switchHTML(s) + '</div>' +
           '<div class="sk-body"><div class="sk-detail-label">Required gear</div><div class="sk-reqs">' + reqBadges(s) + '</div><div class="sk-detail-label">Instructions</div><div class="sk-instructions">' + (typeof Deliverables !== 'undefined' && Deliverables.safeMarkdown ? Deliverables.safeMarkdown(s.body || '') : '<pre>' + esc(s.body || '') + '</pre>') + '</div>' +
-            (s.market ? '<div class="sk-attr">' + (s.shelf === 'originals' ? 'StarNet Original, installed from the Skill Market' : 'From the Skill Market' + (s.author ? ' · by ' + esc(s.author) : '')) + (s.license ? ' · ' + esc(s.license) : '') + '</div>'
+            (s.market ? '<div class="sk-attr">' + (s.shelf === 'originals' ? '1Ultra Original, installed from the Skill Market' : 'From the Skill Market' + (s.author ? ' · by ' + esc(s.author) : '')) + (s.license ? ' · ' + esc(s.license) : '') + '</div>'
               : s.author ? '<div class="sk-attr">Ported from ' + esc(s.author) + (s.license ? ' · ' + esc(s.license) : '') + '</div>' : '') +
           '</div>' +
         '</div>';
@@ -4591,11 +4750,11 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
      the real Harness store; nothing here is simulated. Secrets are shown MASKED only — the
      full key is never written into the DOM (truthful-telemetry + don't-leak-the-key). */
   const PROVIDERS = [
-    // STARNET MANAGED is the one provider with no credential to paste and no account to sign into here: it
+    // 1ULTRA MANAGED is the one provider with no credential to paste and no account to sign into here: it
     // runs on the credits balance a linked station already has. It is also the one provider that must be able
     // to DISAPPEAR — see creditsProviderState() — because offering it on a station with no cloud configured
     // would advertise an account the user cannot create.
-    { id: 'starnet',       name: 'STARNET MANAGED',   endpoint: 'managed inference · credits', blurb: 'no API key — runs on your balance', live: true, credits: true },
+    { id: 'starnet',       name: '1ULTRA MANAGED',   endpoint: 'managed inference · credits', blurb: 'no API key — runs on your balance', live: true, credits: true },
     { id: 'openrouter',    name: 'OPENROUTER',        endpoint: 'openrouter.ai/api/v1',      blurb: 'one key · 300+ models',  live: true },
     { id: 'codex',         name: 'CHATGPT (CODEX)',   endpoint: 'OAuth · ChatGPT subscription', blurb: 'sign-in, no API key',  live: true },
     { id: 'grok',          name: 'GROK (XAI)',        endpoint: 'OAuth · SuperGrok / X Premium+', blurb: 'sign-in, no API key', live: true },
@@ -4618,7 +4777,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
   const H = () => (typeof Harness === 'object' && Harness) ? Harness : null;
   function provName(id) { const p = PROVIDERS.find(x => x.id === id); return p ? p.name : String(id || '').toUpperCase(); }
 
-  /* ---- STARNET MANAGED, the credits provider -------------------------------------------------
+  /* ---- 1ULTRA MANAGED, the credits provider -------------------------------------------------
      Three states, and the first one is the reason this is not a static row:
        absent   — no cloud is configured on this station, so the card DOES NOT RENDER. The honesty
                   law the STORE already follows: never offer an account we cannot create. A shipped
@@ -4641,7 +4800,8 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
   }
   function refreshCreditsProvider() {
     const prior = creditsProv;
-    return Harness.api.get('/api/credits?history=0').catch(e => ({ configured: false, unavailable: !/http 404\b/.test(String((e && e.message) || e)) }))
+    // the STORE's wait (wireCredits): a read that self-heals the link takes ~16s, past api.get's 15s default
+    return Harness.api.get('/api/credits?history=0', { timeoutMs: 20000 }).catch(e => ({ configured: false, unavailable: !/http 404\b/.test(String((e && e.message) || e)) }))
       .then(j => {
         if (j && j.configured) {
           publishCreditsConfigured(true);
@@ -4751,12 +4911,14 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       .then(j => {
         // carry the WHOLE truth shape (connected + expired + reason), exactly like codex — a lone bool can't
         // distinguish "never signed in" from the dead-refresh-token death the row must render differently.
-        const next = { connected: !!(j && j.connected), expired: !!(j && j.expired), reason: (j && j.reason) || '' };
+        const next = { connected: !!(j && j.connected), expired: !!(j && j.expired), reason: (j && j.reason) || '', region: (j && j.region) || '' };
+        // kimi (#70): the stored sign-in's region seeds the next sign-in's default (unless the Commander picked one)
+        if (pid === 'kimi' && next.region && typeof KimiRegion !== 'undefined') KimiRegion.noteSignedIn(next.region);
         // Same rule as codex above: compare what the row will actually DRAW, so a cold "not connected" answer
         // that matches the fallback does not force a full pane rebuild (and its fan-out) for nothing.
-        const wasConnected = oauthProvConnected(pid), wasExpired = oauthProvExpired(pid);
+        const wasConnected = oauthProvConnected(pid), wasExpired = oauthProvExpired(pid), wasRegion = oauthStatus[pid] ? oauthStatus[pid].region : '';
         oauthStatus[pid] = next;
-        if (oauthProvConnected(pid) !== wasConnected || oauthProvExpired(pid) !== wasExpired) scheduleSettingsRepaint();
+        if (oauthProvConnected(pid) !== wasConnected || oauthProvExpired(pid) !== wasExpired || next.region !== wasRegion) scheduleSettingsRepaint();
       })
       .catch(() => {})
       .finally(() => { oauthChecking[pid] = false; });
@@ -4792,8 +4954,23 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
   }
   // honest one-liner for where a just-saved key was stored. Falls back to the neutral "on this machine" until the
   // probe answers, so we never assert keychain-vs-browser before we actually know it.
-  function keyStoreClause() {
+  // #89: in the browser build a saved key / endpoint / backup pool / REMOVE is also handed to the station for routines
+  // (Harness resolves { engine }). When the station could NOT take that change, say what it means beside the result
+  // (a save: chat still works, unattended runs won't have it; a REMOVE: the station keeps using its copy). One toast
+  // slot, so an endpoint + key saved together never stack two copies of the same warning.
+  function warnIfStationLacksKey(res) {
+    const e = res && res.engine;
+    if (e && e.ok === false && e.error) notify('⚠ ' + e.error, 'warn', undefined, { key: 'engine-key' });
+  }
+  function keyStoreClause(res) {
     if (keychainModeKnown === true) return 'stored in your OS keychain';
+    // #89: the station proved it holds its own copy (presence only) — say both places, and which key routines use
+    const e = res && res.engine;
+    if (e && e.ok === true && !e.skipped && !e.stale) {
+      return e.keySource === 'environment'
+        ? 'stored in this browser and on this station (routines use the API key variable this station was started with)'
+        : 'stored in this browser and on this station, so routines can use it';
+    }
     if (keychainModeKnown === false) return 'stored locally in this browser';
     return 'stored on this machine';
   }
@@ -4870,6 +5047,21 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
      device-code engine (OAuthAccounts.for). The list is backend truth (/api/auth/<pid>/accounts: stored tokens, a
      recorded dead sign-in, the station's cooldown) and is re-read at most every 5s while Settings repaints, so a
      DISCONNECT or RE-SIGN-IN of the primary elsewhere on this page shows up without its own wiring. */
+  /* KIMI ACCOUNT REGION (#70): a Kimi account lives in ONE deployment — Global (kimi.ai) or China (kimi.com) — and can
+     only sign in there. This strip picks where the NEXT sign-in (⏼ SIGN IN, RE-SIGN-IN, ＋ ADD ACCOUNT) goes and says
+     which region the stored sign-in belongs to (the sidecar's status `region`, never a guess). */
+  function kimiRegionHtml() {
+    if (typeof KimiRegion === 'undefined') return '';
+    const next = KimiRegion.get();
+    const s = oauthStatus.kimi;
+    const stored = s && (s.connected || s.expired) && s.region ? KimiRegion.label(s.region) : '';
+    return '<div class="prov-region" role="group" aria-label="Kimi account region">' +
+      '<span class="dim">ACCOUNT REGION</span>' +
+      KimiRegion.OPTIONS.map(o => '<button class="bb sm' + (o.id === next ? ' active' : '') + '" data-act="kimi-region" data-region="' + esc(o.id) + '" aria-pressed="' + (o.id === next) + '"' +
+        ' title="sign in with a ' + esc(o.host) + ' account">' + esc(o.label + ' · ' + o.host) + '</button>').join('') +
+      '<span class="dim">' + (stored ? 'signed in on ' + esc(stored) + ' · ' : '') + 'pick where your Kimi account lives before you sign in</span>' +
+    '</div>';
+  }
   const STACKABLE_OAUTH = ['codex', 'grok', 'kimi'];
   const oauthAccts = {};   // pid -> { list: undefined|null|{accounts,max}, at, pending, box: null|{ account, msg, code, uri, openUri } }
   function oauthAcctState(pid) { return (oauthAccts[pid] = oauthAccts[pid] || { list: undefined, at: 0, pending: false, box: null }); }
@@ -4950,7 +5142,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       (extras.length ? all.map(row).join('') : '') +
       box +
       '<div class="prov-accounts-add">' +
-        (canAdd ? '<button class="bb sm" data-act="prov-claude-add" title="sign in another Claude account — Claude Code keeps each sign-in, StarNet never sees them">＋ ADD ACCOUNT</button>' : '') +
+        (canAdd ? '<button class="bb sm" data-act="prov-claude-add" title="sign in another Claude account — Claude Code keeps each sign-in, 1Ultra never sees them">＋ ADD ACCOUNT</button>' : '') +
         '<span class="dim">' + (extras.length
           ? 'runs start on the first ready account; when it hits its usage limit they continue on the next'
           : 'connect more Claude accounts — when one hits its usage limit, runs continue on the next') + '</span>' +
@@ -5070,6 +5262,10 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         : '● SIGNED IN' + claudeCliPlan(claudeCliSt);
       const stat = !p.live ? '○ COMING SOON' : codexDead ? '⚠ SIGN-IN EXPIRED — RECONNECT'
         : isClaude ? claudeStat : keyless ? localStat : credentialSaved ? keyStat : (isOAuthProvider(p.id) ? '○ NOT SIGNED IN' : (p.id === 'custom' ? '○ NO ENDPOINT' : '○ NO KEY'));
+      // #62: NOT VERIFIED / CHECK FAILED says WHY (the probe's own reason: "credential probe HTTP 401", a station
+      // refusal, a timeout) — a bare verdict left a valid-key user with nothing to act on.
+      const statWhy = p.live && !codexDead && credentialSaved && !isClaude && !keyless && health && !health.credentialVerified && health.error
+        ? '<span class="prov-stat-why">' + esc(String(health.error).slice(0, 200)) + '</span>' : '';
       const n = ks.length;
       // NO-KEY cards that accept a key get an inline, collapsible paste-and-save row so the user never has to hunt
       // for where keys live. It reuses the SAME save path (Harness.setKey) as the key list below — no duplicate logic.
@@ -5079,7 +5275,10 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       // ✕ DISCONNECT (or on a machine that never signed in there) this button is the ONLY reachable sign-in —
       // without it the row reads NOT SIGNED IN with zero recovery (the 2026-07-21 user-reported escape).
       // The ⏼ RE-SIGN-IN row below can't cover it: that row only exists once a live/known-dead sign-in exists.
-      const wantsOAuthSignin = p.live && isOAuthProvider(p.id) && !credentialSaved && !codexDead;
+      // #92: a KNOWN-dead sign-in (consumed refresh token) gets the same card button, labelled RECONNECT — the
+      // ⏼ RE-SIGN-IN row sits far below under API KEYS, and a user who read only the card had no way back in.
+      // credentialSaved is already false for a dead sign-in, so the dead state needs no clause of its own here.
+      const wantsOAuthSignin = p.live && isOAuthProvider(p.id) && !credentialSaved;
       const wantsClaudeSignin = p.id === 'claude-cli' && !!(claudeCliSt && claudeCliSt.installed && !claudeCliSt.loggedIn);
       const wantsClaudeInstall = p.id === 'claude-cli' && !!(claudeCliSt && !claudeCliSt.installed);
       const claudeFlowing = wantsClaudeSignin && !claudeCard.account && typeof ClaudeCliSignIn !== 'undefined' && ClaudeCliSignIn.active();
@@ -5092,11 +5291,11 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
             '<span class="prov-ep">' + esc(p.endpoint) + ' · ' + esc(p.blurb) + '</span>' +
           '</span>' +
         '</button>' +
-          '<span class="prov-stat"><span class="prov-stat-t">' + stat + (credentialSaved && !isOAuthProvider(p.id) ? '<i>' + n + (n === 1 ? ' key' : ' keys') + '</i>' : '') + '</span></span>' +
+          '<span class="prov-stat"><span class="prov-stat-t">' + stat + (credentialSaved && !isOAuthProvider(p.id) ? '<i>' + n + (n === 1 ? ' key' : ' keys') + '</i>' : '') + statWhy + '</span></span>' +
         (wantsInline ? '<button class="bb sm prov-addkey" data-act="prov-add-toggle" data-provider="' + esc(p.id) + '" aria-label="Add a ' + esc(p.name) + ' key" title="paste a ' + esc(p.name) + ' key without leaving this card">＋ ADD KEY</button>' : '') +
-        (wantsClaudeSignin && !claudeFlowing && !(typeof ClaudeCliSignIn !== 'undefined' && ClaudeCliSignIn.active()) ? '<button class="bb sm prov-addkey" data-act="prov-claude-signin" aria-label="Sign in with Claude" title="opens Claude in your browser — Claude Code keeps the sign-in, StarNet never sees it">' + (claudeCard.failed ? '⏼ TRY AGAIN' : '⏼ SIGN IN') + '</button>' : '') +
+        (wantsClaudeSignin && !claudeFlowing && !(typeof ClaudeCliSignIn !== 'undefined' && ClaudeCliSignIn.active()) ? '<button class="bb sm prov-addkey" data-act="prov-claude-signin" aria-label="Sign in with Claude" title="opens Claude in your browser — Claude Code keeps the sign-in, 1Ultra never sees it">' + (claudeCard.failed ? '⏼ TRY AGAIN' : '⏼ SIGN IN') + '</button>' : '') +
         (wantsClaudeInstall ? '<button class="bb sm prov-addkey" data-act="prov-claude-install" aria-label="Get Claude Code" title="Claude Code needs a Pro, Max, Team or Enterprise plan">↗ GET CLAUDE CODE</button>' : '') +
-        (wantsOAuthSignin ? '<button class="bb sm prov-addkey" data-act="prov-oauth-signin" data-provider="' + esc(p.id) + '" aria-label="Sign in to ' + esc(p.name) + '" title="device-code sign-in — no API key needed">⏼ SIGN IN</button>' : '') +
+        (wantsOAuthSignin ? '<button class="bb sm prov-addkey" data-act="prov-oauth-signin" data-provider="' + esc(p.id) + '" aria-label="Sign in to ' + esc(p.name) + '" title="device-code sign-in — no API key needed">' + (codexDead ? '⏼ RECONNECT' : '⏼ SIGN IN') + '</button>' : '') +
         (wantsInline
           ? '<div class="key-edit prov-key-edit" id="prov-key-edit-' + esc(p.id) + '" hidden>' +
             '<input type="password" class="key-input" id="prov-key-in-' + esc(p.id) + '" placeholder="paste ' + esc(p.name) + ' key…" autocomplete="off" spellcheck="false">' +
@@ -5105,6 +5304,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
           : '') +
         (wantsClaudeSignin && !claudeCard.account ? claudeFlowBoxHtml(claudeFlowing, claudeBox) : '') +
         (isClaude && claudeCliSt && claudeCliSt.installed ? claudeAccountsHtml() : '') +
+        (p.id === 'kimi' && p.live ? kimiRegionHtml() : '') +
         (STACKABLE_OAUTH.indexOf(p.id) >= 0 ? oauthAccountsHtml(p.id) : '') +
         (wantsOAuthSignin
           ? '<div class="key-edit codex-inline prov-oauth-inline" id="prov-oauth-inline-' + esc(p.id) + '" hidden>' +
@@ -5116,7 +5316,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         '</div>';
     }).join('');
   }
-  // The STARNET MANAGED card. Same shape as every other provider row so it reads as one of them, but its
+  // The 1ULTRA MANAGED card. Same shape as every other provider row so it reads as one of them, but its
   // action routes to the STORE rather than owning a second copy of the pairing flow.
   function creditsProviderCard(p, pi, active) {
     const linked = creditsProv.state === 'linked';
@@ -5137,8 +5337,8 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       '</button>' +
         '<span class="prov-stat"><span class="prov-stat-t">' + stat + '</span></span>' +
       '<button class="bb sm prov-addkey" data-act="credits-store" data-provider="' + esc(p.id) + '" ' +
-      'aria-label="' + ((linked || saved) ? 'Open the STORE' : 'Link this station to a StarNet account') + '" ' +
-      'title="' + ((linked || saved) ? 'balance, plan and history live in the STORE' : 'link this station to a StarNet account') + '">' +
+      'aria-label="' + ((linked || saved) ? 'Open the STORE' : 'Link this station to a 1Ultra account') + '" ' +
+      'title="' + ((linked || saved) ? 'balance, plan and history live in the STORE' : 'link this station to a 1Ultra account') + '">' +
       ((linked || saved) ? '◆ STORE' : '↗ LINK STATION') + '</button>' +
       '</div>';
   }
@@ -5208,7 +5408,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
           '<span class="conn-dot"></span>' +
           '<div class="key-main">' +
           '<div class="key-top"><span class="key-prov">' + esc(provName(k.provider)) + '</span>' +
-          '<code class="key-mask" title="signed in through Claude Code, which keeps the sign-in; StarNet never holds it">' + esc(claudeCliSt.email || 'Claude sign-in') + '</code></div>' +
+          '<code class="key-mask" title="signed in through Claude Code, which keeps the sign-in; 1Ultra never holds it">' + esc(claudeCliSt.email || 'Claude sign-in') + '</code></div>' +
           '<div class="key-meta">model <b>' + esc(k.model || '—') + '</b> · ' + runState +
           (plan ? ' · <span class="key-stat">' + esc(plan) + '</span>' : '') +
           ' · <span class="key-stat">no API key needed</span></div>' +
@@ -5417,9 +5617,10 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
           // success UI waits for the PROVEN store: on desktop setKey resolves only after the keychain write lands
           // (browser localStorage resolves immediately). The old fire-and-forget toasted "✓ stored in your OS
           // keychain" over a rejected write — a keyless station that claimed connected with no re-entry hint.
-          Promise.resolve(h.validateAndSetKey ? h.validateAndSetKey(v, provider) : h.setKey(v, provider)).then(() => {
+          Promise.resolve(h.validateAndSetKey ? h.validateAndSetKey(v, provider) : h.setKey(v, provider)).then(res => {
             invalidateProviderHealth(provider);
-            notify('✓ connected ' + provName(provider) + ' API key — ' + keyStoreClause(), 'good');
+            notify('✓ connected ' + provName(provider) + ' API key — ' + keyStoreClause(res), 'good');
+            warnIfStationLacksKey(res);
             if (typeof ModelDock !== 'undefined' && ModelDock.reflect) ModelDock.reflect();   // clear the dock's no-key warning the instant a key lands
             if (typeof KeyCTA !== 'undefined' && KeyCTA.refresh) KeyCTA.refresh();             // …and the world's keyless-brain banner
             rerender('settings');
@@ -5442,8 +5643,10 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
           const inp = body.querySelector('#pool-in-' + i);
           const keys = act === 'pool-clear' ? [] : String((inp && inp.value) || '').split(/[\n,;]+/).map(v => v.trim()).filter(Boolean);
           if (act === 'pool-save' && !keys.length) { notify('paste at least one backup key, or use CLEAR POOL', 'bad'); sfx('bad'); return; }
-          Promise.resolve(h.validateAndSetKeyPool ? h.validateAndSetKeyPool(keys, row.provider) : h.setKeyPool(keys, row.provider)).then(count => {
+          Promise.resolve(h.validateAndSetKeyPool ? h.validateAndSetKeyPool(keys, row.provider) : h.setKeyPool(keys, row.provider)).then(res => {
+            const count = (res && typeof res === 'object') ? Number(res.count) || 0 : res;   // { count, engine } (#89); a bare count from older hosts
             notify(count ? ('✓ ' + count + ' verified backup key' + (count === 1 ? '' : 's') + ' active only for ' + provName(row.provider)) : ('cleared backup keys for ' + provName(row.provider)), count ? 'good' : 'warn');
+            warnIfStationLacksKey(res);   // #89: …and whether the station's copy for routines followed
             rerender('settings');
           }).catch(err => { notify('✕ ' + ((err && err.message) || 'could not update backup keys'), 'bad'); sfx('bad'); });
         } else if (act === 'baseurl-edit') {
@@ -5463,7 +5666,8 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
           if (inp) inp.value = norm;
           sfx('click');
           setMsg('saved — probing endpoint…', '');
-          Promise.resolve(h.setBaseUrl ? h.setBaseUrl(norm, row.provider) : null).then(() => {
+          Promise.resolve(h.setBaseUrl ? h.setBaseUrl(norm, row.provider) : null).then(res => {
+            warnIfStationLacksKey(res);   // #89: the endpoint saved, but the station could not keep its copy for routines
             invalidateProviderHealth(row.provider);
             // HONEST reachability check against the REAL endpoint — never claim connected without proof. probeProvider
             // round-trips /api/providers/probe; the same probe result feeds the provider card badge cache.
@@ -5479,9 +5683,10 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
           const v = inp ? inp.value.trim() : '';
           if (!v) { sfx('bad'); return; }
           // same proven-store contract as the add path: no success toast over a rejected keychain write.
-          Promise.resolve(h.validateAndSetKey ? h.validateAndSetKey(v, row.provider) : h.setKey(v, row.provider)).then(() => {
+          Promise.resolve(h.validateAndSetKey ? h.validateAndSetKey(v, row.provider) : h.setKey(v, row.provider)).then(res => {
             invalidateProviderHealth(row.provider);
-            notify('✓ updated ' + provName(row.provider) + ' API key — ' + keyStoreClause(), 'good');
+            notify('✓ updated ' + provName(row.provider) + ' API key — ' + keyStoreClause(res), 'good');
+            warnIfStationLacksKey(res);
             if (typeof ModelDock !== 'undefined' && ModelDock.reflect) ModelDock.reflect();   // keep the dock's no-key warning honest after an edit
             if (typeof KeyCTA !== 'undefined' && KeyCTA.refresh) KeyCTA.refresh();
             rerender('settings');
@@ -5495,8 +5700,8 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
           // otherwise the armed confirm would "remove" nothing and the row would immortally re-render.
           const keylessCustomRm = row.provider === 'custom' && !row.key && !!row.baseUrl;
           if (b.dataset.armed) {
-            if (keylessCustomRm && h.setBaseUrl) { h.setBaseUrl('', 'custom'); notify('removed the custom endpoint — add it again anytime from the CUSTOM card', 'warn'); }
-            else { if (h.setKey) h.setKey('', row.provider); notify('removed ' + provName(row.provider) + ' key — paste a new one here to reconnect', 'warn'); }
+            if (keylessCustomRm && h.setBaseUrl) { Promise.resolve(h.setBaseUrl('', 'custom')).then(warnIfStationLacksKey); notify('removed the custom endpoint — add it again anytime from the CUSTOM card', 'warn'); }
+            else { if (h.setKey) Promise.resolve(h.setKey('', row.provider)).then(warnIfStationLacksKey); notify('removed ' + provName(row.provider) + ' key — paste a new one here to reconnect', 'warn'); }
             invalidateProviderHealth(row.provider); if (typeof ModelDock !== 'undefined' && ModelDock.reflect) ModelDock.reflect(); if (typeof KeyCTA !== 'undefined' && KeyCTA.refresh) KeyCTA.refresh(); sfx('bad'); rerender('settings'); return;
           }
           // Arm: make the destructive state impossible to miss — filled --bad button + pulse, red hairline on the row,
@@ -5530,9 +5735,10 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       if (!v) { sfx('bad'); if (inp) inp.focus(); return; }
       if (!h || !h.setKey) { sfx('bad'); return; }
       // same proven-store contract as the key-list paths: success UI only after setKey resolves.
-      Promise.resolve(h.validateAndSetKey ? h.validateAndSetKey(v, provider) : h.setKey(v, provider)).then(() => {
+      Promise.resolve(h.validateAndSetKey ? h.validateAndSetKey(v, provider) : h.setKey(v, provider)).then(res => {
         invalidateProviderHealth(provider);
-        notify('✓ connected ' + provName(provider) + ' API key — ' + keyStoreClause(), 'good');
+        notify('✓ connected ' + provName(provider) + ' API key — ' + keyStoreClause(res), 'good');
+        warnIfStationLacksKey(res);
         if (typeof ModelDock !== 'undefined' && ModelDock.reconcile) ModelDock.reconcile().catch(() => ModelDock.reflect && ModelDock.reflect());
         else if (typeof ModelDock !== 'undefined' && ModelDock.reflect) ModelDock.reflect();
         if (typeof KeyCTA !== 'undefined' && KeyCTA.refresh) KeyCTA.refresh();
@@ -5739,6 +5945,13 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       }
       const claudeInstall = card.querySelector('[data-act="prov-claude-install"]');
       if (claudeInstall) claudeInstall.addEventListener('click', ev => { ev.stopPropagation(); sfx('click'); openExternal('https://code.claude.com/docs/en/setup'); });
+      // KIMI ACCOUNT REGION (#70): the pick rides the NEXT sign-in's start body; it never touches the stored sign-in.
+      card.querySelectorAll('[data-act="kimi-region"]').forEach(btn => btn.addEventListener('click', ev => {
+        ev.stopPropagation();
+        if (typeof KimiRegion === 'undefined' || !KimiRegion.set(btn.dataset.region)) return;
+        sfx('click');
+        rerender('settings');
+      }));
       // FIRST sign-in for a keyless device-code provider (grok/kimi) — the card-local twin of the key-row's
       // ⏼ RE-SIGN-IN, driving the SAME shared engine (OAuthSignIn.for). stopPropagation: the card click selects.
       const oauthSignin = card.querySelector('[data-act="prov-oauth-signin"]');
@@ -5792,7 +6005,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         sfx('click');
       });
       if (inlineSave) inlineSave.addEventListener('click', ev => { ev.stopPropagation(); saveInline(card.dataset.provider); });
-      // STARNET MANAGED: both LINK STATION and STORE land in the same place — the STORE section owns the
+      // 1ULTRA MANAGED: both LINK STATION and STORE land in the same place — the STORE section owns the
       // pairing flow, and duplicating it on this card would be a second implementation to keep in step.
       const toStore = card.querySelector('[data-act="credits-store"]');
       if (toStore) toStore.addEventListener('click', ev => {
@@ -5885,7 +6098,10 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     host.innerHTML = '<p class="set-about" role="status">Checking your account connection…</p>';
     // /api/credits 404s when credits are unconfigured — that is the honesty law, not an error, and
     // api.get throws on any non-2xx. Catching to {configured:false} keeps the 404 on the normal path.
-    return Harness.api.get('/api/credits').catch(error => {
+    // The wait outlasts the sidecar's worst case for this FULL read: a link self-heal (/v1/whoami 8s + one /v1/balance
+    // 8s), then the activity history on the healed adapter (8s) = 24s. api.get's 15s default gave up first and painted
+    // "could not check" over a funded account that was about to answer (E29, 10-07).
+    return Harness.api.get('/api/credits', { timeoutMs: 26000 }).catch(error => {
       if (/http 404\b/.test(String(error && error.message || error))) return { configured: false };
       throw error;
     })
@@ -5976,7 +6192,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     // Same balance, completely different sentence — describing a subscriber's own account as something "the
     // operator tops up" is just wrong on the surface that is supposed to be the truthful one.
     const about = j.linkSaved
-      ? 'This station runs on <b>your StarNet credits</b> — agents work without you bringing a provider key. Each run reserves up to your <b>PER RUN</b> budget and refunds whatever it doesn’t spend. You can always switch to your own key under API KEYS above.'
+      ? 'This station runs on <b>your 1Ultra credits</b> — agents work without you bringing a provider key. Each run reserves up to your <b>PER RUN</b> budget and refunds whatever it doesn’t spend. You can always switch to your own key under API KEYS above.'
       : 'This station runs on <b>managed credits</b> — a prepaid balance the operator tops up, so your agents can work without you bringing your own provider key. Each run reserves up to your <b>PER RUN</b> budget and refunds whatever it doesn’t spend. You can always switch to your own key under API KEYS above.';
     host.innerHTML =
       '<h4 class="ms-h">STORE <span class="dim">— managed credits</span></h4>' +
@@ -5991,7 +6207,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         (j.subscription ? '<button class="bb xs" id="credits-manage" title="change or cancel your plan in the browser">MANAGE PLAN ↗</button>' : '') +
         '<button class="bb xs" id="credits-refresh" title="re-read the balance">↻ REFRESH</button>' +
       '</div>' +
-      '<div class="mc-hint">Adding credits opens your browser — StarNet never handles your payment details.</div>' +
+      '<div class="mc-hint">Adding credits opens your browser — 1Ultra never handles your payment details.</div>' +
       '<div class="set-row"><span class="dim">RECENT ACTIVITY</span></div>' +
       '<div class="mc-list">' + rows + '</div>' +
       (j.linkSaved ? '<div class="set-row" style="margin-top:.6em"><span class="dim" style="font-size:.85em">' +
@@ -6034,14 +6250,14 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
           stage = 'refresh';
         })
         // Symmetric to the link path: a station that just gave up its credential must stop reporting
-        // that it can run on credits, or STARNET stays selectable and every run fails at admission.
+        // that it can run on credits, or 1ULTRA stays selectable and every run fails at admission.
         .then(() => (H() && H().refreshCreditsConfigured) ? H().refreshCreditsConfigured() : null)
         .then(() => refreshCreditsProvider())
         .then(() => { _creditsUnlinkPending = false; scheduleSettingsRepaint(); wireCredits(body); })
         .catch(() => {
           _creditsUnlinkPending = false;
           _creditsUnlinkError = stage === 'keychain'
-            ? 'Could not clear the saved account credential. Unlink was not completed. Try UNLINK again; if it still fails, fully quit and reopen StarNet.'
+            ? 'Could not clear the saved account credential. Unlink was not completed. Try UNLINK again; if it still fails, fully quit and reopen 1Ultra.'
             : stage === 'station'
               ? 'Could not confirm that unlink completed. Refresh the account connection, then retry UNLINK if it is still linked.'
               : 'Unlink completed, but the account display could not refresh. Retry to load the linking options.';
@@ -6080,10 +6296,10 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     host.innerHTML =
       '<h4 class="ms-h">STORE <span class="dim">— managed credits</span></h4>' +
       creditsUnlinkErrorMarkup() +
-      '<p class="set-about">Link this station to your <b>StarNet account</b> to run agents on managed credits — no provider key needed. You will confirm a short code in your browser.</p>' +
+      '<p class="set-about">Link this station to your <b>1Ultra account</b> to run agents on managed credits — no provider key needed. You will confirm a short code in your browser.</p>' +
       (note ? '<div class="set-row" style="color:var(--gold,#e8c15a)">' + esc(note) + '</div>' : '') +
       '<div class="mc-acts"><button class="bb sm" id="credits-link">🔗 LINK STATION</button></div>' +
-      '<div class="mc-hint">Linking opens your browser to confirm — StarNet never handles your payment details.</div>' +
+      '<div class="mc-hint">Linking opens your browser to confirm — 1Ultra never handles your payment details.</div>' +
       '<div id="credits-link-state"></div>';
     const btn = host.querySelector('#credits-link');
     if (btn) btn.addEventListener('click', () => { sfx('click'); startCreditsLink(body, host); });
@@ -6098,10 +6314,17 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     const btn = host.querySelector('#credits-link');
     if (btn) btn.disabled = true;
     if (state) state.innerHTML = '<div class="set-row dim">Requesting a link code…</div>';
-    Harness.api.post('/api/credits/link/start', { deviceName: 'StarNet Station' })
-      .then(r => { if (generation !== _creditsLinkGeneration) return null; if (!r.ok) throw new Error('start failed'); return r.j; })
+    // Same failure facts as the genesis LINK (app.js startStarnetLink): a dead local engine is never "the link service".
+    const startFail = info => Object.assign(new Error('start failed'), { linkStart: info });
+    Harness.api.post('/api/credits/link/start', { deviceName: '1Ultra Station' })
+      .then(r => { if (generation !== _creditsLinkGeneration) return null; if (!r || !r.ok) throw startFail({ status: r && r.status, j: r && r.j }); return r.j; },
+        () => { throw startFail({ local: true }); })
       .then(j => { if (generation !== _creditsLinkGeneration) return; if (!j || !j.code) throw new Error('no code'); showCreditsLinkCode(body, host, j); })
-      .catch(() => { if (generation === _creditsLinkGeneration) renderCreditsLinkCard(body, host, 'Could not reach the link service — try again.'); });
+      .catch(e => {
+        if (generation !== _creditsLinkGeneration) return;
+        const why = (typeof Friendly !== 'undefined' && Friendly.linkStartFailure) ? Friendly.linkStartFailure(e && e.linkStart) : 'could not reach the link service — try again';
+        renderCreditsLinkCard(body, host, why.charAt(0).toUpperCase() + why.slice(1) + '.');
+      });
   }
 
   // Show the STAR-XXXX code prominently (VT323/CRT), open the verify page, and poll every 2s until linked/expired.
@@ -6171,6 +6394,9 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     // .msg is red by default; the `ok` modifier turns it gold. So a success passes ok=true, an error passes nothing.
     const setMsg = (t, ok) => { if (msgEl) { msgEl.textContent = t || ''; msgEl.className = 'msg' + (ok ? ' ok' : ''); } };
     let loaded = false;
+    // what each input was last painted with (+ whether that value was saved here) and the env defaults: SAVE posts only
+    // what the Commander changed — a posted untouched field became a SAVED cap, and a saved PER DAY is strict.
+    let painted = {}, paintedEnv = {};
     const enable = value => { if (saveBtn) saveBtn.disabled = !value; if (resetBtn) resetBtn.disabled = !value; };
     enable(false);
     // paint the inputs + spend readout + reset visibility from a /api/budget/status payload.
@@ -6180,6 +6406,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       const caps = st.caps;
       const saved = (st && st.saved) || {};
       const envd = (st && st.envDefaults) || {};
+      painted = {}; paintedEnv = envd;
       BG_KEYS.forEach(k => {
         const el = inputOf(k); if (!el) return;
         // show the EFFECTIVE cap (persisted-or-env). An empty string can't represent "0 = no cap", so always fill.
@@ -6195,6 +6422,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         // hover title. Truthful precedence: a saved value WINS here (env is only the fallback default, never an
         // override that silences a saved cap), so the badge says "environment default" — not "ignored".
         const savedHere = Object.prototype.hasOwnProperty.call(saved, k);
+        painted[k] = { v: Number(v), saved: savedHere };
         el.title = savedHere ? 'saved on this machine' : 'environment default (not yet saved here)';
         const badge = body.querySelector('#bg-src-' + k);
         if (badge) {
@@ -6205,27 +6433,114 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
           badge.hidden = false;
         }
       });
-      // Issue #53: "0 = no cap" is not the whole truth on StarNet credits — a managed run with PER RUN at 0 stops
+      // Issue #53: "0 = no cap" is not the whole truth on 1Ultra credits — a managed run with PER RUN at 0 stops
       // at the default the sidecar reports (null when no managed credits are wired: then say nothing).
       const managedHint = body.querySelector('#bg-managed-hint');
       if (managedHint) {
         const md = st && st.managedRunDefaultUsd;
         const showManaged = typeof md === 'number' && Number.isFinite(md) && md > 0;
         managedHint.textContent = showManaged
-          ? 'On StarNet credits, a run with PER RUN at 0 still stops at ' + fmtUsd(md) + ', so one prompt can’t use up your balance. Set a per-run cap above 0 to use your own limit instead.'
+          ? 'On 1Ultra credits, a run with PER RUN at 0 still stops at ' + fmtUsd(md) + ', so one prompt can’t use up your balance. Set a per-run cap above 0 to use your own limit instead.'
           : '';
         managedHint.hidden = !showManaged;
       }
       const anySaved = BG_KEYS.some(k => Object.prototype.hasOwnProperty.call(saved, k));
       if (resetBtn) resetBtn.style.display = anySaved ? '' : 'none';
-      if (spendEl && st.accounting && (!st.accounting.complete || !st.accounting.durable)) {
-        spendEl.textContent = 'Spend history unavailable — spending limits cannot be verified. Restore the ledger and restart StarNet.';
+      const acc = st.accounting;
+      if (spendEl && acc && (!acc.complete || !acc.durable)) {
+        // name the cause and the fix that works for it: a restart replays a failed save, never an interrupted run
+        const open = Array.isArray(st.unsettled) ? st.unsettled.length : 0;
+        const floor = (st.atLeast && typeof st.atLeast.today === 'number') ? ' At least ' + fmtUsd(st.atLeast.today) + ' today.' : '';
+        spendEl.textContent = acc.writeError
+          ? 'Spend history unavailable — it could not be saved to disk, so your spending limits can’t be checked. Restart 1Ultra to recover it.'
+          : (acc.readError === 'UNSETTLED_SPEND' && open)
+            ? 'Spend history unavailable — ' + (open === 1 ? 'an interrupted run never recorded what it spent' : open + ' interrupted runs never recorded what they spent') +
+              ', so your spending limits can’t be checked. Settle ' + (open === 1 ? 'it' : 'each') + ' below.' + floor
+            : 'Spend history unavailable — the spend record could not be read, so your spending limits can’t be checked. Restart 1Ultra; if this stays, the spend files in your workspaces folder are damaged.';
       } else if (spendEl) {
         const today = fmtUsd(st && st.spentToday), life = fmtUsd(st && st.lifetime);
         const runs = (st && typeof st.runs === 'number') ? st.runs : 0;
         spendEl.innerHTML = 'SPENT TODAY <b>' + today + '</b> &nbsp;·&nbsp; LIFETIME <b>' + life + '</b> <span class="dim">(' + runs + ' run' + (runs === 1 ? '' : 's') + ')</span>';
       }
+      paintUnsettled(st);
       paintPools(st);
+    };
+    // INTERRUPTED RUNS — a run that stopped before its spend was booked leaves that spend unknown, and a limit the
+    // Commander chose refuses every paid run until it is known. One row per run (/api/budget/status `unsettled`, only
+    // runs found at boot), settled ONLY by the amount the Commander enters from the provider dashboard, or — when the run
+    // started under a per-run limit — counted at that limit. Never a guessed figure (DECISIONS.md "Strict vs soft").
+    const unsettledEl = body.querySelector('#budget-unsettled');
+    const whenOf = ts => {
+      if (!(typeof ts === 'number' && ts > 0)) return 'time unknown';
+      try { return new Date(ts).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); } catch (_) { return new Date(ts).toISOString(); }
+    };
+    const settleRun = (r, payload, btns) => {
+      btns.forEach(b => { b.disabled = true; }); setMsg('settling…');
+      Harness.api.post('/api/budget/settle', Object.assign({ runId: r.runId }, payload))
+        .then(({ ok, j }) => {
+          if (!ok) {
+            setMsg((j && j.error) || 'could not settle that run'); sfx('bad'); btns.forEach(b => { b.disabled = false; });
+            // a failed settle still changed the server (a failed write drops the run and turns accounting into a write
+            // error; a 404 means it was already settled or gone): repaint the rows + spend line from the server's truth
+            refresh();
+            return;
+          }
+          paint(j); setMsg('✓ interrupted run settled — its spend is in your history', true); sfx('click');
+        })
+        .catch(() => { setMsg('could not reach the sidecar'); sfx('bad'); btns.forEach(b => { b.disabled = false; }); });
+    };
+    const paintUnsettled = (st) => {
+      if (!unsettledEl) return;
+      unsettledEl.textContent = '';
+      const list = (st && Array.isArray(st.unsettled)) ? st.unsettled : [];
+      for (const r of list) {
+        if (!r || !r.runId) continue;
+        const row = document.createElement('div');
+        row.className = 'set-row bg-unsettled';
+        const where = [r.provider, r.model].filter(Boolean).join(' · ');
+        // WHERE the charge is: a run on 1Ultra credits (receipt managed:true) was billed to the managed account, so its
+        // charge is in the STORE's RECENT ACTIVITY (AI & MODELS), which lists each charge with its run id — on a linked
+        // station and an operator (env) one alike — not on a provider dashboard the user never had.
+        const managed = r.managed === true;
+        const chargedBy = managed ? 'what 1Ultra charged' : 'what your provider charged';
+        row.setAttribute('data-tip', 'This run stopped before 1Ultra recorded what it spent' +
+          (managed ? ' (it ran on your 1Ultra credits' + (r.model ? ', ' + r.model : '') + ')' : (where ? ' (it started on ' + where + ')' : '')) +
+          (managed ? '. Enter what 1Ultra charged for it — SETTINGS → AI & MODELS › STORE › RECENT ACTIVITY lists those charges as run ' + String(r.runId).slice(0, 8)
+            : '. Enter the charge your provider dashboard shows for it') + ': 1Ultra books it once and your spending limits can be checked again.');
+        const what = document.createElement('span');
+        what.className = 'bg-un-what';
+        const name = document.createElement('b');
+        name.textContent = String(r.title || r.agentId || 'a run').slice(0, 80);
+        what.appendChild(document.createTextNode('INTERRUPTED — '));
+        what.appendChild(name);
+        what.appendChild(document.createTextNode(' · ' + whenOf(r.ts)));
+        const usd = document.createElement('input');
+        usd.className = 'key-input bg-cap bg-un-usd';
+        usd.type = 'number'; usd.min = '0'; usd.step = '0.01'; usd.placeholder = '$ charged';
+        usd.setAttribute('inputmode', 'decimal'); usd.setAttribute('autocomplete', 'off');
+        usd.setAttribute('aria-label', chargedBy + ' for this run, in USD');
+        const btn = document.createElement('button');
+        btn.className = 'bb sm'; btn.textContent = 'SETTLE';
+        btn.setAttribute('data-tip', 'book the amount you entered as this run’s spend');
+        const btns = [btn];
+        let capBtn = null;
+        if (typeof r.runCapUsd === 'number' && Number.isFinite(r.runCapUsd) && r.runCapUsd > 0) {
+          capBtn = document.createElement('button');
+          capBtn.className = 'bb xs'; capBtn.textContent = 'COUNT AS ' + fmtUsd(r.runCapUsd);
+          capBtn.setAttribute('data-tip', 'book it at the ' + fmtUsd(r.runCapUsd) + ' per-run limit it started with — its last call can run past that limit, so ' + (managed ? 'the STORE’s RECENT ACTIVITY' : 'your provider dashboard') + ' has the exact charge');
+          btns.push(capBtn);
+        }
+        btn.addEventListener('click', () => {
+          const raw = String(usd.value).trim();
+          const n = raw === '' ? NaN : Number(raw);
+          if (!Number.isFinite(n) || n < 0) { setMsg('enter ' + chargedBy + ' for that run (a number ≥ 0)'); sfx('bad'); if (usd.focus) usd.focus(); return; }
+          settleRun(r, { usd: n }, btns);
+        });
+        if (capBtn) capBtn.addEventListener('click', () => settleRun(r, { mode: 'limit' }, btns));
+        row.appendChild(what); row.appendChild(usd); row.appendChild(btn);
+        if (capBtn) row.appendChild(capBtn);
+        unsettledEl.appendChild(row);
+      }
     };
     // Soft-pool truth + the one-click RESUME. /api/budget/status carries the governor's live pool reads
     // (day/global: {usd, cap, base} — null when ungoverned). A pool is HIT when spend reached its session cap;
@@ -6271,11 +6586,18 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       for (const k of BG_KEYS) {
         const el = inputOf(k); if (!el) continue;
         const raw = String(el.value).trim();
-        if (raw === '') { payload[k] = 0; continue; }   // blank -> "no cap" (0), matching the placeholder semantics
-        const n = Number(raw);
+        const n = raw === '' ? 0 : Number(raw);   // blank -> "no cap" (0), matching the placeholder semantics
         if (!isFinite(n) || n < 0) { setMsg(k + ': enter a number ≥ 0 (leave blank or 0 for no cap)'); sfx('bad'); el.focus(); return; }
+        const was = painted[k];
+        // Only a value the Commander CHANGED is a choice. Saving an untouched field turned the shipped soft day rail
+        // into a strict saved cap (fail-closed whenever spend history is uncertain — DECISIONS.md "Strict vs soft").
+        if (was && n === was.v) continue;
+        // Typing the environment default back into a SAVED limit clears the override, so "back to default" is the real
+        // default (the day rail soft again), not a saved copy of it.
+        if (was && was.saved && typeof paintedEnv[k] === 'number' && n === paintedEnv[k]) { payload[k] = null; continue; }
         payload[k] = n;
       }
+      if (!Object.keys(payload).length) { setMsg('no changes to save', true); return; }
       setMsg('saving…');
       Harness.api.post('/api/budget/caps', payload)
         .then(({ ok, j }) => {
@@ -6559,19 +6881,18 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     btn.addEventListener('click', () => {
       if (typeof Diag === 'undefined' || !Diag.copy) { setMsg('diagnostics unavailable', false); return; }
       btn.disabled = true; sfx('click');
-      Diag.copy({ notify: false }).then(ok => {
+      Diag.copy({ notify: false, onDone: (ok, text) => {
         btn.disabled = false;
         // Name the support address only when one is really configured (Diag.supportEmail() gates out the unset/
         // placeholder case); otherwise just confirm the copy — never point a user at a fake/placeholder address.
         const diagDest = (typeof Diag !== 'undefined' && Diag.supportEmail) ? Diag.supportEmail() : '';
-        setMsg(ok ? (diagDest ? ('✓ copied — paste it into an email to ' + diagDest) : '✓ copied — paste it into a bug report') : 'copy failed — try again', ok);
-        // Clipboard-failure fallback: if Lane A's on-screen renderer is present, show the report block so the user can
-        // select-and-copy it by hand. Defensive: the helper may not exist in this build yet — keep current behavior then.
-        // (Orchestrator reconciles the exact API at merge.)
+        setMsg(ok ? (diagDest ? ('✓ copied — paste it into an email to ' + diagDest) : '✓ copied — paste it into a bug report') : (text ? 'copy blocked — report shown below' : 'could not read diagnostics — try again'), ok);
+        // Clipboard-failure fallback: show the report the failed copy already read (onDone's text — no second fetch)
+        // as a selectable block, so the user can select-and-copy it by hand.
         if (!ok && typeof Diag !== 'undefined' && typeof Diag.showBlock === 'function') {
-          try { Diag.showBlock(body.querySelector('#diag-block') || body); } catch (_) {}
+          try { Diag.showBlock(body.querySelector('#diag-block') || body, { text }); } catch (_) {}
         }
-      });
+      } });
     });
 
     // LIVE DOCTOR: explicit second consent, then one bounded host request. Results stay visible and copyable;
@@ -6627,7 +6948,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         sessionRow: store.settings.sessionRow,
         flicker: store.settings.flicker, crtGlass: store.settings.crtGlass,
         staticLevel: store.settings.staticLevel,
-        sound: store.settings.sound, keepComputerAwake: store.settings.keepComputerAwake
+        sound: store.settings.sound, hints: store.settings.hints, keepComputerAwake: store.settings.keepComputerAwake
       }, notifyPrefs: Object.assign({}, store.settings.notifyPrefs || notifyDefaults()) };
       try { if (typeof AutonomyStore !== 'undefined' && AutonomyStore.exportState) out.autonomy = AutonomyStore.exportState(); } catch (_) {}
       return out;
@@ -6653,7 +6974,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         const f = fileIn.files && fileIn.files[0]; if (!f) return;
         const reader = new FileReader();
         reader.onload = () => {
-          let env; try { env = JSON.parse(String(reader.result || '')); } catch (_) { setMsg('that is not a valid StarNet backup file'); sfx('bad'); fileIn.value = ''; return; }
+          let env; try { env = JSON.parse(String(reader.result || '')); } catch (_) { setMsg('that is not a valid 1Ultra backup file'); sfx('bad'); fileIn.value = ''; return; }
           setMsg('importing…');
           Harness.api.post('/api/config/import', { envelope: env })
             .then(async ({ ok, j }) => {
@@ -6734,13 +7055,18 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
          labels of the dials did not read as labels at all. `.set-sub` splits the name from its gloss —
          the name carries the phosphor, the gloss stays dim — and is shared with NIGHT SHIFT / the other
          panes so every settings sub-label looks the same. Pure presentation; no ids or handlers move. */
-      '<div class="set-sub"><span class="set-sub-k">INITIATIVE</span><span class="set-sub-d">does it start work on its own</span></div>' +
+      /* ONE QUESTION UP FRONT (2026-10-04, "make it less confusing"): what does it do on its own? The other two
+         dials (how far, how often) and DIRECTION (where) are tuning, so they share ONE fold below — they used to
+         be three equal rows plus a fold, which read as four questions a newcomer had to answer. */
+      '<div class="set-sub"><span class="set-sub-k">ON ITS OWN</span><span class="set-sub-d">what it does while you are away</span></div>' +
       '<div class="set-themes" id="auto-init">' +
         '<button class="set-theme" data-init="wait" title="nothing runs unless you ask">WAIT</button>' +
         '<button class="set-theme" data-init="propose" title="lines up suggestions you approve — never acts on its own">SUGGEST</button>' +
         '<button class="set-theme" data-init="leash" title="does a few small grounded jobs a day on its own">BUILD</button>' +
         '<button class="set-theme" data-init="free" title="picks &amp; does work toward your goals while you’re away">FREE</button>' +
       '</div>' +
+      '<p class="mc-hint">The three answers in PERMISSIONS set this too.</p>' +
+      '<details class="cf-group set-fold" id="auto-direction-fold"><summary><h4 class="ms-h">FINE-TUNE <span class="dim">— how far, how often, and where</span></h4></summary>' +
       '<div class="set-sub"><span class="set-sub-k">REACH</span><span class="set-sub-d">how far an unattended action may go</span></div>' +
       '<div class="set-themes" id="auto-reach">' +
         '<button class="set-theme" data-reach="observe" title="read / research only — writes nothing">OBSERVE</button>' +
@@ -6761,7 +7087,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       // honest, never an invented priority or a fake learned profile.
       // QUIETER (front doors, 2026-10-01): DIRECTION is set once and rarely revisited — it folds closed under its own
       // heading. Every control and id is unchanged; settings search opens the fold when a match is inside.
-      '<details class="cf-group set-fold" id="auto-direction-fold"><summary><h4 class="ms-h">DIRECTION <span class="dim">— where its unattended work should go</span></h4></summary>' +
+      '<div class="set-sub"><span class="set-sub-k">DIRECTION</span><span class="set-sub-d">where its unattended work should go</span></div>' +
       '<div class="set-sub"><span class="set-sub-k">FOCUS</span><span class="set-sub-d" id="auto-focus">…</span></div>' +
       '<div class="set-row ns-steer"><input id="auto-steer" class="key-input" type="text" autocomplete="off" placeholder="Project folder, thread:&lt;id&gt;, or goal"><button class="bb xs" id="auto-steer-set">SET FOCUS</button><button class="bb xs" id="auto-steer-clear" style="display:none">CLEAR</button></div>' +
       '<div class="mc-hint">a steer outranks learned evidence (~7 days, or until cleared). It only redirects the unattended priority — no new access.</div>' +
@@ -6775,8 +7101,9 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       // LIVE HELPERS — the real background sub-agents (team.spawn) running RIGHT NOW, from GET /api/subagents
       // (server truth; the floor's ghost sprites are the same ledger). STOP rides POST /api/subagents/interrupt —
       // before this row a runaway helper could not be stopped from anywhere in the UI.
-      '<div class="set-sub"><span class="set-sub-k">LIVE HELPERS</span><span class="set-sub-d">background sub-agents running now</span></div>' +
-      '<div class="key-list" id="auto-helpers"><p class="set-about">reading helpers…</p></div>';
+      // shown only while helpers are actually running (paintHelpers toggles it) — an empty "no helpers" row was noise
+      '<div class="set-sub" id="auto-helpers-sub" hidden><span class="set-sub-k">LIVE HELPERS</span><span class="set-sub-d">background sub-agents running now</span></div>' +
+      '<div class="key-list" id="auto-helpers" hidden></div>';
     /* ONE WORD: AUTONOMY (2026-09-29, Andrew: "should simply be autonomy"). What the Commander saw as two things —
        the AUTONOMY dial and a separate NIGHT SHIFT section — is one thing: the dial, and what it did while they were
        away. This block (status, decision trail, last report) now renders INSIDE the AUTONOMY section, under the dial
@@ -6822,75 +7149,37 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       '<div class="set-row"><button class="bb sm" id="ns-report-btn">▤ LAST REPORT</button></div>' +
       '<div id="ns-report"></div>';
     const secPermissions =
-      /* PERMISSIONS — THREE TIERS, general → specific → rare (2026-08-07, round 3).
-         The pane was four numbered blocks of in-house vocabulary with two separate crew tables and no
-         summary (547 words to set up ONE agent). Round 2 put three postures out front and folded
-         everything else away, which over-corrected: per-agent reach is the pane's most useful control
-         and a posture can only set every agent the SAME way. So it now steps down by how often you
-         touch a thing, never by how advanced it is:
-           AT A GLANCE      — what the station is allowed to do right now, COUNTED from the live roster.
-           TIER 1 · POSTURE — three station-wide buttons. One click and a newcomer is done.
-           TIER 2 · CREW    — one row per agent, the "except this one" override of tier 1.
-           then the rest of the PERMISSIONS, all visible: SKIP EVERY PROMPT (it outranks every row
-           above it, so it is the last thing that should hide) · WHILE YOU'RE AWAY · STANDING
-           APPROVALS (a revocation you cannot find is not revocable).
-           ADVANCED (closed) — idle Safe Cell cleanup, and ONLY that. Maintenance is the one thing
-           here that earns a fold; ONE fold, never a fold inside a fold.
+      /* PERMISSIONS — ONE QUESTION (2026-10-04, Andrew: "make it less confusing").
+         Round 3 (08-07) left every permission visible, which made the pane honest but long: three postures,
+         then a crew table, two sweep buttons that repeated the postures, a master override, a second copy of
+         the AUTONOMY ladder and the approvals ledger — five ways to answer one question.
+         Now the pane answers it once and steps down only where an answer can differ:
+           AT A GLANCE   — what the station is allowed to do right now, COUNTED from the live roster.
+           THE QUESTION  — three postures. One click and you are done.
+           EACH CREW MEMBER — the SAME three answers per agent (the "except this one" override); the exact
+                           reach ladder / ask-or-not / sandbox for that agent fold under its own row.
+           ALWAYS-YES    — the standing approvals ledger. A revocation you cannot find is not revocable,
+                           so it stays on screen.
+           ADVANCED (closed) — the whole-station Full Power override + Safe Cell maintenance. The override
+                           is reported in the glance AND on every crew row whenever it is ON, so folding the
+                           switch never hides its EFFECT.
+         The four-rung unattended ladder lives in AUTONOMY only; a posture still sets it (one click, one truth).
          No inner "PERMISSIONS" h4 — the console section head already prints it (the PROVIDERS rule). */
-      // ── AT A GLANCE — the pane's answer to "what is my station allowed to do RIGHT NOW", in one
-      // ordinary sentence, computed from the live roster + the server's bypass truth. Beginners opened
-      // this pane and met four numbered blocks of vocabulary with no summary; this is the summary. It
-      // asserts nothing the harness can't prove — every clause counts real agent records.
       '<div id="perm-glance" class="perm-glance"><p class="pg-line">reading your crew…</p></div>' +
-      // ── THE FRONT DOOR — three postures. One click sets reach, asks-first and unattended together for
-      // the whole station, so a newcomer answers ONE question instead of composing four dials. Painted by
-      // paintPostures(): a card highlights only when every component matches the live state.
+      // ── THE QUESTION — three postures. One click sets reach, asks-first and the unattended level together for
+      // the whole station. Painted by paintPostures(): a card highlights only when every component matches.
       '<div class="perm-postures" id="perm-postures"><p class="set-about">reading your station…</p></div>' +
-      '<div class="perm-tier-rule"></div>' +
-      // ── TIER 2 · EACH CREW MEMBER — VISIBLE, directly under the buttons that sweep it. Folding this
-      // away was over-correcting: per-agent reach is the pane's most useful control, and a posture only
-      // sets every agent the SAME way. The postures answer "most of the time"; this answers "except…".
-      // ONE row per agent carrying BOTH per-agent axes. These used to be two separate lists, ~40 rows
-      // apart, each re-listing the whole crew: to set up one agent you scrolled between two tables and
-      // matched names by eye. Independent settings, same subject — so, one row.
-      '<h4 class="ms-h">EACH CREW MEMBER <span class="dim">— override the setting above for one agent</span></h4>' +
+      // ── EACH CREW MEMBER — visible, directly under the cards it overrides. One collapsed row per agent.
+      '<h4 class="ms-h">EACH CREW MEMBER <span class="dim">— give one agent a different answer</span></h4>' +
       '<div class="perm-list" id="perm-crew"></div>' +
-      '<div class="mc-acts perm-allacts">' +
-        '<button class="bb sm" id="perm-ask-all">EVERYONE ASKS FIRST</button>' +
-        '<button class="bb sm danger" id="perm-full-all">FULL POWER — WHOLE STATION</button>' +
-      '</div>' +
-      '<div class="mc-hint">Each crew member either <b>ASKS</b> within the selected reach profile or has <b>FULL POWER</b> over the whole local computer. Full Power applies watched or unattended and includes available tools, host files, arbitrary commands, visible apps, and screen/input control. <code>/yolo</code> is the shortcut.</div>' +
-      // The master switch — it overrides the ASKS FIRST setting on every row above, so it sits directly
-      // under them. Visible: it is a permission, and a switch that silently outranks the rows above it
-      // is the last thing that should be hidden behind a disclosure.
-      '<h4 class="ms-h">FULL POWER — WHOLE STATION <span class="dim">— one switch grants host-wide authority to every agent</span></h4>' +
-      '<div id="perm-bypass" class="perm-master"><p class="perm-m-desc">checking the bypass switch…</p></div>' +
-      // ONE ladder, one vocabulary (UX sweep 2026-07-15): these four rungs ARE the AUTONOMY dial's rungs
-      // (Permissions.PLANS maps 1:1 onto the dial presets) — so they carry the SAME primary words the
-      // dial uses. Stored data-level values are unchanged. FULLY AUTONOMOUS stays in the label (it says
-      // the stakes plainly). Plain-language line first, house vocabulary second.
-      // a pick = AUTONOMY preset + matching standing approvals (PermissionsStore.setLevel) — not a 2nd initiative row
-      '<h4 class="ms-h">ONE-STEP AUTONOMY <span class="dim">— a level plus the approvals it needs</span></h4>' +
-      '<p class="set-about perm-lede">Pick how much agents start on their own while you are away — the same WAIT / SUGGEST / BUILD / FREE ladder as AUTONOMY, plus the standing approvals each level needs, set in one step. AUTONOMY fine-tunes initiative, reach and pace one at a time.</p>' +
-      '<p class="set-about perm-lede" id="perm-desc"></p>' +
+      // ── ALWAYS-YES — what you already said ALWAYS to. Visible: a revocation you cannot find is not revocable.
+      '<h4 class="ms-h">STANDING APPROVALS <span class="dim">— things you said ALWAYS to</span></h4>' +
       '<p class="set-about perm-lede" id="perm-status" aria-live="polite">checking standing approvals…</p>' +
-      '<div class="set-themes" id="perm-level">' +
-        '<button class="set-theme" data-level="never" title="does nothing on its own — you drive everything">WAIT</button>' +
-        '<button class="set-theme" data-level="suggest" title="lines up ideas you approve — never acts on its own">SUGGEST</button>' +
-        '<button class="set-theme" data-level="draft" title="acts on its own and leaves drafts — writes no files">BUILD (DRAFTS)</button>' +
-        '<button class="set-theme" data-level="full" title="acts AND writes real files on its own — logged &amp; reversible">FREE (FULLY AUTONOMOUS)</button>' +
-      '</div>' +
-      // STANDING APPROVALS — a review surface, not a setup one, but still a PERMISSION: it is the list of
-      // things already blessed, and a revocation you cannot find is not really revocable. Visible.
-      // (The "answer ALWAYS and it lands here" teaching is the ledger's own empty state; repeating it in
-      // a lede printed the same sentence twice on a fresh station.)
-      '<h4 class="ms-h">STANDING APPROVALS <span class="dim">— what you already said yes to, for good</span></h4>' +
       '<div class="key-list perm-grants" id="perm-grants"></div>' +
-      // ── ADVANCED — station-wide Docker housekeeping, and ONLY that. Everything else on this pane is a
-      // permission somebody might genuinely need to find; this is maintenance, so it is the one thing
-      // that earns a fold. ONE fold, never a fold inside a fold.
+      // ── ADVANCED — ONE fold, never a fold inside a fold. The override's EFFECT is never hidden (glance + rows).
       '<details class="perm-fold" id="perm-advanced">' +
-        '<summary>Safe Cell maintenance</summary>' +
+        '<summary>Advanced — whole-station override &amp; Safe Cell</summary>' +
+        '<div id="perm-bypass" class="perm-master"><p class="perm-m-desc">checking the Full Power override…</p></div>' +
         '<div id="perm-exec-policy"></div>' +
       '</details>';
     const secBudget =
@@ -6899,11 +7188,12 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       '<h4 class="ms-h">Spending limits <span class="dim">— in USD</span></h4>' +
       '<p class="set-about">Limits apply to recorded agent spending. <b>Blank or 0 means no cap.</b> Changes take effect when you save; unsaved limits follow their environment defaults.</p>' +
       '<div id="budget-spend" class="set-row dim">reading spend…</div>' +
+      '<div id="budget-unsettled"></div>' +   // interrupted runs whose charge is unknown + their SETTLE (only rendered when one exists)
       '<div id="budget-pools"></div>' +   // soft-pool cap state + the one-click RESUME (only rendered when a pool is actually hit)
       '<div class="mc-form" id="budget-form">' +
         '<div class="set-row"><label for="bg-perRun">PER RUN <span class="src-badge" id="bg-src-perRun" hidden></span></label><input id="bg-perRun" class="key-input bg-cap" type="number" min="0" step="0.01" inputmode="decimal" autocomplete="off" placeholder="blank or 0 = no cap"></div>' +
         '<div class="mc-hint">Hard ceiling for a single agent run. The run stops the moment it would exceed this.</div>' +
-        '<div class="mc-hint" id="bg-managed-hint" hidden></div>' +   // #53: the StarNet-credit default, painted from /api/budget/status
+        '<div class="mc-hint" id="bg-managed-hint" hidden></div>' +   // #53: the 1Ultra-credit default, painted from /api/budget/status
         '<div class="set-row"><label for="bg-perAgent">PER AGENT <span class="src-badge" id="bg-src-perAgent" hidden></span></label><input id="bg-perAgent" class="key-input bg-cap" type="number" min="0" step="0.01" inputmode="decimal" autocomplete="off" placeholder="blank or 0 = no cap"></div>' +
         '<div class="mc-hint">Lifetime cap on any one agent’s total spend across all its runs.</div>' +
         '<div class="set-row"><label for="bg-perDay">PER DAY <span class="src-badge" id="bg-src-perDay" hidden></span></label><input id="bg-perDay" class="key-input bg-cap" type="number" min="0" step="0.01" inputmode="decimal" autocomplete="off" placeholder="blank or 0 = no cap"></div>' +
@@ -6921,7 +7211,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       // sets what the loop tries NEXT if that model fails mid-run. Persisted server-side + applied live to every run
       // path (browser, cron, channels); env SKYNET_FALLBACK_MODELS is the default until you save one here.
       '<h4 class="ms-h">Backup models <span class="dim">— tried in order if your primary model fails</span></h4>' +
-      '<p class="set-about">Choose your primary model in COMMS. If it fails mid-run because of availability, authentication, billing, or rate limits, StarNet tries this list from top to bottom. Saved models use your OpenRouter connection, or your StarNet connection when StarNet is the primary provider. <b>An empty list disables fallback.</b> Model changes appear in COMMS and the logbook.</p>' +
+      '<p class="set-about">Choose your primary model in COMMS. If it fails mid-run because of availability, authentication, billing, or rate limits, 1Ultra tries this list from top to bottom. Saved models use your OpenRouter connection, or your 1Ultra connection when 1Ultra is the primary provider. <b>An empty list disables fallback.</b> Model changes appear in COMMS and the logbook.</p>' +
       '<div class="mc-form" id="fbc-form">' +
         '<div id="fbc-list" class="mc-list-fb"><div class="dim">reading chain…</div></div>' +
         '<div class="set-row"><select id="fbc-add" class="fbc-sel"><option value="">＋ add a model from the catalog…</option></select></div>' +
@@ -7023,6 +7313,8 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         return '<button class="set-theme ' + (cur === v ? 'sel' : '') + '" aria-pressed="' + (cur === v ? 'true' : 'false') + '" data-sdock="' + v + '">' + name + '</button>';
       }).join('') +
       '</div>' +
+      // HINTS (hint.js) — the glossary bubble on hover; once the station's words are familiar it can go quiet.
+      '<label class="set-row"><input type="checkbox" id="set-hints" ' + (s.hints ? 'checked' : '') + '> HINTS <span class="dim">— explain station terms when you hover them</span></label>' +
       // CRT — its own section, and a LEVEL rather than a named mode. Framing this as an
       // accessibility fix ("easy read") tells the people who like the tube that they are enduring
       // something, which is not what most of them report. There is no OFF: the station is a CRT.
@@ -7059,18 +7351,18 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     const secSystem =
       // "POWER" — this header held only KEEP COMPUTER AWAKE, so "SCHEDULED TASKS" mislabelled it.
       '<h4 class="ms-h">POWER</h4>' +
-      '<label class="set-row"><input type="checkbox" id="set-awake" ' + (awakeChecked ? 'checked' : '') + (awakeDesktop ? '' : ' disabled') + '> KEEP COMPUTER AWAKE <span class="dim">— ' + (awakeDesktop ? 'prevent idle sleep while StarNet is open' : 'desktop app only') + '</span></label>' +
+      '<label class="set-row"><input type="checkbox" id="set-awake" ' + (awakeChecked ? 'checked' : '') + (awakeDesktop ? '' : ' disabled') + '> KEEP COMPUTER AWAKE <span class="dim">— ' + (awakeDesktop ? 'prevent idle sleep while 1Ultra is open' : 'desktop app only') + '</span></label>' +
       // Lane 4D — native startup/tray choices + the honest background-lifecycle explainer. All controls are
       // desktop-only; they stay disabled and the line names the browser reality otherwise. The explainer
       // is filled live from the tray supervisor's REAL armed state (wireLifecycle) so it never over-claims.
-      '<label class="set-row"><input type="checkbox" id="set-autostart" disabled> LAUNCH AT LOGIN <span class="dim">— ' + (lifecycleDesktop ? 'start StarNet automatically when you sign in' : 'desktop app only') + '</span></label>' +
+      '<label class="set-row"><input type="checkbox" id="set-autostart" disabled> LAUNCH AT LOGIN <span class="dim">— ' + (lifecycleDesktop ? 'start 1Ultra automatically when you sign in' : 'desktop app only') + '</span></label>' +
       '<label class="set-row"><input type="checkbox" id="set-start-minimized" disabled> START MINIMIZED TO TRAY <span class="dim">— ' + (lifecycleDesktop ? 'begin each launch hidden; open from the tray icon' : 'desktop app only') + '</span></label>' +
-      '<label class="set-row"><input type="checkbox" id="set-close-to-tray" disabled> CLOSE WINDOW TO TRAY <span class="dim">— ' + (lifecycleDesktop ? 'X hides StarNet; tray Quit stops it' : 'desktop app only') + '</span></label>' +
+      '<label class="set-row"><input type="checkbox" id="set-close-to-tray" disabled> CLOSE WINDOW TO TRAY <span class="dim">— ' + (lifecycleDesktop ? 'X hides 1Ultra; tray Quit stops it' : 'desktop app only') + '</span></label>' +
       '<p class="set-about" id="lifecycle-desc">' + (lifecycleDesktop ? 'Checking what runs in the background…' : 'The desktop app can stay supervised in the system tray. This browser tab has no background process.') + '</p>' +
       // ADVANCED — env-only runtime knobs, now editable + persisted server-side (P1-9). PRECEDENCE is spelled out
       // in the card: an explicit environment variable ALWAYS wins over a value saved here (a deploy stays in control).
       '<h4 class="ms-h">Runtime limits <span class="dim">— optional ceilings and timeouts</span></h4>' +
-      '<p class="set-about">StarNet does not limit agent concurrency or run iterations by default. Set a positive value only when you want a ceiling. Saved here on this machine and read by the sidecar at boot. <b>An environment variable always overrides a value saved here</b>. Blank a field to clear the override.</p>' +
+      '<p class="set-about">1Ultra does not limit agent concurrency or run iterations by default. Set a positive value only when you want a ceiling. Saved here on this machine and read by the sidecar at boot. <b>An environment variable always overrides a value saved here</b>. Blank a field to clear the override.</p>' +
       '<div class="mc-form" id="adv-form"><div class="dim" id="adv-loading">reading runtime settings…</div></div>' +
       '<div id="adv-msg" class="msg"></div>' +
       // DATA / STATION BACKUP — export the whole station config to one JSON file, import it back, reset a section.
@@ -7114,7 +7406,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       '<div id="diag-build" class="dim" style="margin-top:6px;font-size:11px" hidden></div>' +
       // CLEAR NOTIFICATIONS moved to the NOTIFICATIONS section (where it belongs); this is now just the about note.
       '<h4 class="ms-h">ABOUT</h4>' +
-      '<p class="set-about">STARNET — gamified AI-agent harness.<br>Theme, display & audio preferences are saved locally on this machine. Manage planned tasks on the TASK BOARD and saved conversations under SESSIONS in COMMS.</p>';
+      '<p class="set-about">1ULTRA — gamified AI-agent harness.<br>Theme, display & audio preferences are saved locally on this machine. Manage planned tasks on the TASK BOARD and saved conversations under SESSIONS in COMMS.</p>';
 
     // Keep every control mounted and reachable; group existing nodes without replacing their IDs.
     function arrangeSettingsPane(el) {
@@ -7230,10 +7522,10 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       // preferences — same word, two doors), and a 'SYSTEM' section inside SETTINGS inside the SYSTEM
       // dock read as a loop.
       { id: 'notifs', label: 'ALERTS', glyph: '◔', desc: 'What pings you while you work, and whether it chimes.', build: frag(secNotifs) },
-      // STARNET REMOTE: pair a phone and drive the station from anywhere (app/remote-devices.js owns the pane)
+      // 1ULTRA REMOTE: pair a phone and drive the station from anywhere (app/remote-devices.js owns the pane)
       { id: 'remote', label: 'REMOTE', glyph: '▯', desc: 'Pair your phone and control this station from anywhere.', build: el => { if (typeof RemoteDevices !== 'undefined') RemoteDevices.mount(el, arrangeSettingsPane); else el.textContent = 'Remote is not available in this build.'; } },
       // BROWSER: where the station browser lives — built-in / a Chrome window / your Chrome (app/outputbrowser.js owns the pane)
-      { id: 'browser', label: 'BROWSER', glyph: '◎', desc: 'Where the station browser runs: inside StarNet, as its own Chrome window, or in your own Chrome.', build: el => {
+      { id: 'browser', label: 'BROWSER', glyph: '◎', desc: 'Where the station browser runs: inside 1Ultra, as its own Chrome window, or in your own Chrome.', build: el => {
         if (typeof OutputBrowser !== 'undefined' && OutputBrowser.mountSettings) OutputBrowser.mountSettings(el, arrangeSettingsPane);
         // SAVED SIGN-INS: STEP-IN is no longer a standing dock button, so the sign-ins it keeps get a door here
         const row = mkEl('div', 'set-row');
@@ -7241,8 +7533,10 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         const b = mkEl('button', 'bb sm', 'OPEN SAVED SIGN-INS'); b.type = 'button'; b.id = 'set-open-signins';
         b.addEventListener('click', () => { sfx('click'); openTerm('stepin'); });
         row.appendChild(b); el.appendChild(row);
+        // #61 RESET STATION BROWSER (app/datareset.js owns it)
+        if (typeof DataReset !== 'undefined' && DataReset.mountBrowserReset) DataReset.mountBrowserReset(el);
       } },
-      { id: 'system', label: 'APP & BACKUP', glyph: '⚙', desc: 'Startup, runtime limits, backups, updates, and troubleshooting.', build: frag(secSystem) }
+      { id: 'system', label: 'APP & BACKUP', glyph: '⚙', desc: 'Startup, runtime limits, backups, updates, and troubleshooting.', build: el => { frag(secSystem)(el); if (typeof DataReset !== 'undefined' && DataReset.mountErase) DataReset.mountErase(el); } }   // #65 ERASE EVERYTHING (app/datareset.js)
     ];
     // ONE PLAIN LIST (Andrew 10-02): no intent-group buttons — a few natural pairs share a page instead (AI & MODELS,
     // LOOK & SOUND); every old section id still lands through SETTINGS_ALIAS in openTerm.
@@ -7251,7 +7545,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     wireProviderActions(host);
     wireKeyActions(host);
     queueProviderHealthRefresh();
-    // The STARNET MANAGED card is drawn from a cached credits state, so the FIRST paint of a fresh session
+    // The 1ULTRA MANAGED card is drawn from a cached credits state, so the FIRST paint of a fresh session
     // has nothing to go on. Re-read, and repaint only if the answer changed the card's existence or its
     // balance — an unconditional rerender here would wipe an open key editor on every settings open.
     (() => {
@@ -7307,7 +7601,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     wireSlider(brightIn, v => { s.panelBright = clampN(v, -100, 100, 0); sliderVal('#set-bright-val', s.panelBright + '%'); });
     wireSlider(host.querySelector('#set-static'), v => { s.staticLevel = clampN(v, 0, 200, 100); sliderVal('#set-static-val', s.staticLevel + '%'); });
     const bind = (id, key) => host.querySelector(id).addEventListener('change', ev => { s[key] = ev.target.checked; applySettings(); save(); flashSaved(appMsg()); });
-    bind('#set-flicker', 'flicker'); bind('#set-sound', 'sound');
+    bind('#set-flicker', 'flicker'); bind('#set-sound', 'sound'); bind('#set-hints', 'hints');
     const lightingChips = host.querySelectorAll('#set-lighting [data-lighting]');
     lightingChips.forEach(b => b.addEventListener('click', () => {
       s.roomLighting = resolveRoomLighting(b.dataset.lighting);
@@ -7452,12 +7746,12 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
           if (startMinimizedToggle) { startMinimizedToggle.disabled = false; startMinimizedToggle.checked = !!v.startMinimized; }
           if (closeToTrayToggle) { closeToTrayToggle.disabled = false; closeToTrayToggle.checked = !!v.closeToTray; }
           if (v.closeToTray) {
-            lifeDesc.textContent = 'Closing the window hides StarNet in the tray and keeps the station running. Use Quit StarNet in the tray menu to stop it.';
+            lifeDesc.textContent = 'Closing the window hides 1Ultra in the tray and keeps the station running. Use Quit 1Ultra in the tray menu to stop it.';
           } else if (v.armed) {
             const why = (v.reasons && v.reasons.length) ? v.reasons.join(', ') : 'armed background work';
             lifeDesc.textContent = 'Right now, closing the window KEEPS the station running in the background (' + why + '). Quit fully from the tray icon. Otherwise closing would fully quit.';
           } else {
-            lifeDesc.textContent = 'Right now, nothing is armed — closing the window fully quits StarNet (no background process). Arm a routine, connect a channel, or set autonomy to BUILD or FREE to keep it running while closed.';
+            lifeDesc.textContent = 'Right now, nothing is armed — closing the window fully quits 1Ultra (no background process). Arm a routine, connect a channel, or set autonomy to BUILD or FREE to keep it running while closed.';
           }
         }).catch(() => { lifeDesc.textContent = 'Closing the window keeps the station running only when armed work needs it — otherwise it fully quits.'; });
       };
@@ -7501,7 +7795,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       wireLifecyclePreference(closeToTrayToggle, Lifecycle.setCloseToTray, 'Close to tray', 'closeToTray');
     }
     // PERMISSIONS panel repaint hook — set by the permissions block below; called whenever the granular dial
-    // changes so the level highlight + #perm-desc stay in sync with the posture. No-op until that block wires it.
+    // changes so the posture cards stay in sync with the dial. No-op until that block wires it.
     let syncPerm = function () {};
     repaintAutonomyDial = null;   // GROWTH Tier 3: re-armed per settings render (the closure below owns the live DOM)
     repaintPermAgents = null;     // same contract: the PERMISSIONS block below re-arms it against THIS render's DOM
@@ -7681,10 +7975,14 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     // /api/subagents/interrupt; the list repaints from the ROUTE after every action (never an optimistic flip).
     {
       const list = host.querySelector('#auto-helpers');
+      const helpersSub = host.querySelector('#auto-helpers-sub');
       const paintHelpers = (rows) => {
         if (!list) return;
+        // visible only while something is running (or the ledger can't be read — that is worth saying)
+        const show = !Array.isArray(rows) || rows.length > 0;
+        list.hidden = !show; if (helpersSub) helpersSub.hidden = !show;
         if (!Array.isArray(rows)) { list.innerHTML = '<p class="set-about">helpers unreachable right now.</p>'; return; }
-        if (!rows.length) { list.innerHTML = '<p class="set-about">no background helpers running.</p>'; return; }
+        if (!rows.length) { list.innerHTML = ''; return; }
         list.textContent = '';
         for (const r of rows) {
           const row = document.createElement('div');
@@ -7850,16 +8148,19 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       // Re-setting the dial / a LEVEL click is the (silent) act that LIFTS a durable E-STOP halt
       // (handleAutonomyPosture → clearHalt) — re-read the status shortly after so the ⛔ HALTED card clears
       // (or appears) from the ROUTE's truth, never from an optimistic guess.
-      host.querySelectorAll('#auto-init [data-init], #auto-reach [data-reach], #auto-pace [data-pace], #perm-level [data-level]')
+      host.querySelectorAll('#auto-init [data-init], #auto-reach [data-reach], #auto-pace [data-pace]')
         .forEach(b => b.addEventListener('click', () => { setTimeout(refreshPanel, 600); }));
+      // a PERMISSIONS posture sets the level too (the old level row's job) — its cards are repainted wholesale, so
+      // listen on the stable host rather than on cards that will be replaced.
+      const postureHost = host.querySelector('#perm-postures');
+      if (postureHost) postureHost.addEventListener('click', e => { if (e.target.closest('[data-posture]')) setTimeout(refreshPanel, 600); });
     }
     // PERMISSIONS panel — the never→fully-autonomous LEVEL chooser + the OS-style standing-grant list
     // (permissionsstore). Grants live server-side, so paint from cache now, refresh from the sidecar, repaint. A
     // level click sets BOTH posture + the write grant (so it repaints the dial); the dial syncs back via syncPerm.
     if (typeof PermissionsStore !== 'undefined' && PermissionsStore.snapshot) {
-      const levelWrap = host.querySelector('#perm-level'), grantsWrap = host.querySelector('#perm-grants'),
-            permDesc = host.querySelector('#perm-desc'), permStatus = host.querySelector('#perm-status');
-      const pdesc = (lvl) => (typeof Permissions !== 'undefined' && Permissions.describeLevel) ? Permissions.describeLevel(lvl) : '';
+      // (the four-rung unattended ladder that used to sit here lives in AUTONOMY only; a posture still sets it)
+      const grantsWrap = host.querySelector('#perm-grants'), permStatus = host.querySelector('#perm-status');
       const plabel = (k) => (typeof Permissions !== 'undefined' && Permissions.catalogLabel) ? Permissions.catalogLabel(k) : k;
       const pcurated = () => (typeof Permissions !== 'undefined' && Permissions.grantableKeys) ? Permissions.grantableKeys() : [];
       const repaintDial = () => {
@@ -7972,10 +8273,6 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         const n = present.length;
         const noPrompt = present.filter(a => a && a.approvalMode === 'full').length;
         const asks = n - noPrompt;
-        const broadest = present.reduce((best, a) => {
-          const p = executionProfileOf(executionProfileId(a));
-          return (!best || p.reach > best.p.reach) ? { p: p, a: a } : best;
-        }, null);
         // Whole sentences per branch rather than glued fragments — a concatenated subject and verb
         // disagree the moment the crew count is 1 ("Your one crew member stops and ask you").
         const everyone = (verbSingular, verbPlural) => n === 1
@@ -7987,16 +8284,14 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         else if (!noPrompt) head = everyone('stops and asks', 'stop and ask') + ' you before anything risky.';
         else if (!asks) head = everyone('runs', 'run') + ' without stopping to ask you.';
         else head = asks + ' of your ' + n + ' crew ask before anything risky; ' + noPrompt + ' run' + (noPrompt === 1 ? 's' : '') + ' without asking.';
-        // the PLAIN name leads here too — the glance is the first thing a newcomer reads, and the house
-        // name ("STATION GEAR") teaches them nothing at the moment they most need to understand it.
-        const reachLine = broadest
-          ? 'Furthest reach on the station: <b>' + esc(broadest.p.plainLabel) + '</b> (' + esc(broadest.a.name || broadest.a.id) + ') — ' + esc(broadest.p.plain)
-          : '';
+        // The host-wide meaning of FULL POWER is stated only when someone actually HOLDS it — on a station where
+        // everyone asks, the warning was a paragraph about a state that did not exist. When the whole-station
+        // override is the reason, the glance says where to turn it off (it lives in the ADVANCED fold).
         glanceWrap.classList.toggle('loud', bypassOn);
         glanceWrap.innerHTML =
           '<p class="pg-line">' + esc(head) + '</p>' +
-          (reachLine ? '<p class="pg-reach">' + reachLine + '</p>' : '') +
-          '<p class="pg-floor">FULL POWER is host-wide: it may use protected files, arbitrary commands, visible apps, and screen/input control. ASK and narrower reach modes retain their listed restrictions.</p>';
+          ((bypassOn || noPrompt) ? '<p class="pg-floor">FULL POWER is host-wide: it may use protected files, arbitrary commands, visible apps, and screen/input control. Full Power applies watched or unattended.' +
+            (bypassOn && !snap.envFullAccess ? ' Turn the whole-station override off under <b>Advanced</b> below.' : '') + '</p>' : '');
       };
       /* ── THE POSTURE FRONT DOOR ────────────────────────────────────────────────────────────────────
          A posture is a SHORTCUT FOR SETTING VALUES, never a badge. It highlights only when every one of
@@ -8017,7 +8312,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         const can = !!(access.config && access.config.setApproval && access.config.setExecutionProfile);
         postureWrap.innerHTML =
           '<div class="pp-head"><span class="pp-q">HOW MUCH SHOULD YOUR CREW DO ON ITS OWN?</span>' +
-            '<span class="pp-state' + (on ? ' matched' : '') + '">' + (on ? 'SET TO ' + esc(on.label) : 'CUSTOM — your own mix of the settings below') + '</span></div>' +
+            '<span class="pp-state' + (on ? ' matched' : '') + '">' + (on ? 'SET TO ' + esc(on.label) : 'CUSTOM — your crew have different answers, see below') + '</span></div>' +
           '<div class="pp-cards">' + STATION_POSTURES.map(P =>
             '<button class="pp-card' + (on && on.id === P.id ? ' sel' : '') + (P.id === 'open' ? ' danger' : '') + '" data-posture="' + P.id + '"' +
               ' data-name="' + esc(P.label) + '" aria-pressed="' + (on && on.id === P.id ? 'true' : 'false') + '"' + (can ? '' : ' disabled') + '>' +
@@ -8025,7 +8320,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
               '<span class="pp-blurb">' + esc(P.blurb) + '</span>' +
               '<span class="pp-who">' + esc(P.who) + '</span>' +
             '</button>').join('') + '</div>' +
-          '<p class="pp-foot">Pick one and you are done — everything below is optional.</p>';
+          '<p class="pp-foot">Pick one and you are done. Everything below is optional.</p>';
         // Applying: count what ACTUALLY changed and report that number. setApproval returns false for an
         // agent deleted from another surface mid-click, and setExecutionProfile can be refused by the
         // station — a blanket "posture applied" over a partly-failed sweep is the app asserting a state
@@ -8104,7 +8399,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
             '<div class="set-row"><label>USER</label><input class="key-input" data-ssh-user value="' + esc(String(target.user || '')) + '" placeholder="optional"></div>' +
             '<div class="set-row"><label>PORT</label><input class="key-input" data-ssh-port type="number" min="1" max="65535" value="' + esc(String(target.port || 22)) + '"></div>' +
             '<div class="set-row"><label>REMOTE ROOT</label><input class="key-input" data-ssh-root value="' + esc(String(target.remoteRoot || '/workspace')) + '" placeholder="/workspace"></div>' +
-            '<div class="mc-hint">Uses the OS OpenSSH agent/config with batch authentication and strict known_hosts. StarNet stores no password or private key. Files push before each command and pull back afterward; sync never deletes either side.</div>' +
+            '<div class="mc-hint">Uses the OS OpenSSH agent/config with batch authentication and strict known_hosts. 1Ultra stores no password or private key. Files push before each command and pull back afterward; sync never deletes either side.</div>' +
             '<div class="mc-hint" data-ssh-status>' + esc(sshStatus) + '</div>' +
             '<div class="mc-acts"><button class="bb sm" data-ssh-save>SAVE &amp; PROBE</button>' +
               (sshConfigured ? '<button class="bb sm" data-ssh-sync="push">PUSH NOW</button><button class="bb sm" data-ssh-sync="pull">PULL NOW</button><button class="bb xs danger" data-ssh-clear>CLEAR TARGET</button>' : '') +
@@ -8138,25 +8433,34 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
              reach — so the list READS without opening anything; opening is for CHANGING.
              <details> rather than a hand-rolled toggle: free keyboard + screen-reader semantics, and it is
              the same idiom `.mc-adv` / `.exec-ssh` already use in this file. */
+          /* THE ROW = the same three answers as the cards above, for this one agent. Its SUMMARY says which
+             answer it holds (or CUSTOM — a hand-set mix of reach + asking that no card names) and what that
+             means; opening it offers the three answers; the exact reach ladder, ask-or-not and sandbox fold
+             under MORE OPTIONS for the rare case a card is not enough. The badge reports the EFFECTIVE state:
+             under the whole-station override every row reads FULL POWER, and the stored answer stays visible. */
+          const AP = agentPostureOf(a);
+          const badge = effFull ? 'FULL POWER' : (AP ? AP.label : 'CUSTOM');
+          const stateLine = overridden
+            ? 'whole-station override is ON · ' + (AP ? 'returns to ' + AP.label : 'returns to its custom mix') + ' when it is off'
+            : (AP ? AP.agentBlurb : (full ? 'never asks · ' : 'asks first · ') + p.short);
+          const postureChips = STATION_POSTURES.map(P =>
+            '<button class="ov-vchip pc-posture' + (AP && AP.id === P.id ? ' sel' : '') + (P.id === 'open' ? ' danger' : '') + '" data-agent-posture="' + P.id + '" data-agent="' + esc(String(a.id)) + '"' +
+              ' title="' + esc(P.agentBlurb) + '" aria-pressed="' + (AP && AP.id === P.id ? 'true' : 'false') + '"' + (can && canAsk ? '' : ' disabled') + '>' + esc(P.label) + '</button>').join('');
           return '<details class="perm-agent perm-crew-row' + (effFull ? ' full' : '') + (overridden ? ' overridden' : '') + '" data-profile-agent="' + esc(String(a.id)) + '" data-ssh-configured="' + (sshConfigured ? '1' : '0') + '"' +
               (permCrewOpen.has(String(a.id)) ? ' open' : '') + '>' +
             '<summary class="pc-head">' +
               '<span class="pa-name">' + esc(a.name || a.id) + '</span>' +
-              // WORDING from trunk's host-wide Full Power lane (`7b35f70e8`), STRUCTURE from this one.
-              // Their side is an honesty claim about what the posture actually authorizes — it is the
-              // newer, deliberate copy and must not be reverted by a layout change; my side only turns
-              // the row into a <summary> and adds the caret. Taking either side whole would have
-              // silently dropped the other's work, which is why this conflict was resolved by hand.
-              '<span class="pa-mode">' + (effFull ? 'FULL POWER' : 'ASKS') + '</span>' +
-              '<span class="pa-state">' + (effFull ? 'whole local computer · never stops to ask you' : (esc(p.short) + ' · stops before it writes, runs, or reaches out')) + '</span>' +
+              '<span class="pa-mode">' + esc(badge) + '</span>' +
+              '<span class="pa-state">' + esc(stateLine) + '</span>' +
               '<span class="pc-caret" aria-hidden="true">▸</span>' +
             '</summary>' +
+            '<div class="ov-vchips pc-chips pc-posture-chips">' + postureChips + '</div>' +
+            (AP ? '' : '<p class="pc-plain">A custom mix — it reaches <b>' + esc(p.plainLabel.toLowerCase()) + '</b> and ' + (full ? 'never asks' : 'asks before risky steps') + '. Pick an answer above to reset it, or fine-tune below.</p>') +
+            '<details class="mc-adv pc-exact"' + (permExactOpen.has(String(a.id)) || id === 'remote-ssh' ? ' open' : '') + ' data-exact-agent="' + esc(String(a.id)) + '"><summary>More options — exact reach, asking, sandbox</summary>' +
             '<div class="pc-axis">' +
               '<span class="pc-q">CAN REACH</span>' +
-              // `pc-reach-chips` lays the five rungs out as an EVEN grid rather than a flex-wrap. Wrapping
-              // by content width made a ladder of five different-width lozenges break 4 + 1, with the
-              // orphan under a wide hole — the one thing on the pane that is an ORDERED SCALE was also
-              // the only thing you could not read as one. (CSS-only; the chips themselves are unchanged.)
+              // `pc-reach-chips` lays the five rungs out as an EVEN grid rather than a flex-wrap (an ordered scale
+              // must read as one). (CSS-only; the chips themselves are unchanged.)
               (can ? '<div class="ov-vchips pc-chips pc-reach-chips">' + reachChips + '</div>' : '<span class="pc-plain">' + esc(p.label) + '</span>') +
               '<p class="pc-plain">' + (effFull ? 'Full Power currently overrides this stored reach profile; the profile applies again when Full Power is turned off.' : esc(p.plain)) + '</p>' +
               '<p class="mc-hint pc-truth">' + sandboxChip(row) + 'routes next command to <b>' + esc(routed) + '</b> · availability <b>' + esc(availability) + '</b> · files: ' + esc(p.files) + ' · tools: ' + esc(p.tools) + ' · desktop ' + esc(p.desktop) + '</p>' +
@@ -8173,6 +8477,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
                   : 'Before it writes a file, runs a command, or reaches outside, it stops and waits for your yes.') + '</p>' +
             '</div>' +
             (cell || ssh ? '<div class="pc-more">' + cell + ssh + '</div>' : '') +
+            '</details>' +
             '</details>';
         }).join('');
         wireCrew();
@@ -8188,6 +8493,32 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
             if (!id) return;
             if (row.open) permCrewOpen.add(id); else permCrewOpen.delete(id);
           });
+        });
+        crewList.querySelectorAll('.pc-exact[data-exact-agent]').forEach(box => box.addEventListener('toggle', () => {
+          const id = String(box.dataset.exactAgent || '');
+          if (box.open) permExactOpen.add(id); else permExactOpen.delete(id);
+        }));
+        /* THE THREE ANSWERS, per agent. One click writes BOTH halves of the answer through the same two paths the
+           cards use (setExecutionProfile, then setApproval) and reports what ACTUALLY landed — a refused profile
+           change leaves asking untouched rather than half-applying. FULL POWER keeps the house two-press confirm;
+           an answer the agent already holds does nothing. */
+        crewList.querySelectorAll('[data-agent-posture]').forEach(b => {
+          const P = STATION_POSTURES.find(x => x.id === b.getAttribute('data-agent-posture'));
+          const id = b.getAttribute('data-agent');
+          if (!P || b.disabled || b.classList.contains('sel')) return;
+          const agentName = () => { const a = present.find(x => String(x.id) === id); return a ? (a.name || a.id) : id; };
+          const apply = () => {
+            b.disabled = true;
+            Promise.resolve(access.config.setExecutionProfile(id, P.profile))
+              .then(okP => !!okP && !!access.config.setApproval(id, P.approval))
+              .catch(() => false)
+              .then(ok => {
+                notify(ok ? agentName() + ' set to ' + P.label : 'could not change ' + agentName() + ' — it kept its previous setting', ok ? (P.id === 'open' ? 'warn' : 'good') : 'bad');
+                refreshExecutionProfiles();
+              });
+          };
+          if (P.id === 'open') ArmConfirm.wire(b, { armedLabel: 'SURE? WHOLE COMPUTER', restLabel: P.label, timeoutMs: 4000, onArm: () => sfx('bad'), onConfirm: () => { sfx('bad'); apply(); } });
+          else b.addEventListener('click', () => { sfx('click'); apply(); });
         });
         crewList.querySelectorAll('[data-ssh-save]').forEach(button => button.addEventListener('click', () => {
           const box = button.closest('[data-exec-agent]'); if (!box) return;
@@ -8280,37 +8611,6 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       paintCrew();
       paintPolicy(null);
       refreshExecutionProfiles();
-      // WHOLE-STATION switches. Both COUNT what actually changed and report that number: a blanket
-      // "whole station on FULL ACCESS" toast over an empty roster, or over a partly-failed sweep, is
-      // the app asserting a state the harness never reached (the truthful-telemetry law).
-      const sweepApproval = (mode) => {
-        if (!(access.config && access.config.setApproval)) return null;
-        let done = 0;
-        present.forEach(a => { if (access.config.setApproval(a.id, mode)) done++; });
-        paintCrew();
-        return { done: done, of: present.length };
-      };
-      const fullAll = host.querySelector('#perm-full-all'), askAll = host.querySelector('#perm-ask-all');
-      if (fullAll) ArmConfirm.wire(fullAll, {
-        armedLabel: 'SURE? EVERY AGENT, FULL POWER', restLabel: 'FULL POWER — WHOLE STATION', timeoutMs: 4000,
-        onArm: () => sfx('bad'),
-        onConfirm: () => {
-          const r = sweepApproval('full');
-          if (!r) return;
-          sfx('bad');
-          notify(r.done
-            ? r.done + ' agent' + (r.done === 1 ? '' : 's') + ' now have FULL POWER over the local computer without approval prompts'
-            : 'no crew to change — summon an agent first', r.done ? 'warn' : 'bad');
-        }
-      });
-      if (askAll) askAll.addEventListener('click', () => {
-        const r = sweepApproval('ask');
-        if (!r) return;
-        sfx('click');
-        notify(r.done
-          ? r.done + ' agent' + (r.done === 1 ? '' : 's') + ' will ask before risky moves again'
-          : 'no crew to change — summon an agent first', r.done ? 'good' : 'bad');
-      });
       // A SUMMON / DELETE while the panel sits open must refresh this list (a panel painted from the roster
       // owes a repaint hook — otherwise the pane offers a reach flip for an agent that no longer exists).
       repaintPermAgents = paintCrew;
@@ -8339,6 +8639,10 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       const paintBypass = (snap) => {
         if (!bypassWrap) return;
         bypassWrap.classList.toggle('on', !!(snap.loaded && (snap.masterBypass || snap.envFullAccess)));
+        // the override lives in the ADVANCED fold, but an ON override is never tucked away: the fold opens itself
+        // so the switch that is outranking every crew row is on screen next to the rows it outranks.
+        const advFold = bypassWrap.closest('details');
+        if (advFold && snap.loaded && (snap.masterBypass || snap.envFullAccess)) advFold.open = true;
         if (!snap.loaded) { bypassWrap.innerHTML = '<p class="perm-m-desc">The bypass switch is unavailable until the local permission service confirms it.</p>'; return; }
         // the card: title + live state chip · one description paragraph · the control on its OWN line ·
         // a hairline-separated floor note. The button never sits inside the prose (it read as part of
@@ -8392,8 +8696,6 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         // The glance sentence AND every crew row name the override state, so both must move WITH the
         // switch — a flip that repainted only the card left the rows claiming "ASKS" under an ON override.
         paintCrew();
-        if (permDesc) permDesc.textContent = pdesc(snap.level);
-        if (levelWrap) levelWrap.querySelectorAll('[data-level]').forEach(x => x.classList.toggle('sel', x.dataset.level === snap.level));
         if (permStatus) {
           if (snap.error) permStatus.textContent = '⚠ ' + snap.error + (snap.loaded ? ' — showing the last confirmed approvals; changes were not applied.' : ' — standing approvals could not be verified; no changes are available.');
           else permStatus.textContent = snap.loaded ? '' : 'checking standing approvals…';
@@ -8404,7 +8706,6 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         }
       };
       syncPerm = repaintPerm;
-      if (levelWrap) levelWrap.querySelectorAll('[data-level]').forEach(b => b.addEventListener('click', () => { Promise.resolve(PermissionsStore.setLevel(b.dataset.level)).then(() => { repaintPerm(); repaintDial(); }); sfx('click'); }));
       repaintPerm();
       if (PermissionsStore.refresh) Promise.resolve(PermissionsStore.refresh()).then(repaintPerm).catch(() => {});
     }
@@ -8681,8 +8982,10 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     body.innerHTML = '<header class="utility-head"><h2>Notifications</h2><p>What needs you, and what finished or went wrong while you were elsewhere. Click one to go there.</p></header>' +
       (waiting.length ? '<section class="nf-needs"><h4 class="ms-h">NEEDS YOU <span class="dim">— ' + waiting.length + ' waiting</span></h4><div class="nf-list nf-list-needs">' + waiting.map(row).join('') + '</div></section>' : '') +
       '<div class="nf-toolbar"><div class="utility-tabs" role="group" aria-label="Show notifications">' +
-      '<button type="button" data-nf-view="all" aria-pressed="' + (notifView === 'all') + '">All · ' + rest.length + '</button>' +
-      '<button type="button" data-nf-view="unread" aria-pressed="' + (notifView === 'unread') + '">New · ' + unread + '</button></div>' +
+      // the counts include NEEDS YOU (shown above, in both views): "New" is the bell badge's own number, never fewer than the
+      // rows on screen (self-driving lane 5 — it read "All · 0" with waiting rows listed, and New disagreed with the bell)
+      '<button type="button" data-nf-view="all" aria-pressed="' + (notifView === 'all') + '">All · ' + (rest.length + waiting.length) + '</button>' +
+      '<button type="button" data-nf-view="unread" aria-pressed="' + (notifView === 'unread') + '">New · ' + (unread + waiting.length) + '</button></div>' +
       '<button class="bb sm" id="nf-clear"' + (!unread ? ' disabled' : '') + '>MARK ALL READ</button></div>' +
       '<div class="nf-list">' + (rows.length ? rows.map(row).join('') : '<div class="empty-state"><span class="es-glyph">▮</span><b>' + (notifView === 'unread' ? 'You’re all caught up' : 'Nothing yet') + '</b><span>' + (notifView === 'unread' ? 'Switch to All to see earlier ones.' : 'When an agent needs your OK, or work finishes while you’re elsewhere, it lands here.') + '</span></div>') + '</div>';
     body.querySelectorAll('[data-nf-view]').forEach(b => b.addEventListener('click', () => {
@@ -8704,6 +9007,21 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     }));
   }
   // The bell counts what's worth looking at: everyone still waiting on you + anything new that finished or broke.
+  /* NOTIFICATIONS FROM CHAT (station.control notifications.read / notifications.clear, 2026-10-05): the MARK ALL READ and
+     CLEAR NOTIFICATIONS keys' own effect — except that an agent can NEVER read or clear a NEEDS YOU entry, so an agent can
+     never hide the approval it is waiting on. `saved` is the localStorage write's own answer, never assumed. */
+  function notifsMarkRead() {
+    let marked = 0;
+    store.notifs.forEach(n => { if (!isWaiting(n) && !n.read) { n.read = true; marked++; } });
+    const saved = save(); rerender('notifs'); badges();
+    return { marked, waiting: store.notifs.filter(isWaiting).length, saved };
+  }
+  function notifsClear() {
+    const keep = store.notifs.filter(isWaiting), cleared = store.notifs.length - keep.length;
+    store.notifs = keep;
+    const saved = save(); badges(); rerender('notifs');
+    return { cleared, waiting: keep.length, saved };
+  }
   function badges() {
     reapDeadPrompts();
     const n = store.notifs.filter(x => x && x.kind && (isWaiting(x) || !x.read)).length;
@@ -8875,13 +9193,13 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       return;
     }
     if (h && h.degraded) {
-      // EL-11 FIX 1: the sidecar is REFUSING writes — this workspace was written by a NEWER StarNet. Persistent
+      // EL-11 FIX 1: the sidecar is REFUSING writes — this workspace was written by a NEWER 1Ultra. Persistent
       // red dot + a one-time visible line; never lets a refused write read as a healthy backup.
       d.classList.add('degraded');
-      d.title = 'this station’s data was written by a newer StarNet — update the app. Until then, changes are NOT being backed up.';
+      d.title = 'this station’s data was written by a newer 1Ultra — update the app. Until then, changes are NOT being backed up.';
       if (!degradedNotified) {
         degradedNotified = true;
-        try { notify('This station’s data was written by a newer StarNet — update the app. Until you do, your changes are NOT being backed up.', 'bad'); } catch (_) {}
+        try { notify('This station’s data was written by a newer 1Ultra — update the app. Until you do, your changes are NOT being backed up.', 'bad'); } catch (_) {}
       }
     } else if (h && h.stale) {
       d.classList.add('stale');
@@ -9059,7 +9377,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
         el.appendChild(mkEl('p', 'cd-privacy', 'Your profile is stored locally. Its briefing is sent to each agent’s configured model when it works; relevant summaries may also be used for suggestions.'));
         el.appendChild(cdBriefing(ds));
       } },
-      { id: 'sources', label: 'SOURCES', glyph: '⌁', desc: 'Manage the notes StarNet can study for useful work.', build: el => {
+      { id: 'sources', label: 'SOURCES', glyph: '⌁', desc: 'Manage the notes 1Ultra can study for useful work.', build: el => {
         if (typeof WorkHub !== 'undefined') WorkHub.mountSources(el);
         else el.appendChild(mkEl('p', 'cd-empty', 'Source settings are unavailable. Reopen the dossier to try again.'));
       }, onShow: el => { const detail = el.querySelector('.wh-source-settings'); if (detail) detail.open = true; } },
@@ -9395,7 +9713,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
      you are on, and the steps ahead.
 
      WHERE IT DEPARTS FROM A BATTLE PASS, DELIBERATELY: nothing here is locked, and no node is a tier you
-     buy or unlock. StarNet's standing law is that the log reveals ORDER and never withholds — so upcoming
+     buy or unlock. 1Ultra's standing law is that the log reveals ORDER and never withholds — so upcoming
      nodes read as "coming up", never as locked loot, and there is no padlock, no tier number, and no
      fake currency. The reward each node names is the real outcome the milestone produces.
 
@@ -9510,7 +9828,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     const next = steps.find(s => s.isNext && s.status !== 'done');
     const accept = (next && !next.inFlight)
       ? '<button class="consent-btn q-arc-accept q-track-accept" data-gid="' + esc(next.arcGoalId) + '" data-mid="' + esc(next.milestoneId) + '">▶ START THIS STEP</button><p class="sub dim">Starts work with your crew using your current model and permissions.</p>'
-        + '<details class="q-life-report"><summary>I DID THIS STEP</summary><label>What did you do?<textarea class="q-step-evidence" maxlength="1000" placeholder="Describe the action you completed outside StarNet"></textarea></label>'
+        + '<details class="q-life-report"><summary>I DID THIS STEP</summary><label>What did you do?<textarea class="q-step-evidence" maxlength="1000" placeholder="Describe the action you completed outside 1Ultra"></textarea></label>'
         + '<button class="consent-btn q-step-report" data-gid="' + esc(next.arcGoalId) + '" data-mid="' + esc(next.milestoneId) + '">RECORD MY ACTION</button></details>'
       : (next && next.inFlight ? '<span class="sub q-track-running">the build for this step is running — finishing it completes the step.</span>' : '');
     const alternatives = steps.filter(s => s.status !== 'done' && !s.isNext);
@@ -9767,7 +10085,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     const recent = (Array.isArray(j.outcomes) ? j.outcomes : []).slice(-3).reverse();
     const progression = j.progression;
     const achievements = progression && Array.isArray(progression.achievements) ? progression.achievements.slice(-5).reverse() : [];
-    const proofLabel = (kind, authority) => authority === 'commander-confirmed' ? 'You confirmed' : kind === 'metric' ? 'You recorded' : 'StarNet recorded';
+    const proofLabel = (kind, authority) => authority === 'commander-confirmed' ? 'You confirmed' : kind === 'metric' ? 'You recorded' : '1Ultra recorded';
     const growthHtml = progression ? '<div class="q-commander-growth"><div class="q-journey-title">COMMANDER LEVEL ' + progression.level + '</div>'
       + '<div class="sub">' + progression.points + ' achievement points · ' + progression.pointsToNextLevel + ' to the next level</div>'
       + '<div class="sub dim">Confirmed goal activity and recorded metric checkpoints earn points across your goals. Confirming a completed goal earns 100 points. Setbacks never erase your history.</div>'
@@ -9831,7 +10149,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
           + '<button class="consent-btn q-goal-reflect">SAVE REFLECTION</button></details></details>';
       }).join('') + '</div>' : '';
     return '<details class="q-life-goal q-life-manage"' + (goals.length ? '' : ' open') + '><summary>Start a goal</summary>'
-      + '<p class="sub">A rough idea is enough. Shape it with StarNet or write your own plan.</p>'
+      + '<p class="sub">A rough idea is enough. Shape it with 1Ultra or write your own plan.</p>'
       + '<label>I want to…<input class="q-new-goal" maxlength="280" placeholder="Learn to play a song, change careers, build a business…"></label>'
       + '<button class="consent-btn q-goal-suggest">HELP SHAPE MY PLAN</button><p class="sub dim">Uses your current AI model to suggest an editable plan. Saving and starting work are separate actions.</p>'
       + '<div class="q-plan-feedback" role="status" aria-live="polite"></div><div class="q-plan-proposal"></div>'
@@ -10015,7 +10333,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       const rewardHtml = q.reward ? '<div class="sub q-reward"><span class="q-field-label">REWARD</span>&#9670; ' + esc(q.reward) + '</div>' : '';
       const actionRow = (goBtn || queueBtn) ? '<div class="q-actions">' + goBtn + queueBtn + '</div>' : '';
       const lifeActions = q.kind === 'ledger' && q.status !== 'done' ? '<div class="q-life-quest" data-qid="' + esc(q.id) + '">'
-        + '<div class="sub q-owner">' + esc(q.executionMode === 'commander' ? 'YOUR ACTION' : q.executionMode === 'together' ? 'YOU + STARNET' : 'STARNET CAN HELP') + '</div>'
+        + '<div class="sub q-owner">' + esc(q.executionMode === 'commander' ? 'YOUR ACTION' : q.executionMode === 'together' ? 'YOU + 1ULTRA' : '1ULTRA CAN HELP') + '</div>'
         + (q.whyNow ? '<div class="sub">Why now: ' + esc(q.whyNow) + '</div>' : '')
         + (isPaused(q) ? '<div class="sub">' + esc(q.disposition.type === 'later' ? 'Saved for tomorrow' : q.disposition.type === 'too_big' ? 'Needs a smaller step' : 'Blocked') + (q.disposition.reason ? ': ' + esc(q.disposition.reason) : '') + '</div><button class="consent-btn q-quest-disposition" data-action="resume">RESUME</button>'
           : '<details><summary>CHANGE THIS RECOMMENDATION</summary><label>What needs to change?<input id="q-reason-' + esc(q.id) + '" class="q-disposition-reason" value="' + esc(questDrafts.get(q.id)?.reason || '') + '" maxlength="240" placeholder="For example: waiting for a reply, or only 15 minutes available"></label>'
@@ -10249,7 +10567,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     if (suggest) suggest.addEventListener('click', async () => {
       if (body._journeyPlanning) return;
       const form = body.querySelector('.q-life-manage'), title = form.querySelector('.q-new-goal').value.trim();
-      if (title.length < 4) { body._journeyPlanMessage = 'Tell StarNet a little about what you want to do first.'; planFeedback.textContent = body._journeyPlanMessage; form.querySelector('.q-new-goal').focus(); return; }
+      if (title.length < 4) { body._journeyPlanMessage = 'Tell 1Ultra a little about what you want to do first.'; planFeedback.textContent = body._journeyPlanMessage; form.querySelector('.q-new-goal').focus(); return; }
       const options = { motivation: form.querySelector('.q-new-motivation').value, constraints: form.querySelector('.q-new-constraints').value,
         successCondition: form.querySelector('.q-new-success').value, steps: form.querySelector('.q-new-steps').value };
       body._journeyPlanning = true; body._journeyPlan = null; rerender('quests', false);
@@ -10888,12 +11206,12 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
     const bds = typeof SpaceBG === 'undefined' ? [] : [].concat(SpaceBG.list()).concat(typeof Terrain === 'undefined' || !Terrain.list ? [] : Terrain.list());
     return { theme: THEMES.map(([n]) => n).concat('custom'), themeHue: '0-359', themeSat: '0-100', themeGlow: '0-150', panelBright: '-100-100',
       roomLighting: ROOM_LIGHTING_STEPS.map(([id]) => id), textScale: TEXT_SCALES.map(([v, n]) => v + ' (' + n + ')'), flicker: 'true|false',
-      crtGlass: GLASS_STEPS.map(([id]) => id), staticLevel: '0-200', sound: 'true|false', backdrop: bds.map(b => b.id), sessionRow: ROW_STEPS.map(([id]) => id),
+      crtGlass: GLASS_STEPS.map(([id]) => id), staticLevel: '0-200', sound: 'true|false', hints: 'true|false', backdrop: bds.map(b => b.id), sessionRow: ROW_STEPS.map(([id]) => id),
       notifyPrefs: Object.keys(notifyDefaults()).join('|') + ': true|false' };
   }
   function lookNow() {
     const s = store.settings, out = {};
-    ['theme', 'themeHue', 'themeSat', 'themeGlow', 'panelBright', 'roomLighting', 'textScale', 'flicker', 'crtGlass', 'staticLevel', 'sound', 'backdrop', 'sessionRow'].forEach(k => { out[k] = s[k]; });
+    ['theme', 'themeHue', 'themeSat', 'themeGlow', 'panelBright', 'roomLighting', 'textScale', 'flicker', 'crtGlass', 'staticLevel', 'sound', 'hints', 'backdrop', 'sessionRow'].forEach(k => { out[k] = s[k]; });
     out.notifyPrefs = Object.assign({}, s.notifyPrefs);
     return out;
   }
@@ -10916,7 +11234,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
       else if (k === 'sessionRow') pick(k, ROW_STEPS.map(([id]) => id));
       else if (k === 'backdrop') pick(k, opts.backdrop);
       else if (k === 'textScale') { const v = Number(patch[k]); if (!TEXT_SCALES.some(([n]) => n === v)) throw new Error('textScale must be one of: ' + TEXT_SCALES.map(([n, l]) => n + ' (' + l + ')').join(', ')); next[k] = v; }
-      else if (k === 'flicker' || k === 'sound') bool(k);
+      else if (k === 'flicker' || k === 'sound' || k === 'hints') bool(k);
       else if (k === 'notifyPrefs') {
         const np = patch[k]; if (!np || typeof np !== 'object') throw new Error('notifyPrefs takes { runComplete, needsApproval, cronDigest, sound } as true/false');
         const d = notifyDefaults(); next[k] = Object.assign({}, store.settings.notifyPrefs);
@@ -10937,7 +11255,7 @@ const StationUI = typeof document === 'undefined' ? {} : (() => {
   // GROWTH Tier 3: repaint the Settings AUTONOMY panel's EARNED badge if it is open (no-op otherwise — the paint fn
   // queries its own (possibly detached) host nodes, so a closed panel costs nothing). Called after a trust accept.
   const repaintAutonomy = () => { try { if (repaintAutonomyDial) repaintAutonomyDial(); } catch (_) {} };
-  return { init, enter, setRoster, leave, clearRunning, runningCount: () => runningAgents.size, isAgentRunning: (id) => agentLive(id), notify, settleNotifs, waitingNotifKeys, seenSession, flashSave, openAgent, refreshCrew: () => crewTick(), openArcade, toggleTerm, openTerm, openDesk, closeTerm, rerender, refreshBoard: refreshBoardLive, pokeQuests, setTheme, getTheme, setLook, lookNow, lookOptions, repaintAutonomy, refreshSystems, toggleFamily, familyOf, registerWindow, h };
+  return { init, enter, setRoster, leave, clearRunning, runningCount: () => runningAgents.size, isAgentRunning: (id) => agentLive(id), notify, warnIfStationLacksKey, settleNotifs, waitingNotifKeys, seenSession, flashSave, openAgent, refreshCrew: () => crewTick(), openArcade, toggleTerm, openTerm, showTerm, showAgent, notifsMarkRead, notifsClear, openDesk, closeTerm, rerender, refreshBoard: refreshBoardLive, pokeQuests, setTheme, getTheme, setLook, lookNow, lookOptions, repaintAutonomy, refreshSystems, toggleFamily, familyOf, registerWindow, h, motionRestState };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = { visibleTerminalRect, clampTerminalSize };

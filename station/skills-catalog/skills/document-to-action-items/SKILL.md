@@ -86,6 +86,6 @@ Use the destination the Commander approved: the station task board (`task.create
 
 *Needs the CABINET to read documents. Local PDFs and scans also need the WORKBENCH for extraction.*
 
-Adapted for StarNet from document-to-action-items (Ben Barclay), MIT.
+Adapted for 1Ultra from document-to-action-items (Ben Barclay), MIT.
 
 *Task-board steps (task.create, task.manage) need the ORCHESTRATOR, which every run the Commander starts carries. In a scheduled run, list those updates in the report instead of making them.*

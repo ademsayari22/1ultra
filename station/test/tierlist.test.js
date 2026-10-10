@@ -109,6 +109,6 @@ test('no configured cloud → honest empty answer, no fetch', async () => {
   const r = await tl.get();
   assert.equal(r.ok, false);
   assert.deepEqual(r.boards, []);
-  assert.match(r.reason, /no StarNet cloud/);
+  assert.match(r.reason, /no 1Ultra cloud/);
   assert.equal(f.calls.length, 0);
 });

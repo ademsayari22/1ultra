@@ -1,6 +1,6 @@
 /* node test/connectors-tool.test.js — the `connectors.list` builtin (sidecar/tools/builtin/connectors.js).
 
-   The tool exists because an agent could not tell "StarNet cannot reach GitHub" apart from "GitHub is one
+   The tool exists because an agent could not tell "1Ultra cannot reach GitHub" apart from "GitHub is one
    click away and nobody clicked it". So the assertions that matter are about HONESTY, not formatting:
      • an INSTALLED connector never re-appears in AVAILABLE (no nagging to add what you have);
      • a connected KEY never re-appears in AVAILABLE either;

@@ -104,7 +104,7 @@ function seedSkills(ws) {
 
   const api = async (route, init) => {
     const headers = Object.assign({ 'Content-Type': 'application/json' }, (init && init.headers) || {});
-    if (apiToken) headers['X-StarNet-Token'] = apiToken;
+    if (apiToken) headers['X-1Ultra-Token'] = apiToken;
     const r = await fetch(B + route, Object.assign({ cache: 'no-store' }, init || {}, { headers }));
     const body = await r.json().catch(() => null);
     return { status: r.status, body };

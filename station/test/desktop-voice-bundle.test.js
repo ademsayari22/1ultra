@@ -49,7 +49,7 @@ assert.match(buildRs, /"voice-deps\/node_modules"/, 'Cargo treats the staged voi
 assert.match(
   infoPlist,
   /<key>NSMicrophoneUsageDescription<\/key>\s*<string>[^<]*(?:microphone|voice)[^<]*<\/string>/i,
-  'the macOS app bundle declares why StarNet requests microphone access'
+  'the macOS app bundle declares why 1Ultra requests microphone access'
 );
 assert.equal(tauri.bundle.macOS.hardenedRuntime, true);
 assert.equal(tauri.bundle.macOS.entitlements, 'entitlements.plist');

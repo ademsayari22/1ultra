@@ -38,11 +38,11 @@ const env = C.buildExport({
     id: 'bad-url', transport: 'http', url: 'https://bad host/mcp?opaque=MALFORMED_URL_SECRET'
   }],
   notifyPrefs: { runComplete: true, sound: false }
-}, { now: 123, app: 'StarNet' });
+}, { now: 123, app: '1Ultra' });
 
 eq(env.starnetExport, 1, 'envelope carries the starnetExport:1 version pivot');
 eq(env.exportedAt, 123, 'exportedAt stamped from injected clock');
-eq(env.app, 'StarNet', 'app name stamped');
+eq(env.app, '1Ultra', 'app name stamped');
 eq(env.sections.budget.perRun, 2, 'budget section carried');
 eq(env.sections.fallback.models.length, 2, 'fallback chain carried as {models}');
 eq(env.sections.dossier.block, 'the commander block', 'dossier carried');
@@ -127,7 +127,7 @@ eq(bigChain.sections.fallback.models.length, 8, 'the fallback chain is capped at
 // ---- forward-tolerance: unknown sections dropped (noted), newer schema accepted with a note ----
 const fwd = C.parseImport({ starnetExport: 99, sections: { budget: { perRun: 1 }, futureThing: { x: 1 } } });
 ok(fwd.ok, 'a newer-schema file still imports what we understand');
-ok(fwd.notes.some(x => /newer StarNet/.test(x)), 'a newer schema is noted');
+ok(fwd.notes.some(x => /newer 1Ultra/.test(x)), 'a newer schema is noted');
 ok(fwd.notes.some(x => /futureThing/.test(x)), 'an unknown section is noted, not fatal');
 eq(fwd.sections.futureThing, undefined, 'the unknown section is not applied');
 eq(fwd.sections.budget.perRun, 1, 'the known section still applies alongside the unknown one');

@@ -1,6 +1,6 @@
 'use strict';
 
-/* THE STARNET FONT LAW.
+/* THE 1ULTRA FONT LAW.
  *
  * VT323 is the station's face. Everything — COMMS, the panels, the canvas, the baked floor
  * plates — is drawn in it, and a fallback face is never acceptable: the pixel grade IS the

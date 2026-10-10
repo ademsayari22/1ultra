@@ -108,4 +108,4 @@ The threat model file exists, was re-read, follows the output format section by 
 
 *Needs the INTEL CAB (fs.list, fs.search, fs.read, fs.write).*
 
-Adapted for StarNet from security-threat-model (OpenAI), Apache-2.0.
+Adapted for 1Ultra from security-threat-model (OpenAI), Apache-2.0.

@@ -87,7 +87,7 @@ function client(server, root, url, store, extra) {
     loadJson: (f) => (store.has(f) ? JSON.parse(store.get(f)) : undefined), saveJson: (f, v) => store.set(f, JSON.stringify(v))
   }, extra || {}));
 }
-const ORIGINAL = (body, version) => ({ slug: 'feed-watch', version: version || '1.0.0', shelf: 'originals', category: 'Research', requires: ['dish'], license: 'MIT', authors: ['StarNet'], librarySlug: 'feed-watch',
+const ORIGINAL = (body, version) => ({ slug: 'feed-watch', version: version || '1.0.0', shelf: 'originals', category: 'Research', requires: ['dish'], license: 'MIT', authors: ['1Ultra'], librarySlug: 'feed-watch',
   files: [{ path: 'SKILL.md', content: market.libraryToSkillMd(Object.assign({}, BUNDLED, body ? { body } : {}), { version: version || '1.0.0' }) }] });
 const GRILL = { slug: 'grill-me', version: '1.0.0', shelf: 'community', category: 'Planning', requires: [], license: 'MIT', authors: ['Matt Pocock', 'Nous Research'],
   upstream: { url: 'https://github.com/example/skills/tree/abc/grill-me', commit: 'abc' }, files: [{ path: 'SKILL.md', content: COMMUNITY_MD }, { path: 'LICENSE', content: MIT }] };
@@ -105,7 +105,7 @@ A.rejects = async (fn, re, label) => { let err = null; try { await fn(); } catch
     A.eq(by['feed-watch'].status, 'bundled', 'our bundled original is recognised as exactly the published version');
     A.eq(by['grill-me'].status, 'available', 'a market-only skill is available to install');
     A.eq(by['feed-watch'].missingGear, ['dish'], 'the gear a skill still needs is named');
-    A.eq(l.entries[0].shelf, 'originals', 'StarNet Originals come first');
+    A.eq(l.entries[0].shelf, 'originals', '1Ultra Originals come first');
     const srv2 = serve([ORIGINAL('1. Fetch the source.\n2. Compare with the baseline.\n3. Alert only past the bar.', '1.1.0')]);
     const l2 = await client(srv2, tmp()).listing({ bundled: [BUNDLED] });
     A.eq(l2.entries[0].status, 'update', 'a newer market text of a bundled original shows Update');
@@ -306,7 +306,7 @@ A.rejects = async (fn, re, label) => { let err = null; try { await fn(); } catch
     const olderMarket = serve([ORIGINAL(null, '1.0.0')]);
     A.eq((await client(olderMarket, tmp()).listing({ bundled: [newerBuiltIn] })).entries[0].status, 'bundled', 'a market version OLDER than the built-in copy is never offered as an update');
 
-    // a pull of a StarNet Original covers its built-in copy when the pull names every version (or its exact text)
+    // a pull of a 1Ultra Original covers its built-in copy when the pull names every version (or its exact text)
     const store5 = new Map(), root5 = tmp();
     let cur5 = serve([ORIGINAL('1. Fetch.\n2. Diff.', '1.1.0')], null, { serial: 1 });
     const m5 = client({ fetchDocument: (u) => cur5.fetchDocument(u) }, root5, undefined, store5);

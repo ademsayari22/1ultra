@@ -1,4 +1,4 @@
-/* STARNET — workstreams.js : the unified unit-of-work record (session organization).
+/* 1ULTRA — workstreams.js : the unified unit-of-work record (session organization).
    A WORKSTREAM is one named conversation that simultaneously IS the Comms thread (its
    `history`), IS a kanban card (its `lane`), and OWNS its backend runs + deliverables +
    per-conversation cost. This module is the single owner of workstreams[] + activeId +
@@ -451,9 +451,17 @@
   // Only actual Commander/agent dialogue belongs in search or export. Local/system records can contain
   // prompts, recovery markers, tool metadata, or other implementation state and must never leak through
   // a user-facing transcript surface.
+  const isVisibleMessage = m => !!(m && !m.sys && !m.hidden && !m.internal
+    && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string');
   function visibleMessages(w) {
-    return ((w && Array.isArray(w.history)) ? w.history : []).filter(m => m && !m.sys && !m.hidden && !m.internal
-      && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string');
+    return ((w && Array.isArray(w.history)) ? w.history : []).filter(isVisibleMessage);
+  }
+  // the last message visibleMessages(w) holds whose text is not blank — read from the END, so the rail's 1s
+  // heartbeat costs a few rows per session instead of a copy of every session's whole history (2026-10-07)
+  function latestVisibleMessage(w) {
+    const h = (w && Array.isArray(w.history)) ? w.history : [];
+    for (let i = h.length - 1; i >= 0; i--) if (isVisibleMessage(h[i]) && h[i].content.trim()) return h[i];
+    return null;
   }
   const SECRET_RES = [
     /\bsk-[A-Za-z0-9_-]{16,}\b/g,
@@ -478,7 +486,7 @@
       const doc = { schema: 'starnet.conversation', version: 1, exportedAt: opts.exportedAt != null ? opts.exportedAt : now(), title, messages, secretsIncluded: false };
       return { format: 'json', mime: 'application/json', filename: 'starnet-' + slug + '.json', text: JSON.stringify(doc, null, 2), doc };
     }
-    const lines = ['# ' + title, '', '_Exported from StarNet. Hidden/system data and obvious credentials are excluded._', ''];
+    const lines = ['# ' + title, '', '_Exported from 1Ultra. Hidden/system data and obvious credentials are excluded._', ''];
     for (const m of messages) lines.push('## ' + (m.role === 'user' ? 'Commander' : 'Agent'), '', m.content, '');
     return { format: 'markdown', mime: 'text/markdown', filename: 'starnet-' + slug + '.md', text: lines.join('\n') };
   }
@@ -656,7 +664,7 @@
     appendRun, noteRunEnd, recordDeliverable, addCost, costOf, noteModel, modelOf,
     // the rail's INBOX row reads these directly: the same sys/hidden/internal filter search and
     // export already trust, so the count and the preview can never surface machine chatter.
-    visibleMessages, hasAgent,
+    visibleMessages, latestVisibleMessage, hasAgent,
     migrateV1, importTasks,
     LANES
   };

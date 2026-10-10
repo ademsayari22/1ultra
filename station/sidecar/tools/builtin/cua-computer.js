@@ -38,7 +38,7 @@ function makeCuaComputerTools(deps) {
       properties: {
         action: { type: 'string', enum: ['describe', ...contract.tools.map(t => t.name)] },
         operation: { type: 'string', description: 'For describe: the action whose input schema and guidance you need.' },
-        parameters: { type: 'object', description: 'Native action arguments. Example get_window_state: {pid:123,window_id:456}; click: {pid:123,window_id:456,element_token:"observed token"}; type_text also takes text. Call describe for exact schemas. StarNet owns the session.' }
+        parameters: { type: 'object', description: 'Native action arguments. Example get_window_state: {pid:123,window_id:456}; click: {pid:123,window_id:456,element_token:"observed token"}; type_text also takes text. Call describe for exact schemas. 1Ultra owns the session.' }
       }
     },
     run(args, ctx) {
@@ -54,7 +54,7 @@ function makeCuaComputerTools(deps) {
         if (!contract.tools.some(t => t.name === args.action)) throw new Error('Unsupported computer operation');
         const parameters = args.parameters || {};
         if (!parameters || typeof parameters !== 'object' || Array.isArray(parameters)) throw new Error('parameters must be an object');
-        if ('session' in parameters) throw new Error('StarNet owns the computer session; omit session');
+        if ('session' in parameters) throw new Error('1Ultra owns the computer session; omit session');
         const conn = await getConnection(ctx?.signal);
         const cancelled = () => { void reset(); };
         ctx?.signal?.addEventListener('abort', cancelled, { once: true });
@@ -69,7 +69,7 @@ function makeCuaComputerTools(deps) {
           // would be discarded by its success normalization.
           if (result.isError || state.effect === 'refused' || state.refusal) {
             const error = new Error(JSON.stringify({ backend: 'cua', operation: args.action, ...state,
-              ...(expired ? { hostRecovery: 'StarNet discarded the expired session. Call get_window_state again to obtain fresh tokens before acting. No action was replayed.' } : {}) }));
+              ...(expired ? { hostRecovery: '1Ultra discarded the expired session. Call get_window_state again to obtain fresh tokens before acting. No action was replayed.' } : {}) }));
             error.cuaRefusal = true;
             throw error;
           }

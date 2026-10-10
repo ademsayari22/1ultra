@@ -1,4 +1,4 @@
-/* STARNET hudmode.js — HUD MODE: StarNet as a small always-on-top panel.
+/* 1ULTRA hudmode.js — HUD MODE: 1Ultra as a small always-on-top panel.
    For the Commander who is gaming or doing something else on the PC and wants every piece of work the
    station is doing one glance away, with a hand on each of them, without the whole station on screen.
 
@@ -593,7 +593,7 @@
 
   // The widget's world is drawn ~20 times a second (World.setFrameCap): alive to a glance, a fraction of the
   // full station's cost while a game has the GPU. 48ms stays under the world's 64ms step clamp, so bodies
-  // still move at their true speed. The full station always gets its uncapped loop back.
+  // still move at their true speed. The full station gets the world's own RENDER PACING back (30 fps focused, slower unfocused — world.js).
   const WIDGET_FRAME_MS = 48;
   function worldStart(capped) {
     // the widget shows the world only: its rows already say who works, for how long and on what, so the
@@ -679,7 +679,7 @@
     open.setAttribute('aria-label', 'Open activity'); open.title = 'Click to open activity · drag to move';
     const box = el('section', 'hud-widget');
     box.id = 'hud-widget';
-    box.setAttribute('aria-label', 'StarNet HUD: your agents at work');
+    box.setAttribute('aria-label', '1Ultra HUD: your agents at work');
     box.setAttribute('data-tauri-drag-region', '');
     const rows = el('div', 'hud-wrows'); rows.setAttribute('data-tauri-drag-region', '');
     const more = el('button', 'hud-wmore'); more.type = 'button'; more.hidden = true;
@@ -1058,7 +1058,7 @@
         toggle();
       }
     });
-    // The tray's HUD Mode / Open StarNet items (hud_mode.rs) ask the page to switch.
+    // The tray's HUD Mode / Open 1Ultra items (hud_mode.rs) ask the page to switch.
     try {
       const ev = root.__TAURI__ && root.__TAURI__.event;
       if (ev && typeof ev.listen === 'function') {

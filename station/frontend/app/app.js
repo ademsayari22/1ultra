@@ -1,4 +1,4 @@
-/* STARNET — app.js : screen flow + wiring.
+/* 1ULTRA — app.js : screen flow + wiring.
    title -> connect (create a character) -> game.  Auto-resumes a saved agent on refresh. */
 'use strict';
 
@@ -22,7 +22,7 @@ const App = (() => {
   let pickedTraits = {};        // the VOICE & MANNER fine-tune dials (warmth/humor/formality/length + emoji/blunt) — only set keys contribute prompt text
   let pickedCustomVoice = '';   // the Commander's free-text "in their own words" voice note (optional)
   let pickedApproval = 'ask';   // the APPROVAL mode — 'ask' (consent-gated) | 'full' (auto-approve). Drives the REAL consent broker (sidecar bypass), not a cosmetic toggle.
-  let pickedProvider = 'openai';   // BEGINNER-FIRST funnel: the STARNET hero is the promoted start, but it only exists once the cloud seam is proven (revealStarnetGenesis auto-picks it on a fresh create). Until then OPENAI leads — its card carries BOTH paths (ChatGPT sign-in or an API key). initConnect() still honours a returning agent's saved provider.
+  let pickedProvider = 'openai';   // BEGINNER-FIRST funnel: the 1ULTRA hero is the promoted start, but it only exists once the cloud seam is proven (revealStarnetGenesis auto-picks it on a fresh create). Until then OPENAI leads — its card carries BOTH paths (ChatGPT sign-in or an API key). initConnect() still honours a returning agent's saved provider.
   // POWER-USER LOOP PL-03 — entry is a four-surface truth transaction. World opens its EventSource
   // before Chat/StationUI finish mounting, and their independent timers used to expose an impossible
   // mixture during reload: unreachable + STANDBY + ONLINE + "COMMS online". Hold every idle claim at
@@ -244,7 +244,7 @@ const App = (() => {
     // sidecar/capability/office.js + capgate F1). So the identity must NOT promise web/files unconditionally; it
     // tells the agent to use whatever it's actually been granted and to SAY when a tool is missing (that's the
     // signal that teaches the Commander what to place next), never to pretend a reach it doesn't have.
-    let s = 'You are ' + name + ', an AI agent operating from a workstation aboard the STARNET station — a room '
+    let s = 'You are ' + name + ', an AI agent operating from a workstation aboard the 1ULTRA station — a room '
       + 'your Commander (the user) is building for you. Address the user as "Commander" and keep a spark of personality. '
       + 'Your workstation grants you REAL tools — exactly the ones the Commander has placed in your room (web search/read, '
       + 'file read/write, a terminal, memory, and more as the station grows; compute to think is always yours). When the '
@@ -318,23 +318,23 @@ const App = (() => {
   }
   function approvalClause(a) {
     const full = a && a.approvalMode === 'full';
-    if (full) return '\n\nAUTHORITY — FULL POWER: the Commander explicitly authorized the whole local computer. Do not pause for approval and do not claim a StarNet policy restriction: use every available tool, arbitrary host commands, host files, visible apps, and screen/input control needed to complete the request. This authority is general, not task-specific. Report only real prerequisites outside StarNet\'s control (for example a missing login, unavailable hardware, an OS elevation prompt, or a disconnected service), and keep trying viable routes before declaring one.';
+    if (full) return '\n\nAUTHORITY — FULL POWER: the Commander explicitly authorized the whole local computer. Do not pause for approval and do not claim a 1Ultra policy restriction: use every available tool, arbitrary host commands, host files, visible apps, and screen/input control needed to complete the request. This authority is general, not task-specific. Report only real prerequisites outside 1Ultra\'s control (for example a missing login, unavailable hardware, an OS elevation prompt, or a disconnected service), and keep trying viable routes before declaring one.';
     return '\n\nAPPROVAL — ASK FIRST: actions that write files, run commands, or reach the network need the Commander\'s approval — but you NEVER ask for it in a chat message. The approval system cannot see chat text; typed replies like "I approve" grant nothing. Instead, just make the tool call: the harness pauses it and shows the Commander a real approval prompt with Approve/Deny buttons, and the decision comes back to you automatically. Reasoning over what you already have needs no approval.';
   }
   // an always-appended SYSTEM truth: what the agent ACTUALLY runs on. Mirrors approvalClause — derived fresh each
   // compose, never stored in the editable identity.md (so it can't be edited away and never drifts stale). Fixes the
   // "I'm a <legacy-name> agent" misread: when the agent introspects (env/pwd) it may meet the project's former name
-  // "Skynet" (renamed to StarNet, but some paths/env survive as back-compat aliases) or scattered references to the
+  // "Skynet" (renamed to 1Ultra, but some paths/env survive as back-compat aliases) or scattered references to the
   // earlier open-source runtimes the harness was built on. Without this grounding it guesses one of those. Truthful-
-  // telemetry law: state only what's true (StarNet harness, Commander's own model), don't guess.
+  // telemetry law: state only what's true (1Ultra harness, Commander's own model), don't guess.
   function foundationClause() {
-    return '\n\nYOUR FOUNDATION: You run on the StarNet harness — a local-first agent runtime on the Commander\'s own '
+    return '\n\nYOUR FOUNDATION: You run on the 1Ultra harness — a local-first agent runtime on the Commander\'s own '
       + 'machine, not a hosted service. Your reasoning comes from whichever model the Commander has connected through '
       + 'their own API key or account. As you look around your environment you may meet names that are not you, and '
-      + 'none of them change what you are: StarNet was previously called "Skynet" — it has been renamed, but some file '
+      + 'none of them change what you are: 1Ultra was previously called "Skynet" — it has been renamed, but some file '
       + 'paths, environment variables, and config keys may still carry the old "Skynet"/"SKYNET_" name as a back-compat '
       + 'alias; and because the harness was assembled from and built on earlier open-source agent runtimes, some code, '
-      + 'comments, or tool names may reference other projects. You are a StarNet agent on the StarNet harness — not a '
+      + 'comments, or tool names may reference other projects. You are a 1Ultra agent on the 1Ultra harness — not a '
       + 'Skynet agent, and not whatever those internal references happen to name. Do not guess at your own foundation '
       + 'from ambiguous signals in the environment; report only what you can actually verify, and say plainly when you are not sure.';
   }
@@ -367,7 +367,7 @@ const App = (() => {
     // live roster truth, so it must land before anything else colours the prompt. '' for non-orchestrators.
     p += rosterClause(a);
     // FOUNDATION sits right after identity (before personality) — a constant system truth that grounds "what you are"
-    // so the agent never mistakes StarNet's internal lineage for being some other agent. Kept out of the docs.
+    // so the agent never mistakes 1Ultra's internal lineage for being some other agent. Kept out of the docs.
     p += foundationClause();
     // personality sits AFTER identity (keeps the REAL-tools clause) and BEFORE purpose, so it colours the
     // agent's tone without ever displacing capability or the mission. Personas.compose folds the chosen
@@ -701,7 +701,7 @@ const App = (() => {
   /* THE STATION DEFAULT IS THE OVERSEER'S WIRE (issue #24). Focusing an agent writes its model/provider/effort into
      the ONE global wire every COMMS run reads (Harness). A pinned agent brings its own wire; an agent with no pin
      ("Follow station default") must get the Overseer's, because nothing else resets the global. Before this, a
-     specialist summoned while the station ran on StarNet credits kept a `starnet` pin; the Commander switched the
+     specialist summoned while the station ran on 1Ultra credits kept a `starnet` pin; the Commander switched the
      station to OpenRouter, focused that specialist, cleared its pin, and every run after that still went out as
      `starnet` — refused at 0s with "Out of managed credit" on a funded BYOK station. */
   function stationDefaultWire() {
@@ -712,12 +712,12 @@ const App = (() => {
   function savedStationProv(saved) { return (saved && saved.agent && saved.agent.provider) || (saved && saved.prov) || ''; }
   /* 0.12.5 REASONING MIGRATION, once per save (persist() writes `reasoningMigrated` on every save from the first
      0.12.5 persist, so an explicit 0.12.5 choice is never touched). 0.12.4's model dock could not read a reasoning
-     dial for OpenAI-API, xAI/Grok, DeepSeek or StarNet Managed models: it showed them locked at OFF and saved that,
+     dial for OpenAI-API, xAI/Grok, DeepSeek or 1Ultra Managed models: it showed them locked at OFF and saved that,
      while the adapter sent no reasoning_effort at all. 0.12.5 reads their real dials and sends the saved level, which
      would silently change what an upgraded station runs:
        - OpenAI-API / xAI / Grok / DeepSeek ran at the MODEL's default reasoning. The inherited 'none' would now turn it
          off, so it is dropped and the provider default applies (the dock clamps it to a level the model accepts).
-       - StarNet Managed sent nothing. The Overseer's onboarding MEDIUM would now switch paid thinking on, so a Managed
+       - 1Ultra Managed sent nothing. The Overseer's onboarding MEDIUM would now switch paid thinking on, so a Managed
          pin keeps OFF (nothing is sent) until someone picks a level. */
   const REASONING_MIGRATION = '0125';
   const LEGACY_DIAL_LOCKED = ['openai', 'xai', 'grok', 'deepseek'];
@@ -752,7 +752,7 @@ const App = (() => {
   // SETTINGS -> PROVIDERS picks the STATION's provider, and the station default IS the Overseer's pin
   // (stationDefaultWire). The card used to move only the global wire, so the Overseer kept the provider the station
   // had just left: unpinned agents, their roster rows and a restore all followed it (the #24 "Out of managed credit"
-  // symptom through a Settings switch from StarNet credits to a BYOK key). An invalid model under the new provider is
+  // symptom through a Settings switch from 1Ultra credits to a BYOK key). An invalid model under the new provider is
   // reconciled by the dock the next time the Overseer is focused, exactly as a dock provider pick is.
   function setStationProvider(p) {
     const hero = agents.get('agent');
@@ -825,7 +825,7 @@ const App = (() => {
       fireworks: 'FIREWORKS',
       perplexity: 'PERPLEXITY',
       cerebras: 'CEREBRAS',
-      starnet: 'STARNET MANAGED',
+      starnet: '1ULTRA MANAGED',
       ollama: 'OLLAMA',
       'claude-cli': 'CLAUDE CODE',
       custom: 'CUSTOM'
@@ -1221,8 +1221,11 @@ const App = (() => {
   // auto-requisitioned — it opens the agent-binding picker on placement; the Commander places + binds it by hand,
   // which is the honest one desk-per-agent path). Degrades safely: if any control isn't found we still leave BUILD MODE
   // open on its default tool, which is already a real improvement over the old unclickable "Open BUILD MODE" sentence.
-  function openDeskPlacement() {
+  function openDeskPlacement(agentId) {
     if (typeof Build === 'undefined' || !Build.open) return;
+    // (2026-10-07) BUILD MODE arms the desk FOR this agent: the next floor click drops it and seats them there —
+    // no CONFIGURE step. The DOM drive below stays only as the fallback for a Build without placeDeskFor.
+    if (agentId && Build.placeDeskFor) { try { if (Build.placeDeskFor(agentId)) return; } catch (_) {} }
     try { if (!Build.isOpen || !Build.isOpen()) Build.open(); } catch (_) { return; }
     // BUILD MODE builds its palette synchronously in open()->buildDOM, but retarget across a couple of rAFs to be safe
     // against any deferred render. Each pass clicks only what isn't already active, so it's idempotent + cheap.
@@ -1555,7 +1558,12 @@ const App = (() => {
       stationSaveQueued = true;
       // Coalesce the synchronous mutations of one gesture (e.g. place + assign a desk),
       // but save before the next browser event. Do not wait for SAVE & EXIT or a chat turn.
-      queueMicrotask(() => { stationSaveQueued = false; persist(); });
+      queueMicrotask(() => {
+        stationSaveQueued = false; persist();
+        // a desk that just landed (a WHO SITS HERE chip, PLACE ITS DESK, the overseer's station op) retires the open
+        // COMMS "nowhere to sit" line now, not only when BUILD MODE closes: it is a derived floor claim (chat.js re-reads it)
+        if (typeof Chat !== 'undefined' && Chat.retireDeskPrompt) { try { Chat.retireDeskPrompt(); } catch (_) {} }
+      });
     });
   }
 
@@ -1594,7 +1602,8 @@ const App = (() => {
     grok: ['grok-4', 'grok-3', 'grok-code-fast-1'],
     kimi: ['kimi-for-coding', 'kimi-for-coding-highspeed', 'k3'],
     openai: ['gpt-5.5', 'gpt-5.4', 'gpt-4.1'],
-    anthropic: ['claude-sonnet-4-5', 'claude-opus-4-1', 'claude-3-5-haiku-latest'],
+    // current ids (2026-10): claude-opus-4-1 retired 2026-08-05 and Haiku 3.5 is retired — an offline pick of either 404s
+    anthropic: ['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-haiku-4-5'],
     gemini: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'],
     xai: ['grok-4.3', 'grok-4-fast', 'grok-4'],
     groq: ['openai/gpt-oss-120b', 'llama-3.3-70b-versatile', 'meta-llama/llama-4-scout-17b-16e-instruct'],
@@ -1606,7 +1615,10 @@ const App = (() => {
     cerebras: ['llama-4-scout-17b-16e-instruct', 'llama3.1-8b', 'qwen-3-coder-480b'],
     ollama: ['qwen3:8b', 'llama3.1', 'qwen2.5-coder', 'mistral'],
     'claude-cli': ['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-haiku-4-5-20251001'],   // [0] = the default pick; the live catalog adds the rest
-    openrouter: ['gpt-5.5', 'anthropic/claude-sonnet-4.6', 'anthropic/claude-opus-4.8', 'openai/gpt-5', 'google/gemini-2.5-pro']
+    openrouter: ['gpt-5.5', 'anthropic/claude-sonnet-4.6', 'anthropic/claude-opus-4.8', 'openai/gpt-5', 'google/gemini-2.5-pro'],
+    // #93: 1ULTRA MANAGED's catalog is the routed vendor/model lineup — a bare 'gpt-5.5' (the openrouter row it used
+    // to borrow) is "not in the catalog" there and the dock cleared it. Its own list saves a catalog-shaped id.
+    starnet: ['openai/gpt-5.5', 'anthropic/claude-sonnet-4.6', 'anthropic/claude-opus-4.8', 'openai/gpt-5', 'google/gemini-2.5-pro']
   });
   // The genesis model catalog for the ACTIVE provider — {id, name, pricing, context_length, fallback?} items
   // feeding the themed #model-pop popover (which replaced the native <datalist>). genesisOffline flags a
@@ -1674,6 +1686,13 @@ const App = (() => {
      curated FALLBACK list loadModels() already ships, so nothing new is fabricated. Codex hides them —
      its menu is discovered live per-account (loadCodexModels), so a static list there could mislead. */
   const MODEL_PICKS = Object.freeze({
+    // #93: managed ids are vendor/model, like OpenRouter's; [0] is the default a fresh 1ULTRA setup saves.
+    starnet: [
+      { label: 'GPT-5.5', id: 'openai/gpt-5.5', tag: '' },
+      { label: 'Sonnet 4.6', id: 'anthropic/claude-sonnet-4.6', tag: 'balanced' },
+      { label: 'Opus 4.8', id: 'anthropic/claude-opus-4.8', tag: 'deepest' },
+      { label: 'Gemini 2.5 Pro', id: 'google/gemini-2.5-pro', tag: '' }
+    ],
     openrouter: [
       { label: 'Opus 4.8', id: 'anthropic/claude-opus-4.8', tag: 'deepest' },
       { label: 'Sonnet 4.6', id: 'anthropic/claude-sonnet-4.6', tag: 'balanced' },
@@ -1685,8 +1704,8 @@ const App = (() => {
       { label: 'GPT-5.4', id: 'gpt-5.4', tag: '' }
     ],
     anthropic: [
-      { label: 'Sonnet 4.5', id: 'claude-sonnet-4-5', tag: 'balanced' },
-      { label: 'Opus 4.1', id: 'claude-opus-4-1', tag: 'deepest' }
+      { label: 'Sonnet 5.5', id: 'claude-sonnet-5-5', tag: 'balanced' },
+      { label: 'Opus 5.5', id: 'claude-opus-5-5', tag: 'deepest' }   // was Opus 4.1 — retired 2026-08-05, the chip 404'd
     ],
     gemini: [
       { label: 'Gemini 2.5 Pro', id: 'gemini-2.5-pro', tag: 'deepest' },
@@ -2020,7 +2039,7 @@ const App = (() => {
     // sign-in block shows there alongside the key box; grok/kimi keep it as their only path.
     const isOpenAI = pickedProvider === 'openai';
     el('codex-block').classList.toggle('hidden', !(isOAuth || isOpenAI));
-    // STARNET MANAGED wears its own link block (the codex-block twin) — visible only while picked.
+    // 1ULTRA MANAGED wears its own link block (the codex-block twin) — visible only while picked.
     const isStarnet = pickedProvider === 'starnet';
     { const sb = el('starnet-block'); if (sb) sb.classList.toggle('hidden', !isStarnet); }
     // OLLAMA (the free local path) wears its own honest block — visible only while picked; its status line is
@@ -2182,12 +2201,28 @@ const App = (() => {
         ? 'Uses the ChatGPT Plus/Pro account you already have — no API key, no billing setup. Prefer a key? Paste an OpenAI API key above instead.'
         : 'Uses the ' + c.sub + ' you already have — no API key, no billing setup. Prefer a key? Switch to OPENROUTER (or any provider) above.';
     }
+    paintKimiRegion(pid);
     // a stale code/status from the previously picked provider must never dress this one's block
     const codeEl = el('codex-code'), openBtn = el('btn-codex-open');
     if (codeEl) codeEl.classList.add('hidden');
     if (openBtn) openBtn.classList.add('hidden');
     const statusEl = el('codex-status');
     if (statusEl) { statusEl.textContent = 'checking…'; statusEl.className = 'codex-status'; }
+  }
+
+  // KIMI ACCOUNT REGION (#70): shown only while Kimi is picked. The pick is what the NEXT sign-in sends (the shared
+  // engine reads KimiRegion.get()); the sidecar stores it with the credential and routes refresh + inference to it.
+  function paintKimiRegion(pid) {
+    const box = el('kimi-region');
+    if (!box) return;
+    const on = pid === 'kimi' && typeof KimiRegion !== 'undefined';
+    box.classList.toggle('hidden', !on);
+    if (!on) return;
+    const cur = KimiRegion.get();
+    box.querySelectorAll('[data-kimi-region]').forEach(b => {
+      b.setAttribute('aria-pressed', String(b.dataset.kimiRegion === cur));
+      b.onclick = () => { if (KimiRegion.set(b.dataset.kimiRegion)) { SFX.click(); paintKimiRegion('kimi'); } };
+    });
   }
 
   // GET /api/auth/<pid>/status → paint the shared sign-in block for THIS provider (mirrors refreshCodexStatus,
@@ -2199,7 +2234,9 @@ const App = (() => {
     try { const r = await fetch('/api/auth/' + pid + '/status'); j = await r.json(); } catch (_) {}
     oauthConnected[pid] = !!j.connected;
     if (typeof Harness !== 'undefined' && Harness.setDesktopConfigured) Harness.setDesktopConfigured(pid, oauthConnected[pid]);
+    if (pid === 'kimi' && j.region && typeof KimiRegion !== 'undefined') KimiRegion.noteSignedIn(j.region);   // #70: default the next sign-in to the stored one's region
     if (pickedProvider !== pid) return;   // the pick moved on while we awaited — never paint another provider's block
+    if (pid === 'kimi') paintKimiRegion('kimi');
     const statusEl = el('codex-status'), signinBtn = el('btn-codex-signin'), logoutBtn = el('btn-codex-logout');
     if (!statusEl || !signinBtn || !logoutBtn) return;
     if (oauthConnected[pid]) {
@@ -2207,7 +2244,7 @@ const App = (() => {
         statusEl.innerHTML = '<span class="conn-dot"></span>connected to ' + esc(c.name) + ' — but the sign-in could not be saved to disk; you may need to re-sign in after a restart';
         statusEl.className = 'codex-status warn';
       } else {
-        statusEl.innerHTML = '<span class="conn-dot"></span>connected to ' + esc(c.name) + ' — your agents can run on your subscription';
+        statusEl.innerHTML = '<span class="conn-dot"></span>connected to ' + esc(c.name) + (pid === 'kimi' && j.region && typeof KimiRegion !== 'undefined' ? ' (' + esc(KimiRegion.label(j.region)) + ')' : '') + ' — your agents can run on your subscription';
         statusEl.className = 'codex-status ok';
       }
       signinBtn.textContent = '↻ RE-SIGN IN';
@@ -2281,7 +2318,7 @@ const App = (() => {
   }
 
   /* ---------- CLAUDE CLI on the genesis screen ----------
-     SIGN IN WITH CLAUDE, as smooth as the ChatGPT/Grok doors without StarNet ever holding the credential: the
+     SIGN IN WITH CLAUDE, as smooth as the ChatGPT/Grok doors without 1Ultra ever holding the credential: the
      sidecar runs the user's own `claude auth login` (it opens the browser and keeps the token) and this tile only
      paints /api/auth/claude-cli/* truth. States:
        checking · missing (install command + guide; re-checks itself, so installing flips the tile on its own)
@@ -2430,7 +2467,7 @@ const App = (() => {
     if (ci) ci.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); submitClaudeCode(); } };
   }
 
-  /* ---------- STARNET MANAGED on the genesis screen ----------
+  /* ---------- 1ULTRA MANAGED on the genesis screen ----------
      The subscription path for people who never want to see an API key: buy on starnetos.com, then the
      connect screen links this station to that account with ONE confirmed code — the same sidecar engine
      the STORE uses (/api/credits/link/*), painted into #starnet-block. The chip itself stays HIDDEN
@@ -2455,7 +2492,8 @@ const App = (() => {
   }
   async function revealStarnetGenesis(autoPick) {
     let linked = false, linkable = false;
-    try { const j = await Harness.api.get('/api/credits?history=0'); linked = !!(j && j.configured); } catch (_) {}
+    // the same wait as WAKE's status read below: the first read can be the one that self-heals the link (~16s)
+    try { const j = await Harness.api.get('/api/credits?history=0', { timeoutMs: 20000 }); linked = !!(j && j.configured); } catch (_) {}
     if (!linked) { try { const j = await Harness.api.get('/api/credits/linkable'); linkable = !!(j && j.available); } catch (_) {} }
     starnetLinked = linked;
     const b = document.querySelector('.provider-row .prov[data-prov="starnet"]');
@@ -2475,9 +2513,13 @@ const App = (() => {
     const priorLinked = starnetLinked, priorPurchaseUrl = starnetPurchaseUrl;
     let timeout = null;
     try {
+      // The wait must outlast the sidecar's own bounded worst case, so its answer always lands first: a link
+      // self-heal retry's /v1/whoami (8s) + one /v1/balance read (8s). 10s used to lose that race on WAKE.
+      // api.get's OWN deadline (15s by default) is the one that fires, so it carries the 20s (E29, 10-07); the race
+      // below is only a backstop at the same bound, for an api.get that ever loses its deadline.
       j = await Promise.race([
-        Harness.api.get('/api/credits?history=0'),
-        new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error('credits status timeout')), 10000); })
+        Harness.api.get('/api/credits?history=0', { timeoutMs: 20000 }),
+        new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error('credits status timeout')), 20000); })
       ]);
       answered = !!(j && typeof j.configured === 'boolean');
     }
@@ -2500,7 +2542,7 @@ const App = (() => {
     if (pickedProvider !== 'starnet') { stopStarnetBalancePoll(); return result(); }   // pick moved on — don't repaint another provider's block
     if (starnetLinked && starnetLinkStatus === 'unavailable') {
       stopStarnetBalancePoll();
-      statusEl.textContent = 'link saved on this station, but StarNet could not verify it right now — check your connection and try again.';
+      statusEl.textContent = 'link saved on this station, but 1Ultra could not verify it right now — check your connection and try again.';
       statusEl.className = 'codex-status bad';
       if (linkBtn) linkBtn.classList.add('hidden');
       if (creditsBtn) creditsBtn.classList.add('hidden');
@@ -2508,7 +2550,7 @@ const App = (() => {
     } else if (starnetLinked && starnetOutOfCredit()) {
       // linked, wallet empty: the one state WAKE can never fix. Say it, offer the store, and keep polling the
       // balance so the moment the purchase lands this line flips green without a restart.
-      statusEl.innerHTML = '<span class="conn-dot"></span>linked to your StarNet account — <b>no credits yet</b>. Waking your agent uses credits right away, so add some first.';
+      statusEl.innerHTML = '<span class="conn-dot"></span>linked to your 1Ultra account — <b>no credits yet</b>. Waking your agent uses credits right away, so add some first.';
       statusEl.className = 'codex-status bad';
       if (linkBtn) linkBtn.classList.add('hidden');
       if (switchBtn) switchBtn.classList.remove('hidden');
@@ -2517,7 +2559,7 @@ const App = (() => {
     } else if (starnetLinked) {
       stopStarnetBalancePoll();
       const bal = (starnetBalanceUsd == null) ? '' : ' · $' + starnetBalanceUsd.toFixed(2) + ' available';
-      statusEl.innerHTML = '<span class="conn-dot"></span>linked to your StarNet account' + esc(bal) + ' — your agents run on your subscription';
+      statusEl.innerHTML = '<span class="conn-dot"></span>linked to your 1Ultra account' + esc(bal) + ' — your agents run on your subscription';
       statusEl.className = 'codex-status ok';
       if (linkBtn) linkBtn.classList.add('hidden');
       if (creditsBtn) creditsBtn.classList.add('hidden');
@@ -2534,7 +2576,7 @@ const App = (() => {
     }
     return result();
   }
-  // A station can be linked to a DIFFERENT StarNet login than the browser account that owns the purchase.
+  // A station can be linked to a DIFFERENT 1Ultra login than the browser account that owns the purchase.
   // Genesis used to auto-recognize that old device and offer only ADD CREDITS, trapping a paid beginner on
   // the wrong account. Switching clears both credential halves, re-reads provider truth, and starts the normal
   // pairing flow immediately — no Terminal, logs, reinstall, or trip through Settings required.
@@ -2569,11 +2611,15 @@ const App = (() => {
     const generation = _starnetLinkGeneration;
     const statusEl = el('starnet-status'), codeEl = el('starnet-code'), openBtn = el('btn-starnet-open');
     const progress = el('connect-msg');
-    if (progress) { progress.className = 'msg'; progress.textContent = 'Opening your StarNet account…'; }
+    if (progress) { progress.className = 'msg'; progress.textContent = 'Opening your 1Ultra account…'; }
     const fail = t => { statusEl.textContent = t; statusEl.className = 'codex-status bad'; codeEl.classList.add('hidden'); openBtn.classList.add('hidden'); if (progress) { progress.className = 'msg bad'; progress.textContent = t; } };
     statusEl.textContent = 'requesting a link code…'; statusEl.className = 'codex-status';
-    Harness.api.post('/api/credits/link/start', { deviceName: 'StarNet Station' })
-      .then(r => { if (generation !== _starnetLinkGeneration) return null; if (!r || !r.ok) throw new Error('start failed'); return r.j; })
+    // A failure keeps WHAT failed (Friendly.linkStartFailure words it): the station's own POST never answering is a
+    // local-engine fault, not "the link service"; a sidecar reply carries its classification of the cloud failure.
+    const startFail = info => Object.assign(new Error('start failed'), { linkStart: info });
+    Harness.api.post('/api/credits/link/start', { deviceName: '1Ultra Station' })
+      .then(r => { if (generation !== _starnetLinkGeneration) return null; if (!r || !r.ok) throw startFail({ status: r && r.status, j: r && r.j }); return r.j; },
+        () => { throw startFail({ local: true }); })
       .then(j => {
         if (generation !== _starnetLinkGeneration) return;
         if (!j || !j.code) throw new Error('no code');
@@ -2594,7 +2640,7 @@ const App = (() => {
               if (generation !== _starnetLinkGeneration) return;
               if (p && p.linked) {
                 stopStarnetLinkPoll(); SFX.open();
-                if (progress) progress.textContent = 'StarNet connected.';
+                if (progress) progress.textContent = '1Ultra connected.';
                 codeEl.classList.add('hidden'); openBtn.classList.add('hidden');
                 // desktop: move the fresh token file → OS keychain NOW (Rust reads + moves; the token
                 // never passes through here), then teach Harness the credential exists so
@@ -2621,7 +2667,10 @@ const App = (() => {
         };
         _starnetLinkPoll = setInterval(tick, 2000);
       })
-      .catch(() => { if (generation === _starnetLinkGeneration) fail('could not reach the link service — try again'); })
+      .catch(e => {
+        if (generation !== _starnetLinkGeneration) return;
+        fail((typeof Friendly !== 'undefined' && Friendly.linkStartFailure) ? Friendly.linkStartFailure(e && e.linkStart) : 'could not reach the link service — try again');
+      })
       .finally(() => { if (generation === _starnetLinkGeneration) _starnetLinkStarting = false; });
   }
 
@@ -2804,7 +2853,7 @@ const App = (() => {
       if (b.dataset.prov !== pickedProvider) el('in-model').value = '';
       selectProviderUI(b.dataset.prov);
       window.OverseerSetup?.beginConnection();
-      // The explicit StarNet card click starts account connection; automatic selection never opens a window.
+      // The explicit 1Ultra card click starts account connection; automatic selection never opens a window.
       if (b.dataset.prov === 'starnet' && !starnetLinked) startStarnetLink();
 
     }; });
@@ -2821,7 +2870,7 @@ const App = (() => {
     el('btn-codex-signin').onclick = () => (codexHere() ? startCodexSignIn() : startOAuthSignIn(pickedProvider));
     wireClaudeCliTile();
     el('btn-codex-logout').onclick = () => (codexHere() ? codexLogout() : oauthGenesisLogout(pickedProvider));
-    // STARNET MANAGED: reveal the hero only when this station actually has a cloud seam, and wire its link
+    // 1ULTRA MANAGED: reveal the hero only when this station actually has a cloud seam, and wire its link
     // flow. On a fresh create the revealed hero also becomes the default pick (the promoted easiest start);
     // a resume keeps the agent's saved provider.
     userPickedProvider = false;
@@ -2900,10 +2949,20 @@ const App = (() => {
   // BACK from the connect screen. With the title screen gone there's nowhere to retreat TO, so BACK is a
   // context move: in RESUME it re-runs auto-resume (a fresh credential check may now pass straight in); on a
   // fresh first run it's a no-op beyond dropping any in-flight codex poll (the create screen is the root).
-  function onConnectBack() {
+  async function onConnectBack() {
     SFX.click(); stopCodexPoll();
     const saved = Save.has() ? Save.load() : null;
-    if (saved && saved.agent) { reentry(); return; }
+    if (saved && saved.agent) {
+      // RETRY must re-ask, not re-read. A 1Ultra station's "configured" flag is read ONCE at boot; when the
+      // account service was down then (issue #76), retry kept consulting that stale false and bounced straight
+      // back to this screen even after the link was healthy again. Re-read the sidecar's live answer first.
+      if (savedStationProv(saved) === 'starnet' && Harness.refreshCreditsConfigured) {
+        const back = el('btn-back'); if (back) back.disabled = true;
+        try { await Harness.refreshCreditsConfigured(); } catch (_) {}
+        finally { if (back) back.disabled = false; }
+      }
+      reentry(); return;
+    }
     // fresh first run — nothing behind the create screen; just stay put.
   }
 
@@ -2978,7 +3037,7 @@ const App = (() => {
   async function onWakeAttempt() {
     SFX.boot(); SFX.open();
     stopCodexPoll();   // leaving the connect screen — drop any in-flight sign-in poll
-    stopStarnetLinkPoll();   // …and any in-flight StarNet pairing poll (same screen-exit rule)
+    stopStarnetLinkPoll();   // …and any in-flight 1Ultra pairing poll (same screen-exit rule)
     stopStarnetBalancePoll();   // …and the empty-wallet balance poll
     // single funnel for agent.name → honor the 18-char design cap (covers the roster-pick path too).
     // A blank/sentinel name mints a station codename (never the bland 'AGENT'), matching the awakening
@@ -3017,15 +3076,15 @@ const App = (() => {
       // relink; using that cached $0 here stranded a funded customer even though /v1/balance already held the
       // credits. GET /api/credits performs an awaited authoritative refresh for the ACTIVE linked account.
       // Only a successful finite zero may deny WAKE. A failed/unknown read is unavailable, never "$0".
-      msg.textContent = 'checking your StarNet credits…';
+      msg.textContent = 'checking your 1Ultra credits…';
       const creditState = await refreshStarnetGenesisStatus();
       if (!creditState || !creditState.answered || (creditState.linked && creditState.balanceUsd == null)) {
         msg.className = 'msg bad';
-        msg.textContent = 'StarNet couldn’t confirm your credit balance right now. Your credits are safe — try WAKE again in a moment.';
+        msg.textContent = '1Ultra couldn’t confirm your credit balance right now. Your credits are safe — try WAKE again in a moment.';
         return false;
       }
-      if (!creditState.linked) { msg.textContent = 'link your StarNet account first — press 🔗 LINK YOUR STARNET ACCOUNT above.'; return false; }
-      if (!(creditState.balanceUsd > 0)) { msg.className = 'msg bad'; msg.textContent = 'your StarNet account has no credits yet — waking your agent uses credits right away. Press ＄ ADD CREDITS above, then WAKE again.'; return false; }
+      if (!creditState.linked) { msg.textContent = 'link your 1Ultra account first — press CONNECT 1ULTRA ACCOUNT above.'; return false; }
+      if (!(creditState.balanceUsd > 0)) { msg.className = 'msg bad'; msg.textContent = 'your 1Ultra account has no credits yet — waking your agent uses credits right away. Press ＄ ADD CREDITS above, then WAKE again.'; return false; }
       Harness.setModel(model); Harness.setProv('starnet');
     } else if (pickedProvider === 'claude-cli') {
       const cst = (claudeCliState && claudeCliState.loggedIn) ? claudeCliState : await refreshClaudeCliStatus();
@@ -3046,8 +3105,11 @@ const App = (() => {
       wireVia = 'your ChatGPT sign-in';
     } else {
       const key = el('in-key').value.trim();
+      // #89 (browser build): each save also hands the station its copy for routines; when it could not, the same
+      // warning SETTINGS shows says so — the wake goes on (chat carries its key), but routines would not have it
+      const warnStation = res => { if (typeof StationUI !== 'undefined' && StationUI.warnIfStationLacksKey) StationUI.warnIfStationLacksKey(res); };
       if (providerNeedsBaseUrl(pickedProvider)) {
-        if (Harness.setBaseUrl) await Harness.setBaseUrl(baseUrl, pickedProvider);
+        if (Harness.setBaseUrl) warnStation(await Harness.setBaseUrl(baseUrl, pickedProvider));
       }
       // DEV auto-resume eligibility is not proof of a credential for the chosen provider.
       const configured = !!(Harness.hasStoredCredential && Harness.hasStoredCredential(pickedProvider));
@@ -3074,7 +3136,7 @@ const App = (() => {
       }
       // Only (re)store when a key was actually typed — desktop keeps the existing keychain key on blank.
       // setKey is async in desktop (writes the keychain + pushes it to the sidecar); await so the run has it.
-      if (key) await (Harness.validateAndSetKey ? Harness.validateAndSetKey(key, pickedProvider) : Harness.setKey(key, pickedProvider));
+      if (key) warnStation(await (Harness.validateAndSetKey ? Harness.validateAndSetKey(key, pickedProvider) : Harness.setKey(key, pickedProvider)));
       Harness.setModel(model); Harness.setProv(pickedProvider);
       if (pickedProvider === 'openai') wireVia = key ? 'the OpenAI API key you typed' : 'the OpenAI API key stored on this station';
     }
@@ -3093,9 +3155,25 @@ const App = (() => {
       // a BILLING refusal is not a model failure: managed admission refused the run before any model was
       // reached. Name the real cause and the real fix; "your model didn't answer" sends people model-hopping.
       if (/managed credit|Managed credits/i.test(wire.why)) {
+        // the account REFUSED this station's link: retrying can't fix it and the wallet isn't empty — relink is the
+        // door (friendlyerror's managed_credit_link; `.?` because a quote in a regex mis-slices the fnBody test helper)
+        if (/refused this station.?s link|relink/i.test(wire.why)) {
+          msg.textContent = 'your 1Ultra account no longer accepts this station’s link (it was unlinked, or belongs to another account) — your credits are safe. '
+            + (pickedProvider === 'starnet' ? 'Press CONNECT 1ULTRA ACCOUNT above, then WAKE again.' : 'Relink this station to your 1Ultra account, or use your own provider key.');
+          refreshStarnetGenesisStatus();
+          return false;
+        }
+        // the balance is HELD by this station's own running 1Ultra runs (friendlyerror's managed_credit_held, audit
+        // B11): it reads $0 but it was read, so it is neither "no credits" nor "couldn't read" — waiting frees it
+        if (/Managed credits are held|balance is held by/i.test(wire.why)) {
+          msg.textContent = 'your 1Ultra balance is held by runs still working on this station — each refunds what it doesn’t spend. Wait for them to finish, then WAKE again'
+            + (pickedProvider === 'starnet' ? ' (or press ＄ ADD CREDITS above).' : ', or use your own provider key.');
+          refreshStarnetGenesisStatus();
+          return false;
+        }
         msg.textContent = /Out of managed credit/i.test(wire.why)
-          ? 'your StarNet account has no credits — waking your agent uses credits right away. Press ＄ ADD CREDITS above, then WAKE again.'
-          : 'StarNet couldn’t read your credit balance right now — try WAKE again in a moment, or use your own provider key.';
+          ? 'your 1Ultra account has no credits — waking your agent uses credits right away. Press ＄ ADD CREDITS above, then WAKE again.'
+          : '1Ultra couldn’t read your credit balance right now — try WAKE again in a moment, or use your own provider key.';
         refreshStarnetGenesisStatus();
         return false;
       }
@@ -3167,6 +3245,7 @@ const App = (() => {
     if (typeof MintStore !== 'undefined') MintStore.reset();   // …no inherited recurring-task shapes — these feed the seed shelf, so a leak would offer a prior Commander's chores (own key)
     if (typeof AutoJobStore !== 'undefined') AutoJobStore.reset();   // …and re-arm the one-time standing-jobs proposal (own key; server-side routines are separate)
     if (typeof AutopilotStore !== 'undefined') AutopilotStore.reset();   // …and a fresh idle autopilot (no inherited idle/armed state — its decision is re-earned by the new Commander's posture + dossier)
+    if (typeof Briefing !== 'undefined') Briefing.reset();
     if (typeof ReturnStore !== 'undefined') ReturnStore.reset();   // …and no inherited return-ritual trail — a fresh Commander gets no prior hero's pending OUTBOX crates or attendance stamp (own key)
     if (typeof NightDraftNudge !== 'undefined') NightDraftNudge.reset();   // …and no inherited night-shift seen-stamp / spent nudge — a fresh Commander re-earns the unseen-drafts nudge (own key)
     if (typeof WorkshopStore !== 'undefined') WorkshopStore.reset();   // W3: no inherited "later" list or seen-ledger for a fresh Commander (own key)
@@ -3679,6 +3758,10 @@ const App = (() => {
     // recovers sessions for routines that finished while the browser was closed. Read-only on U.bus. Init AFTER
     // Chat.init + App is fully formed (this returns App) so the module's App.refreshRail/persist bridges resolve.
     if (typeof AutoSessions !== 'undefined') AutoSessions.init();
+    // THE ONE RETURN REPORT: boot + the first input after a real absence ask the sidecar for ONE briefing of every
+    // unattended outcome (routines, builds, loops, drafts, failures) and deliver it into ONE pinned session. The
+    // older per-surface return beats (digest, morning report, drafts nudge, workshop reveal) stand down while it is live.
+    if (typeof Briefing !== 'undefined') Briefing.init({ enabled: !opts.awaitingPurpose, agentId: agent.id });
     if (typeof RemoteView !== 'undefined') RemoteView.init();   // the station picture a paired phone sees (drawn only while one is looking)
     if (typeof RemoteSessions !== 'undefined') RemoteSessions.init();   // phone conversations show up as desk sessions
     // Delegated-session recovery: if no page received the live delivery (or another open page won the ACK race
@@ -3715,7 +3798,7 @@ const App = (() => {
       // writeFile = the token-gated, consent-broker-gated, checkpointed server write (/api/autonomy/write). A failed
       // or denied write just degrades to a desk draft (the act() branch handles the fallback).
       canWriteFiles: () => { try { return (typeof PermissionsStore !== 'undefined' && PermissionsStore.snapshot) ? (PermissionsStore.snapshot().grants || []).indexOf('cabinet:write') >= 0 : false; } catch (_) { return false; } },
-      hasCabinet: () => { try { return (typeof World !== 'undefined' && World.heroCaps) ? (World.heroCaps((agent && agent.id) || 'agent') || []).indexOf('cabinet') >= 0 : false; } catch (_) { return false; } },
+      hasCabinet: () => { try { return (typeof World !== 'undefined' && World.heroCaps) ? (World.heroCaps((agent && agent.id) || 'agent') || []).some(c => (c && (c.objectType || c)) === 'cabinet') : false; } catch (_) { return false; } },   // heroCaps returns [{objectType}]: an indexOf('cabinet') never matched
       writeFile: (req) => fetch('/api/autonomy/write', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ agentId: (agent && agent.id) || 'agent', path: req.path, content: req.content }) }).then(r => r.ok ? r.json() : { ok: false }).catch(() => ({ ok: false })),
       // leave the result on the Commander's desk: a persistent toast + the live "working" cue + a gentle COMMS beat
       // that, on accept, posts the work into the feed. If it WROTE a real file (B2) the copy says so + names the path;
@@ -4039,10 +4122,21 @@ const App = (() => {
   }
   // Compact excerpt of the latest visible turn; never an invented completion claim.
   // Share search/export filtering so hidden tool/system chatter stays hidden.
+  // The rail's 1s heartbeat asks this twice per row (the receipt line and the hover tip): read the newest message
+  // from the end of the history and re-excerpt only when that message's text changed (a 26-agent station spent
+  // ~18ms of every second copying whole histories and re-running these regexes over the same text).
+  const railExcerpts = new WeakMap();
   function railReceipt(w) {
-    const messages = Workstreams.visibleMessages ? Workstreams.visibleMessages(w) : [];
-    const latest = messages.slice().reverse().find(m => m.content.trim());
+    const latest = Workstreams.latestVisibleMessage ? Workstreams.latestVisibleMessage(w)
+      : (Workstreams.visibleMessages ? Workstreams.visibleMessages(w) : []).slice().reverse().find(m => m.content.trim());
     if (!latest) return 'No messages yet';
+    const memo = railExcerpts.get(latest);
+    if (memo && memo.content === latest.content && memo.role === latest.role) return memo.out;
+    const out = railExcerpt(latest);
+    railExcerpts.set(latest, { content: latest.content, role: latest.role, out });
+    return out;
+  }
+  function railExcerpt(latest) {
     const text = latest.content
       .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
       .replace(/(^|\n)\s{0,3}(?:#{1,6}\s+|[-*+]\s+|>\s*)/g, ' ')
@@ -4999,7 +5093,7 @@ const App = (() => {
             }
             discovered.innerHTML = rows.map(x => '<button type="button" class="proj-discover-pick" data-path="' + U.esc(x.root) + '"><b>' + U.esc(x.name || x.root) + '</b><span>' + U.esc(x.root) + '</span><em>' + U.esc(x.kind || 'project') + '</em></button>').join('');
             discovered.hidden = false;
-            discovered.querySelectorAll('.proj-discover-pick').forEach(b => { b.onclick = () => { input.value = b.dataset.path || ''; showHint('Candidate selected. ADD grants this folder to StarNet.', false); input.focus(); }; });
+            discovered.querySelectorAll('.proj-discover-pick').forEach(b => { b.onclick = () => { input.value = b.dataset.path || ''; showHint('Candidate selected. ADD grants this folder to 1Ultra.', false); input.focus(); }; });
             showHint('Found ' + rows.length + ' candidate' + (rows.length === 1 ? '' : 's') + '. Select one, then ADD to grant access.' + (j.truncated ? ' Search stopped at its safety limit.' : ''), false);
           })
           .catch(() => showHint('could not reach the station', true))
@@ -5098,7 +5192,7 @@ const App = (() => {
   }
 
   // FORWARD-VERSION GATE (P0.3). Raised when the save on this machine (or an adopted durable remote) was written
-  // by a NEWER StarNet than this build can read. This is a HARD STOP: it shows the blocking gate screen and
+  // by a NEWER 1Ultra than this build can read. This is a HARD STOP: it shows the blocking gate screen and
   // returns; NOTHING here calls persist()/Save.write(), so the newer save is never re-stamped or clobbered. The
   // only action re-checks/opens the desktop Update Center when the native updater is present; otherwise it states
   // how to update. gateActive latches so a stray timer/beacon can't route back into a resume/persist path.
@@ -5113,6 +5207,28 @@ const App = (() => {
     const msg = el('future-msg');
     const btn = el('btn-future-update');
     const hasUpdater = (typeof Updates !== 'undefined') && (typeof window !== 'undefined' && window.__TAURI__ && window.__TAURI__.core);
+    // #91: Updates.install() PAUSES by RETURNING its snapshot (a failed pre-update recovery point, an unverified save,
+    // an agent still working) instead of throwing, and the Update Center is unreachable from this gate. Name the pause
+    // here; when the in-app path failed, offer the full installer beside UPDATE 1ULTRA (reinstalling keeps the station).
+    const offerInstaller = () => {
+      let dl = el('btn-future-download');
+      if (!dl && btn && btn.parentNode) {
+        dl = document.createElement('button');
+        dl.id = 'btn-future-download'; dl.className = 'btn-xl'; dl.textContent = 'DOWNLOAD LATEST ▸';
+        btn.parentNode.appendChild(dl);
+      }
+      if (dl) dl.onclick = () => { SFX.click && SFX.click(); try { Updates.openReleasesPage(); } catch (_) {} };
+    };
+    const installOutcome = (snap, thrown) => {
+      if (!msg) return;
+      const runs = (snap && snap.confirmRuns) | 0;
+      if (thrown || (snap && snap.error)) {
+        msg.textContent = 'the update could not install' + (snap && snap.error ? ' — ' + snap.error : '') + '. Download the full installer instead: reinstalling over the top keeps your station.';
+        offerInstaller();
+      } else if (runs > 0) msg.textContent = (runs === 1 ? '1 agent is' : runs + ' agents are') + ' still working — installing now would kill ' + (runs === 1 ? 'its run' : 'their runs') + '. Try again when ' + (runs === 1 ? 'it finishes.' : 'they finish.');
+      else if (snap && /^(downloading|installing|restarting)$/.test(String(snap.phase || ''))) msg.textContent = 'installing the update — 1Ultra restarts on its own when it is done.';
+      else msg.textContent = 'the update did not start — try again in a moment.';
+    };
     if (btn) {
       btn.onclick = async () => {
         SFX.click && SFX.click();
@@ -5127,14 +5243,14 @@ const App = (() => {
             // re-click while a check is in flight returns the busy snapshot immediately). This gate is a HARD
             // STOP on a save this build cannot read: a false "check back shortly" strands the user with no
             // idea that the one action on the screen didn't work. Name each state for what it is.
-            if (phase === 'available') { try { await Updates.install(); } catch (e) { if (msg) msg.textContent = 'update found, but the install failed — open the Update Center and retry.'; } }
+            if (phase === 'available') { let after = null, thrown = false; try { after = await Updates.install(); } catch (e) { thrown = true; } installOutcome(after, thrown); }
             else if (phase === 'current') { if (msg) msg.textContent = 'no newer build is published yet — check back shortly.'; }
             else if (phase === 'error') { if (msg) msg.textContent = 'the update check failed' + (snap && snap.error ? ' — ' + snap.error : '') + '. Check your connection and try again.'; }
             else if (phase === 'checking' || phase === 'downloading' || phase === 'installing' || phase === 'restarting') { if (msg) msg.textContent = 'an update check is already running — one moment…'; }
-            else if (msg) msg.textContent = 'this build cannot check for updates — download the latest StarNet from starnetos.com, then reopen.';
+            else if (msg) msg.textContent = 'this build cannot check for updates — download the latest 1Ultra from starnetos.com, then reopen.';
           } catch (_) { if (msg) msg.textContent = 'update check failed — try again in a moment.'; }
         } else if (msg) {
-          msg.textContent = 'Update StarNet to the latest version (in the desktop app: Update Center), then reopen.';
+          msg.textContent = 'Update 1Ultra to the latest version (in the desktop app: Update Center), then reopen.';
         }
       };
     }
@@ -5149,7 +5265,7 @@ const App = (() => {
     gateActive = true;
     try { if (World && World.stop) World.stop(); } catch (_) {}
     const p = el('recovery-quarantine-path');
-    if (p) p.textContent = (rec && rec.quarantinedTo) ? String(rec.quarantinedTo) : 'the StarNet workspaces folder (look for *.save.json.corrupt-*)';
+    if (p) p.textContent = (rec && rec.quarantinedTo) ? String(rec.quarantinedTo) : 'the 1Ultra workspaces folder (look for *.save.json.corrupt-*)';
     const btn = el('btn-recovery-continue');
     if (btn) {
       btn.onclick = async () => {
@@ -5191,7 +5307,10 @@ const App = (() => {
       SFX.click && SFX.click();
       if (typeof Diag === 'undefined' || !Diag.copy) { if (status) status.textContent = '＋ recovery details unavailable — send a screenshot of ' + diagnosis.code; return; }
       reportBtn.disabled = true; reportBtn.textContent = '⧉ COPYING…';
-      Diag.copy({ notify: false, context: { kind: diagnosis.code, error: diagnosis.text, engineAlive: true }, onDone: (ok, text) => {
+      // No engineAlive here: this page is bundled into the desktop shell, so the gate rendering proves nothing about
+      // the sidecar. Left unset, the report MEASURES /api/health (Harness.pingEngine) instead of always printing
+      // "REACHABLE" — a 10-08 support report claimed a live engine while its crash ledger was still being written.
+      Diag.copy({ notify: false, context: { kind: diagnosis.code, error: diagnosis.text }, onDone: (ok, text) => {
         reportBtn.disabled = false; reportBtn.textContent = ok ? '✓ RECOVERY DETAILS COPIED' : '⧉ RECOVERY DETAILS SHOWN BELOW';
         if (!ok && reportHost && Diag.showBlock) Diag.showBlock(reportHost, { text });
       } });
@@ -5205,15 +5324,11 @@ const App = (() => {
     // produced by the sidecar from its own ledger, so it is proof, not a guess. Likewise, if the desktop guardian
     // has HALTED respawns (starnet_sidecar_status.halted), say so — the retry poll can never heal that on its own.
     let degradedReason = '';
+    // The reading itself is shared with the in-game LINK DOWN chip (Harness.engineState): the same verbatim 503 text
+    // or guardian halt, now bounded so a hung service cannot leave the probe pending.
     const probeDegraded = async () => {
       let reason = '';
-      try {
-        const r = await fetch('/api/health', { cache: 'no-store' });
-        if (r && r.status === 503) { const t = String(await r.text() || '').trim(); if (/^degraded/i.test(t)) reason = t; }
-      } catch (_) { reason = ''; }
-      if (!reason && core && core.invoke) {
-        try { const g = await core.invoke('starnet_sidecar_status'); if (g && g.halted && g.reason) reason = 'station service halted: ' + String(g.reason); } catch (_) {}
-      }
+      try { reason = String(((await Harness.engineState()) || {}).reason || ''); } catch (_) { reason = ''; }
       if (reason === degradedReason) return reason;
       degradedReason = reason;
       if (sub) { if (reason) sub.textContent = reason; else if (/^(degraded|station service halted)/i.test(sub.textContent)) sub.textContent = 'station service not answering'; }
@@ -5267,9 +5382,9 @@ const App = (() => {
       if (restartBtn) restartBtn.disabled = true;
       setStatus((auto ? 'still unreachable — ' : '') + 'restarting the station service…');
       let up = false;
-      try { up = await core.invoke('starnet_restart_sidecar'); } catch (_) { up = false; }
+      try { up = await Harness.restartEngine(); } catch (_) { up = false; }   // the same single-flight door the LINK DOWN chip uses
       if (up) { setStatus('station service restarted — reconnecting…'); attempt(); }
-      else setStatus('the station service could not be restarted — quit StarNet fully (Cmd+Q / tray → Quit) and open it again. Your save is untouched.');
+      else setStatus('the station service could not be restarted — quit 1Ultra fully (Cmd+Q / tray → Quit) and open it again. Your save is untouched.');
       restarting = false;
       if (restartBtn) restartBtn.disabled = false;
     };
@@ -5280,7 +5395,7 @@ const App = (() => {
     // START COMPLETELY FRESH — unlike the sidecar-backed lineage action, this must work when NO HTTP
     // route answers. The native shell first moves the entire workspace generation to quarantine, seals
     // the new generation against legacy re-migration, and respawns with the same keychain credentials.
-    // Only after that durable move succeeds does FreshStart clear browser-owned StarNet state. Two clicks.
+    // Only after that durable move succeeds does FreshStart clear browser-owned 1Ultra state. Two clicks.
     const freshBtn = el('btn-unreachable-fresh');
     if (freshBtn) {
       let armed = false;
@@ -5293,7 +5408,7 @@ const App = (() => {
           if (!retryingBrowserClear && !armed) {
             armed = true;
             freshBtn.textContent = '✦ CONFIRM — START COMPLETELY FRESH';
-            setStatus('your old local station will be moved to a quarantine folder. Your StarNet account link and purchased credits are not removed. Press again to confirm.');
+            setStatus('your old local station will be moved to a quarantine folder. Your 1Ultra account link and purchased credits are not removed. Press again to confirm.');
             setTimeout(() => {
               if (armed && !resetting) { armed = false; freshBtn.textContent = '✦ START COMPLETELY FRESH'; }
             }, 12000);
@@ -5330,7 +5445,7 @@ const App = (() => {
               setStatus('clean station ready — reopening now. Your account link and purchased credits were kept.' + where);
               try { location.reload(); } catch (_) {}
             } else {
-              setStatus('clean station prepared, but the station service is still blocked. Fully quit StarNet and reopen it. Your account link and purchased credits were kept.' + where);
+              setStatus('clean station prepared, but the station service is still blocked. Fully quit 1Ultra and reopen it. Your account link and purchased credits were kept.' + where);
             }
           } catch (error) {
             resetting = false;
@@ -5344,7 +5459,7 @@ const App = (() => {
       } else if (!core && typeof FreshStart !== 'undefined' && FreshStart.clearBrowserState) {
         // BROWSER MODE exit — START FRESH scoped to what this window actually owns. This gate only opens when the
         // local cache is ALREADY empty (Save.load() null) and the durable side could not be read, so the only
-        // StarNet state left in this browser is stale bookkeeping (prefs, a dead session token, a dev fault flag);
+        // 1Ultra state left in this browser is stale bookkeeping (prefs, a dead session token, a dev fault flag);
         // clearing it cannot lose a save. The sidecar's own files are never touched from here — the copy says so.
         // Two clicks, same arm/confirm shape as the desktop path. Honest label: it is NOT the desktop quarantine.
         const LABEL = '✦ START FRESH (CLEAR BROWSER STATE)';
@@ -5356,7 +5471,7 @@ const App = (() => {
           if (!armed) {
             armed = true;
             freshBtn.textContent = '✦ CONFIRM — CLEAR BROWSER STATE';
-            setStatus('this clears only this browser\'s StarNet state (cached settings, any stale session) and reloads. The station service\'s own save files are not touched. Press again to confirm.');
+            setStatus('this clears only this browser\'s 1Ultra state (cached settings, any stale session) and reloads. The station service\'s own save files are not touched. Press again to confirm.');
             setTimeout(() => { if (armed && !resetting) { armed = false; freshBtn.textContent = LABEL; } }, 12000);
             return;
           }
@@ -5405,17 +5520,17 @@ const App = (() => {
     if (box) {
       const evidenceHtml = rows.slice(0, 8).map(row => {
         const kind = String(row && row.kind || 'prior-state').replace(/-/g, ' ').toUpperCase();
-        const root = String(row && row.root || 'local StarNet storage');
+        const root = String(row && row.root || 'local 1Ultra storage');
         const examples = Array.isArray(row && row.examples) && row.examples.length ? ' · ' + row.examples.slice(0, 4).join(', ') : '';
         return '<div><b>' + U.esc(kind) + '</b> — <code>' + U.esc(root) + '</code>' + U.esc(examples) + '</div>';
-      }).join('') || '<div><b>PRIOR STATE MARKER</b> — local StarNet storage</div>';
+      }).join('') || '<div><b>PRIOR STATE MARKER</b> — local 1Ultra storage</div>';
       const candidateHtml = candidates.map(row => {
         const when = row && row.updatedAt ? new Date(row.updatedAt).toLocaleString() : 'time unavailable';
         const size = row && row.bytes ? Math.max(1, Math.ceil(row.bytes / 1024)) + ' KB' : 'size unavailable';
         const on = !!(row && row.id === selected);
         return '<button class="lineage-candidate' + (on ? ' on' : '') + '" data-candidate-id="' + U.esc(row && row.id || '') + '" aria-pressed="' + (on ? 'true' : 'false') + '"' + (row && row.recoverable ? '' : ' disabled') + '>' +
           '<b>' + U.esc(row && row.stationName || 'Prior station') + '</b>' +
-          '<span>' + U.esc(row && row.displayRoot || 'local StarNet storage') + '</span>' +
+          '<span>' + U.esc(row && row.displayRoot || 'local 1Ultra storage') + '</span>' +
           '<small>' + U.esc(row && row.recoverable ? when + ' · ' + size : row && row.reason || 'unreadable save') + '</small></button>';
       }).join('');
       box.innerHTML = evidenceHtml + (candidateHtml ? '<div class="lineage-candidates" aria-label="Recoverable stations">' + candidateHtml + '</div>' : '');

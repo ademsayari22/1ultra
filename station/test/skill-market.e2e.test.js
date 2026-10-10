@@ -27,7 +27,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 const HOST = '127.0.0.1';
 const PRELOAD = '--require ' + path.join(__dirname, '_skill_market_fixture.js').replace(/\\/g, '/');
-const TARGET = 'line-design';      // a market-only StarNet Original (needs the orchestrator)
+const TARGET = 'line-design';      // a market-only 1Ultra Original (needs the orchestrator)
 const TAMPERED = 'routine-craft';  // served with one extra line when STARNET_TEST_MARKET_TAMPER names it
 
 function startMock() {
@@ -81,7 +81,7 @@ function startMock() {
     const by = Object.fromEntries((m.entries || []).map(e => [e.slug, e]));
     A.eq(by['feed-watch'] && by['feed-watch'].status, 'bundled', 'a bundled original reads BUILT IN (our text is exactly the published version)');
     A.eq(by[TARGET] && by[TARGET].status, 'available', 'a market-only original is available to install');
-    A.eq(by[TARGET] && by[TARGET].shelf, 'originals', 'on the StarNet Originals shelf');
+    A.eq(by[TARGET] && by[TARGET].shelf, 'originals', 'on the 1Ultra Originals shelf');
     A.ok(!(await library()).some(s => s.slug === TARGET), 'precondition: it is not in the library yet');
 
     // ---- 2. install ----

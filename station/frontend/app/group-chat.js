@@ -10,6 +10,7 @@ const GroupChat = (() => {
   let mentionItems = [], mentionSel = 0, mentionCtx = null, mentionBusy = false;
   let basePlaceholder = null;
   const composerDrafts = new Map();
+  const inspectOpen = new Set();   // approval promptIds whose INSPECT panel the Commander opened (survives a re-render)
   const sharedAttachments = new Map();
   const $ = id => document.getElementById(id);
   const uid = () => crypto.randomUUID();
@@ -28,7 +29,7 @@ const GroupChat = (() => {
   async function api(body, query = '') {
     const r = await fetch('/api/groups' + query, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { cache: 'no-store' });
     if (r.status === 401 || r.status === 403) throw new Error('Reconnect to this station by refreshing the page. Your conversation is saved.');
-    if (r.status === 404 && !body && !query) throw new Error('Group chat is unavailable on this server. Run the current StarNet backend, then try again.');
+    if (r.status === 404 && !body && !query) throw new Error('Group chat is unavailable on this server. Run the current 1Ultra backend, then try again.');
     let out;
     try { out = await r.json(); } catch (_) { throw new Error('The server could not load group chat. Try again.'); }
     if (!r.ok || !out?.ok) throw new Error(out?.error || 'Group request failed'); return out.result;
@@ -173,7 +174,7 @@ const GroupChat = (() => {
       .gc-state .gc-dot{flex:0 0 auto;color:var(--ph);text-shadow:0 0 6px var(--ph-glow);animation:1s steps(1) infinite comms-blink}.gc-state .gc-verb{letter-spacing:1.5px;text-transform:uppercase}.gc-state .gc-what{color:var(--ph-dim);font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis}
       .gc-state.hold{border-left-color:var(--gold);background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 14%,transparent),rgba(0,0,0,.25))}.gc-state.hold .gc-dot,.gc-state.hold .gc-verb{color:var(--gold);animation:none;text-shadow:none}
       .gc-state.bad{border-left-color:var(--bad)}.gc-state.bad .gc-dot,.gc-state.bad .gc-verb{color:var(--bad);animation:none;text-shadow:none}
-      .gc-state .gc-approval{flex:1 0 100%;font-size:12px;color:var(--text);opacity:.9;overflow-wrap:anywhere}.gc-state .bb{margin-left:auto!important;font-size:11px!important;min-height:20px!important;padding:0 6px!important}.gc-state .bb+.bb{margin-left:0!important}
+      .gc-state .gc-inspect summary{cursor:pointer}.gc-state .gc-inspect pre{max-height:240px;overflow:auto;margin:4px 0;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}.gc-state .gc-approval{flex:1 0 100%;font-size:12px;color:var(--text);opacity:.9;overflow-wrap:anywhere}.gc-state .bb{margin-left:auto!important;font-size:11px!important;min-height:20px!important;padding:0 6px!important}.gc-state .bb+.bb{margin-left:0!important}
       #gc-questions{flex:0 0 auto;max-height:50%;overflow:auto}.gc-question{padding:8px 12px;border-left:2px solid var(--gold);background:var(--panel2);font-size:14px}.gc-question p{margin:5px 0}.gc-question-choices{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}.gc-question small,.gc-transfer{color:var(--ph-dim);font-size:12px}.gc-transfer{padding:2px 0 5px 14px;flex:0 0 auto}
       #gc-notice:empty{display:none}#gc-notice{flex:0 0 auto;padding:4px 12px;font-size:13px;color:var(--gold);overflow-wrap:anywhere}
       /* the picker fills its window: the two lists share the height and scroll on their own, the footer never leaves view */
@@ -431,7 +432,26 @@ const GroupChat = (() => {
       if (t.approval) {
         // the keys first (line one), the argument text under them: a short window clips text, never the decision
         for (const decision of ['once', 'deny']) row.append(button(decision === 'once' ? 'ALLOW ONCE' : 'DENY', async () => { await api({ op: 'answer', id: group.id, promptId: t.approval.promptId, decision }); }));
-        row.append(h('div', { class: 'gc-approval' }, t.approval.tool + ' · ' + t.approval.argsSummary));
+        // argsSummary is the WHOLE request (user report 10-08): one glance line here, every character in INSPECT under it
+        // the desk card's own reading of it (Chat.consentInspect), so both surfaces show one request the same way
+        const raw = String(t.approval.argsSummary || '');
+        const ins = (typeof Chat !== 'undefined' && Chat.consentInspect ? Chat.consentInspect(t.approval) : null) || { text: raw };
+        const one = String(ins.copy || ins.text).replace(/\s+/g, ' ').trim();
+        row.append(h('div', { class: 'gc-approval' }, t.approval.tool + (one ? ' · ' + (one.length > 160 ? one.slice(0, 159) + '…' : one) : '')));
+        if (one.length > 160 || /\n/.test(String(ins.text).trim())) {
+          const pid = t.approval.promptId;
+          const detail = h('details', { class: 'gc-approval gc-inspect', ontoggle: () => { if (detail.open) inspectOpen.add(pid); else inspectOpen.delete(pid); } });
+          detail.open = inspectOpen.has(pid);   // a re-render keeps the panel the Commander opened
+          const idle = ins.copyLabel || 'COPY';
+          const copy = h('button', { type: 'button', class: 'bb gc-copy' }, idle);
+          copy.addEventListener('click', () => {
+            const done = ok => { copy.textContent = ok ? '✓ COPIED' : 'COPY FAILED: select the text'; setTimeout(() => { copy.textContent = idle; }, 1400); };
+            const text = ins.copy || ins.text;   // Chat.copyText falls back to a selection copy where the clipboard API is refused
+            try { (typeof Chat !== 'undefined' && Chat.copyText ? Chat.copyText(text) : navigator.clipboard.writeText(text).then(() => true)).then(done, () => done(false)); } catch (_) { done(false); }
+          });
+          detail.append(h('summary', {}, 'Inspect complete request (secret patterns redacted)'), h('pre', {}, ins.text), copy);
+          row.append(detail);
+        }
       }
       states.append(row);
     }

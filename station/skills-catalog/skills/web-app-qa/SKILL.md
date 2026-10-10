@@ -153,4 +153,4 @@ Every page and flow in the agreed scope was visited or is listed under "Not test
 
 *Needs the DISH (browser.navigate, browser.snapshot, browser.click, browser.type, browser.screenshot, browser.network) and the INTEL CAB (fs.write, fs.read).*
 
-Adapted for StarNet from dogfood (Teknium, Nous Research), MIT.
+Adapted for 1Ultra from dogfood (Teknium, Nous Research), MIT.

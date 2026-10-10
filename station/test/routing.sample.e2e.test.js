@@ -189,7 +189,7 @@ function twoStagePlan() {
   try {
     const token = await bootToken(B, B);
     A.ok(token.length >= 32, 'got a session API token');
-    const headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    const headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     const post = (body) => fetch(B + '/api/routing/sample', { method: 'POST', headers, body: JSON.stringify(body == null ? {} : body) })
       .then(r => r.json().then(j => ({ status: r.status, j })));
 

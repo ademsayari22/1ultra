@@ -35,6 +35,7 @@
   const { note: failNote } = (typeof require === 'function') ? require('../failopen.js') : { note: function (tag, e) { console.warn('[failopen] ' + tag + ':', (e && e.message) || e); } };
 
   const JSONRPC = '2.0';
+  const LOCAL_ERROR = Symbol.for('starnet.mcp.localTransportError');   // set by transport.http/stdio failTo
   const DEFAULT_PROTOCOL = '2025-06-18';   // MCP revision; the server's echoed version wins after initialize
   const MAX_PAGES = 100;                   // a misbehaving server that always returns a cursor can't spin forever
 
@@ -46,6 +47,9 @@
     const raw = String((error && error.message) || '');
     if (/^connector HTTP \d{3}(?: — [a-z0-9_.-]{1,64})?$/i.test(raw)) return raw;
     if (raw === 'connector HTTP redirect refused — update the configured endpoint directly') return raw;
+    // Text our OWN transport wrote (DNS miss, refused connection, non-JSON body, child exit). The marker is a
+    // Symbol, which no JSON a server sends can produce, so remote prose can never ride this branch.
+    if (error && error[LOCAL_ERROR] === true) return raw.replace(/[\x00-\x1f\x7f]+/g, ' ').slice(0, 300);
     return 'connector JSON-RPC error' + (code != null ? ' (' + String(code).slice(0, 24) + ')' : '');
   }
 
@@ -125,7 +129,7 @@
           const onAbort = () => {
             if (!pending.has(id)) return;
             settle(id, p => p.reject(Object.assign(new Error('mcp request cancelled: ' + method), { cancelled: true, sent: true, effectUnknown: true })));
-            notify('notifications/cancelled', { requestId: id, reason: 'cancelled by the StarNet host (run stopped)' })
+            notify('notifications/cancelled', { requestId: id, reason: 'cancelled by the 1Ultra host (run stopped)' })
               .catch(err => { failNote('mcp.client.cancelNotify', err); onError(err); });
           };
           signal.addEventListener('abort', onAbort, { once: true });
@@ -188,7 +192,7 @@
     }
 
     /* RESOURCES AND PROMPTS (2026-07-27). This client spoke `tools/list` and `tools/call` and nothing else,
-       which meant StarNet saw only a THIRD of what a connected MCP server actually offers. A server whose
+       which meant 1Ultra saw only a THIRD of what a connected MCP server actually offers. A server whose
        whole point is exposing documents (resources) or reusable prompt templates (prompts) connected fine,
        reported zero tools, and looked broken. These are not extras — they are two of the protocol's three
        primitives, and the reference harness has spoken all three for a long time.

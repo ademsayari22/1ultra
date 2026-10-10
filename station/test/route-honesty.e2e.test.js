@@ -64,7 +64,7 @@ function exited(child, ms) {
     const B = 'http://' + HOST + ':' + b.port;
     const tok = await bootToken(B, B);
     A.ok(!!tok, 'boot token extracted');
-    const H = { 'X-StarNet-Token': tok, Origin: B };
+    const H = { 'X-1Ultra-Token': tok, Origin: B };
     const j = async (m, p, body) => { const r = await fetch(B + p, { method: m, headers: Object.assign({ 'Content-Type': 'application/json' }, H), body: body ? JSON.stringify(body) : undefined }); let out = null; try { out = await r.json(); } catch (_) {} return { status: r.status, body: out }; };
 
     // ---- 1. corrupt ≠ empty ----
@@ -116,7 +116,7 @@ function exited(child, ms) {
     child = b2.child;
     const B2 = 'http://' + HOST + ':' + b2.port;
     const tok2 = await bootToken(B2, B2);
-    const f2 = await fetch(B2 + '/api/dev/fault', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': tok2, Origin: B2 }, body: '{}' });
+    const f2 = await fetch(B2 + '/api/dev/fault', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': tok2, Origin: B2 }, body: '{}' });
     A.eq(f2.status, 202, 'keep-serving boot accepted the fault');
     let hs2 = 0;
     for (let i = 0; i < 40 && hs2 !== 503; i++) { await sleep(50); try { hs2 = (await fetch(B2 + '/api/health')).status; } catch (_) {} }
@@ -140,7 +140,7 @@ function exited(child, ms) {
       child = bl.child;
       const BL = 'http://' + HOST + ':' + bl.port;
       const tokL = await bootToken(BL, BL);
-      const fl = await fetch(BL + '/api/dev/fault', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': tokL, Origin: BL }, body: '{}' });
+      const fl = await fetch(BL + '/api/dev/fault', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': tokL, Origin: BL }, body: '{}' });
       A.eq(fl.status, 202, 'life ' + life + ': fault accepted');
       let st = 0, body = '';
       for (let i = 0; i < 60 && st !== 503; i++) { await sleep(50); try { const r = await fetch(BL + '/api/health'); st = r.status; body = await r.text(); } catch (_) {} }
@@ -167,18 +167,18 @@ function exited(child, ms) {
       A.ok(/\[process-fault\] uncaughtException: CRASH LOOP — 3 fault exit/.test(bl.output()), 'life 3: boot log carries the crash-loop hold line');
       const shell = await fetch(BL + '/', { headers: { Origin: BL } });
       A.eq(shell.status, 200, 'life 3: static recovery shell remains reloadable');
-      const rd = await fetch(BL + '/api/skills?placed=cabinet', { headers: { 'X-StarNet-Token': tokL, Origin: BL } });
+      const rd = await fetch(BL + '/api/skills?placed=cabinet', { headers: { 'X-1Ultra-Token': tokL, Origin: BL } });
       A.eq(rd.status, 503, 'life 3: non-diagnostic API reads fail closed while held');
       const rosterFile = path.join(wsLoop, 'agent.roster.json');
       A.eq(fs.existsSync(rosterFile), false, 'life 3: no roster existed before the refused mutation');
-      const wr = await fetch(BL + '/api/roster', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-StarNet-Token': tokL, Origin: BL }, body: JSON.stringify({ updatedAt: Date.now(), agents: [{ agentId: 'agent', system: 'audit', name: 'Audit', provider: 'openrouter' }] }) });
+      const wr = await fetch(BL + '/api/roster', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-1Ultra-Token': tokL, Origin: BL }, body: JSON.stringify({ updatedAt: Date.now(), agents: [{ agentId: 'agent', system: 'audit', name: 'Audit', provider: 'openrouter' }] }) });
       const wj = await wr.json();
       A.eq(wr.status, 503, 'life 3: mutations fail closed while held');
       A.eq(wj.code, 'EPROCESS_FAULT', 'life 3: refusal names the process-fault boundary');
       A.eq(fs.existsSync(rosterFile), false, 'life 3: refused mutation wrote no roster bytes');
       const v1 = await fetch(BL + '/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer fixture' }, body: '{}' });
       A.eq(v1.status, 503, 'life 3: external /v1 work also fails closed');
-      const dg3 = await fetch(BL + '/api/diagnostics', { headers: { 'X-StarNet-Token': tokL, Origin: BL } });
+      const dg3 = await fetch(BL + '/api/diagnostics', { headers: { 'X-1Ultra-Token': tokL, Origin: BL } });
       const d3 = await dg3.json();
       A.ok(d3.report && d3.report.processFault && d3.report.processFault.exiting === false && d3.report.processFault.loop && d3.report.processFault.loop.count === 3, 'life 3: diagnostics processFault says held + loop count 3');
       A.ok(d3.report.crashLoop && d3.report.crashLoop.tripped === true && d3.report.crashLoop.count === 3, 'life 3: diagnostics crashLoop tripped');

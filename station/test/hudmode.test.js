@@ -4,7 +4,7 @@
        authority on what is running, events only enrich it, and nothing is claimed before the first
        snapshot lands;
      · the page wiring (button, stylesheet, script) and the station windows staying reachable;
-     · the desktop wiring: module, managed state, commands, the tray's HUD Mode / Open StarNet paths,
+     · the desktop wiring: module, managed state, commands, the tray's HUD Mode / Open 1Ultra paths,
        and the HUD's restore floor mirroring the main window's builder. */
 'use strict';
 const fs = require('fs');
@@ -307,8 +307,8 @@ A.eq([H.fmtAgo(10_000), H.fmtAgo(5 * 60_000), H.fmtAgo(2 * 3_600_000)], ['just n
   A.ok(/starnet_set_close_to_tray,\s*hud_mode::starnet_hud_status,\s*hud_mode::starnet_hud_set,\s*hud_mode::starnet_hud_pin,\s*hud_mode::starnet_hud_fold\s*\]\)/.test(main),
     'HUD commands are registered after the lifecycle commands');
   A.ok(/MenuItem::with_id\(app, "lifecycle_hud", "HUD Mode", true, None::<&str>\)\?;/.test(main), 'tray offers HUD Mode');
-  A.ok(/Menu::with_items\(app, &\[&open_item, &hud_item, &status_item, &sep, &pause_item, &quit_item\]\)/.test(main), 'HUD Mode sits under Open StarNet');
-  A.ok(/"lifecycle_open" => \{\s*hud_mode::request\(app, false\);\s*show_main_window\(app\);\s*\}/.test(main), 'Open StarNet hands a HUD back to the full station');
+  A.ok(/Menu::with_items\(app, &\[&open_item, &hud_item, &status_item, &sep, &pause_item, &quit_item\]\)/.test(main), 'HUD Mode sits under Open 1Ultra');
+  A.ok(/"lifecycle_open" => \{\s*hud_mode::request\(app, false\);\s*show_main_window\(app\);\s*\}/.test(main), 'Open 1Ultra hands a HUD back to the full station');
   A.ok(/"lifecycle_hud" => \{\s*show_main_window\(app\);\s*hud_mode::request\(app, true\);\s*\}/.test(main), 'HUD Mode reveals the window and asks the page to fold');
   A.eq((main.match(/WebviewWindowBuilder::new\(/g) || []).length, 1, 'still exactly one window builder: the HUD is the main window, not a second one');
   A.ok(/\.min_inner_size\(960\.0, 600\.0\)/.test(main) && /const MAIN_MIN_W: f64 = 960\.0;/.test(hud) && /const MAIN_MIN_H: f64 = 600\.0;/.test(hud),

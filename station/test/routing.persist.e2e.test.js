@@ -96,7 +96,7 @@ function cyclicPlan() {
     let B = 'http://' + HOST + ':' + b.port;
     let token = await bootToken(B, B);
     A.ok(token.length >= 32, 'got a session API token');
-    let headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    let headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     /* The probe carries the LINE the work entered on (work belongs to a line, 2026-08-07) — a dock only
        advances its line for the line's own work, so an origin-less probe is terminal by design and would
        answer null whether routing was armed or not. Carrying it makes this a stronger liveness probe: the
@@ -123,7 +123,7 @@ function cyclicPlan() {
     B = 'http://' + HOST + ':' + b.port;
     A.ok(b.out().indexOf('routing plan restored from disk') >= 0, 'boot log confirms the accepted plan re-armed');
     token = await bootToken(B, B);
-    headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     A.eq(await chainNext(), 'stage-two', 'the re-armed routing answers the same chain edge after restart');
 
     /* ---- refuse: 422 unarms LIVE routing but KEEPS the refused plan as the capability view ----
@@ -150,7 +150,7 @@ function cyclicPlan() {
     A.ok(b.out().indexOf('routing plan restored from disk') < 0, '...but never as ROUTING — a refused floor cannot re-arm dispatch at boot');
     A.ok(b.out().indexOf('persisted plan refused at boot') < 0, '...and the malformed-plan warn does not fire — this is the deliberate capability restore, not an error');
     token = await bootToken(B, B);
-    headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     A.eq(await chainNext(), null, 'post-restart routing matches live: unarmed (boot/live parity)');
 
     // ---- an explicit CLEAR (empty body) persists too ----
@@ -180,7 +180,7 @@ function cyclicPlan() {
     B = 'http://' + HOST + ':' + b.port;
     A.ok(b.out().indexOf('routing plan restored from disk') >= 0, 'the pre-arc plan is still accepted at boot');
     token = await bootToken(B, B);
-    headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     A.eq(await chainNext(), 'stage-two', 'a RESTORED pre-arc plan advances its multi-stage line with no browser ever opening');
     // healing fills a hole; it does not open a door — the gate still refuses foreign and origin-less work
     const askWith = async (q) => {

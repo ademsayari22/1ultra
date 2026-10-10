@@ -1,6 +1,6 @@
 /* node test/todo.durability.test.js - durable todo storage regression.
 
-   Guards the StarNet goal 5-6 bug: todo:<agent> keys must not be treated as unsupported notebook keys
+   Guards the 1Ultra goal 5-6 bug: todo:<agent> keys must not be treated as unsupported notebook keys
    and swallowed by the host store. The todo tool writes through the same injected memory store as notebook,
    but persists to its own sibling file so task plans survive restart and compaction. */
 'use strict';

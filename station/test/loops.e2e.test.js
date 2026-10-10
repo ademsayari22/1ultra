@@ -118,7 +118,7 @@ async function until(B, headers, pred, label, ms) {
        FINAL pre-dormancy iteration is fire-and-forget, so ~8% of runs (worse under gate load) its mock hit
        landed only AFTER the driver's settle had written 'dormant' and this test had snapshotted — reading as
        "a dormant loop spent money" when the loop subsystem had provably stopped (instrumented timeline proof,
-       2026-07-30: the trailing prompt began "You are StarNet background skill review", never with the
+       2026-07-30: the trailing prompt began "You are 1Ultra background skill review", never with the
        objective or a <loop_ledger>). An iteration prompt is the ONLY prompt that BEGINS with the objective
        (loopjob-driver buildMessages puts the objective first; every aux prompt opens with its own scaffolding),
        so the counter anchors at position 0 — it still counts every real iteration, including any that would
@@ -129,7 +129,7 @@ async function until(B, headers, pred, label, ms) {
     ({ child, port } = await boot(8990 + (process.pid % 25), env, 20));
     let B = 'http://' + HOST + ':' + port;
     let token = await bootToken(B, B);
-    let headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    let headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
 
     // ---- a station with no loops pays no timer ----------------------------------------------------------
     const empty = await (await fetch(B + '/api/loops', { headers })).json();
@@ -234,7 +234,7 @@ async function until(B, headers, pred, label, ms) {
     await sleep(600);
     ({ child, port } = await boot(port, env, 20));
     B = 'http://' + HOST + ':' + port;
-    token = await bootToken(B, B); headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    token = await bootToken(B, B); headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     const revived = (await (await fetch(B + '/api/loops', { headers })).json()).loops[0];
     A.eq(revived.id, beforeRestart.id, 'the loop survived the restart');
     A.eq(revived.state, 'dormant', 'still dormant — a converged loop does not quietly resume itself');
@@ -265,7 +265,7 @@ async function until(B, headers, pred, label, ms) {
     await sleep(600);
     ({ child, port } = await boot(port, env, 20));
     B = 'http://' + HOST + ':' + port;
-    token = await bootToken(B, B); headers = { 'Content-Type': 'application/json', 'X-StarNet-Token': token, Origin: B };
+    token = await bootToken(B, B); headers = { 'Content-Type': 'application/json', 'X-1Ultra-Token': token, Origin: B };
     await sleep(2500);
     halted = await (await fetch(B + '/api/loops', { headers })).json();
     A.eq(halted.halted, true, 'the E-STOP SURVIVED the restart — no self-resuming autonomy');

@@ -20,7 +20,7 @@ const { tmpdir } = require('node:os');
   A.eq(report.summary.qualityScore, 1, 'seven quality dimensions produce an equal-weight perfect deterministic baseline');
   A.eq(Object.keys(report.summary.dimensions).sort(), ['completion', 'cost', 'latency', 'planning', 'recovery', 'stopping', 'toolSelection'], 'scorecard names every requested quality dimension');
   A.ok(/^[a-f0-9]{64}$/.test(report.suiteDigest) && /^[a-f0-9]{64}$/.test(report.baselineDigest), 'report binds the exact suite and comparison baseline');
-  A.eq(report.benchmarkVersion, 'starnet-0.9.0-agent-quality-v1', 'receipt names the fixed StarNet 0.9.0 benchmark version');
+  A.eq(report.benchmarkVersion, 'starnet-0.9.0-agent-quality-v1', 'receipt names the fixed 1Ultra 0.9.0 benchmark version');
   A.eq(report.results[1].metrics, {
     turns: 1, toolCalls: 1, retries: 0, tokensIn: 20, tokensOut: 8, tokens: 28, costUsd: 0.000036, firstTokenMs: 0, durationMs: 190,
     artifactHashes: [{ path: 'output.md', sha256: '0da6d1b1911c49b32fb845247367d08532316038e81c2b524de8b192818e1e9f' }], verificationFresh: true
@@ -111,7 +111,7 @@ const { tmpdir } = require('node:os');
 
   const bind = await import('../scripts/eval/bind.mjs');
   const runtimeNode = bind.probeStarNetRuntimeNode(dirname(process.execPath), process.execPath);
-  A.eq(runtimeNode.version, process.version, 'StarNet binding records the installed subject Node rather than the controller process by assumption');
+  A.eq(runtimeNode.version, process.version, '1Ultra binding records the installed subject Node rather than the controller process by assumption');
   A.eq(runtimeNode.path, resolve(process.execPath), 'runtime Node evidence records the exact executable it probed');
   A.throws(() => bind.probeStarNetRuntimeNode(dirname(process.execPath), join(root, 'missing-node')), 'missing installed runtime Node fails candidate binding closed');
   const bindTemp = mkdtempSync(join(tmpdir(), 'starnet-eval-bind-'));
@@ -122,7 +122,7 @@ const { tmpdir } = require('node:os');
     const runGit = args => spawnSync('git', args, { cwd: source, encoding: 'utf8' });
     A.eq(runGit(['init']).status, 0, 'bind fixture initializes a source repository');
     A.eq(runGit(['config', 'user.email', 'eval@example.invalid']).status, 0, 'bind fixture configures a local author email');
-    A.eq(runGit(['config', 'user.name', 'StarNet Eval']).status, 0, 'bind fixture configures a local author name');
+    A.eq(runGit(['config', 'user.name', '1Ultra Eval']).status, 0, 'bind fixture configures a local author name');
     writeFileSync(join(source, 'frontend', 'app.js'), 'first\nsecond\n', 'utf8');
     A.eq(runGit(['add', 'frontend/app.js']).status, 0, 'bind fixture stages the LF source');
     A.eq(runGit(['commit', '-m', 'fixture']).status, 0, 'bind fixture commits the LF source');
