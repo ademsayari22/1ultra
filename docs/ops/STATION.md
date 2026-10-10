@@ -10,7 +10,8 @@ Requires Python 3.10+ and Node.js 20+. Install pinned dependencies once with `cd
 - `/campaign/` is the campaign page on its own. `/classic/` is the original Python interface. For a separate standard-library fallback, run `python3 scripts/station.py --classic --port 8542`.
 - Switches you can turn on now: **lead.codex** (then sign in: model dock → GPT / CODEX → Sign in with ChatGPT, and pick GPT 6.1 SOL · XHIGH) and **tools.web** (public web search and reading for agents; private network addresses stay blocked). Crew switches arrive with FreeLLMAPI.
 - One emergency stop: the 1Ultra stop halts Starnet too, Starnet's E-STOP sets the 1Ultra stop, and Starnet's RESUME clears both.
-- Agents can never read or write the 1Ultra project folder (only their own station runtime), and it cannot be added as a project.
+- Agents can never read or write the 1Ultra project folder, and it cannot be added as a project. Inside the station runtime each agent reaches only its own workspace, never the switches, the stop, saved settings or the ChatGPT tokens — even in Full Power. Searches and recursive listings skip protected files.
+- Every model request checks the emergency stop and the provider switch again, so turning `lead.codex` off or pressing stop takes effect on the next call, not only on the next run.
 
 ## Find leads and convince a buyer
 
@@ -92,7 +93,7 @@ python3 scripts/station_browser_smoke.py --agents --playwright-module /path/to/p
 
 ### Verification history (10 October 2026, Stage 1a: ULTRA on Codex)
 
-Local checks on copied records: 147 Python tests, 66 station Node tests, `check_station.py`, 20 HTTP smoke checks and the three browser journeys (desktop and 390px) pass; business records are unchanged. The smoke run turns `lead.codex` on with a fake ChatGPT token, restarts, confirms the token loads, and proves the emergency stop refuses a Codex run before any model call; an `strace` of that run showed connections only to 127.0.0.1 and the local name cache, with no lookup of chatgpt.com or openai.com. Over HTTP, a resume whose saves fail answers 503 with the stop still on, and a retry after saves work clears it. The upstream fast suite matches the Phase 1 baseline (see `STATION_UPSTREAM_TESTS.md`). No live model call has been made for Stage 1a yet: the first live check (Adem turns on `lead.codex`, signs in with ChatGPT and sends ULTRA one message) waits for Adem's go.
+Local checks on copied records: 148 Python tests, 70 station Node tests, `check_station.py`, 20 HTTP smoke checks and the three browser journeys (desktop and 390px) pass; business records are unchanged. The smoke run turns `lead.codex` on with a fake ChatGPT token, restarts, confirms the token loads, and proves the emergency stop refuses a Codex run before any model call; an `strace` of that run showed connections only to 127.0.0.1 and the local name cache, with no lookup of chatgpt.com or openai.com. Over HTTP, a resume whose saves fail answers 503 with the stop still on, and a retry after saves work clears it. The upstream fast suite matches the Phase 1 baseline (see `STATION_UPSTREAM_TESTS.md`). The final review found four gaps (recursive search into the project under Full Power, runtime control files reachable under Full Power, and stop and switch checked only when a provider was built); all four were fixed with regression tests before merge. No live model call has been made for Stage 1a yet: the first live check (Adem turns on `lead.codex`, signs in with ChatGPT and sends ULTRA one message) waits for Adem's go.
 
 ### Verification history (5 October 2026, before the Starnet update)
 
