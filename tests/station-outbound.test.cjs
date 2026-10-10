@@ -77,13 +77,89 @@ const normalized = new net.Socket().connect([{ host: 'www.mojeek.com', port: 443
 assert.equal(typeof normalized.lookup, 'function'); assert.equal(received[1], callback);
 `);
 });
-test('socket guards preserve caller lookups and FreeLLMAPI loopback options', () => {
+test('socket custom lookups allow public address results', () => {
   checkConnect(`
-const lookup = () => {}, custom = { host: 'www.mojeek.com', port: 443, lookup };
-assert.equal(new net.Socket().connect(custom), custom);
-assert.equal(received[0].lookup, lookup);
-const local = { host: 'localhost', port: 3001 };
-assert.equal(new net.Socket().connect(local), local);
-assert.equal(Object.hasOwn(local, 'lookup'), false);
+const lookup = (hostname, options, callback) => {
+  assert.equal(hostname, 'www.mojeek.com');
+  if (options.all) callback(null, [{ address: '93.184.216.34', family: 4 }]);
+  else callback(null, '93.184.216.34', 4);
+};
+const options = new net.Socket().connect({ host: 'www.mojeek.com', port: 443, lookup });
+let result;
+options.lookup('www.mojeek.com', { all: false }, (...args) => { result = args; });
+assert.deepEqual(result, [null, '93.184.216.34', 4]);
 `);
+});
+test('socket custom lookups refuse private address results', () => {
+  checkConnect(`
+const lookup = (hostname, options, callback) => {
+  assert.equal(hostname, 'www.mojeek.com');
+  if (options.all) callback(null, [{ address: '10.0.0.5', family: 4 }]);
+  else callback(null, '10.0.0.5', 4);
+};
+const options = new net.Socket().connect({ host: 'www.mojeek.com', port: 443, lookup });
+let result;
+options.lookup('www.mojeek.com', { all: false }, (...args) => { result = args; });
+assert.equal(result.length, 1); assert.ok(result[0] instanceof Error);
+assert.equal(result[0].code, 'ULTRA_OUTBOUND_BLOCKED');
+`);
+});
+test('socket hostname lookups guard localhost while allowing the FreeLLMAPI exception', () => {
+  checkConnect(`
+const local = { host: 'localhost', port: 3001 };
+const options = new net.Socket().connect(local);
+assert.equal(typeof options.lookup, 'function');
+const lookup = (hostname, lookupOptions, callback) => {
+  if (lookupOptions.all) callback(null, [{ address: '127.0.0.1', family: 4 }]);
+  else callback(null, '127.0.0.1', 4);
+};
+const custom = new net.Socket().connect({ ...local, lookup });
+let result;
+custom.lookup('localhost', { all: false }, (...args) => { result = args; });
+assert.deepEqual(result, [null, '127.0.0.1', 4]);
+`);
+});
+
+const REQUEST_CHILD = `
+const P = require(process.argv[1]), on = new Set(JSON.parse(process.argv[2]));
+const http = require('node:http'), https = require('node:https');
+http.request = () => 'REAL'; http.get = () => 'REAL'; https.request = () => 'REAL'; https.get = () => 'REAL';
+P.install(require('node:os').tmpdir() + '/ultra-outbound', { isOn: id => on.has(id) }, JSON.parse(process.argv[3]));
+const out = {};
+const run = (key, f) => { try { out[key] = f(); } catch (e) { out[key] = e.code || e.message; } };
+run('hostnameOut', () => https.request('https://chatgpt.com/x', { hostname: 'evil.example' }));
+run('hostnameIn', () => https.request('https://www.mojeek.com/', { hostname: 'chatgpt.com' }));
+run('hostOut', () => https.get(new URL('https://chatgpt.com/x'), { host: 'evil.example' }));
+run('hostIn', () => https.get(new URL('https://www.mojeek.com/'), { host: 'chatgpt.com' }));
+run('crewPort', () => http.request('http://127.0.0.1:9/', { port: 3001 }));
+run('wrongPort', () => http.get(new URL('http://127.0.0.1:3001/'), { port: 9 }));
+run('ipc', () => https.request('https://chatgpt.com/x', { socketPath: '/tmp/ultra-test.sock' }));
+run('privateIpc', () => http.get(new URL('http://192.168.1.10/'), { socketPath: '/tmp/ultra-test.sock' }));
+run('httpsOverride', () => http.request('http://localhost/', { protocol: 'https:' }));
+run('httpOverride', () => https.get(new URL('https://localhost/'), { protocol: 'http:' }));
+run('callback', () => https.request('https://chatgpt.com/x', () => {}));
+console.log(JSON.stringify(out));
+`;
+function probeRequests(on = [], opts = { freellmapiPort: 3001 }) {
+  return JSON.parse(execFileSync(process.execPath, ['-e', REQUEST_CHILD, POLICY, JSON.stringify(on), JSON.stringify(opts)], { encoding: 'utf8' }).trim().split('\n').pop());
+}
+test('HTTP guards check hostname and host overrides over string and URL destinations', () => {
+  const r = probeRequests(['lead.codex']);
+  assert.equal(r.hostnameOut, B); assert.equal(r.hostnameIn, 'REAL');
+  assert.equal(r.hostOut, B); assert.equal(r.hostIn, 'REAL');
+  assert.equal(r.callback, 'REAL', 'a callback is not an options override');
+});
+test('HTTP guards apply port overrides before checking the FreeLLMAPI switch', () => {
+  assert.equal(probeRequests(['crew.freellmapi']).crewPort, 'REAL');
+  assert.equal(probeRequests(['crew.freellmapi']).wrongPort, B);
+  assert.equal(probeRequests().crewPort, B);
+  assert.equal(probeRequests(['tools.web']).crewPort, B);
+});
+test('HTTP socket-path overrides are local IPC even when every switch is off', () => {
+  const r = probeRequests();
+  assert.equal(r.ipc, 'REAL'); assert.equal(r.privateIpc, 'REAL');
+});
+test('HTTP protocol overrides determine the effective default port', () => {
+  const r = probeRequests(['crew.freellmapi'], { freellmapiPort: 443 });
+  assert.equal(r.httpsOverride, 'REAL'); assert.equal(r.httpOverride, B);
 });

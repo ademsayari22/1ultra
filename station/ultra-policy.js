@@ -204,7 +204,15 @@ function urlTarget(input) {
 }
 function requestTarget(args, protocol) {
   const a = args[0];
-  if (typeof a === 'string' || a instanceof URL) return urlTarget(a);
+  if (typeof a === 'string' || a instanceof URL) {
+    const target = urlTarget(a);
+    const o = args[1] && typeof args[1] === 'object' ? args[1] : {};
+    if (o.socketPath) return null;
+    target.host = o.hostname || o.host || target.host;
+    if (Object.hasOwn(o, 'port')) target.port = o.port;
+    if (Object.hasOwn(o, 'protocol')) target.protocol = o.protocol;
+    return target;
+  }
   const o = a && typeof a === 'object' ? a : {};
   if (o.socketPath) return null;
   return { host: o.hostname || o.host || 'localhost', port: o.port, protocol: o.protocol || protocol };
@@ -236,14 +244,12 @@ function install(runtime, switches, opts = {}) {
   const net = require('node:net'); const realConnect = net.Socket.prototype.connect;
   net.Socket.prototype.connect = function (...args) {
     const target = connectTarget(args); check(target);
-    if (target && net.isIP(target.host) === 0 && canonicalHost(target.host) !== 'localhost') {
+    if (target && net.isIP(target.host) === 0) {
       const callArgs = Array.isArray(args[0]) ? args[0] : args;
       const hasOptions = callArgs[0] && typeof callArgs[0] === 'object';
       const options = hasOptions ? callArgs[0] : { host: target.host, port: target.port };
-      if (!options.lookup) {
-        const rest = callArgs.slice(hasOptions || typeof callArgs[1] !== 'string' ? 1 : 2);
-        args = [{ ...options, lookup: makeGuardedLookup(require('node:dns').lookup, isOn, { ...opts, port: target.port, protocol: target.protocol }) }, ...rest];
-      }
+      const rest = callArgs.slice(hasOptions || typeof callArgs[1] !== 'string' ? 1 : 2);
+      args = [{ ...options, lookup: makeGuardedLookup(options.lookup || require('node:dns').lookup, isOn, { ...opts, port: target.port, protocol: target.protocol }) }, ...rest];
     }
     return realConnect.apply(this, args);
   };
