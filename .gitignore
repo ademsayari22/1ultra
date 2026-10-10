@@ -16,3 +16,4 @@ simulations/results/
 station/runtime/
 station/node_modules/
 .aws
+station/.dogfood/
