@@ -141,6 +141,10 @@ async function handle(req,res){
       try{switches.set(body.id,body.value);}catch(e){return json(res,e.code==='not_ready'?409:400,{error:e.message});}
       return json(res,200,{switches:switches.list(),version:switches.version()});
     }
+    if(p==='/api/ultra/route-classes'&&req.method==='GET'){
+      const routes=routeTable.map(r=>({key:policy.routeKey(r),cls:policy.classifyPath(policy.routeKey(r))}));
+      return json(res,200,{routes,unclassified:routes.filter(r=>r.cls==='unclassified').map(r=>r.key)});
+    }
     if(p==='/api/ultra/readiness'&&req.method==='GET')return json(res,200,{
       providers:registry.listProviderProfiles().map(p=>({...p,connected:false,modelInvoked:false,status:'disabled by campaign policy'})),
       connectors:connectorCatalog.list().map(c=>({id:c.id,name:c.name,category:c.category,authType:c.authType,connected:false})),
@@ -224,6 +228,10 @@ function campaign(req,res,token){
   res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store','X-Frame-Options':'SAMEORIGIN','Content-Security-Policy':"frame-ancestors 'self'",'X-Content-Type-Options':'nosniff'});
   res.end(data);
 }
+let routeTable=[];
+function registerRoutes(routes){routeTable=routes;}
+const preGate=(method,url)=>policy.preGate(method,url,switches);
+const routeGate=r=>policy.routeGate(r,switches);
 process.on('exit',()=>{if(rpc)rpc.kill('SIGTERM');for(const job of jobs.values())terminateJob(job);});
-module.exports={root,runtime,policy,handle,classic,campaign,switches};
+module.exports={root,runtime,policy,handle,classic,campaign,switches,preGate,routeGate,registerRoutes};
 policy.install(runtime);

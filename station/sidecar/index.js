@@ -10403,9 +10403,10 @@ updatePreparation = makeUpdatePreparation({
 });
 
 const server = http.createServer((req, res) => {
-  if (!ultraHost.policy.routeAllowed(req.method, String(req.url || '/'))) {
-    res.writeHead(403, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({error:'Live models, connections and background jobs are disabled. Use campaign preparation tools.'}));
+  const ultraPre = ultraHost.preGate(req.method, String(req.url || '/'));
+  if (!ultraPre.ok) {
+    res.writeHead(403, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ ok: false, error: ultraPre.error || 'Refused by 1Ultra policy.', switch: ultraPre.switch || null }));
   }
   // DNS-REBINDING FLOOR ON EVERY PATH (2026-09-23 security audit). The Host pin used to guard only /api/* (and
   // openai-compat's own routes), while `/` inlines the per-launch API token — a rebound page could read the secret
@@ -11468,6 +11469,7 @@ const ROUTES = [
   { m: 'GET', qrx: /^\/shared\//, h: serveShared }
 ];
 
+ultraHost.registerRoutes(ROUTES);
 function dispatchRoute(req, res) {
   const url = req.url || '';
   const bare = url.split('?')[0];
@@ -11482,6 +11484,8 @@ function dispatchRoute(req, res) {
     else if (r.rx) { gm = url.match(r.rx); if (!gm) continue; }
     else if (r.qrx) { if (!r.qrx.test(bare)) continue; }
     else continue;   // malformed entry: never match (fail closed to the static fallthrough)
+    const ultraGate = ultraHost.routeGate(r);
+    if (!ultraGate.ok) { res.writeHead(403, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); return res.end(JSON.stringify({ ok: false, error: ultraGate.error, switch: ultraGate.switch || null })); }
     const out = r.h(req, res, gm);
     return r.errorPolicy ? out.catch((e) => r.errorPolicy(res, e)) : out;
   }

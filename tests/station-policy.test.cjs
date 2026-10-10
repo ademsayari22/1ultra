@@ -1,18 +1,49 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
 const Policy = require('../station/ultra-policy.js');
-test('all upstream external/model routes fail closed including restored scheduler settings', () => {
-  for (const route of ['/api/run','/v1/chat/completions','/api/cron/arm','/api/providers/probe','/api/connectors','/api/autonomy/posture','/api/plugins/approve']) {
-    assert.equal(Policy.routeAllowed('POST',route), false, route);
-  }
-  assert.equal(Policy.routeAllowed('GET','/api/ultra/workspace'),true);
-  assert.equal(Policy.routeAllowed('POST','/api/ultra/campaign/event'),true);
-  assert.throws(() => Policy.assertModelAllowed(), /disabled/);
+const switches = (...on) => ({ isOn: id => on.includes(id) || (id === 'channels' && on.some(x => x.startsWith('channels.'))) || (id === 'providers' && on.some(x => x.startsWith('providers.'))) });
+test('path classes use prefix boundaries and longest match', () => {
+  const cases = {'/api/memory/notes':'local','/api/runs':'local','/api/run-recoveries':'local','/api/run':'lead.codex','/api/agents/affinity':'local',
+    '/api/agent':'lead.codex','/api/auth/codex/start':'lead.codex','/api/auth/grok/start':'providers','/api/execution-profiles':'tools.shell',
+    '/api/channels/telegram/bots':'channels','/api/cron/arm':'cron','/api/nightshift':'nightshift','/api/connectors':'tools.mcp',
+    '/api/tts':'voice','/api/browser/reset':'tools.browser','/api/credits':'blocked','/api/update/prepare':'blocked','/api/nope':'unclassified',
+    '/shared/events.js':'local','/workshop-run/abc/index.html':'lead.codex','/view/t/index.html':'local',
+    '/plugin-ui/p/index.html':'tools.mcp','/plugin-draft/d':'tools.mcp','/app-ui/a/index.html':'lead.codex'};
+  for (const [p, cls] of Object.entries(cases)) assert.equal(Policy.classifyPath(p), cls, p);
 });
-test('script job limits reject duplicate desks and the third worker', () => {
-  const gate=Policy.makeGate(); gate.enter('research');
-  assert.throws(()=>gate.enter('research'),/already/); gate.enter('sales');
-  assert.throws(()=>gate.enter('qa'),/Only 2 preparation workers/); gate.leave('research');gate.enter('qa');
+test('route keys come from string matchers or the literal prefix of a regex', () => {
+  assert.equal(Policy.routeKey({ exact: '/api/save?x=1' }), '/api/save');
+  assert.equal(Policy.routeKey({ qprefix: '/api/memory/' }), '/api/memory');
+  assert.equal(Policy.routeKey({ rx: /^\/api\/hooks\/(trg_[a-z0-9]{8,24})(?:\?.*)?$/ }), '/api/hooks');
+  assert.equal(Policy.routeKey({ rx: /^\/api\/channels\/telegram\/bots\/([^/]+)\/owner$/ }), '/api/channels/telegram/bots');
+  assert.equal(Policy.routeKey({ qrx: /^\/shared\// }), '/shared');
+  assert.equal(Policy.routeKey({}), '');
+});
+test('gates refuse switch families until the owner turns the switch on', () => {
+  const off = switches();
+  assert.equal(Policy.routeGate({ exact: '/api/memory' }, off).ok, true);
+  const refused = Policy.routeGate({ exact: '/api/run' }, off);
+  assert.deepEqual([refused.ok, refused.switch], [false, 'lead.codex']); assert.match(refused.error, /lead\.codex/);
+  assert.equal(Policy.routeGate({ exact: '/api/run' }, switches('lead.codex')).ok, true);
+  assert.equal(Policy.routeGate({ exact: '/api/channels/x' }, switches('channels.telegram')).ok, true);
+  assert.equal(Policy.routeGate({ exact: '/api/credits' }, switches('lead.codex')).ok, false);
+  assert.equal(Policy.routeGate({ exact: '/api/nope' }, off).ok, false);
+});
+test('pre-gate: static GET only, external API and webhooks refused', () => {
+  const off = switches();
+  assert.equal(Policy.preGate('GET', '/', off).ok, true);
+  assert.equal(Policy.preGate('POST', '/', off).ok, false);
+  assert.equal(Policy.preGate('POST', '/v1/chat/completions', off).ok, false);
+  assert.equal(Policy.preGate('POST', '/api/hooks/trg_abcdefgh', off).ok, false);
+  assert.equal(Policy.preGate('GET', '/workshop-run/x/index.html', off).ok, false);
+  assert.equal(Policy.preGate('POST', '/api/ultra/runtime', off).ok, true);
+  assert.equal(Policy.preGate('GET', '/health', off).ok, true);
+});
+test('worker limit follows the concurrency value', () => {
+  const gate = Policy.makeGate(() => 3); gate.enter('research'); gate.enter('sales');
+  assert.throws(() => gate.enter('research'), /already/); gate.enter('qa');
+  assert.throws(() => gate.enter('delivery'), /Only 3 preparation workers/);
+  assert.throws(() => Policy.assertModelAllowed(), /disabled/);
 });
 test('runtime paths cannot overlap business records', () => {
   assert.equal(Policy.runtimeAllowed('/home/adem/1ultra','/home/adem/1ultra/data'),false);

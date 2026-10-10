@@ -83,6 +83,13 @@ def main():
             assert {r['id']: r['value'] for r in sw['switches']}['concurrency'] == 3
             request('/api/ultra/switches', {'id': 'concurrency', 'value': 2}, sw['version'])
             checks.append('owner switches: defaults, readiness refusal, stale refusal, change')
+            classes = request('/api/ultra/route-classes')
+            assert len(classes['routes']) > 300 and classes['unclassified'] == [], classes['unclassified']
+            refused = request('/api/run', {'messages': []}, expected=403)
+            assert refused['switch'] == 'lead.codex' and 'lead.codex' in refused['error']
+            request('/api/save?agent=agent')  # local family answers 200 (request() raises on any other status)
+            request('/v1/chat/completions', {'model': 'x'}, expected=403)
+            checks.append('route classes: none unclassified; model route refused with its switch; local routes answer')
             assert len(workspace['leads']) == len(json.loads((root / 'data/leads.json').read_text()))
             checks.append('Authenticated workspace and deterministic ranking')
             lead = workspace['hunt']['leads'][0]
@@ -161,7 +168,7 @@ def main():
             checks.append('Brief corrections preserve the original task without duplicate IDs')
             request('/api/ultra/control',{'action':'resume'})
             checks.append('Restart preserves sessions, briefs, memory feedback, workflows and emergency stop')
-            for route in ['/api/run', '/api/cron/arm', '/v1/chat/completions', '/api/plugins/approve']:
+            for route in ['/api/run', '/api/cron/arm', '/v1/chat/completions', '/api/plugins/allow', '/api/plugins/call']:
                 request(route, {}, expected=403)
             request('/api/ultra/workspace', expected=403, authenticated=False)
             checks.append('Live model, scheduler, plugin execution and unauthenticated API denied')
