@@ -1466,3 +1466,7 @@ Phase 1 leaves these spec items for the plans that follow:
   - Allow the specific outbound hosts in `policy.install()` that each enabled switch needs, and flip `ready` for `lead.codex`, `crew.freellmapi` and `crew.escalate_to_lead`.
 - **Phase 4 (remaining features):** convert each Phase 1 no-op patch (`no-cron`, `no-nightshift`, `no-discovery`, `no-loops`, `no-quest-refresh`, `no-trigger-poll`, `no-shell-hooks`, `no-skill-market-pull`, `quiet-boot` restoration) into a switch check, test it with fixtures, and flip its switch to `ready`.
 - **Phase 5 (docs):** add the `AGENTS.md` "Authority and scope" note on owner switches.
+- **Found while building Phase 1 (for Phases 3–4):**
+  - Connect the 1Ultra emergency stop to every switch-gated path before any switch becomes `ready` (spec: the stop overrides every switch).
+  - Bare code values still carry the Starnet name: the OAuth `clientName` and MCP `clientInfo`, the `X-Title` app attribution header, and the push-notification fallback title. Patch them before connectors, providers or channels reach third parties.
+  - Starnet's startup browser-install probe logs one refused call; handle it with `tools.browser`.
