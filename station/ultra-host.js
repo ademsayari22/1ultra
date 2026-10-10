@@ -21,6 +21,9 @@ const stateFile=path.join(runtime,'ultra-state.json');
 const controlFile=path.join(runtime,'ultra-control.json');
 const switches=require('./ultra-switches.js').makeSwitches({fs,path,file:path.join(runtime,'ultra-switches.json'),
   providerIds:registry.listProviderProfiles().map(p=>p.id).filter(id=>!['codex','starnet'].includes(id))});
+// First boot only: give Starnet's interface a lead so it resumes onto the station. Never overwrites existing files.
+if(!fs.existsSync(path.join(runtime,'agent.save.json')))for(const [name,value] of Object.entries(require('./ultra-seed.js').files(Date.now())))
+  if(!fs.existsSync(path.join(runtime,name)))durable(path.join(runtime,name),value);
 const briefs=makeTaskBriefStore({fs,path,workspaces:runtime});
 const gate=policy.makeGate(()=>switches.value('concurrency')),jobs=new Map();let rpc=null,pending=new Map(),seq=0,
   halted=fs.existsSync(controlFile)?JSON.parse(fs.readFileSync(controlFile,'utf8')).halted===true:false;

@@ -118,5 +118,29 @@
     "file": "sidecar/index.js",
     "find": "if (terminalPtyLoadError && require.main === module)",
     "replace": "if (false && terminalPtyLoadError && require.main === module)"
+  },
+  {
+    "id": "dock-campaign",
+    "file": "frontend/index.html",
+    "find": "      </div>\n    </div>\n    <div class=\"bb-group\" data-group=\"build\">",
+    "replace": "        <button class=\"bb\" data-term=\"campaign\"><span class=\"bb-i\">◆</span><span class=\"bb-tx\"><b>CAMPAIGN</b><small>Tunisia leads, pitches &amp; your recorded outcomes</small></span></button>\n      </div>\n    </div>\n    <div class=\"bb-group\" data-group=\"build\">"
+  },
+  {
+    "id": "dock-switches",
+    "file": "frontend/index.html",
+    "find": "        <button class=\"bb\" data-term=\"settings\" data-hint=\"settings\">",
+    "replace": "        <button class=\"bb\" data-term=\"ultra-switches\"><span class=\"bb-i\">⏻</span><span class=\"bb-tx\"><b>SWITCHES</b><small>what agents may use — you decide</small></span></button>\n        <button class=\"bb\" data-term=\"settings\" data-hint=\"settings\">"
+  },
+  {
+    "id": "ultra-window-script",
+    "file": "frontend/index.html",
+    "find": "<script src=\"app/windows/find.js\"></script>",
+    "replace": "<script src=\"app/windows/find.js\"></script>\n<script src=\"ultra-window.js\"></script>"
+  },
+  {
+    "id": "ultra-brand-css",
+    "file": "frontend/index.html",
+    "find": "</head>",
+    "replace": "<link rel=\"stylesheet\" href=\"ultra-brand.css\">\n</head>"
   }
 ]

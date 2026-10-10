@@ -16368,9 +16368,10 @@
     },
     {
       "path": "frontend/index.html",
-      "current_sha256": "23e5f810ee3ebe633e32d767613935239197c001aac1a1b9784f125afce64720",
+      "current_sha256": "3568b0b4d005cde4b16a764cbc0e66f5f7f63006ef0e50e90212ed82ceae11e3",
       "reasons": [
-        "brand"
+        "brand",
+        "patch:dock-campaign,dock-switches,ultra-window-script,ultra-brand-css"
       ]
     },
     {
