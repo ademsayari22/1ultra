@@ -103,6 +103,49 @@ test('the Codex adapter cannot retry or list models after the switch is turned o
   assert.equal(calls, 1, 'the model catalog makes no request either');
 });
 
+test('pressing stop cancels a Codex request held open by the provider, with no retry', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ultra-inflight-root-'));
+  const runtime = fs.mkdtempSync(path.join(os.tmpdir(), 'ultra-inflight-runtime-'));
+  const hostPath = path.resolve(__dirname, '../station/ultra-host.js');
+  const codexPath = path.resolve(__dirname, '../station/sidecar/providers/codex.js');
+  const probe = String.raw`
+    // A provider that never answers: the request settles only when its signal aborts.
+    let requests = 0;
+    globalThis.fetch = (url, init) => { requests++; return new Promise((_, reject) => {
+      const s = init && init.signal; if (s) s.addEventListener('abort', () => reject(s.reason), { once: true }); }); };
+    const host = require(process.argv[1]);
+    const { makeCodexProvider } = require(process.argv[2]);
+    host.switches.set('lead.codex', true);
+    const check = () => host.assertModelRequest({ provider: 'codex' });
+    const provider = host.policy.guardAdapter(makeCodexProvider({ fetch: host.policy.gateFetch(globalThis.fetch, check, host.stopSignal), token: 'fixture', baseUrl: 'https://chatgpt.com/backend-api/codex' }), check);
+    const result = {};
+    const started = Date.now();
+    const run = (async () => { for await (const ev of provider.stream({ model: 'gpt-6.1-sol', messages: [{ role: 'user', content: 'fixture' }] })) void ev; })()
+      .then(() => 'finished', e => (e && e.code) || String(e && e.message));
+    setTimeout(() => host.onStationHalt(), 150);
+    run.then(outcome => { result.outcome = outcome; result.requests = requests; result.ms = Date.now() - started; process.stdout.write(JSON.stringify(result)); });
+  `;
+  try {
+    const stdoutPath = path.join(root, 'stdout.json'), stderrPath = path.join(root, 'stderr.txt');
+    const stdout = fs.openSync(stdoutPath, 'w'), stderr = fs.openSync(stderrPath, 'w');
+    let child;
+    try {
+      child = spawnSync(process.execPath, ['-e', probe, hostPath, codexPath], {
+        env: { ...process.env, ULTRA_ROOT: root, ULTRA_RUNTIME: runtime }, stdio: ['ignore', stdout, stderr], timeout: 15000
+      });
+    } finally { fs.closeSync(stdout); fs.closeSync(stderr); }
+    assert.ifError(child.error);
+    assert.equal(child.status, 0, fs.readFileSync(stderrPath, 'utf8'));
+    const result = JSON.parse(fs.readFileSync(stdoutPath, 'utf8'));
+    assert.equal(result.outcome, 'ULTRA_EMERGENCY_STOP');
+    assert.equal(result.requests, 1, 'no retry after the stop');
+    assert.ok(result.ms < 5000, 'cancelled promptly: ' + result.ms + ' ms');
+  } finally {
+    fs.rmSync(runtime, { recursive: true, force: true });
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('assertModelRequest refuses during the emergency stop and while the provider switch is off', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ultra-model-root-'));
   const runtime = fs.mkdtempSync(path.join(os.tmpdir(), 'ultra-model-runtime-'));
