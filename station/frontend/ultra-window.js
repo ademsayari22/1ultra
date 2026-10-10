@@ -28,7 +28,7 @@
     body.innerHTML = '<div class="ultra-sw"><p class="dim">Loading switches…</p></div>';
     let data;
     try { data = await api('GET'); } catch (e) { body.innerHTML = '<div class="ultra-sw"><p class="bad">' + esc(e.message) + '</p></div>'; return; }
-    body.innerHTML = '<div class="ultra-sw"><p>Only you can change these. Agents can read them. Emergency stop overrides every switch.</p><p class="bad ultra-sw-error" hidden></p>'
+    body.innerHTML = '<div class="ultra-sw"><p>Only you can change these. Agents can read them. Emergency stop overrides every switch.</p><p class="bad ultra-sw-error"' + (data.problem ? '>' + esc(data.problem) : ' hidden>') + '</p>'
       + data.switches.map(row).join('')
       + '<p class="dim ultra-credit">1Ultra is built on the MIT-licensed StarNet code by Andrew Sims. It is not affiliated with or endorsed by StarNet.</p></div>';
     body.querySelectorAll('[data-switch]').forEach(input => input.addEventListener('change', async () => {

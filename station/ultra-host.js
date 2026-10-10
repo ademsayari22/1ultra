@@ -138,7 +138,7 @@ async function handle(req,res){
       state.history=state.history.slice(-200);writeState(state);return json(res,200,{version:version()});
     }
     if(p==='/api/ultra/switches'){
-      if(req.method==='GET')return json(res,200,{switches:switches.list(),version:switches.version()});
+      if(req.method==='GET')return json(res,200,{switches:switches.list(),version:switches.version(),problem:switches.problem()});
       if(req.method!=='POST')return json(res,405,{error:'Owner action requires POST.'});
       if(String(req.headers['if-match']||'')!==switches.version())return json(res,409,{error:'Switches changed. Reload before saving.'});
       try{switches.set(body.id,body.value);}catch(e){return json(res,e.code==='not_ready'?409:400,{error:e.message});}

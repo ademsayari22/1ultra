@@ -27,7 +27,13 @@ function failure(code,message){return Object.assign(new Error(message),{code});}
 function makeSwitches({fs,path,file,providerIds=[],now=()=>new Date().toISOString()}){
   const catalog=[...CATALOG,...providerIds.map(id=>({id:'providers.'+id,label:'Provider: '+id,type:'bool',default:false,ready:false,needs:'Your own key; paid use is refused while the spend cap is 0'}))];
   const byId=new Map(catalog.map(row=>[row.id,row]));
-  function read(){if(!fs.existsSync(file))return {version:1,values:{},history:[]};const saved=JSON.parse(fs.readFileSync(file,'utf8'));return {version:1,values:saved.values||{},history:saved.history||[]};}
+  // An unreadable file fails closed: every switch reads as its default and changes are refused until the owner fixes it.
+  function load(){if(!fs.existsSync(file))return {state:{version:1,values:{},history:[]},problem:null};
+    try{const saved=JSON.parse(fs.readFileSync(file,'utf8'));if(!saved||typeof saved!=='object'||Array.isArray(saved))throw Error('not an object');
+      return {state:{version:1,values:saved.values&&typeof saved.values==='object'?saved.values:{},history:Array.isArray(saved.history)?saved.history:[]},problem:null};}
+    catch(e){return {state:{version:1,values:{},history:[]},problem:path.basename(file)+' is unreadable ('+e.message+'). Every switch reads as its default until you fix or delete the file.'};}}
+  function read(){return load().state;}
+  function problem(){return load().problem;}
   function write(state){fs.mkdirSync(path.dirname(file),{recursive:true});const tmp=file+'.'+crypto.randomBytes(6).toString('hex')+'.tmp';
     fs.writeFileSync(tmp,JSON.stringify(state,null,2)+'\n',{mode:0o600});fs.renameSync(tmp,file);}
   function value(id){const row=byId.get(id);if(!row)throw failure('unknown','Unknown switch: '+id);const values=read().values;return Object.hasOwn(values,id)?values[id]:row.default;}
@@ -41,11 +47,12 @@ function makeSwitches({fs,path,file,providerIds=[],now=()=>new Date().toISOStrin
     const row=byId.get(id);if(!row)throw failure('unknown','Unknown switch: '+id);
     if(!row.ready)throw failure('not_ready','"'+row.label+'" is not available yet.');
     if(!validate(row,v))throw failure('invalid','Invalid value for "'+row.label+'".');
+    const issue=problem();if(issue)throw failure('invalid',issue);
     const state=read(),from=Object.hasOwn(state.values,id)?state.values[id]:row.default;
     state.values[id]=v;state.history=[...state.history,{at:now(),id,from,to:v}].slice(-500);write(state);
   }
   function list(){return catalog.map(row=>({...row,value:value(row.id)}));}
   function version(){return crypto.createHash('sha256').update(fs.existsSync(file)?fs.readFileSync(file):'').digest('hex');}
-  return {list,value,isOn,set,version,file,CATALOG:catalog};
+  return {list,value,isOn,set,version,problem,file,CATALOG:catalog};
 }
 module.exports={makeSwitches,CATALOG};

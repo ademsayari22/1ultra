@@ -29,3 +29,12 @@ test('values persist across instances and provider switches are generated',()=>{
   assert.deepEqual(again.list().filter(r=>r.id.startsWith('providers.')).map(r=>[r.id,r.value,r.ready]),[['providers.anthropic',false,false],['providers.openrouter',false,false]]);
   assert.throws(()=>again.value('providers.gemini'),/Unknown switch/);
 });
+test('an unreadable switch file fails closed: defaults, no changes, a stated problem',()=>{
+  const s=store();fs.writeFileSync(s.file,'{not json');
+  assert.equal(s.isOn('lead.codex'),false);assert.equal(s.value('concurrency'),2);assert.equal(s.isOn('channels'),false);
+  assert.equal(s.list().find(r=>r.id==='concurrency').value,2);
+  assert.match(s.problem(),/ultra-switches\.json is unreadable/);
+  assert.throws(()=>s.set('concurrency',3),e=>e.code==='invalid'&&/unreadable/.test(e.message));
+  assert.equal(fs.readFileSync(s.file,'utf8'),'{not json','the owner file is never overwritten');
+  assert.equal(store().problem(),null);
+});
