@@ -1,0 +1,73 @@
+{
+  "source_url": "https://github.com/androoAGI/starnet",
+  "commit": "e0a36dcd31787248b877aea01a6e53741012bc46",
+  "observed_on": "2026-10-05",
+  "inspection_only": false,
+  "implementation_started": true,
+  "feature_sources": {
+    "station": [
+      "frontend/app/world.js",
+      "frontend/app/worldmodel.js",
+      "frontend/app/worldrenderer.js",
+      "frontend/app/stationbuilder.js",
+      "frontend/app/stationui.js",
+      "frontend/app/pipeline.js"
+    ],
+    "crew_and_sessions": [
+      "frontend/app/app.js",
+      "frontend/app/personas.js",
+      "frontend/app/dossier.js",
+      "frontend/app/chat.js",
+      "frontend/app/workstreams.js",
+      "frontend/app/taskconversation.js"
+    ],
+    "workflows": [
+      "sidecar/routing/router.js",
+      "sidecar/routing/chain.js",
+      "sidecar/routing/steptest.js",
+      "sidecar/routing/line-stats.js",
+      "frontend/app/recipes.js"
+    ],
+    "memory_and_skills": [
+      "sidecar/context.js",
+      "sidecar/memcore.js",
+      "sidecar/skillstore.js",
+      "sidecar/tools/builtin/notebook.js",
+      "sidecar/tools/builtin/recall.js",
+      "sidecar/tools/builtin/skills.js"
+    ],
+    "artifacts_and_recovery": [
+      "frontend/app/deliverables.js",
+      "sidecar/output-artifacts.js",
+      "sidecar/completion-evidence.js",
+      "sidecar/run-journal.js",
+      "sidecar/run-recovery.js",
+      "sidecar/transcriptstore.js"
+    ],
+    "providers_and_controls": [
+      "sidecar/index.js",
+      "sidecar/providers/factory.js",
+      "sidecar/budget.js",
+      "sidecar/permissions.js",
+      "sidecar/permgrants.js",
+      "sidecar/concurrency.js",
+      "sidecar/halt.js",
+      "sidecar/taskbrief-policy.js"
+    ],
+    "extensions": [
+      "sidecar/plugins.js",
+      "sidecar/plugin-runtime.js",
+      "sidecar/plugin-surface.js",
+      "sidecar/mcp/manager.js"
+    ]
+  },
+  "code_file_counts": {
+    "sidecar": 365,
+    "frontend/app": 262,
+    "shared": 5,
+    "test": 1271
+  },
+  "judgment_reason": "Choose product and authority boundaries for a larger merge; a source inventory cannot decide how Starnet runtime state maps to owner-confirmed business evidence.",
+  "imported_source_manifest": "station/UPSTREAM.json",
+  "active_feature_guide": "docs/ops/STATION.md"
+}

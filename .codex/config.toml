@@ -1,0 +1,7 @@
+# Project-scoped settings; model selection inherits the current session.
+sandbox_mode = "workspace-write"
+model_reasoning_effort = "xhigh"
+
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 2

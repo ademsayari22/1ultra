@@ -1,0 +1,302 @@
+[
+  {
+    "id": "F01",
+    "phase": 0,
+    "title": "Record available billing facts and missing questions; unknown dates are allowed",
+    "owner": "Adem",
+    "priority": 100,
+    "status": "blocked_on_owner",
+    "depends_on": [],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 45
+  },
+  {
+    "id": "F02",
+    "phase": 0,
+    "title": "Prepare factual payment follow-up or information request from known facts",
+    "owner": "ultra_finance",
+    "priority": 95,
+    "status": "blocked",
+    "depends_on": [
+      "F01"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 20
+  },
+  {
+    "id": "F03",
+    "phase": 0,
+    "title": "Contact payment handler and record response/date",
+    "owner": "Adem",
+    "priority": 94,
+    "status": "blocked",
+    "depends_on": [
+      "F02"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 15
+  },
+  {
+    "id": "S01",
+    "phase": 0,
+    "title": "Select one small service and confirm weekly capacity",
+    "owner": "Adem",
+    "priority": 90,
+    "status": "todo",
+    "depends_on": [],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 30
+  },
+  {
+    "id": "S02",
+    "phase": 0,
+    "title": "Prepare one permitted/synthetic service example",
+    "owner": "ultra_delivery",
+    "priority": 88,
+    "status": "blocked",
+    "depends_on": [
+      "S01"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 90
+  },
+  {
+    "id": "Q00",
+    "phase": 0,
+    "title": "Check the service example against its source and verify explainability",
+    "owner": "ultra_qa",
+    "priority": 87,
+    "status": "blocked",
+    "depends_on": [
+      "S02"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 20
+  },
+  {
+    "id": "R01",
+    "phase": 1,
+    "title": "Recheck the four public service prospects",
+    "owner": "ultra_research",
+    "priority": 85,
+    "status": "todo",
+    "depends_on": [],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 30
+  },
+  {
+    "id": "R02",
+    "phase": 1,
+    "title": "Provide five warm contacts or introduction routes",
+    "owner": "Adem",
+    "priority": 84,
+    "status": "blocked_on_owner",
+    "depends_on": [],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 30
+  },
+  {
+    "id": "S03",
+    "phase": 1,
+    "title": "Draft a first small contact batch from verified public or warm contacts",
+    "owner": "ultra_sales",
+    "priority": 82,
+    "status": "blocked",
+    "depends_on": [
+      "S01",
+      "Q00",
+      "R01"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 30
+  },
+  {
+    "id": "C01",
+    "phase": 1,
+    "title": "Contact buyers, hold conversations and record actual outcomes or no reply",
+    "owner": "Adem",
+    "priority": 80,
+    "status": "blocked",
+    "depends_on": [
+      "Q01"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 60
+  },
+  {
+    "id": "Q01",
+    "phase": 1,
+    "title": "Check tailored sales claims and scope before founder sends",
+    "owner": "ultra_qa",
+    "priority": 78,
+    "status": "blocked",
+    "depends_on": [
+      "Q00",
+      "S03"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 20
+  },
+  {
+    "id": "C02",
+    "phase": 1,
+    "title": "Inspect one client sample and agree bounded scope/price",
+    "owner": "Adem",
+    "priority": 76,
+    "status": "blocked",
+    "depends_on": [
+      "C01",
+      "Q01"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 20
+  },
+  {
+    "id": "F04",
+    "phase": 1,
+    "title": "Record agreed terms and evidence that the start condition is fulfilled",
+    "owner": "Adem",
+    "priority": 74,
+    "status": "blocked",
+    "depends_on": [
+      "C02"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 15
+  },
+  {
+    "id": "D01",
+    "phase": 2,
+    "title": "Prepare the scoped job and source-linked output",
+    "owner": "ultra_delivery",
+    "priority": 72,
+    "status": "blocked",
+    "depends_on": [
+      "F04"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": null
+  },
+  {
+    "id": "Q02",
+    "phase": 2,
+    "title": "Independently check agreed fields and exception handling",
+    "owner": "ultra_qa",
+    "priority": 70,
+    "status": "blocked",
+    "depends_on": [
+      "D01"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": null
+  },
+  {
+    "id": "D02",
+    "phase": 2,
+    "title": "Review/release the output and obtain actual acceptance",
+    "owner": "Adem",
+    "priority": 68,
+    "status": "blocked",
+    "depends_on": [
+      "Q02"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 30
+  },
+  {
+    "id": "F05",
+    "phase": 2,
+    "title": "Collect/record balance and total time/costs",
+    "owner": "Adem",
+    "priority": 66,
+    "status": "blocked",
+    "depends_on": [
+      "D02"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 20
+  },
+  {
+    "id": "P01",
+    "phase": 3,
+    "title": "Ask paid client about recurring volume/need",
+    "owner": "Adem",
+    "priority": 60,
+    "status": "blocked",
+    "depends_on": [
+      "F05"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 15
+  },
+  {
+    "id": "P02",
+    "phase": 3,
+    "title": "Prepare capped automation/support proposal from actual need",
+    "owner": "ultra_sales",
+    "priority": 58,
+    "status": "blocked",
+    "depends_on": [
+      "P01"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 30
+  },
+  {
+    "id": "R03",
+    "phase": 4,
+    "title": "After owner expansion/pivot decision, research up to five agency/remote prospects using checked permitted proof",
+    "owner": "ultra_research",
+    "priority": 45,
+    "status": "blocked",
+    "depends_on": [
+      "Q00"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 60
+  },
+  {
+    "id": "E01",
+    "phase": 0,
+    "title": "Check support-role requirements and actual start/payday",
+    "owner": "Adem",
+    "priority": 40,
+    "status": "todo",
+    "depends_on": [],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 30
+  },
+  {
+    "id": "SIM01",
+    "phase": 0,
+    "title": "Run one fictional scope/review rehearsal",
+    "owner": "ultra_ops",
+    "priority": 20,
+    "status": "todo",
+    "depends_on": [],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 45
+  }
+]

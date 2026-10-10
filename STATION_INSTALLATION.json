@@ -1,0 +1,84 @@
+{
+  "installed_on": "2026-10-05",
+  "launcher": "python3 scripts/station.py",
+  "url": "http://127.0.0.1:8541",
+  "classic_path": "/classic/",
+  "node_minimum_major": 20,
+  "python_minimum": "3.10",
+  "upstream_revision": "e0a36dcd31787248b877aea01a6e53741012bc46",
+  "models_enabled": true,
+  "outbound_enabled": false,
+  "schedulers_enabled": false,
+  "business_facts_changed_by_installation": false,
+  "source_manifest": "station/UPSTREAM.json",
+  "guide": "docs/ops/STATION.md",
+  "verification": {
+    "python_tests": 132,
+    "adapted_javascript_tests": 11,
+    "copied_record_http_checks": 13,
+    "browser_interaction_checks": 14,
+    "browser_viewports": [
+      "1440x1000",
+      "1024x900",
+      "390x844"
+    ],
+    "console_errors": 0,
+    "external_requests": 0,
+    "live_provider_tested": true,
+    "upstream_full_suite_claimed_passing": false,
+    "source_import_count": 2394,
+    "expected_http_refusals": 2,
+    "browser_suite": "tests/station-experience-browser.cjs",
+    "latest_report": "runs/station-qa-20261005-reports/result.json",
+    "agent_fixture_browser_checks": 12,
+    "agent_live_test_status": "One explicitly approved Codex CLI pitch completed; output validated and remains unsent for owner review",
+    "agent_payload_for_owner_review": "runs/agent-20261005T174901Z-1930c646/prompt.md",
+    "agent_browser_screenshots": "/tmp/1ultra-report-qa",
+    "agent_live_test_scope": "Installed existing-account CLI and full main-interface report orchestration; upstream provider adapters, live classic orchestration and other live specialist roles remain untested",
+    "agent_live_test_run": "runs/agent-20261005T174901Z-1930c646",
+    "agent_live_test_usage": {
+      "input_tokens": 11699,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 430,
+      "reasoning_output_tokens": 0
+    },
+    "live_ui_provider_tested": true,
+    "live_ui_test_status": "Passed one owner-approved browser-launched Sales report; automatic report receipt, reload recovery and collection refresh verified; original emergency stop restored",
+    "report_workflow": "One click; saved report loaded into interface; collection automatically refreshed; same-tab reload recovers existing receipt without replay",
+    "live_ui_test_run": "runs/agent-20261005T185447Z-01ea2530",
+    "live_ui_test_evidence": "runs/station-qa-20261005-reports/live-ui.json",
+    "live_ui_test_usage": {
+      "input_tokens": 14503,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 398,
+      "reasoning_output_tokens": 0
+    },
+    "agent_settings_report": "runs/station-qa-20261005-agent-settings/result.json",
+    "agent_settings_live_inference_tested": false,
+    "agent_settings_cli_override_parsed": true
+  },
+  "business_xp_at_installation": 0,
+  "active_tunisia_discoveries": 20,
+  "last_ui_update": "2026-10-05-agent-settings-and-xhigh",
+  "model_execution": "Manual existing-account Codex CLI judgment; upstream provider routes remain disabled",
+  "agent_defaults": {
+    "reasoning_effort": "xhigh",
+    "model": "CLI default",
+    "skills": {
+      "research": [
+        "ultra-prospect"
+      ],
+      "sales": [
+        "ultra-sales"
+      ],
+      "delivery": [
+        "ultra-deliver"
+      ],
+      "qa": []
+    },
+    "mandatory_role_instructions": true,
+    "settings_path": "Crew > Settings & skills"
+  }
+}

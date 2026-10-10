@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "contacts": [],
+  "events": [],
+  "followups": [],
+  "signals": [],
+  "proofs": [
+    {
+      "id": "proof-2fa83a878544",
+      "lead_id": "zaatir",
+      "created_at": "2026-10-05T19:57:12.696201+00:00",
+      "offer": "documents",
+      "path": "runs/script-20261005T195712Z-3b6acf94/report.md",
+      "run_id": "script-20261005T195712Z-3b6acf94",
+      "source_version": "892e0565db263494e0ba6622e88f1637a54024624e8c5fd334e13e5df55cfed0",
+      "checks": [
+        {
+          "name": "Synthetic input disclosed",
+          "passed": true
+        },
+        {
+          "name": "Source retained with output",
+          "passed": true
+        },
+        {
+          "name": "Relevant exception or website change checked",
+          "passed": true
+        }
+      ],
+      "reviewed": false,
+      "permission": "synthetic"
+    }
+  ],
+  "variants": [],
+  "experiments": [],
+  "weights": {
+    "fit": 40,
+    "evidence": 25,
+    "contact": 20,
+    "freshness": 15
+  },
+  "weights_version": 1,
+  "history": [
+    {
+      "at": "2026-10-05T19:57:12.697242+00:00",
+      "action": "proof",
+      "id": "proof-2fa83a878544",
+      "before_version": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "comptes-consulting-owed",
+    "mode": "real",
+    "description": "Comptes Audit consulting payment owed",
+    "status": "owed",
+    "amount_minor": null,
+    "currency": "TND",
+    "earned_minor": null,
+    "invoice_reference": null,
+    "work_acceptance_evidence": null,
+    "agreed_due_date": null,
+    "receipt_evidence": null,
+    "basis": "User confirmed payment owed on 2026-10-04"
+  }
+]

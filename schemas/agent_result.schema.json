@@ -1,0 +1,93 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "role",
+    "mode",
+    "summary",
+    "evidence",
+    "actions",
+    "owner_actions",
+    "unknowns"
+  ],
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "ultra_ops",
+        "ultra_research",
+        "ultra_sales",
+        "ultra_delivery",
+        "ultra_qa",
+        "ultra_finance",
+        "ultra_customer"
+      ]
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "simulation"
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "claim"
+        ],
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "claim": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "text"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "research",
+              "draft",
+              "local_check",
+              "needs_owner"
+            ]
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "owner_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

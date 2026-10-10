@@ -1,0 +1,1 @@
+Archived at the owner’s request: refocus on finding and convincing Tunisian B2B leads. The consulting receivable was removed from active records; this does not establish payment, cancellation or forgiveness. Billing and employment/remote discoveries remain recoverable here. Budget and complete prior records are preserved.

@@ -1,0 +1,14 @@
+{
+  "name": "1ultra-station",
+  "private": true,
+  "version": "0.1.0",
+  "license": "MIT",
+  "scripts": {
+    "start": "node sidecar/index.js",
+    "test": "node --test ../tests/station-policy.test.cjs ../tests/station-state.test.cjs ../tests/station-workflows.test.cjs ../tests/station-experience.test.cjs ../tests/station-ui-smoke.cjs"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "undici": "6.28.1"
+  }
+}

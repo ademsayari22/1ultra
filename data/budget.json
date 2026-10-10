@@ -1,0 +1,56 @@
+{
+  "incremental_spend_limit_tnd": 0,
+  "status": "existing_tools_only",
+  "basis": "Owner requested existing tools and scripts where possible; no incremental purchases authorized",
+  "live_timeout_seconds": 180,
+  "new_purchase_authorized": false,
+  "codex_usage_cost": "Not known; live calls consume existing account usage",
+  "available_hours_this_week": 30,
+  "minimum_cash_needed_minor": null,
+  "cash_currency": "TND",
+  "cash_needed_by": null,
+  "receiving_method": null,
+  "prefer_scripts": true,
+  "daily_minutes": null,
+  "defer_billing": true,
+  "daily_minutes_on": "2026-10-05",
+  "history": [
+    {
+      "at": "2026-10-04T23:58:28.871425+00:00",
+      "before": {
+        "incremental_spend_limit_tnd": 0,
+        "status": "existing_tools_only",
+        "basis": "Owner requested existing tools and scripts where possible; no incremental purchases authorized",
+        "live_timeout_seconds": 180,
+        "new_purchase_authorized": false,
+        "codex_usage_cost": "Not known; live calls consume existing account usage",
+        "available_hours_this_week": null,
+        "minimum_cash_needed_minor": null,
+        "cash_currency": "TND",
+        "cash_needed_by": null,
+        "receiving_method": null,
+        "prefer_scripts": true,
+        "daily_minutes": null,
+        "defer_billing": true
+      },
+      "after": {
+        "incremental_spend_limit_tnd": 0,
+        "status": "existing_tools_only",
+        "basis": "Owner requested existing tools and scripts where possible; no incremental purchases authorized",
+        "live_timeout_seconds": 180,
+        "new_purchase_authorized": false,
+        "codex_usage_cost": "Not known; live calls consume existing account usage",
+        "available_hours_this_week": 30,
+        "minimum_cash_needed_minor": null,
+        "cash_currency": "TND",
+        "cash_needed_by": null,
+        "receiving_method": null,
+        "prefer_scripts": true,
+        "daily_minutes": null,
+        "defer_billing": true,
+        "daily_minutes_on": "2026-10-05"
+      }
+    }
+  ],
+  "updated_at": "2026-10-04T23:58:28.871425+00:00"
+}

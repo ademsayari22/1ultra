@@ -1,0 +1,59 @@
+{
+  "checked_on": "2026-10-05",
+  "scope": "Open-source lead sourcing tools for a Tunisia-only B2B campaign",
+  "kind": "Tool comparison; no prospect import, sending, installation or live provider test",
+  "recommendation": "Start with Google Maps Scraper for discovery and Crawl4AI for website extraction; assess a small Tunisia batch before integration.",
+  "tools": [
+    {
+      "name": "Google Maps Scraper",
+      "source_url": "https://github.com/gosom/google-maps-scraper",
+      "license": "MIT",
+      "observed_text": "Extract Google Maps business leads, emails, reviews, phone numbers, websites, ratings, coordinates",
+      "role": "Discover local businesses and published contact routes",
+      "unknowns": [
+        "Tunisia-specific completeness and contact freshness not benchmarked"
+      ]
+    },
+    {
+      "name": "Crawl4AI",
+      "source_url": "https://github.com/unclecode/crawl4ai",
+      "license": "Apache-2.0; see repository attribution instructions",
+      "observed_text": "CSS and XPath schemas: fast extraction with no LLM",
+      "role": "Extract company facts and contacts from supplied website or directory URLs",
+      "unknowns": [
+        "Self-hosted library is not a general web-search API"
+      ]
+    },
+    {
+      "name": "OpenEnrich",
+      "source_url": "https://github.com/openenrich/openenrich",
+      "license": "AGPL-3.0",
+      "observed_text": "Free but network-dependent: proving one specific mailbox exists needs an SMTP conversation on port 25",
+      "role": "Optional email finding and checks after company discovery",
+      "unknowns": [
+        "Mail-server checks may be inconclusive; inferred addresses are not published-contact evidence"
+      ]
+    },
+    {
+      "name": "ScrapeGraphAI",
+      "source_url": "https://github.com/ScrapeGraphAI/Scrapegraph-ai",
+      "license": "MIT",
+      "observed_text": "Bring your own (OpenAI, Groq, Gemini, Azure, local via Ollama)",
+      "role": "Prompt-driven website extraction",
+      "unknowns": [
+        "Needs a local model or external model usage; managed API is separate and paid"
+      ]
+    },
+    {
+      "name": "OpenGTM",
+      "source_url": "https://github.com/buildingopen/opengtm",
+      "license": "MIT",
+      "observed_text": "Find companies by industry + region via Gemini + Google Search grounding",
+      "role": "Combined discovery, company research, scoring and draft preparation",
+      "unknowns": [
+        "Gemini API required; documented message languages English and German need adaptation for current campaign",
+        "Publisher scoring signals are hypotheses, not confirmed buyer need or budget"
+      ]
+    }
+  ]
+}

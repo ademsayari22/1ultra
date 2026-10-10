@@ -1,0 +1,13 @@
+{
+  "type": "object", "additionalProperties": false,
+  "required": ["summary", "answer", "pitch", "evidence", "unknowns", "owner_actions"],
+  "properties": {
+    "summary": {"type": "string"}, "answer": {"type": "string"},
+    "pitch": {"anyOf": [{"type": "null"}, {"type": "object", "additionalProperties": false,
+      "required": ["subject", "body"], "properties": {"subject": {"type": "string"}, "body": {"type": "string"}}}]},
+    "evidence": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+      "required": ["source", "claim"], "properties": {"source": {"type": "string"}, "claim": {"type": "string"}}}},
+    "unknowns": {"type": "array", "items": {"type": "string"}},
+    "owner_actions": {"type": "array", "items": {"type": "string"}}
+  }
+}

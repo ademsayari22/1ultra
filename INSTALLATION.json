@@ -1,0 +1,106 @@
+{
+  "installed_at_utc": "2026-10-04T09:18:11.850818+00:00",
+  "destination": "/home/adem/1ultra",
+  "source_file_count": 48,
+  "source_sha256": {
+    ".agents/skills/ultra-deliver/SKILL.md": "5bb54e848c3bb2f153d9d9c794ddd0a77f2598ad1f777337e98a74f30fd4673a",
+    ".agents/skills/ultra-prospect/SKILL.md": "5a7d5825b43bbb03781dc9cf35d4faed809ac7221de52dd6ec016e0e243f8ce8",
+    ".agents/skills/ultra-sales/SKILL.md": "c7bcc10b69defff5931e8d15e93bc31909c1b8cd07b16154b460e2a7b2aaebb1",
+    ".agents/skills/ultra-simulate/SKILL.md": "d08a1cc014375800c6ac055a54b96b92c73dd2103145ef80fb1677c011bf6432",
+    ".agents/skills/ultra-start/SKILL.md": "5869027a5f4bba97a395cd91b77407e641f94a020d4ff368ca9955fc07031b91",
+    ".codex/agents/ultra_customer.toml": "d0112d196f3607d0d59ad306536b7141fc2c3f1ccff262696dad797b0f6e2cff",
+    ".codex/agents/ultra_delivery.toml": "7dc18a4bf066623fabe4c99ccc85cbe732d9b429d64d552587efb019c5f17c99",
+    ".codex/agents/ultra_finance.toml": "e6f0252d52ca60781417bec1b69b4c4561bfcb1fd87ac1065335e09832c4104a",
+    ".codex/agents/ultra_ops.toml": "8741d5723e169a3c48d60d99e0296b5a9c36025554ee64826ef6932a10649b47",
+    ".codex/agents/ultra_qa.toml": "7dec47708f612c60a8bbbf9df3e2ae0efcac6ec07c658fd1744f74ce95be7160",
+    ".codex/agents/ultra_research.toml": "8e86dbd059ab2ad7d78e0259eb0759b0915ab5b3ab0d55fb2634bb79ff628b52",
+    ".codex/agents/ultra_sales.toml": "018f9d84e36f8f90efe94dde4136a48d6bee8fb8ca746d4ad7141046c63319b0",
+    ".codex/config.toml": "46a177b295881375051f3152862cfad4f5bc73c887a640c2120a3bb9489a18b5",
+    ".gitignore": "119b4514a80114ce38c03e039a7ce9fb14127a7f1855a8e782a85df8c4a1d4cf",
+    "AGENTS.md": "b7ca0abe7e807899aaaeeaead3d1092f441c1c678047842d5fe8cd23c06ff32f",
+    "README.md": "fad77d03420f90890443fb335c79efbe791f96984a36bf959be101bcb86cda82",
+    "STATE.md": "4a45dd467fa595bf9a90ca386285de9f29e7e5d4258950034a3f4e9c7cd956d0",
+    "context/FOUNDER.md": "2f4d512120d16749e07a26c5661c5a015a30573114263458d07c919f9602c209",
+    "context/SOURCES.md": "c604cf838cccea024858b9edf7aae19c96d08912863b7205358dadf825ee67f3",
+    "data/README.md": "3fb0030e3673a35b9c6d96fe3cb6a421f274cf411856f3aa6ccff6b1e7c16bd5",
+    "data/budget.json": "e1ac4171e366c2472703ac2ebbe9d9dd713976965c26da15182f81ce9b353fc0",
+    "data/exclusions.json": "6fe4d3d9655f666d8bd10b63058c4ef927168c9e1cd12521381283d2b4a2233d",
+    "data/leads.json": "a0797c52a84f9b180392696c033e10b4da8f2c6ea8f77097a1c930ab98dec854",
+    "data/payments.json": "b133cd478bc8cf747f73df388e38946b57961b835f3de57858584bdf77b7029a",
+    "data/tasks.json": "aaa00999fc060f555f470caf43aeea0e3e3d5134084ef43c4bf0605ac7a7517e",
+    "delivery/templates/ACCEPTANCE.md": "c5693aca1361dc699fd8e3eeb4cac00fee24d1a0f1acbe59157536d584c8aac7",
+    "delivery/templates/HANDOVER.md": "98e0534a2caf14dd1acd07210d5a71fe9738c4a8acf015500e0469f5f22bf59c",
+    "delivery/templates/KICKOFF.md": "5db609ffb6019c9284360e5bff0849edc4c46e2a4b1bd2fb8e5713b67043b974",
+    "docs/business/30_DAY_PLAN.md": "4d3de5082e431c603014a1848cc4e7ad01b1b7c3e18e3ba20a12745edc41e533",
+    "docs/business/DESIGN.md": "ae176489c525ad3450d57d1fa35268fdeebfda14830f21fd7b48fd21580a8739",
+    "docs/business/OFFERS.md": "f7357f57981eb3f1d44703df7c28f1c3ec95d2bf03d269cde5566e86fbbaf765",
+    "docs/ops/AGENT_WORKFLOW.md": "d5eacb28eb98bc96410c8bac924122d62f83564ad0deaf0bde844fe1270378ea",
+    "docs/ops/AUTOMATION_PLAN.md": "7ec72b14329e4fcace9aa5ed3350a719592f075ada4e0c3e52f90c034bf7ff48",
+    "docs/ops/VERIFICATION.md": "0b4a9e190b896063c01b744352239ffaa053c23a20e601d91a0082351d1f8b11",
+    "docs/reference/CODEX_SETUP.md": "f38833632f8f755e408302c5a7a1f1f94234f9ed7f37e20a56a685b0a9ac06ea",
+    "finance/payment_follow_up.md": "90c4fccc6bd14a0e1e0c48857b3328e39c52d13bf134a7cbddc6a5b8900ace93",
+    "research/SNAPSHOT_2026-10-04.md": "6a31d4c08c068af2d17c70a409aaf1f92861146f2a3221b91cce9638a2ac4dbd",
+    "runs/.gitkeep": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+    "sales/templates/OUTREACH_FR.md": "1a18105f291a0a7a577eddeffa576f9a8f11ab3d5676f808fb65f97eef9ee1e3",
+    "sales/templates/PROPOSAL.md": "6690a18a7fd7113059a5a82d23dbd179f341d505eb93295b6538c2c50fb96a2a",
+    "sales/templates/REMOTE_EN.md": "7d8a381d11119c1bc2d16c4fe72890d685f73a2727c8d4ff805de368677b7767",
+    "schemas/agent_result.schema.json": "bb1c9c1019cd19f1cbf19fdcce38162d068e5a4c471ff7969c1973004ce9b741",
+    "scripts/ultra.py": "1c00dc826c00e7547027ac2bdded1647e831021e3d985006a1f96df9d24c3e72",
+    "simulations/scenarios.json": "b7725520a8cac2e5bcc7c437ecf42e6abc114ca8b9e83e2ffd6c6ce58b0aef04",
+    "simulations/worked-example/QA.md": "7562109fcdb0ed75a3ea167807d8839f3cdb2461cf766aa837f354d85e6ed275",
+    "simulations/worked-example/REHEARSAL.md": "6e2554a3952a7861416d87b713396d73a2b31985a00351417df5aa20b6b63d08",
+    "simulations/worked-example/run.json": "923d139e9069edbc5328e4c37b052ed881055d10e89a46c2432778217d830a0f",
+    "tests/test_ultra.py": "bfa01d86dd9e946760a43ccbd4c5810743f1004008e035859090b49306a66995"
+  },
+  "local_git_initialized": true,
+  "git_branch": "main",
+  "git_commit_created": false,
+  "global_codex_config_changed": false,
+  "unit_tests": {
+    "exit_code": 0,
+    "output": "----------------------------------------------------------------------\nRan 18 tests in 0.037s\n\nOK"
+  },
+  "destination_checks": [
+    {
+      "command": [
+        "python3",
+        "scripts/ultra.py",
+        "status"
+      ],
+      "exit_code": 0,
+      "output": "1Ultra real records\nReceived cash by currency:\n- No evidenced cash receipts recorded\nOwed payments with unknown amount: 1\nReceipt claims without complete evidence: 0\nExcluded fictional financial rows: 0\nTasks: 22 total; 0 done\nPublic leads/discoveries: 8; discovery is not a sale/application\nIncremental spending limit: 0 TND (existing_tools_only); not purchase authorization"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/ultra.py",
+        "prepare"
+      ],
+      "exit_code": 0,
+      "output": "/home/adem/1ultra/runs/daily-20261004T091811Z-7958879a"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/ultra.py",
+        "simulate",
+        "messy-pilot"
+      ],
+      "exit_code": 0,
+      "output": "/home/adem/1ultra/runs/simulation-20261004T091811Z-97c6b275"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/ultra.py",
+        "agent",
+        "ultra_sales"
+      ],
+      "exit_code": 0,
+      "output": "/home/adem/1ultra/runs/agent-20261004T091811Z-bcb4c65d"
+    }
+  ],
+  "real_data_unchanged": true,
+  "native_cli_live_model_invoked": false,
+  "external_actions_performed": false
+}

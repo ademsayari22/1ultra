@@ -1,0 +1,26 @@
+{
+  "mode": "simulation",
+  "scenario": "messy-pilot",
+  "method": "Existing project-building session: customer subagent, coordinator sales/delivery/finance drafts, separate QA subagent",
+  "native_cli_invoked": false,
+  "real_outcome": false,
+  "model_roleplay_performed": true,
+  "data_sha256_before": {
+    "data/README.md": "3fb0030e3673a35b9c6d96fe3cb6a421f274cf411856f3aa6ccff6b1e7c16bd5",
+    "data/budget.json": "e1ac4171e366c2472703ac2ebbe9d9dd713976965c26da15182f81ce9b353fc0",
+    "data/payments.json": "b133cd478bc8cf747f73df388e38946b57961b835f3de57858584bdf77b7029a",
+    "data/exclusions.json": "6fe4d3d9655f666d8bd10b63058c4ef927168c9e1cd12521381283d2b4a2233d",
+    "data/tasks.json": "aaa00999fc060f555f470caf43aeea0e3e3d5134084ef43c4bf0605ac7a7517e",
+    "data/leads.json": "a0797c52a84f9b180392696c033e10b4da8f2c6ea8f77097a1c930ab98dec854"
+  },
+  "qa_result": "pass_for_owner_review_of_fictional_scope",
+  "data_sha256_after": {
+    "data/README.md": "3fb0030e3673a35b9c6d96fe3cb6a421f274cf411856f3aa6ccff6b1e7c16bd5",
+    "data/budget.json": "e1ac4171e366c2472703ac2ebbe9d9dd713976965c26da15182f81ce9b353fc0",
+    "data/payments.json": "b133cd478bc8cf747f73df388e38946b57961b835f3de57858584bdf77b7029a",
+    "data/exclusions.json": "6fe4d3d9655f666d8bd10b63058c4ef927168c9e1cd12521381283d2b4a2233d",
+    "data/tasks.json": "aaa00999fc060f555f470caf43aeea0e3e3d5134084ef43c4bf0605ac7a7517e",
+    "data/leads.json": "a0797c52a84f9b180392696c033e10b4da8f2c6ea8f77097a1c930ab98dec854"
+  },
+  "real_data_unchanged": true
+}

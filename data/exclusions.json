@@ -1,0 +1,494 @@
+{
+  "source_updated": "2026-09-20",
+  "basis": "Exclude all 103 listed employers company-wide, including aliases. Application statuses follow user reports/instructions; exact submission dates and confirmations are not established.",
+  "application_receipts_verified": false,
+  "companies": [
+    {
+      "company": "Dime",
+      "aliases": [
+        "DimeHealth",
+        "DimeHealth AI"
+      ]
+    },
+    {
+      "company": "Oxus",
+      "aliases": []
+    },
+    {
+      "company": "Fenrock AI",
+      "aliases": [
+        "Fenrock"
+      ]
+    },
+    {
+      "company": "Terrakotta",
+      "aliases": []
+    },
+    {
+      "company": "Accenture",
+      "aliases": []
+    },
+    {
+      "company": "Brain Co.",
+      "aliases": [
+        "BrainCo"
+      ]
+    },
+    {
+      "company": "Canonical",
+      "aliases": []
+    },
+    {
+      "company": "Unsiloed AI",
+      "aliases": [
+        "Unsiloed"
+      ]
+    },
+    {
+      "company": "Reducto",
+      "aliases": []
+    },
+    {
+      "company": "Mistral AI",
+      "aliases": [
+        "Mistral"
+      ]
+    },
+    {
+      "company": "DataSnipper",
+      "aliases": []
+    },
+    {
+      "company": "Klippa / Doxis",
+      "aliases": [
+        "Klippa",
+        "Doxis",
+        "SER Group"
+      ]
+    },
+    {
+      "company": "Extend",
+      "aliases": []
+    },
+    {
+      "company": "Fieldguide",
+      "aliases": []
+    },
+    {
+      "company": "Datalab",
+      "aliases": []
+    },
+    {
+      "company": "Rossum",
+      "aliases": []
+    },
+    {
+      "company": "Nanonets / Trail",
+      "aliases": [
+        "Nanonets",
+        "Trail"
+      ]
+    },
+    {
+      "company": "Stacks",
+      "aliases": []
+    },
+    {
+      "company": "MindBridge",
+      "aliases": []
+    },
+    {
+      "company": "Caseware",
+      "aliases": []
+    },
+    {
+      "company": "Affinda",
+      "aliases": []
+    },
+    {
+      "company": "Docsumo",
+      "aliases": []
+    },
+    {
+      "company": "Instabase",
+      "aliases": []
+    },
+    {
+      "company": "Mindee",
+      "aliases": []
+    },
+    {
+      "company": "Division5",
+      "aliases": []
+    },
+    {
+      "company": "Konfuzio",
+      "aliases": []
+    },
+    {
+      "company": "Esker",
+      "aliases": []
+    },
+    {
+      "company": "Bluebook AI",
+      "aliases": [
+        "Bluebook"
+      ]
+    },
+    {
+      "company": "Humai",
+      "aliases": []
+    },
+    {
+      "company": "Oqood",
+      "aliases": []
+    },
+    {
+      "company": "Al-Rushd",
+      "aliases": [
+        "Al Rushd",
+        "Alrushd"
+      ]
+    },
+    {
+      "company": "Pixemantic",
+      "aliases": []
+    },
+    {
+      "company": "Tergle",
+      "aliases": []
+    },
+    {
+      "company": "AutoSitu",
+      "aliases": [
+        "Arkhe"
+      ]
+    },
+    {
+      "company": "Zapier",
+      "aliases": []
+    },
+    {
+      "company": "LI.FI",
+      "aliases": [
+        "LIFI"
+      ]
+    },
+    {
+      "company": "THRYVE",
+      "aliases": []
+    },
+    {
+      "company": "ScaleX Innovation",
+      "aliases": [
+        "ScaleX"
+      ]
+    },
+    {
+      "company": "B2H",
+      "aliases": [
+        "B2H AI Solutions"
+      ]
+    },
+    {
+      "company": "ANB TALENTS",
+      "aliases": []
+    },
+    {
+      "company": "Centroid Solutions",
+      "aliases": []
+    },
+    {
+      "company": "EdenTNS",
+      "aliases": []
+    },
+    {
+      "company": "Ignite IT",
+      "aliases": []
+    },
+    {
+      "company": "Careernet",
+      "aliases": []
+    },
+    {
+      "company": "Hume AI",
+      "aliases": []
+    },
+    {
+      "company": "Huma",
+      "aliases": []
+    },
+    {
+      "company": "Pixeltable",
+      "aliases": []
+    },
+    {
+      "company": "Junior AI",
+      "aliases": [
+        "Junior.ai"
+      ]
+    },
+    {
+      "company": "InterSystems",
+      "aliases": []
+    },
+    {
+      "company": "Printerpix",
+      "aliases": []
+    },
+    {
+      "company": "SAP",
+      "aliases": []
+    },
+    {
+      "company": "noon",
+      "aliases": []
+    },
+    {
+      "company": "ByteDance",
+      "aliases": []
+    },
+    {
+      "company": "Harrington Starr",
+      "aliases": []
+    },
+    {
+      "company": "EatEasy",
+      "aliases": []
+    },
+    {
+      "company": "Max Accelerate Technology Group",
+      "aliases": [
+        "Max Accelerate"
+      ]
+    },
+    {
+      "company": "MultiBank Group",
+      "aliases": [
+        "MultiBank"
+      ]
+    },
+    {
+      "company": "Siemens Energy",
+      "aliases": []
+    },
+    {
+      "company": "Meydan Free Zone",
+      "aliases": []
+    },
+    {
+      "company": "Hire Rightt",
+      "aliases": []
+    },
+    {
+      "company": "WSP",
+      "aliases": []
+    },
+    {
+      "company": "Cigna Group",
+      "aliases": [
+        "Cigna"
+      ]
+    },
+    {
+      "company": "Amazon",
+      "aliases": []
+    },
+    {
+      "company": "Salesforce",
+      "aliases": []
+    },
+    {
+      "company": "Bain & Company",
+      "aliases": [
+        "Bain"
+      ]
+    },
+    {
+      "company": "OpenAI",
+      "aliases": []
+    },
+    {
+      "company": "G42",
+      "aliases": [
+        "Core42",
+        "Inception",
+        "M42",
+        "Presight"
+      ]
+    },
+    {
+      "company": "MBZUAI",
+      "aliases": []
+    },
+    {
+      "company": "Technology Innovation Institute",
+      "aliases": [
+        "TII"
+      ]
+    },
+    {
+      "company": "Hub71",
+      "aliases": []
+    },
+    {
+      "company": "Space42",
+      "aliases": []
+    },
+    {
+      "company": "Safe City Group",
+      "aliases": [
+        "Safe City"
+      ]
+    },
+    {
+      "company": "Brihati Global Edge Solutions",
+      "aliases": [
+        "Brihati"
+      ]
+    },
+    {
+      "company": "Artefact",
+      "aliases": []
+    },
+    {
+      "company": "InfoVision Middle East",
+      "aliases": [
+        "InfoVision"
+      ]
+    },
+    {
+      "company": "Zoomlion",
+      "aliases": []
+    },
+    {
+      "company": "DATAMAZE.AI",
+      "aliases": [
+        "DATAMAZE"
+      ]
+    },
+    {
+      "company": "Hays",
+      "aliases": []
+    },
+    {
+      "company": "Fuse Energy",
+      "aliases": []
+    },
+    {
+      "company": "Tandem Interim",
+      "aliases": []
+    },
+    {
+      "company": "Imperum",
+      "aliases": []
+    },
+    {
+      "company": "Wipro",
+      "aliases": []
+    },
+    {
+      "company": "Cosmos",
+      "aliases": []
+    },
+    {
+      "company": "Müller's Solutions",
+      "aliases": [
+        "Mullers Solutions"
+      ]
+    },
+    {
+      "company": "Dyson",
+      "aliases": []
+    },
+    {
+      "company": "Epergne Solutions",
+      "aliases": []
+    },
+    {
+      "company": "BlackStone eIT",
+      "aliases": []
+    },
+    {
+      "company": "HappyRobot",
+      "aliases": []
+    },
+    {
+      "company": "FIVE Hotels and Resorts",
+      "aliases": [
+        "FIVE Hotels"
+      ]
+    },
+    {
+      "company": "Finofo",
+      "aliases": []
+    },
+    {
+      "company": "Secure Engage",
+      "aliases": [
+        "SecureEngage"
+      ]
+    },
+    {
+      "company": "PolicyMe",
+      "aliases": []
+    },
+    {
+      "company": "Mila",
+      "aliases": []
+    },
+    {
+      "company": "EvenUp",
+      "aliases": []
+    },
+    {
+      "company": "GiT / GincoIT",
+      "aliases": [
+        "GiT",
+        "GincoIT",
+        "Ginco IT",
+        "git-me.ai"
+      ]
+    },
+    {
+      "company": "Kanban Studios F.Z.E",
+      "aliases": [
+        "Kanban Studios",
+        "Kanban Studios FZE"
+      ]
+    },
+    {
+      "company": "Lawis",
+      "aliases": []
+    },
+    {
+      "company": "Rezilens",
+      "aliases": []
+    },
+    {
+      "company": "Ultrassure",
+      "aliases": []
+    },
+    {
+      "company": "ShyftLabs",
+      "aliases": []
+    },
+    {
+      "company": "TYSAPA AI & Innovation",
+      "aliases": [
+        "TYSAPA",
+        "TYSAPA AI & INNOVATION SERVICES L.L.C."
+      ]
+    },
+    {
+      "company": "CGI",
+      "aliases": []
+    },
+    {
+      "company": "Compass Data and AI",
+      "aliases": [
+        "Compass Analytics"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1340 @@
+[
+  {
+    "id": "R01",
+    "phase": 0,
+    "title": "Review five sourced Tunisian B2B companies",
+    "owner": "ultra_research",
+    "priority": 100,
+    "status": "todo",
+    "depends_on": [],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 30,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056182+00:00",
+        "before": {
+          "id": "R01",
+          "phase": 1,
+          "title": "Recheck the four public service prospects",
+          "owner": "ultra_research",
+          "priority": 85,
+          "status": "todo",
+          "depends_on": [],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30
+        },
+        "after": {
+          "id": "R01",
+          "phase": 0,
+          "title": "Review five sourced Tunisian B2B companies",
+          "owner": "ultra_research",
+          "priority": 100,
+          "status": "todo",
+          "depends_on": [],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:14:31.056182+00:00"
+  },
+  {
+    "id": "R02",
+    "phase": 0,
+    "title": "Shortlist five relevant Tunisian companies",
+    "owner": "Adem",
+    "priority": 98,
+    "status": "blocked_on_owner",
+    "depends_on": [
+      "R01"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 30,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056229+00:00",
+        "before": {
+          "id": "R02",
+          "phase": 1,
+          "title": "Provide five warm contacts or introduction routes",
+          "owner": "Adem",
+          "priority": 84,
+          "status": "blocked_on_owner",
+          "depends_on": [],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30
+        },
+        "after": {
+          "id": "R02",
+          "phase": 0,
+          "title": "Shortlist five relevant Tunisian companies",
+          "owner": "Adem",
+          "priority": 98,
+          "status": "blocked_on_owner",
+          "depends_on": [
+            "R01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:14:31.056229+00:00"
+  },
+  {
+    "id": "R04",
+    "phase": 0,
+    "title": "Source another bounded Tunisia batch with Apollo or public pages",
+    "owner": "ultra_research",
+    "priority": 82,
+    "depends_on": [
+      "R01"
+    ],
+    "status": "todo",
+    "completion_evidence": null,
+    "owner_confirmed": false,
+    "next_action_on": null,
+    "timebox_minutes": 30
+  },
+  {
+    "id": "S01",
+    "phase": 1,
+    "title": "Choose one small offer and confirm weekly capacity",
+    "owner": "Adem",
+    "priority": 94,
+    "status": "todo",
+    "depends_on": [],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 30,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056257+00:00",
+        "before": {
+          "id": "S01",
+          "phase": 0,
+          "title": "Select one small service and confirm weekly capacity",
+          "owner": "Adem",
+          "priority": 90,
+          "status": "todo",
+          "depends_on": [],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30
+        },
+        "after": {
+          "id": "S01",
+          "phase": 1,
+          "title": "Choose one small offer and confirm weekly capacity",
+          "owner": "Adem",
+          "priority": 94,
+          "status": "todo",
+          "depends_on": [],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:14:31.056257+00:00"
+  },
+  {
+    "id": "S02",
+    "phase": 1,
+    "title": "Prepare one permitted or synthetic proof example",
+    "owner": "ultra_delivery",
+    "priority": 92,
+    "status": "todo",
+    "depends_on": [
+      "S01"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 90,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056283+00:00",
+        "before": {
+          "id": "S02",
+          "phase": 0,
+          "title": "Prepare one permitted/synthetic service example",
+          "owner": "ultra_delivery",
+          "priority": 88,
+          "status": "blocked",
+          "depends_on": [
+            "S01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 90
+        },
+        "after": {
+          "id": "S02",
+          "phase": 1,
+          "title": "Prepare one permitted or synthetic proof example",
+          "owner": "ultra_delivery",
+          "priority": 92,
+          "status": "blocked",
+          "depends_on": [
+            "S01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 90
+        }
+      },
+      {
+        "at": "2026-10-05T00:15:02.441284+00:00",
+        "before": {
+          "id": "S02",
+          "phase": 1,
+          "title": "Prepare one permitted or synthetic proof example",
+          "owner": "ultra_delivery",
+          "priority": 92,
+          "status": "blocked",
+          "depends_on": [
+            "S01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 90,
+          "updated_at": "2026-10-05T00:14:31.056283+00:00"
+        },
+        "after": {
+          "id": "S02",
+          "phase": 1,
+          "title": "Prepare one permitted or synthetic proof example",
+          "owner": "ultra_delivery",
+          "priority": 92,
+          "status": "todo",
+          "depends_on": [
+            "S01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 90,
+          "updated_at": "2026-10-05T00:14:31.056283+00:00"
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:15:02.441284+00:00"
+  },
+  {
+    "id": "Q00",
+    "phase": 1,
+    "title": "Check the proof against its source and explain the output",
+    "owner": "ultra_qa",
+    "priority": 90,
+    "status": "todo",
+    "depends_on": [
+      "S02"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 20,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056310+00:00",
+        "before": {
+          "id": "Q00",
+          "phase": 0,
+          "title": "Check the service example against its source and verify explainability",
+          "owner": "ultra_qa",
+          "priority": 87,
+          "status": "blocked",
+          "depends_on": [
+            "S02"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 20
+        },
+        "after": {
+          "id": "Q00",
+          "phase": 1,
+          "title": "Check the proof against its source and explain the output",
+          "owner": "ultra_qa",
+          "priority": 90,
+          "status": "blocked",
+          "depends_on": [
+            "S02"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 20
+        }
+      },
+      {
+        "at": "2026-10-05T00:15:02.441355+00:00",
+        "before": {
+          "id": "Q00",
+          "phase": 1,
+          "title": "Check the proof against its source and explain the output",
+          "owner": "ultra_qa",
+          "priority": 90,
+          "status": "blocked",
+          "depends_on": [
+            "S02"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 20,
+          "updated_at": "2026-10-05T00:14:31.056310+00:00"
+        },
+        "after": {
+          "id": "Q00",
+          "phase": 1,
+          "title": "Check the proof against its source and explain the output",
+          "owner": "ultra_qa",
+          "priority": 90,
+          "status": "todo",
+          "depends_on": [
+            "S02"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 20,
+          "updated_at": "2026-10-05T00:14:31.056310+00:00"
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:15:02.441355+00:00"
+  },
+  {
+    "id": "S03",
+    "phase": 1,
+    "title": "Prepare three company-specific French pitches",
+    "owner": "ultra_sales",
+    "priority": 88,
+    "status": "todo",
+    "depends_on": [
+      "R02",
+      "S01",
+      "Q00"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 30,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056333+00:00",
+        "before": {
+          "id": "S03",
+          "phase": 1,
+          "title": "Draft a first small contact batch from verified public or warm contacts",
+          "owner": "ultra_sales",
+          "priority": 82,
+          "status": "blocked",
+          "depends_on": [
+            "S01",
+            "Q00",
+            "R01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30
+        },
+        "after": {
+          "id": "S03",
+          "phase": 1,
+          "title": "Prepare three company-specific French pitches",
+          "owner": "ultra_sales",
+          "priority": 88,
+          "status": "blocked",
+          "depends_on": [
+            "R02",
+            "S01",
+            "Q00"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30
+        }
+      },
+      {
+        "at": "2026-10-05T00:15:02.441408+00:00",
+        "before": {
+          "id": "S03",
+          "phase": 1,
+          "title": "Prepare three company-specific French pitches",
+          "owner": "ultra_sales",
+          "priority": 88,
+          "status": "blocked",
+          "depends_on": [
+            "R02",
+            "S01",
+            "Q00"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30,
+          "updated_at": "2026-10-05T00:14:31.056333+00:00"
+        },
+        "after": {
+          "id": "S03",
+          "phase": 1,
+          "title": "Prepare three company-specific French pitches",
+          "owner": "ultra_sales",
+          "priority": 88,
+          "status": "todo",
+          "depends_on": [
+            "R02",
+            "S01",
+            "Q00"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30,
+          "updated_at": "2026-10-05T00:14:31.056333+00:00"
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:15:02.441408+00:00"
+  },
+  {
+    "id": "Q01",
+    "phase": 1,
+    "title": "Review three pitches for truthful observations and bounded claims",
+    "owner": "ultra_qa",
+    "priority": 86,
+    "status": "todo",
+    "depends_on": [
+      "S03",
+      "Q00"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 20,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056358+00:00",
+        "before": {
+          "id": "Q01",
+          "phase": 1,
+          "title": "Check tailored sales claims and scope before founder sends",
+          "owner": "ultra_qa",
+          "priority": 78,
+          "status": "blocked",
+          "depends_on": [
+            "Q00",
+            "S03"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 20
+        },
+        "after": {
+          "id": "Q01",
+          "phase": 1,
+          "title": "Review three pitches for truthful observations and bounded claims",
+          "owner": "ultra_qa",
+          "priority": 86,
+          "status": "blocked",
+          "depends_on": [
+            "S03",
+            "Q00"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 20
+        }
+      },
+      {
+        "at": "2026-10-05T00:15:02.441460+00:00",
+        "before": {
+          "id": "Q01",
+          "phase": 1,
+          "title": "Review three pitches for truthful observations and bounded claims",
+          "owner": "ultra_qa",
+          "priority": 86,
+          "status": "blocked",
+          "depends_on": [
+            "S03",
+            "Q00"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 20,
+          "updated_at": "2026-10-05T00:14:31.056358+00:00"
+        },
+        "after": {
+          "id": "Q01",
+          "phase": 1,
+          "title": "Review three pitches for truthful observations and bounded claims",
+          "owner": "ultra_qa",
+          "priority": 86,
+          "status": "todo",
+          "depends_on": [
+            "S03",
+            "Q00"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 20,
+          "updated_at": "2026-10-05T00:14:31.056358+00:00"
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:15:02.441460+00:00"
+  },
+  {
+    "id": "C01",
+    "phase": 2,
+    "title": "Record actual buyer contacts, replies and follow-up dates",
+    "owner": "Adem",
+    "priority": 80,
+    "status": "todo",
+    "depends_on": [
+      "Q01"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 60,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056382+00:00",
+        "before": {
+          "id": "C01",
+          "phase": 1,
+          "title": "Contact buyers, hold conversations and record actual outcomes or no reply",
+          "owner": "Adem",
+          "priority": 80,
+          "status": "blocked",
+          "depends_on": [
+            "Q01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 60
+        },
+        "after": {
+          "id": "C01",
+          "phase": 2,
+          "title": "Record actual buyer contacts, replies and follow-up dates",
+          "owner": "Adem",
+          "priority": 80,
+          "status": "blocked",
+          "depends_on": [
+            "Q01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 60
+        }
+      },
+      {
+        "at": "2026-10-05T00:15:02.441509+00:00",
+        "before": {
+          "id": "C01",
+          "phase": 2,
+          "title": "Record actual buyer contacts, replies and follow-up dates",
+          "owner": "Adem",
+          "priority": 80,
+          "status": "blocked",
+          "depends_on": [
+            "Q01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 60,
+          "updated_at": "2026-10-05T00:14:31.056382+00:00"
+        },
+        "after": {
+          "id": "C01",
+          "phase": 2,
+          "title": "Record actual buyer contacts, replies and follow-up dates",
+          "owner": "Adem",
+          "priority": 80,
+          "status": "todo",
+          "depends_on": [
+            "Q01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 60,
+          "updated_at": "2026-10-05T00:14:31.056382+00:00"
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:15:02.441509+00:00"
+  },
+  {
+    "id": "C02",
+    "phase": 2,
+    "title": "Inspect a permitted sample and agree one bounded paid pilot",
+    "owner": "Adem",
+    "priority": 78,
+    "status": "todo",
+    "depends_on": [
+      "C01"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 20,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056406+00:00",
+        "before": {
+          "id": "C02",
+          "phase": 1,
+          "title": "Inspect one client sample and agree bounded scope/price",
+          "owner": "Adem",
+          "priority": 76,
+          "status": "blocked",
+          "depends_on": [
+            "C01",
+            "Q01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 20
+        },
+        "after": {
+          "id": "C02",
+          "phase": 2,
+          "title": "Inspect a permitted sample and agree one bounded paid pilot",
+          "owner": "Adem",
+          "priority": 78,
+          "status": "blocked",
+          "depends_on": [
+            "C01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 20
+        }
+      },
+      {
+        "at": "2026-10-05T00:15:02.441558+00:00",
+        "before": {
+          "id": "C02",
+          "phase": 2,
+          "title": "Inspect a permitted sample and agree one bounded paid pilot",
+          "owner": "Adem",
+          "priority": 78,
+          "status": "blocked",
+          "depends_on": [
+            "C01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 20,
+          "updated_at": "2026-10-05T00:14:31.056406+00:00"
+        },
+        "after": {
+          "id": "C02",
+          "phase": 2,
+          "title": "Inspect a permitted sample and agree one bounded paid pilot",
+          "owner": "Adem",
+          "priority": 78,
+          "status": "todo",
+          "depends_on": [
+            "C01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 20,
+          "updated_at": "2026-10-05T00:14:31.056406+00:00"
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:15:02.441558+00:00"
+  },
+  {
+    "id": "F04",
+    "phase": 2,
+    "title": "Record accepted terms and evidence the start condition is fulfilled",
+    "owner": "Adem",
+    "priority": 76,
+    "status": "todo",
+    "depends_on": [
+      "C02"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 15,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056429+00:00",
+        "before": {
+          "id": "F04",
+          "phase": 1,
+          "title": "Record agreed terms and evidence that the start condition is fulfilled",
+          "owner": "Adem",
+          "priority": 74,
+          "status": "blocked",
+          "depends_on": [
+            "C02"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 15
+        },
+        "after": {
+          "id": "F04",
+          "phase": 2,
+          "title": "Record accepted terms and evidence the start condition is fulfilled",
+          "owner": "Adem",
+          "priority": 76,
+          "status": "blocked",
+          "depends_on": [
+            "C02"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 15
+        }
+      },
+      {
+        "at": "2026-10-05T00:15:02.441606+00:00",
+        "before": {
+          "id": "F04",
+          "phase": 2,
+          "title": "Record accepted terms and evidence the start condition is fulfilled",
+          "owner": "Adem",
+          "priority": 76,
+          "status": "blocked",
+          "depends_on": [
+            "C02"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 15,
+          "updated_at": "2026-10-05T00:14:31.056429+00:00"
+        },
+        "after": {
+          "id": "F04",
+          "phase": 2,
+          "title": "Record accepted terms and evidence the start condition is fulfilled",
+          "owner": "Adem",
+          "priority": 76,
+          "status": "todo",
+          "depends_on": [
+            "C02"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 15,
+          "updated_at": "2026-10-05T00:14:31.056429+00:00"
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:15:02.441606+00:00"
+  },
+  {
+    "id": "D01",
+    "phase": 3,
+    "title": "Prepare the agreed pilot with source-linked output",
+    "owner": "ultra_delivery",
+    "priority": 72,
+    "status": "todo",
+    "depends_on": [
+      "F04"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": null,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056452+00:00",
+        "before": {
+          "id": "D01",
+          "phase": 2,
+          "title": "Prepare the scoped job and source-linked output",
+          "owner": "ultra_delivery",
+          "priority": 72,
+          "status": "blocked",
+          "depends_on": [
+            "F04"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": null
+        },
+        "after": {
+          "id": "D01",
+          "phase": 3,
+          "title": "Prepare the agreed pilot with source-linked output",
+          "owner": "ultra_delivery",
+          "priority": 72,
+          "status": "blocked",
+          "depends_on": [
+            "F04"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": null
+        }
+      },
+      {
+        "at": "2026-10-05T00:15:02.441654+00:00",
+        "before": {
+          "id": "D01",
+          "phase": 3,
+          "title": "Prepare the agreed pilot with source-linked output",
+          "owner": "ultra_delivery",
+          "priority": 72,
+          "status": "blocked",
+          "depends_on": [
+            "F04"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": null,
+          "updated_at": "2026-10-05T00:14:31.056452+00:00"
+        },
+        "after": {
+          "id": "D01",
+          "phase": 3,
+          "title": "Prepare the agreed pilot with source-linked output",
+          "owner": "ultra_delivery",
+          "priority": 72,
+          "status": "todo",
+          "depends_on": [
+            "F04"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": null,
+          "updated_at": "2026-10-05T00:14:31.056452+00:00"
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:15:02.441654+00:00"
+  },
+  {
+    "id": "Q02",
+    "phase": 3,
+    "title": "Check agreed fields and exception handling against sources",
+    "owner": "ultra_qa",
+    "priority": 70,
+    "status": "todo",
+    "depends_on": [
+      "D01"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": null,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056481+00:00",
+        "before": {
+          "id": "Q02",
+          "phase": 2,
+          "title": "Independently check agreed fields and exception handling",
+          "owner": "ultra_qa",
+          "priority": 70,
+          "status": "blocked",
+          "depends_on": [
+            "D01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": null
+        },
+        "after": {
+          "id": "Q02",
+          "phase": 3,
+          "title": "Check agreed fields and exception handling against sources",
+          "owner": "ultra_qa",
+          "priority": 70,
+          "status": "blocked",
+          "depends_on": [
+            "D01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": null
+        }
+      },
+      {
+        "at": "2026-10-05T00:15:02.441702+00:00",
+        "before": {
+          "id": "Q02",
+          "phase": 3,
+          "title": "Check agreed fields and exception handling against sources",
+          "owner": "ultra_qa",
+          "priority": 70,
+          "status": "blocked",
+          "depends_on": [
+            "D01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": null,
+          "updated_at": "2026-10-05T00:14:31.056481+00:00"
+        },
+        "after": {
+          "id": "Q02",
+          "phase": 3,
+          "title": "Check agreed fields and exception handling against sources",
+          "owner": "ultra_qa",
+          "priority": 70,
+          "status": "todo",
+          "depends_on": [
+            "D01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": null,
+          "updated_at": "2026-10-05T00:14:31.056481+00:00"
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:15:02.441702+00:00"
+  },
+  {
+    "id": "D02",
+    "phase": 3,
+    "title": "Review and release the output; obtain actual buyer acceptance",
+    "owner": "Adem",
+    "priority": 68,
+    "status": "todo",
+    "depends_on": [
+      "Q02"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 30,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056504+00:00",
+        "before": {
+          "id": "D02",
+          "phase": 2,
+          "title": "Review/release the output and obtain actual acceptance",
+          "owner": "Adem",
+          "priority": 68,
+          "status": "blocked",
+          "depends_on": [
+            "Q02"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30
+        },
+        "after": {
+          "id": "D02",
+          "phase": 3,
+          "title": "Review and release the output; obtain actual buyer acceptance",
+          "owner": "Adem",
+          "priority": 68,
+          "status": "blocked",
+          "depends_on": [
+            "Q02"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30
+        }
+      },
+      {
+        "at": "2026-10-05T00:15:02.441750+00:00",
+        "before": {
+          "id": "D02",
+          "phase": 3,
+          "title": "Review and release the output; obtain actual buyer acceptance",
+          "owner": "Adem",
+          "priority": 68,
+          "status": "blocked",
+          "depends_on": [
+            "Q02"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30,
+          "updated_at": "2026-10-05T00:14:31.056504+00:00"
+        },
+        "after": {
+          "id": "D02",
+          "phase": 3,
+          "title": "Review and release the output; obtain actual buyer acceptance",
+          "owner": "Adem",
+          "priority": 68,
+          "status": "todo",
+          "depends_on": [
+            "Q02"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30,
+          "updated_at": "2026-10-05T00:14:31.056504+00:00"
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:15:02.441750+00:00"
+  },
+  {
+    "id": "F05",
+    "phase": 3,
+    "title": "Record actual payment and whole-job time and costs",
+    "owner": "Adem",
+    "priority": 66,
+    "status": "todo",
+    "depends_on": [
+      "D02"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 20,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056526+00:00",
+        "before": {
+          "id": "F05",
+          "phase": 2,
+          "title": "Collect/record balance and total time/costs",
+          "owner": "Adem",
+          "priority": 66,
+          "status": "blocked",
+          "depends_on": [
+            "D02"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 20
+        },
+        "after": {
+          "id": "F05",
+          "phase": 3,
+          "title": "Record actual payment and whole-job time and costs",
+          "owner": "Adem",
+          "priority": 66,
+          "status": "blocked",
+          "depends_on": [
+            "D02"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 20
+        }
+      },
+      {
+        "at": "2026-10-05T00:15:02.441799+00:00",
+        "before": {
+          "id": "F05",
+          "phase": 3,
+          "title": "Record actual payment and whole-job time and costs",
+          "owner": "Adem",
+          "priority": 66,
+          "status": "blocked",
+          "depends_on": [
+            "D02"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 20,
+          "updated_at": "2026-10-05T00:14:31.056526+00:00"
+        },
+        "after": {
+          "id": "F05",
+          "phase": 3,
+          "title": "Record actual payment and whole-job time and costs",
+          "owner": "Adem",
+          "priority": 66,
+          "status": "todo",
+          "depends_on": [
+            "D02"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 20,
+          "updated_at": "2026-10-05T00:14:31.056526+00:00"
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:15:02.441799+00:00"
+  },
+  {
+    "id": "P01",
+    "phase": 4,
+    "title": "Ask a paying buyer about recurring work",
+    "owner": "Adem",
+    "priority": 60,
+    "status": "todo",
+    "depends_on": [
+      "F05"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 15,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056550+00:00",
+        "before": {
+          "id": "P01",
+          "phase": 3,
+          "title": "Ask paid client about recurring volume/need",
+          "owner": "Adem",
+          "priority": 60,
+          "status": "blocked",
+          "depends_on": [
+            "F05"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 15
+        },
+        "after": {
+          "id": "P01",
+          "phase": 4,
+          "title": "Ask a paying buyer about recurring work",
+          "owner": "Adem",
+          "priority": 60,
+          "status": "blocked",
+          "depends_on": [
+            "F05"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 15
+        }
+      },
+      {
+        "at": "2026-10-05T00:15:02.441843+00:00",
+        "before": {
+          "id": "P01",
+          "phase": 4,
+          "title": "Ask a paying buyer about recurring work",
+          "owner": "Adem",
+          "priority": 60,
+          "status": "blocked",
+          "depends_on": [
+            "F05"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 15,
+          "updated_at": "2026-10-05T00:14:31.056550+00:00"
+        },
+        "after": {
+          "id": "P01",
+          "phase": 4,
+          "title": "Ask a paying buyer about recurring work",
+          "owner": "Adem",
+          "priority": 60,
+          "status": "todo",
+          "depends_on": [
+            "F05"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 15,
+          "updated_at": "2026-10-05T00:14:31.056550+00:00"
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:15:02.441843+00:00"
+  },
+  {
+    "id": "P02",
+    "phase": 4,
+    "title": "Prepare a capped repeat-service proposal from confirmed need",
+    "owner": "ultra_sales",
+    "priority": 58,
+    "status": "todo",
+    "depends_on": [
+      "P01"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 30,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056573+00:00",
+        "before": {
+          "id": "P02",
+          "phase": 3,
+          "title": "Prepare capped automation/support proposal from actual need",
+          "owner": "ultra_sales",
+          "priority": 58,
+          "status": "blocked",
+          "depends_on": [
+            "P01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30
+        },
+        "after": {
+          "id": "P02",
+          "phase": 4,
+          "title": "Prepare a capped repeat-service proposal from confirmed need",
+          "owner": "ultra_sales",
+          "priority": 58,
+          "status": "blocked",
+          "depends_on": [
+            "P01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30
+        }
+      },
+      {
+        "at": "2026-10-05T00:15:02.441886+00:00",
+        "before": {
+          "id": "P02",
+          "phase": 4,
+          "title": "Prepare a capped repeat-service proposal from confirmed need",
+          "owner": "ultra_sales",
+          "priority": 58,
+          "status": "blocked",
+          "depends_on": [
+            "P01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30,
+          "updated_at": "2026-10-05T00:14:31.056573+00:00"
+        },
+        "after": {
+          "id": "P02",
+          "phase": 4,
+          "title": "Prepare a capped repeat-service proposal from confirmed need",
+          "owner": "ultra_sales",
+          "priority": 58,
+          "status": "todo",
+          "depends_on": [
+            "P01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 30,
+          "updated_at": "2026-10-05T00:14:31.056573+00:00"
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:15:02.441886+00:00"
+  },
+  {
+    "id": "R03",
+    "phase": 4,
+    "title": "Review local buyer evidence and refine the next Tunisia niche",
+    "owner": "ultra_research",
+    "priority": 45,
+    "status": "todo",
+    "depends_on": [
+      "Q01"
+    ],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 60,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056596+00:00",
+        "before": {
+          "id": "R03",
+          "phase": 4,
+          "title": "After owner expansion/pivot decision, research up to five agency/remote prospects using checked permitted proof",
+          "owner": "ultra_research",
+          "priority": 45,
+          "status": "blocked",
+          "depends_on": [
+            "Q00"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 60
+        },
+        "after": {
+          "id": "R03",
+          "phase": 4,
+          "title": "Review local buyer evidence and refine the next Tunisia niche",
+          "owner": "ultra_research",
+          "priority": 45,
+          "status": "blocked",
+          "depends_on": [
+            "Q01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 60
+        }
+      },
+      {
+        "at": "2026-10-05T00:15:02.441928+00:00",
+        "before": {
+          "id": "R03",
+          "phase": 4,
+          "title": "Review local buyer evidence and refine the next Tunisia niche",
+          "owner": "ultra_research",
+          "priority": 45,
+          "status": "blocked",
+          "depends_on": [
+            "Q01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 60,
+          "updated_at": "2026-10-05T00:14:31.056596+00:00"
+        },
+        "after": {
+          "id": "R03",
+          "phase": 4,
+          "title": "Review local buyer evidence and refine the next Tunisia niche",
+          "owner": "ultra_research",
+          "priority": 45,
+          "status": "todo",
+          "depends_on": [
+            "Q01"
+          ],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 60,
+          "updated_at": "2026-10-05T00:14:31.056596+00:00"
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:15:02.441928+00:00"
+  },
+  {
+    "id": "SIM01",
+    "phase": 1,
+    "title": "Practise one fictional buyer conversation",
+    "owner": "ultra_ops",
+    "priority": 20,
+    "status": "todo",
+    "depends_on": [],
+    "completion_evidence": null,
+    "next_action_on": null,
+    "timebox_minutes": 45,
+    "history": [
+      {
+        "at": "2026-10-05T00:14:31.056619+00:00",
+        "before": {
+          "id": "SIM01",
+          "phase": 0,
+          "title": "Run one fictional scope/review rehearsal",
+          "owner": "ultra_ops",
+          "priority": 20,
+          "status": "todo",
+          "depends_on": [],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 45
+        },
+        "after": {
+          "id": "SIM01",
+          "phase": 1,
+          "title": "Practise one fictional buyer conversation",
+          "owner": "ultra_ops",
+          "priority": 20,
+          "status": "todo",
+          "depends_on": [],
+          "completion_evidence": null,
+          "next_action_on": null,
+          "timebox_minutes": 45
+        }
+      }
+    ],
+    "updated_at": "2026-10-05T00:14:31.056619+00:00",
+    "mode": "simulation"
+  }
+]

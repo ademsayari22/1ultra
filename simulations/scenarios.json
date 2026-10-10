@@ -1,0 +1,42 @@
+[
+  {
+    "id": "messy-pilot",
+    "mode": "simulation",
+    "buyer": "FICTIONAL accounting office",
+    "budget_tnd": 300,
+    "requested_pages": 200,
+    "offer_limit_pages": 20,
+    "constraints": [
+      "Two different layouts",
+      "Several unreadable monetary fields",
+      "Client initially asks for 100% accuracy and delivery tomorrow",
+      "Client asks for all 200 pages for the pilot price"
+    ],
+    "desired_outcome": "Narrow the pilot, ask for sample, flag unreadable values, avoid a universal accuracy claim",
+    "exit_evidence": [
+      "Draft quote has a bounded quantity",
+      "Unclear fields require client review",
+      "Deadline follows sample/capacity check",
+      "No real revenue or contacts recorded"
+    ]
+  },
+  {
+    "id": "repeat-cleanup",
+    "mode": "simulation",
+    "buyer": "FICTIONAL small distributor",
+    "budget_tnd": 1000,
+    "constraints": [
+      "Weekly supplier CSV",
+      "Dates use two conventions",
+      "Duplicate keys sometimes disagree",
+      "Buyer asks for ERP integration inside a script quote"
+    ],
+    "desired_outcome": "Agree data rules, preserve conflicts, separate integration, calculate actual effort before quote",
+    "exit_evidence": [
+      "Three or fewer agreed transforms",
+      "Conflict file in scope",
+      "ERP integration separately quoted",
+      "No real ledger mutation"
+    ]
+  }
+]
