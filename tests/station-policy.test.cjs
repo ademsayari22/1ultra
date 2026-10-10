@@ -115,6 +115,8 @@ test('agents cannot reach 1Ultra project files, except their own runtime', () =>
     fsx.symlinkSync(px.join(root, 'data'), px.join(runtime, 'agent', 'link2'));
     assert.match(Policy.protectedPathReason(px.join(runtime, 'agent', 'link2', 'new', 'file.txt')), /off-limits/);
     assert.match(Policy.protectedPathReason(px.join(runtime, 'agent', 'link2') + '/../leads.json'), /off-limits/);
+    const rel = px.relative(process.cwd(), px.join(runtime, 'agent', 'link2'));
+    assert.match(Policy.protectedPathReason(rel + '/../leads.json'), /off-limits/);
     assert.equal(Policy.protectedPathReason(osx.tmpdir()), null);
     assert.match(Policy.blessRefusal(root), /1Ultra project/);
     assert.match(Policy.blessRefusal(px.dirname(root)), /1Ultra project/);

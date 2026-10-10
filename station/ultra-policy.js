@@ -130,7 +130,8 @@ function setProtectedRoots(roots) {
 }
 function kernelResolve(p) {
   const path = require('node:path'), fs = require('node:fs');
-  const abs = path.isAbsolute(String(p)) ? String(p) : path.resolve(String(p));
+  const raw = String(p);
+  const abs = path.isAbsolute(raw) ? raw : process.cwd() + path.sep + raw;
   let cur = path.parse(abs).root || path.sep, missing = false;
   for (const seg of abs.split(path.sep).filter(Boolean)) {
     if (seg === '.') continue;
