@@ -8,7 +8,9 @@ test('path classes use prefix boundaries and longest match', () => {
     '/api/channels/telegram/bots':'channels','/api/cron/arm':'cron','/api/nightshift':'nightshift','/api/connectors':'tools.mcp',
     '/api/tts':'voice','/api/browser/reset':'tools.browser','/api/credits':'blocked','/api/update/prepare':'blocked','/api/nope':'unclassified',
     '/shared/events.js':'local','/workshop-run/abc/index.html':'lead.codex','/view/t/index.html':'local',
-    '/plugin-ui/p/index.html':'tools.mcp','/plugin-draft/d':'tools.mcp','/app-ui/a/index.html':'lead.codex'};
+    '/plugin-ui/p/index.html':'tools.mcp','/plugin-draft/d':'tools.mcp','/app-ui/a/index.html':'lead.codex',
+    '/api/file?agent=agent&path=deliverable.html':'local','/api/fs/dirstat':'tools.shell',
+    '/api/channels/events?cursor=0':'local','/api/channels/telegram/connect':'channels'};
   for (const [p, cls] of Object.entries(cases)) assert.equal(Policy.classifyPath(p), cls, p);
 });
 test('route keys come from string matchers or the literal prefix of a regex', () => {

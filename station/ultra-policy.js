@@ -14,6 +14,7 @@ const ROUTE_CLASSES = Object.freeze({
   '/api/skills':'local','/api/state':'local','/api/station':'local','/api/task-briefs':'local','/api/threads':'local',
   '/api/toolsets':'local','/api/transcript':'local','/api/userprops':'local','/api/version':'local','/api/widgets':'local',
   '/api/workspace':'local','/shared':'local','/view':'local',
+  '/api/file':'local', // Outbox: serves files jailed to an agent workspace or an owner-approved project folder
   '/workshop-run':'lead.codex','/app-ui':'lead.codex','/api/agent':'lead.codex','/api/apps':'lead.codex','/api/fallback':'lead.codex','/api/growth':'lead.codex','/api/insights':'lead.codex',
   '/api/line-jobs':'lead.codex','/api/model-tiers':'lead.codex','/api/models':'lead.codex','/api/overseer':'lead.codex',
   '/api/realtime':'lead.codex','/api/routing':'lead.codex','/api/run':'lead.codex','/api/scout':'lead.codex','/api/slash':'lead.codex',
@@ -21,11 +22,12 @@ const ROUTE_CLASSES = Object.freeze({
   '/api/auth':'providers','/api/key':'providers','/api/providers':'providers',
   '/api/skill-exchange':'skills.market','/api/skill-market':'skills.market',
   '/api/channels':'channels',
+  '/api/channels/events':'local', // the station's own server→page event bridge; connecting a channel stays switch-gated
   '/api/cron':'cron','/api/hooks':'cron','/api/loops':'cron',
   '/api/autonomy':'nightshift','/api/away':'nightshift','/api/discovery':'nightshift','/api/nightshift':'nightshift','/api/workflow-takeovers':'nightshift',
   '/api/connectors':'tools.mcp','/api/plugins':'tools.mcp','/api/servicekeys':'tools.mcp','/plugin-ui':'tools.mcp','/plugin-draft':'tools.mcp',
   '/api/local-voice':'voice','/api/stt':'voice','/api/tts':'voice',
-  '/api/execution':'tools.shell','/api/execution-profiles':'tools.shell','/api/file':'tools.shell','/api/fs':'tools.shell','/api/pickpath':'tools.shell',
+  '/api/execution':'tools.shell','/api/execution-profiles':'tools.shell','/api/fs':'tools.shell','/api/pickpath':'tools.shell',
   '/api/computer-control':'tools.computer','/api/browser':'tools.browser',
   '/api/credits':'blocked','/api/dev':'blocked','/api/remote':'blocked','/api/spotify':'blocked','/api/update':'blocked',
 });
