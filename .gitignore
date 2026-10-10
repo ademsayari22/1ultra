@@ -14,7 +14,7 @@ finance/receipts/
 simulations/results/
 .codex/logs/
 station/runtime/
-station/node_modules/
+station/node_modules
 .aws
 station/.dogfood/
 .worktrees/
