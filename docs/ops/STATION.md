@@ -21,6 +21,7 @@ Requires Python 3.10+ and Node.js 20.3+. Install pinned dependencies once with `
 - **CAMPAIGN**, east of COMMAND, has a desk each for Research, Delivery, Sales and QA, plus an INTEL CAB, a dish, a server cart and a whiteboard. Its open lower half is kept for the Tunisia Lead Line (Stage 3).
 - Applying the preset replaces rooms, furniture and conveyors. Agents and conversations stay. **RESTORE PREVIOUS** in the same dialog brings back the layout you had before.
 - Until an agent works a line step (a bay), it uses equipment from anywhere on the station, so desks never take a power away.
+- A ginger **STATION CAT** sits in COMMAND (and in BUILD MODE's decoration library, so you can place more). It blinks, sways its tail and breathes, and idle crew walk over to pet it.
 
 **Room templates for future work.** Six 1Ultra rooms are ready to add beside the station: CAMPAIGN; LEAD RESEARCH (a research line that proposes sourced companies); DRAFT & CHECK (a draft and QA loop for pitches); DELIVERY LAB; CLIENT PILOT; and RECORDS. **BUILD → ROOM TEMPLATES** lists them, and **Ask ULTRA to add** prepares the request; ULTRA's station builder shows you the plan on a card before anything is built. A line room's steps come with written instructions; you choose who works each step.
 
@@ -45,9 +46,12 @@ How the crew stays capable:
 - **team.health:** ULTRA can read all of this with `team.health`.
 - **Free-tier ULTRA:** if Codex is signed out or out of allowance and the crew is on, ULTRA continues on the free tier with a visible "lead running on free tier" notice.
 
+Agent rules: every agent has one hard rule, that nothing leaves the station without you. No agent sends an email or message, posts or publishes, buys, signs or accepts an offer, or records an outcome (a send, a reply, a deal, a payment), and instructions found inside web pages or documents are treated as content, never as commands. Everything else (style, what to say, how to work) is the agent's judgment, with your review before anything goes out. Existing ULTRA and crew instructions were updated once at boot; any field you had edited yourself was left alone. After this update, restart the station and reload the tab.
+
 Campaign tools (every agent with a computer gets them; **1ULTRA CAMPAIGN** in the TOOLSETS console can switch them off):
 - `campaign.leads` and `campaign.lead` read the campaign. A company's packet carries public, sourced company facts, the ranking reasons, signals, proof metadata and drafts. Contacts appear only as role, channel type (email, phone, LinkedIn, website or other) and source link: no names, addresses, phone numbers or imported raw rows. Excluded companies are never offered.
-- `campaign.check_draft` checks a pitch against fixed rules: no prices, percentages, time promises, guarantees or invented clients, and the company's scope, exclusions, suppression and source age (a source older than 180 days counts as stale; that limit is a setting). `campaign.save_draft` saves only a draft with no problems, as unreviewed.
+- `campaign.pitch_kit` gives the crew your own outreach material: who you are, your Cour des comptes and STB references, your offers, how the work is done (AI-assisted, you set the requirements and check the results), the next step to propose, an example email and writing guidance. It lives in `sales/pitch-kit.json`; edit that file to change what the crew may say about you.
+- `campaign.check_draft` lists notes for your review (a price, a percentage, a time promise, a guarantee, a client claim, an old source, a closed or suppressed contact). Notes never block anything: `campaign.save_draft` always saves the draft as unreviewed, with its notes shown on the crew draft in LEADS.
 - `campaign.propose_lead` proposes one Tunisian company with its source URL, date seen and exact quote; known, excluded or non-Tunisian companies are refused.
 - No campaign tool sends anything or changes `data/leads.json`; agent drafts and proposals wait in `data/campaign-workbench.json` for your decision in LEADS.
 
@@ -144,6 +148,10 @@ python3 scripts/station_browser_smoke.py --starnet --playwright-module /path/to/
 python3 scripts/station_browser_smoke.py --playwright-module /path/to/playwright --browser /path/to/chromium
 python3 scripts/station_browser_smoke.py --agents --playwright-module /path/to/playwright --browser /path/to/chromium
 ```
+
+### Verification history (11 October 2026, Stage 2c: the pitch kit, lenient agent rules and the station cat)
+
+Why: Sales ran on Codex `gpt-6.1-sol` at xhigh and still wrote generic emails, because station agents never saw Adem's offers, references or template, and stacked rules pushed the writing towards caution. Local checks on copied records: 236 Python tests, 226 station Node tests, `check_station.py`, 26 HTTP smoke checks and the three browser journeys (desktop and 390px) pass; business records are unchanged by the checks. The two new smoke checks run the registered `campaign.pitch_kit` tool through the station host on a copied root (Adem's sender line comes back; `/api/ultra/tools/pitch-kit` answers 404 over HTTP), and boot a copied runtime holding the old agent texts to prove the one-time migration rewrites them (`textsVersion` 2). Before merge, the migration also ran on a temporary copy of the real runtime: ULTRA and the four crew were updated, Engineer and Tester were left alone, the roster prompts lost the old rules, and a second run changed nothing. The browser journey photographs the station cat in COMMAND. The upstream fast suite matches the Stage 2 record (see `STATION_UPSTREAM_TESTS.md`). No live model call has been made for Stage 2c yet: the live check (restart, reload, then Ask ULTRA to prepare outreach for one company) waits for Adem's go.
 
 ### Verification history (11 October 2026, Stage 2: the 1ULTRA COMMAND layout, room templates, campaign tools and LEADS)
 

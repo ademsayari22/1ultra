@@ -10,6 +10,8 @@ Rerun on 11 October 2026 after Stage 1b (the crew on FreeLLMAPI): the same 1101 
 
 Rerun on 11 October 2026 after Stage 2 (the 1ULTRA COMMAND layout, room templates, campaign tools and LEADS): 1101 steps, 951 passed and 150 failed: the same 146, plus four `patch` failures listed below; the real `runs/station-runtime` was unchanged. The first Stage 2 run also failed `test/inputpolicy.test.js`, which requires every tool family on the computer to be a freebie or a toggleable toolset; the campaign tools are now the toggleable **1ULTRA CAMPAIGN** toolset, and that test passes.
 
+Rerun on 11 October 2026 after Stage 2c (the pitch kit, lenient agent rules and the station cat): 1101 steps, 951 passed and the same 150 failed; the real `runs/station-runtime` was unchanged. The cat's patches to `propsprites.js` and `world.js` added no failure.
+
 | Reason | Failures | Meaning |
 |---|---|---|
 | `excluded-tooling` | 89 | reads website/, src-tauri/, .github/, qa/, dev/, relay/, bin/, release or eval files that are not imported |

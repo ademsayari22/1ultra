@@ -256,8 +256,20 @@ def main():
                 request('/api/ultra/tools/' + route, {}, expected=404)
             assert json.loads((root / 'data/leads.json').read_text()) == original_leads
             checks.append('Campaign tools: ULTRA and the crew get campaign.* tools; a crew packet carries no contact route or names; /api/ultra/tools/ answers 404')
-            kit = fixture_python('print(json.dumps(campaign_tools.pitch_kit(store, args)))', {})
-            assert kit['sender']['fr'] == 'Adem Sayari, ingénieur IA et data science, basé à Sousse'
+            # Explicit exit runs the host's exit hook, which stops its private worker.
+            subprocess.run(['node', '-e',
+                "const assert=require('node:assert/strict'); const host=require('./station/ultra-host.js'); "
+                "assert.equal(host.root,process.env.ULTRA_ROOT); assert.equal(host.runtime,process.env.ULTRA_RUNTIME); "
+                "const tools=[]; host.registerCampaignTools({register:t=>tools.push(t)}); "
+                "(async()=>{const tool=tools.find(t=>t.name==='campaign.pitch_kit'); "
+                "assert.ok(tool,'campaign.pitch_kit must be registered'); "
+                "const result=JSON.parse((await tool.run({}, {agentId:'sales'})).content); "
+                "assert.equal(result.status,200); "
+                "assert.equal(result.value.sender.fr,'Adem Sayari, ingénieur IA et data science, basé à Sousse'); "
+                "})().then(()=>process.exit(0),error=>{console.error(error);process.exit(1);});"], cwd=project,
+                env={'PATH': os.environ['PATH'], 'LANG': 'C.UTF-8', 'ULTRA_ROOT': str(root),
+                     'ULTRA_RUNTIME': str(root / 'runtime'), 'ULTRA_PORT': str(args.port),
+                     'ULTRA_FREELLMAPI_PORT': str(crew_port)}, check=True, timeout=30)
             request('/api/ultra/tools/pitch-kit', expected=404)
             checks.append("Pitch kit: copied-root campaign tool returns Adem's sender line; /api/ultra/tools/pitch-kit GET answers 404")
             campaign = request('/api/ultra/campaign')
