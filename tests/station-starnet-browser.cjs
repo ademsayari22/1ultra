@@ -34,12 +34,26 @@ async function waitForWindowShown(page,selector){
         await presets.locator('[data-use-build]').click();
         await presets.waitFor({state:'hidden'});
         assert.deepEqual(await page.evaluate(()=>Object.values(World.stationDoc().rooms).filter(room=>room.kind!=='corridor').map(room=>room.name).sort()),['CAMPAIGN','COMMAND'],'1ULTRA COMMAND replaces the floor (hallways aside)');
+        assert.equal(await page.evaluate(()=>World.stationDoc().props.filter(prop=>prop.t==='ultra_cat').length),1,'1ULTRA COMMAND places one station cat on the floor');
         for(const [id,role] of [['research','Research'],['delivery','Delivery'],['sales','Sales'],['qa','QA']]){
           assert.match(await page.locator('#crew .crew-row[data-agent-id="'+id+'"] .crew-name').innerText(),new RegExp('\\b'+role+'\\b'),'the '+role+' crew row remains');
         }
         await page.locator('#refit-done').click();
-        await page.waitForTimeout(1500);   // let the floor bake and the crew walk to their desks before the picture
+        await waitForWindowShown(page,'#stage-wrap');
+        await page.waitForFunction(()=>World.propScreenRect('ultra_cat'));
         await page.screenshot({path:path.join(out,'starnet-command-layout.png')});
+        const camera=await page.evaluate(()=>World.cameraState());
+        await page.waitForFunction(()=>{
+          const doc=World.stationDoc(),command=Object.values(doc.rooms).find(room=>room.name==='COMMAND'),geo=WorldModel.create(doc).projectGeometry(),rect=command.rects[0];
+          return World.restoreCamera({scale:4,cx:((rect.x1+rect.x2+1)/2-geo.origin.tx)*PropSprites.TILE,cy:((rect.y1+rect.y2+1)/2-geo.origin.ty)*PropSprites.TILE});
+        });
+        await page.waitForFunction(()=>{
+          const rect=World.propScreenRect('ultra_cat'),stage=document.querySelector('#stage').getBoundingClientRect();
+          return rect && rect.left>=stage.left && rect.top>=stage.top && rect.right<=stage.right && rect.bottom<=stage.bottom && World.cameraDbg().scale===4;
+        });
+        await waitForWindowShown(page,'#stage-wrap');
+        await page.screenshot({path:path.join(out,'starnet-cat.png')});
+        assert.equal(await page.evaluate(camera=>World.restoreCamera(camera),camera),true,'the cat screenshot returns the camera');
         await page.evaluate(()=>document.querySelector('#bb-build').click());
         await page.locator('#refit-stations').click();
         await presets.locator('[data-restore-build]').click();

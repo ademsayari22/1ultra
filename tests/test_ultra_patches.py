@@ -33,6 +33,16 @@ class PatchAnchorsTest(unittest.TestCase):
         ids = [p['id'] for p in json.loads((ROOT / 'station/ultra-patches.json').read_text())]
         self.assertEqual(len(ids), len(set(ids)))
 
+    def test_station_cat_is_regenerated_from_the_catalog_draw_and_idle_patches(self):
+        patches = {p['id']: p for p in json.loads((ROOT / 'station/ultra-patches.json').read_text())}
+        for patch_id, file in [('ultra-cat-catalog', 'frontend/app/propsprites.js'),
+                               ('ultra-cat-draw', 'frontend/app/propsprites.js'),
+                               ('ultra-cat-use-line', 'frontend/app/world.js'),
+                               ('ultra-cat-use-beat', 'frontend/app/world.js')]:
+            with self.subTest(patch_id=patch_id):
+                self.assertIn(patch_id, list(patches))
+                self.assertEqual(patches[patch_id]['file'], file)
+
     def test_station_copy_matches_patched_upstream(self):
         for rel, expected in patched_upstream().items():
             self.assertEqual((ROOT / 'station' / rel).read_text(), expected, f'station/{rel} differs from upstream + patches; rerun update_starnet.py')

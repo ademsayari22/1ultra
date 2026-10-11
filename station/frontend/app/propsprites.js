@@ -1854,6 +1854,43 @@ const PropSprites = (() => {
   /* ---- DECOR EXPANSION wave 2 (2026-07-15): grime + machinery + glow ---- */
 
 
+  F.ultra_cat = (x, y, w, h, f) => {
+    const ph = (f && f.x) || 0;
+    const ginger = '#d7883b', stripe = shade(ginger, -0.38);
+    const rise = Math.sin(now / 400 + ph) > 0.65 ? 1 : 0;
+    const sway = Math.round(Math.sin(now / 800 + ph));
+    const clock = ((now + ph * 137) % 4200 + 4200) % 4200;
+    const closed = clock < 180 && blink(360, ph);
+    // A deck contact shadow stays put while the seated chest breathes by one pixel.
+    const alpha = ctx.globalAlpha;
+    ctx.globalAlpha = alpha * 0.3;
+    px(x + 2, y + 10, 8, 1, '#1b140f');
+    ctx.globalAlpha = alpha;
+    // Curled tail, behind the body; only the upright tip sways, within the tile.
+    px(x + 7, y + 9, 3, 1, stripe);
+    px(x + 8 + sway, y + 7, 2, 2, ginger);
+    px(x + 8 + sway, y + 6, 1, 1, stripe);
+    // Haunches and white chest. The paws remain planted on the deck.
+    px(x + 3, y + 6 - rise, 5, 4 + rise, ginger);
+    px(x + 6, y + 7, 2, 1, stripe);
+    px(x + 6, y + 9, 2, 1, stripe);
+    px(x + 4, y + 6 - rise, 2, 3, '#f5e4c9');
+    px(x + 3, y + 9, 2, 1, '#f5e4c9');
+    px(x + 6, y + 10, 2, 1, ginger);
+    // Two pointed ears and the camera-facing head, with forehead stripes.
+    px(x + 3, y + 2 - rise, 1, 2, stripe);
+    px(x + 7, y + 2 - rise, 1, 2, stripe);
+    px(x + 3, y + 3 - rise, 5, 3, ginger);
+    px(x + 3, y + 3 - rise, 1, 1, '#eab073');
+    px(x + 7, y + 3 - rise, 1, 1, '#eab073');
+    px(x + 5, y + 3 - rise, 1, 1, stripe);
+    const eye = closed ? stripe : '#76b85a';
+    px(x + 4, y + 4 - rise, 1, 1, eye);
+    px(x + 6, y + 4 - rise, 1, 1, eye);
+    px(x + 4, y + 5 - rise, 3, 1, '#f5e4c9');
+    px(x + 5, y + 5 - rise, 1, 1, '#a75a4a');
+  };
+
   F.holopet = (x, y, w, h, f) => {   // v4 holo jellyfish — FLUSH deck emitter, walk-over; nothing solid at all
     const ph = (f && f.x) || 0;
     // The emitter is INLAID in the deck (2 rows, no rise) because agents walk straight over this tile; the
@@ -10920,6 +10957,7 @@ const PropSprites = (() => {
     { id: "terrarium", label: "TERRARIUM", cat: "decor", tier: "cosmetic", w: 1, h: 1, animated: true, blocks: true, use: { kind: 'terra', sit: false, approach: 'auto' } },
     // DECOR EXPANSION wave 2 (2026-07-15, recurated) — fun/glow set. Flat holo/paint walk-over; cabinets block.
     { id: "holopet", label: "HOLO PET", cat: "decor", tier: "cosmetic", w: 1, h: 1, animated: true, blocks: false, use: { kind: 'pet', sit: false, approach: 'auto' } },
+    { id: "ultra_cat", label: "STATION CAT", cat: "decor", tier: "cosmetic", w: 1, h: 1, animated: true, blocks: false, desc: "A ginger station cat. The crew stop by to pet it. Decoration only.", use: { kind: 'cat', sit: false, approach: 'auto' } },
     { id: "plasmaglobe", label: "PLASMA GLOBE", cat: "decor", tier: "cosmetic", w: 1, h: 1, animated: true, blocks: false, mount: "surface" },
     { id: "gachapon", label: "GACHAPON", cat: "decor", tier: "cosmetic", w: 1, h: 1, animated: true, blocks: true, use: { kind: 'gacha', sit: false, approach: 'auto' } },
     // DECOR EXPANSION wave 3 (2026-07-15) — greenery + lounge picks.

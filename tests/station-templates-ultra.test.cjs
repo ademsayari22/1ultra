@@ -24,6 +24,9 @@ test('1ULTRA COMMAND puts ULTRA in a COMMAND room in the center and the crew in 
   const st = M.create(doc);
   const names = st.rooms().filter(r => r.kind !== 'corridor').map(r => r.name).sort();
   assert.deepEqual(names, ['CAMPAIGN', 'COMMAND']);
+  const cats = st.props().filter(p => p.t === 'ultra_cat');
+  assert.equal(cats.length, 1, 'the preset has one station cat');
+  assert.equal(roomOf(st, cats[0]), 'COMMAND', 'the cat lives in COMMAND');
   assert.equal(st.roomById(doc.meta.spawnRoomId).name, 'COMMAND', 'COMMAND is the spawn room, in the center');
   const seats = Object.fromEntries(st.props().filter(p => p.agentId).map(p => [p.agentId, roomOf(st, p)]));
   assert.deepEqual(seats, { agent: 'COMMAND', research: 'CAMPAIGN', delivery: 'CAMPAIGN', sales: 'CAMPAIGN', qa: 'CAMPAIGN' });

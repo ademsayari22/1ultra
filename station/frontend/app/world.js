@@ -336,6 +336,7 @@ const World = (() => {
     locker: ['nothing of mine in here', 'someone elses things', 'all empty', 'closed again'],
     coffee: ['the smell registers', 'i cannot drink it', 'it is warm at least', 'for the ritual'],
     pet: ['it does not need feeding', 'it follows me', 'made of the same light', 'hello, then'],
+    cat: ['it purrs at me', 'soft, and unbothered', 'it chose this tile', 'hello, cat'],
     terra: ['sealed and content', 'it grows without us', 'a whole world in there', 'still alive'],
     bed: ['powering down', 'somewhere soft, for once', 'a few cycles', 'wake me if it matters'],
     bookshelf: ['spines i have not read', 'someone kept these', 'paper, still', 'a good shelf'],
@@ -381,6 +382,7 @@ const World = (() => {
     terra:     { dwell: [12000, 22000], fidget: [2600, 5200], track: true },
     fish:      { dwell: [14000, 26000], fidget: [2600, 5200], track: true },   // restful: it just watches
     pet:       { dwell: [9000, 18000],  fidget: [1400, 2800], track: true },
+    cat:       { dwell: [9000, 18000],  fidget: [1400, 2800], track: true },
     bar:       { dwell: [12000, 24000], fidget: [7000, 12000] },
     tv:        { dwell: [14000, 26000], fidget: [2600, 5200], track: true },
     beanbag:   { dwell: [12000, 24000], fidget: [2600, 5200] },

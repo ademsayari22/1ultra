@@ -41,7 +41,7 @@ const UltraTemplates = (() => {
     { id: 'ultra-command', group: 'ultra', name: '1ULTRA COMMAND', rooms: 2,
       pitch: 'ULTRA orchestrates from the center, and the crew works the campaign next door',
       description: 'A command room in the center for ULTRA, your orchestrator, with all five essentials, and the CAMPAIGN room beside it with a desk for Research, Delivery, Sales and QA. The free sides take room templates as your work grows.',
-      center: { name: 'COMMAND', seat: 'agent', props: [['screens', 10, 0], ['industrial_roundtable', 7, 5], ['dinerchair', 6, 5, 3], ['dinerchair', 9, 5, 1], ['plant', 0, 9], ['plant', 17, 9]] },
+      center: { name: 'COMMAND', seat: 'agent', props: [['screens', 10, 0], ['industrial_roundtable', 7, 5], ['dinerchair', 6, 5, 3], ['dinerchair', 9, 5, 1], ['plant', 0, 9], ['plant', 17, 9], ['ultra_cat', 12, 8]] },
       wings: [['ultraCampaign', 'east']] }
   ];
   return { rooms, kitAbout, catalog };

@@ -15468,9 +15468,10 @@
     },
     {
       "path": "frontend/app/propsprites.js",
-      "current_sha256": "b5914f3aa9293d5da5ffc6ee14dcf5129d30798552f8f94eb50cb7057b589346",
+      "current_sha256": "0253671a389215e811548056178e97d783a02bb8548ce59e5d94386bed4e3cb5",
       "reasons": [
-        "brand"
+        "brand",
+        "patch:ultra-cat-catalog,ultra-cat-draw"
       ]
     },
     {
@@ -16189,9 +16190,10 @@
     },
     {
       "path": "frontend/app/world.js",
-      "current_sha256": "a70b25fa3449057806ee9dca781a8b846dff02b9d6fe455326dbaeb7bb6e50e2",
+      "current_sha256": "b86aa008642bc6d3b5a4458acb0197fde331b6ce10ecf14f52e51e33e6139f0f",
       "reasons": [
-        "brand"
+        "brand",
+        "patch:ultra-cat-use-line,ultra-cat-use-beat"
       ]
     },
     {
