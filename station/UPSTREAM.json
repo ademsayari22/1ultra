@@ -16469,9 +16469,10 @@
     },
     {
       "path": "sidecar/capability/registry.js",
-      "current_sha256": "a437e8187edbb751c15453e0886f8a7d20d005ac6cf0d91a8aac20848dc42cff",
+      "current_sha256": "707d801537fb3b66f02012466c6b0e943a7be0aaf73baf6e484ff6e0f912b103",
       "reasons": [
-        "brand"
+        "brand",
+        "patch:crew-health-capability"
       ]
     },
     {
@@ -16651,10 +16652,10 @@
     },
     {
       "path": "sidecar/index.js",
-      "current_sha256": "b2a47e4ea3d86f5307c0c48b3d3007f5237bc08f41d531751c6ae8c649fdc731",
+      "current_sha256": "b6c3d1295f8139e51aa962dfaca703c132eb7f2eea5257058ce59f9d22494850",
       "reasons": [
         "brand",
-        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty,bless-refusal,model-request-gate,codex-token-gate,codex-refresh-gate,crew-provider-config,crew-free-tier-cost,crew-run-receipts,crew-run-record"
+        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty,bless-refusal,model-request-gate,codex-token-gate,codex-refresh-gate,crew-provider-config,crew-free-tier-cost,crew-run-receipts,crew-run-record,crew-dispatch-deps,crew-health-tool,crew-health-brief"
       ]
     },
     {
@@ -16999,7 +17000,7 @@
     },
     {
       "path": "sidecar/runstore.js",
-      "current_sha256": "1a9c039ba975c6ce6f3c44eaefc52c6dc9dd855a57997c4fbaeb95c1663f42ef",
+      "current_sha256": "ee11f1675e360e9a53d858fd6bef1d332080c59b7640569597ff31832293f54c",
       "reasons": [
         "patch:crew-runstore-routing"
       ]
@@ -17214,6 +17215,13 @@
       "current_sha256": "4f9d5e8d00d64d3121d0ea792d8f898dd4f8b84696b485fb706fa36e44330c3c",
       "reasons": [
         "brand"
+      ]
+    },
+    {
+      "path": "sidecar/tools/builtin/orchestration.js",
+      "current_sha256": "a22b65f6ee62ffb64c6743bf2a53608e710ff5c4ceef2e1ea24312c4b8d2c933",
+      "reasons": [
+        "patch:crew-dispatch-once,crew-dispatch-hold,crew-dispatch-supervise"
       ]
     },
     {

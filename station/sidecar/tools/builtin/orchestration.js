@@ -624,7 +624,7 @@
           }
         }
 
-        const runWorker = async (job, o2) => {
+        const runWorkerOnce = async (job, o2) => {
           o2 = o2 || {};
           if (job.error) return { agentId: job.agentId, reason: 'error', result: job.error, usd: 0 };
           const wire = workerWire(job.ident);   // the worker's OWN provider+model when resolvable (see workerWire)
@@ -771,6 +771,8 @@
           /* Show it where the Commander asked for it. Only a COMPLETED worker delivers: every other outcome
              (error / refused / timeout) returned above, so a partial or failed run is reported to the lead but
              never folded into a session as though it were finished work. */
+          // 1Ultra: a crew result that failed its capability check is held for the ladder, never delivered as finished.
+          if (deps.crewSupervisor && !deps.crewSupervisor.accept(job, row)) return Object.assign(row, { crewHeld: true });
           await deliverToSession(job, row);
           // WORK VISIBILITY (ghost-file fix): what the worker PROVABLY produced (its runOnce artifact ledger),
           // stamped with the OWNING agentId. Files live in the WORKER's private workspace — the lead cannot
@@ -781,6 +783,10 @@
           }
           return row;
         };
+        // 1Ultra: every crew subtask runs through the capability ladder (retry, reassign, hand back to the lead).
+        const runWorker = deps.crewSupervisor
+          ? (job, o2) => deps.crewSupervisor.supervise(job, o2, { runWorkerOnce, crew, leadId, leadProvider: provider, parentRunId: ctx && ctx.runId })
+          : runWorkerOnce;
 
         if (args.background) {
           if (!subagents || typeof subagents.start !== 'function') return { content: 'background subagents unavailable (no subagent manager)', summary: 'error' };

@@ -71,6 +71,18 @@ class PatchAnchorsTest(unittest.TestCase):
         self.assertIn('entry.ultraRouting = ', (ROOT / 'station/sidecar/runstore.js').read_text())
         self.assertIn("'⤳ answered by '", (ROOT / 'station/frontend/app/chat.js').read_text())
 
+    def test_team_dispatch_runs_through_the_crew_supervisor(self):
+        orchestration = (ROOT / 'station/sidecar/tools/builtin/orchestration.js').read_text()
+        self.assertIn('const runWorkerOnce = async (job, o2) => {', orchestration)
+        self.assertIn('if (deps.crewSupervisor && !deps.crewSupervisor.accept(job, row)) return Object.assign(row, { crewHeld: true });', orchestration)
+        self.assertIn('deps.crewSupervisor.supervise(job, o2, { runWorkerOnce, crew, leadId, leadProvider: provider, parentRunId: ctx && ctx.runId })', orchestration)
+        index = (ROOT / 'station/sidecar/index.js').read_text()
+        for needle in ('crewSupervisor: ultraHost.crew,', 'ultraHost.crew.registerTools(registry);',
+                       "teamNote += '\\n' + ultraHost.crew.leadBrief();", 'ultraMoves: ultraHost.crew.movesFor(runId), '):
+            self.assertIn(needle, index)
+        self.assertIn("tool: 'team.health', scope: 'read', requiresConsent: false, network: false", (ROOT / 'station/sidecar/capability/registry.js').read_text())
+        self.assertIn('entry.ultraMoves = ', (ROOT / 'station/sidecar/runstore.js').read_text())
+
 
 if __name__ == '__main__':
     unittest.main()

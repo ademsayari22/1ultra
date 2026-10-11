@@ -329,6 +329,7 @@
       if (error) entry.error = error;
       // 1Ultra (additive): which model FreeLLMAPI actually routed each request to. Present only on crew runs.
       if (Array.isArray(e.ultraRouting) && e.ultraRouting.length) entry.ultraRouting = e.ultraRouting.slice(0, 20).map(r => Object.assign({ status: num(r && r.status), routedVia: str(r && r.routedVia).slice(0, 256), fallbackAttempts: num(r && r.fallbackAttempts), fallbackTrail: str(r && r.fallbackTrail).slice(0, 1024) }, str(r && r.error) ? { error: str(r.error).slice(0, 60) } : {}));
+      if (Array.isArray(e.ultraMoves) && e.ultraMoves.length) entry.ultraMoves = e.ultraMoves.slice(0, 10).map(m => ({ step: str(m && m.step).slice(0, 20), from: str(m && m.from).slice(0, 40), to: str(m && m.to).slice(0, 40), outcome: str(m && m.outcome).slice(0, 20), detail: str(m && m.detail).slice(0, 200) }));
       rows.push(entry);
       // bound the RAM mirror: splice the oldest off past the ceiling. Disk keeps the full append-only log; only
       // this in-process array is capped so a long-lived process doesn't leak. The cap is well above every served

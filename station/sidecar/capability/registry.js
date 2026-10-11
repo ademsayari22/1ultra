@@ -265,6 +265,7 @@
     // watched browser-commanded run), plus the per-worker/day/global budget caps and the concurrency ceiling.
     orchestrator: [
       { capId: 'orchestrator', tool: 'team.dispatch', scope: 'execute', requiresConsent: true, network: true },
+      { capId: 'orchestrator', tool: 'team.health', scope: 'read', requiresConsent: false, network: false },
       { capId: 'orchestrator', tool: 'team.spawn', scope: 'execute', requiresConsent: true, network: true },
       // team.summon CREATES a new crew member — a stronger, outward-visible mutation than delegating to existing
       // crew, so unlike team.dispatch it IS consent-gated (the APPROVAL-mode confirm beat). Lead-only by the same
