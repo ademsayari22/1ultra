@@ -6,6 +6,8 @@ Run on 10 October 2026 against Starnet `54899e5` as adapted for 1Ultra (Phase 1)
 
 Rerun on 10 October 2026 after Stage 1a (ULTRA on Codex and the safety rails): the same 1101 steps, 955 passed, and the same 146 steps failed for the same reasons; the real `runs/station-runtime` was again unchanged. The first Stage 1a run found one new failure, `test/failopen-ratchet.test.js`: the emergency-stop hook added one silent `catch`. It now reports through Starnet's `failNote` (`ultra.station-halt.killAll`), and the ratchet passes.
 
+Rerun on 11 October 2026 after Stage 1b (the crew on FreeLLMAPI): the same 1101 steps, 955 passed, and the same 146 steps failed for the same reasons; the real `runs/station-runtime` was unchanged. Two Stage 1b runs found one new failure each, both source-pattern guards, and both were fixed rather than excused. `test/comms-presence.test.js` needs the per-tool duration within 1300 characters of `function telemetryRun`; the "answered by" line now comes from a helper defined before that function. `test/update-drain-wiring.test.js` allows only two bare `runOnceCore(` mentions; the free-tier restart after a failed Codex sign-in now goes through the same single counted call, at most once.
+
 | Reason | Failures | Meaning |
 |---|---|---|
 | `excluded-tooling` | 89 | reads website/, src-tauri/, .github/, qa/, dev/, relay/, bin/, release or eval files that are not imported |
