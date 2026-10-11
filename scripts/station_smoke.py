@@ -31,12 +31,42 @@ def main():
         b64 = lambda d: base64.urlsafe_b64encode(json.dumps(d).encode()).decode().rstrip('=')
         (runtime / 'codex').mkdir()
         (runtime / 'codex' / 'tokens.json').write_text(json.dumps({'access_token': b64({'alg': 'none'}) + '.' + b64({'exp': 4102444800}) + '.fixture', 'refresh_token': 'fixture-refresh', 'last_refresh': '2026-10-10T00:00:00Z', 'auth_mode': 'chatgpt'}))
+        import http.server, socketserver, threading
+        crew_seen, crew_key = [], 'freellmapi-' + 'ab' * 24
+        class FakeFreeLLMAPI(http.server.BaseHTTPRequestHandler):
+            def log_message(self, *args): pass
+            def send_json(self, status, body, extra=None):
+                data = json.dumps(body).encode()
+                self.send_response(status); self.send_header('Content-Type', 'application/json'); self.send_header('Content-Length', str(len(data)))
+                for name, value in (extra or {}).items(): self.send_header(name, value)
+                self.end_headers(); self.wfile.write(data)
+            def do_GET(self):
+                if self.path.startswith('/v1/models'):
+                    return self.send_json(200, {'object': 'list', 'data': [{'id': 'auto', 'available': True}, {'id': 'smart-model', 'execution_status': 'ready', 'supported_parameters': ['tools']}]})
+                self.send_json(404, {'error': {'message': 'not found'}})
+            def do_POST(self):
+                body = json.loads(self.rfile.read(int(self.headers.get('Content-Length') or 0)) or b'{}')
+                crew_seen.append({'path': self.path, 'auth': self.headers.get('Authorization'), 'task': self.headers.get('X-FreeLLM-Task-Type'), 'model': body.get('model')})
+                if self.path != '/v1/chat/completions': return self.send_json(404, {'error': {'message': 'not found'}})
+                usage = {'prompt_tokens': 5, 'completion_tokens': 3, 'total_tokens': 8}
+                if body.get('stream') is False:
+                    return self.send_json(200, {'id': 'c1', 'object': 'chat.completion', 'model': 'smart-model', 'choices': [{'index': 0, 'message': {'role': 'assistant', 'content': 'fixture crew reply'}, 'finish_reason': 'stop'}], 'usage': usage}, {'X-Routed-Via': 'fixture/smart-model'})
+                chunk = lambda delta, finish=None, extra=None: 'data: ' + json.dumps({'id': 'c1', 'object': 'chat.completion.chunk', 'created': 0, 'model': 'smart-model', 'choices': [{'index': 0, 'delta': delta, 'finish_reason': finish}], **(extra or {})}) + '\n\n'
+                data = (chunk({'role': 'assistant', 'content': 'fixture crew reply'}) + chunk({}, 'stop', {'usage': usage}) + 'data: [DONE]\n\n').encode()
+                self.send_response(200); self.send_header('Content-Type', 'text/event-stream'); self.send_header('X-Routed-Via', 'fixture/smart-model')
+                self.send_header('Content-Length', str(len(data))); self.end_headers(); self.wfile.write(data)
+        fake = socketserver.ThreadingTCPServer(('127.0.0.1', 0), FakeFreeLLMAPI); fake.daemon_threads = True
+        crew_port = fake.server_address[1]
+        threading.Thread(target=fake.serve_forever, daemon=True).start()
+        (runtime / '.secrets').mkdir(mode=0o700)
+        (runtime / '.secrets' / 'freellmapi.json').write_text(json.dumps({'baseUrl': f'http://127.0.0.1:{crew_port}/v1', 'key': crew_key}))
+        (runtime / 'model-tiers.json').write_text(json.dumps({'version': 1, 'models': {'fixture/smart-model': {'canonicalId': 'smart-model', 'tier': 'smart', 'tools': True, 'vision': False}}}))
         (runtime / 'ultra-control.json').write_text('{"halted": true}\n')
         (runtime / 'ultra-state.json').write_text(json.dumps({'version': 1, 'world': None, 'workstreams': None, 'companySessions': {}, 'crew': {}, 'memory': [], 'tasks': [], 'workflows': [], 'workflowRuns': {}, 'focus': None, 'settings': {'theme': 'dark', 'text': 16, 'reducedMotion': False}, 'history': [{'at': 'fixture', 'fields': ['settings']}]}) + '\n')
         log = open(root / 'station.log', 'w+')
         proc = subprocess.Popen(['node', str(project / 'station/sidecar/index.js')], cwd=project,
             env={'PATH': os.environ['PATH'], 'LANG': 'C.UTF-8', 'ULTRA_ROOT': str(root),
-                 'ULTRA_RUNTIME': str(root / 'runtime'), 'ULTRA_PORT': str(args.port)}, stdout=log, stderr=log)
+                 'ULTRA_RUNTIME': str(root / 'runtime'), 'ULTRA_PORT': str(args.port), 'ULTRA_FREELLMAPI_PORT': str(crew_port)}, stdout=log, stderr=log)
         base = f'http://127.0.0.1:{args.port}'; token = ''
         def request(route, body=None, version=None, expected=200, authenticated=True):
             headers = {'X-Starnet-Token': token} if authenticated else {}
@@ -51,7 +81,7 @@ def main():
         def boot():
             nonlocal token, proc
             proc = subprocess.Popen(['node', str(project / 'station/sidecar/index.js')], cwd=project,
-                env={'PATH':os.environ['PATH'],'LANG':'C.UTF-8','ULTRA_ROOT':str(root),'ULTRA_RUNTIME':str(root/'runtime'),'ULTRA_PORT':str(args.port)},stdout=log,stderr=log)
+                env={'PATH':os.environ['PATH'],'LANG':'C.UTF-8','ULTRA_ROOT':str(root),'ULTRA_RUNTIME':str(root/'runtime'),'ULTRA_PORT':str(args.port), 'ULTRA_FREELLMAPI_PORT': str(crew_port)},stdout=log,stderr=log)
             for attempt in range(60):
                 try:
                     page=request('/',authenticated=False)
@@ -89,7 +119,7 @@ def main():
             sw = request('/api/ultra/switches')
             values = {row['id']: row['value'] for row in sw['switches']}
             assert values['lead.codex'] is False and values['concurrency'] == 2 and values['crew.escalate_to_lead'] is True
-            request('/api/ultra/switches', {'id': 'crew.freellmapi', 'value': True}, sw['version'], expected=409)
+            request('/api/ultra/switches', {'id': 'tools.browser', 'value': True}, sw['version'], expected=409)
             request('/api/ultra/switches', {'id': 'concurrency', 'value': 3}, 'stale', expected=409)
             sw = request('/api/ultra/switches', {'id': 'concurrency', 'value': 3}, sw['version'])
             assert {r['id']: r['value'] for r in sw['switches']}['concurrency'] == 3
@@ -129,6 +159,31 @@ def main():
             request('/api/halt/resume', {'confirm': True})
             sw = request('/api/ultra/switches'); request('/api/ultra/switches', {'id': 'lead.codex', 'value': False}, sw['version'])
             checks.append('Codex lead: tokens load while lead.codex is on; the emergency stop refuses the run before any model call')
+            def run_body(payload):
+                req = urllib.request.Request(base + '/api/run', data=json.dumps(payload).encode(),
+                                             headers={'X-Starnet-Token': token, 'Origin': base, 'Content-Type': 'application/json'})
+                with urllib.request.urlopen(req, timeout=30) as response: return response.read().decode()
+            def set_switch(sid, value):
+                sw = request('/api/ultra/switches'); request('/api/ultra/switches', {'id': sid, 'value': value}, sw['version'])
+            set_switch('crew.freellmapi', True)
+            crew = request('/api/ultra/crew')
+            assert crew['reachable'] and crew['keyAccepted'] and crew['readyModels'] == 1, crew
+            assert [m['agentId'] for m in crew['members']] == ['research', 'delivery', 'sales', 'qa'] and all(m['ready'] for m in crew['members']), crew
+            body = run_body({'agentId': 'sales', 'provider': 'custom', 'model': 'auto:smart', 'messages': [{'role': 'user', 'content': 'fixture'}]})
+            assert 'fixture crew reply' in body, body[:300]
+            chat = [s for s in crew_seen if s['path'] == '/v1/chat/completions']
+            assert chat and chat[-1] == {'path': '/v1/chat/completions', 'auth': 'Bearer ' + crew_key, 'task': 'chat', 'model': 'auto:smart'}, crew_seen
+            row = next(r for r in request('/api/runs?agent=sales')['runs'] if r.get('provider') == 'custom')
+            assert row['usd'] == 0 and row['ultraRouting'][-1]['routedVia'] == 'fixture/smart-model', row
+            checks.append('Crew on FreeLLMAPI: seeded crew ready, unified key and task type sent, routed model recorded, cost $0')
+            (runtime / 'codex' / 'tokens.json').unlink()
+            proc.terminate(); proc.wait(timeout=10); boot()
+            set_switch('lead.codex', True)
+            body = run_body({'agentId': 'agent', 'provider': 'codex', 'model': 'gpt-6.1-sol', 'messages': [{'role': 'user', 'content': 'fixture'}]})
+            assert 'lead running on free tier' in body and 'fixture crew reply' in body, body[:400]
+            assert crew_seen[-1]['model'] == 'auto:smart' and crew_seen[-1]['task'] is None, crew_seen[-1]
+            set_switch('lead.codex', False); set_switch('crew.freellmapi', False)
+            checks.append('Lead fallback: a signed-out Codex lead continues on the free tier with a visible notice')
             assert len(workspace['leads']) == len(json.loads((root / 'data/leads.json').read_text()))
             checks.append('Authenticated workspace and deterministic ranking')
             lead = workspace['hunt']['leads'][0]
@@ -224,6 +279,7 @@ def main():
             try: proc.wait(timeout=5)
             except subprocess.TimeoutExpired: proc.kill(); proc.wait()
             log.close()
+            fake.shutdown()
 
 
 if __name__ == '__main__': main()

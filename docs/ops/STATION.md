@@ -8,10 +8,38 @@ Requires Python 3.10+ and Node.js 20.3+. Install pinned dependencies once with `
 
 - `/` is the Starnet station (1Ultra build). **WORK → CAMPAIGN** opens the Tunisia campaign; **SYSTEM → SWITCHES** shows what agents may use.
 - `/campaign/` is the campaign page on its own. `/classic/` is the original Python interface. For a separate standard-library fallback, run `python3 scripts/station.py --classic --port 8542`.
-- Switches you can turn on now: **lead.codex** (then sign in: model dock → GPT / CODEX → Sign in with ChatGPT, and pick GPT 6.1 SOL · XHIGH) and **tools.web** (public web search and reading for agents; private network addresses stay blocked). Crew switches arrive with FreeLLMAPI.
+- Switches you can turn on now: **lead.codex** (then sign in: model dock → GPT / CODEX → Sign in with ChatGPT, and pick GPT 6.1 SOL · XHIGH), **crew.freellmapi** (crew on the local FreeLLMAPI service; see "Crew on FreeLLMAPI"), **crew.escalate_to_lead** (on by default: ULTRA takes over crew work that fails on every free option, while lead.codex is on) and **tools.web** (public web search and reading for agents; private network addresses stay blocked).
 - One emergency stop: the 1Ultra stop halts Starnet too, Starnet's E-STOP sets the 1Ultra stop, and Starnet's RESUME clears both.
 - Agents can never read or write the 1Ultra project folder, and it cannot be added as a project. Inside the station runtime each agent reaches only its own workspace, never the switches, the stop, saved settings or the ChatGPT tokens — even in Full Power. Searches and recursive listings skip protected files.
 - Every model request (including retries, model catalogs and sign-in renewals) checks the emergency stop and the provider switch again, so turning `lead.codex` off takes effect on the next request, and pressing stop also aborts model requests already in flight.
+
+## Crew on FreeLLMAPI
+
+Research, Delivery, Sales and QA work next to ULTRA on free models through [FreeLLMAPI](https://github.com/tashfeenahmed/freellmapi), running locally on `127.0.0.1:3001`. ULTRA stays on Codex.
+
+1. Install once: `python3 scripts/freellmapi.py install`. This downloads FreeLLMAPI at the pinned commit and its packages.
+2. Start it: `python3 scripts/freellmapi.py start`. It begins with OVH AI Endpoints' keyless access, which is slow (about 2 requests per minute per model).
+3. Give the station its key: `python3 scripts/freellmapi.py key`.
+4. To make it faster, add free keys:
+   - Run `python3 scripts/freellmapi.py admin` for the dashboard login.
+   - Open http://127.0.0.1:3001/keys and paste keys from Groq, Cerebras and OpenRouter there. Never paste a key in a chat.
+5. Tier the models, and again after adding keys: `python3 scripts/freellmapi.py tiers`. You can edit tiers in `runs/station-runtime/model-tiers.json`.
+6. In **SYSTEM → SWITCHES**, turn on **crew.freellmapi**. The line under it shows whether FreeLLMAPI is running, how many models are ready and how many crew members can work.
+7. Talk to a crew member in COMMS, or ask ULTRA to delegate. Each run's details show **answered by** with the model FreeLLMAPI actually used.
+
+How the crew stays capable:
+- **Checks:** the station checks every delegated crew result. A result is caught when its model was below the member's tier, when it failed its checks, or when QA gave no verdict.
+- **Ladder:** a caught result is retried once on `auto:smart`, then handed to another member who covers the work, then back to ULTRA (with **crew.escalate_to_lead**). That is at most three moves.
+- **Bench:** a member with three bad results in 30 minutes is benched until a model at its tier is ready again.
+- **team.health:** ULTRA can read all of this with `team.health`.
+- **Free-tier ULTRA:** if Codex is signed out or out of allowance and the crew is on, ULTRA continues on the free tier with a visible "lead running on free tier" notice.
+
+Privacy:
+- Free providers may log prompts. Crew models get only public research, campaign drafts and synthetic examples, and agents still cannot read the project folder.
+- FreeLLMAPI keeps request metadata (not message bodies) for 90 days in `services/freellmapi/state/`.
+- Stop it with `python3 scripts/freellmapi.py stop`.
+
+After the first start with this update, close and reopen any station tab, so the page picks up the new crew members.
 
 ## Find leads and convince a buyer
 

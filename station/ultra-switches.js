@@ -4,8 +4,8 @@
 const crypto=require('node:crypto');
 const CATALOG=Object.freeze([
   {id:'lead.codex',label:'Lead agent on Codex (gpt-6.1-sol, xhigh)',type:'bool',default:false,ready:true,needs:'Turn on, then sign in: model dock → GPT / CODEX → Sign in with ChatGPT; pick GPT 6.1 SOL · XHIGH'},
-  {id:'crew.freellmapi',label:'Crew agents on FreeLLMAPI',type:'bool',default:false,ready:false,needs:'FreeLLMAPI running with at least one provider key'},
-  {id:'crew.escalate_to_lead',label:'Lead takes over crew work that fails on every free option',type:'bool',default:true,ready:false,needs:'lead.codex on'},
+  {id:'crew.freellmapi',label:'Crew agents on FreeLLMAPI',type:'bool',default:false,ready:true,needs:'Start FreeLLMAPI first: python3 scripts/freellmapi.py start, then key and tiers'},
+  {id:'crew.escalate_to_lead',label:'Lead takes over crew work that fails on every free option',type:'bool',default:true,ready:true,needs:'lead.codex on'},
   {id:'tools.web',label:'Web search and page reading',type:'bool',default:false,ready:true,needs:''},
   {id:'tools.browser',label:'Agent-driven headless browser',type:'bool',default:false,ready:false,needs:'Playwright Chromium'},
   {id:'tools.shell',label:'Shell, terminal and files outside the agent workspace',type:'bool',default:false,ready:false,needs:''},

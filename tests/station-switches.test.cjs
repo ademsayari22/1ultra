@@ -7,12 +7,13 @@ test('defaults: everything off except escalation (inert) and concurrency 2',()=>
   assert.equal(byId['lead.codex'].value,false);assert.equal(byId['crew.freellmapi'].value,false);
   assert.equal(byId['crew.escalate_to_lead'].value,true);assert.equal(byId.concurrency.value,2);assert.equal(byId.spend_cap_usd.value,0);
   for(const id of ['tools.web','tools.browser','tools.shell','tools.computer','tools.mcp','cron','nightshift','voice','skills.market','channels.telegram','channels.discord','channels.slack','channels.signal','channels.matrix'])assert.equal(byId[id].value,false,id);
-  assert.deepEqual(s.list().filter(r=>r.ready).map(r=>r.id).sort(),['concurrency','lead.codex','spend_cap_usd','tools.web']);
+  assert.deepEqual(s.list().filter(r=>r.ready).map(r=>r.id).sort(),['concurrency','crew.escalate_to_lead','crew.freellmapi','lead.codex','spend_cap_usd','tools.web']);
   assert.equal(s.isOn('channels'),false);assert.equal(s.isOn('providers'),false);
 });
 test('only ready switches change, with type and range checks and history',()=>{
   const s=store();
-  assert.throws(()=>s.set('crew.freellmapi',true),e=>e.code==='not_ready');
+  assert.throws(()=>s.set('tools.browser',true),e=>e.code==='not_ready');
+  s.set('crew.freellmapi',true);assert.equal(s.isOn('crew.freellmapi'),true);s.set('crew.freellmapi',false);
   s.set('lead.codex',true);assert.equal(s.isOn('lead.codex'),true);s.set('lead.codex',false);
   assert.throws(()=>s.set('nope',true),e=>e.code==='unknown');
   assert.throws(()=>s.set('concurrency','3'),e=>e.code==='invalid');

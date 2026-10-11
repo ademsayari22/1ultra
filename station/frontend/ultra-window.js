@@ -24,6 +24,25 @@
     const note = s.ready ? (s.needs ? (s.id === 'lead.codex' ? '' : 'Needs: ') + s.needs : '') : 'Not available yet' + (s.needs ? ' · needs: ' + s.needs : '');
     return '<label class="ultra-sw-row"><span class="ultra-sw-label"><b>' + esc(s.label) + '</b><small>' + esc(s.id) + (note ? ' · ' + esc(note) : '') + '</small></span>' + control(s) + '</label>';
   }
+  function crewText(s) {
+    if (!s.wire || !s.wire.configured) return 'not set up: run python3 scripts/freellmapi.py start, then key';
+    if (!s.switch) return 'set up; turn on crew.freellmapi to use the crew';
+    if (!s.reachable) return 'not running: python3 scripts/freellmapi.py start';
+    if (!s.keyAccepted) return 'key rejected: python3 scripts/freellmapi.py key';
+    const members = Array.isArray(s.members) ? s.members : [];
+    return s.readyModels + ' ready model' + (s.readyModels === 1 ? '' : 's') + ' · ' + members.filter(m => m.ready).length + ' of ' + members.length + ' crew ready'
+      + (s.tiersSeeded ? '' : ' · run python3 scripts/freellmapi.py tiers');
+  }
+  async function crewLine(body) {
+    const input = body.querySelector('[data-switch="crew.freellmapi"]');
+    if (!input) return;
+    const line = document.createElement('p'); line.className = 'dim ultra-crew-status'; line.textContent = 'FreeLLMAPI: checking…';
+    input.closest('label').after(line);
+    try {
+      const r = await fetch('/api/ultra/crew', { headers: { 'X-Starnet-Token': window.__STARNET_API_TOKEN__ || '' } });
+      line.textContent = 'FreeLLMAPI: ' + crewText(await r.json());
+    } catch (e) { line.textContent = 'FreeLLMAPI: status unavailable (' + e.message + ')'; }
+  }
   async function build(body) {
     body.innerHTML = '<div class="ultra-sw"><p class="dim">Loading switches…</p></div>';
     let data;
@@ -37,6 +56,7 @@
       catch (e) { const err = body.querySelector('.ultra-sw-error'); err.textContent = e.message; err.hidden = false; return; }
       build(body);
     }));
+    crewLine(body);
   }
   StationUI.registerWindow('ultra-switches', 'SWITCHES', build, { console: true, className: 'ultra-switches-win' });
 })();
