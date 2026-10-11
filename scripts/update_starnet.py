@@ -17,7 +17,7 @@ SKIP_PARTS = {'workspaces', 'output', 'credentials', 'fixtures-private'}
 # 1Ultra-owned paths inside station/: never written, replaced or deleted by an update.
 OWNED = ('ultra-host.js', 'ultra-policy.js', 'ultra-state.js', 'ultra-switches.js', 'ultra-seed.js', 'ultra-patches.json',
          'UPSTREAM.json', 'package.json', 'package-lock.json', 'node_modules/', 'frontend/campaign/', 'frontend/assets/',
-         'frontend/ultra-window.js', 'frontend/ultra-brand.css')
+         'frontend/ultra-window.js', 'frontend/ultra-brand.css', 'frontend/ultra-templates.js')
 RENAMES = {'package.json': 'package.upstream.json', 'package-lock.json': 'package-lock.upstream.json'}
 # Display words only. A brand word is rewritten when it touches whitespace (prose) or sits alone between HTML tags
 # (>STARNET<). A word joined to '-' or '/' (X-StarNet-Token header, Support/StarNet path) or standing alone as a code

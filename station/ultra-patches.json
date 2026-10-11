@@ -403,5 +403,24 @@
   "file": "sidecar/index.js",
   "find": "    try { codexToken = await ensureCodexAccessToken(); }\n    catch (e) {\n      emit('agent.run.start', { agentId, runId, trigger: trigger, model, ...runStartExtra });\n",
   "replace": "    try { codexToken = await ensureCodexAccessToken(); }\n    catch (e) {\n      const ultraFallback = Object.assign({}, o, { provider: providerId, model });\n      if (ultraHost.crew.rewriteLeadAuthFailure(ultraFallback)) {\n        throw Object.assign(new Error('Codex startup token acquisition failed; continuing on the free tier.'), { code: 'ULTRA_CODEX_START_FALLBACK', ultraFallback });\n      }\n      emit('agent.run.start', { agentId, runId, trigger: trigger, model, ...runStartExtra });\n"
-}
+},
+{"id": "ultra-templates-merge", "file": "frontend/app/stationtemplates.js",
+ "find": "  return { catalog: catalog.map(({wings,...entry}) => Object.freeze(entry)), guides, build, example, recommend, kits, presetKits };",
+ "replace": "  /* 1Ultra: the 1ULTRA COMMAND station and the 1Ultra room kits (station/frontend/ultra-templates.js) join the catalog and the kits. */\n  const ULTRA_TEMPLATES = (typeof module !== 'undefined' && module.exports) ? require('../ultra-templates.js') : (typeof UltraTemplates !== 'undefined' ? UltraTemplates : null);\n  if (ULTRA_TEMPLATES) { catalog.push(...ULTRA_TEMPLATES.catalog); Object.assign(rooms, ULTRA_TEMPLATES.rooms); Object.assign(KIT_ABOUT, ULTRA_TEMPLATES.kitAbout); }\n  return { catalog: catalog.map(({wings,...entry}) => Object.freeze(entry)), guides, build, example, recommend, kits, presetKits };"},
+{"id": "ultra-templates-center", "file": "frontend/app/stationtemplates.js",
+ "find": "    const requireOK = r => { if (!r.ok) throw new Error(r.msg || r.error); return r; };\n",
+ "replace": "    const requireOK = r => { if (!r.ok) throw new Error(r.msg || r.error); return r; };\n    // 1Ultra: a preset may name and furnish its center room and seat an agent at the center desk (1ULTRA COMMAND).\n    if (entry.center) {\n      const home = station.rooms()[0];\n      if (entry.center.name) requireOK(station.renameRoom(home.id, entry.center.name));\n      for (const [t,x,y,facing=0] of entry.center.props || []) {\n        const spec = sprites.spec(t);\n        if (!spec) throw new Error('Missing station furniture: '+t);\n        requireOK(station.addProp({t,x,y,w:spec.w,h:spec.h,r:facing,block:spec.blocks!==false}));\n      }\n      const desk = entry.center.seat && station.props().find(p => p.t === 'desk' && station.roomAt(p.x, p.y) === home.id);\n      if (desk) requireOK(station.assignDesk(desk.id, entry.center.seat));\n    }\n"},
+{"id": "ultra-templates-seats", "file": "frontend/app/stationtemplates.js",
+ "find": "      for (const [t,x,y,facing=0] of r.props) {\n        const spec = sprites.spec(t);\n        if (!spec) throw new Error('Missing station furniture: '+t);\n        requireOK(station.addProp({t,x:slot.x+x,y:slot.y+y,w:spec.w,h:spec.h,r:facing,block:spec.blocks!==false}));\n      }\n",
+ "replace": "      for (const [t,x,y,facing=0,seat] of r.props) {\n        const spec = sprites.spec(t);\n        if (!spec) throw new Error('Missing station furniture: '+t);\n        const placed = requireOK(station.addProp({t,x:slot.x+x,y:slot.y+y,w:spec.w,h:spec.h,r:facing,block:spec.blocks!==false}));\n        if (seat) requireOK(station.assignDesk(placed.id, seat));   // 1Ultra: a preset desk can seat a named agent\n      }\n"},
+{"id": "ultra-templates-group", "file": "frontend/app/build.js",
+ "find": "  const PRESET_GROUPS = [\n",
+ "replace": "  const PRESET_GROUPS = [\n    ['ultra', '1ULTRA', 'Stations for your 1Ultra work: ULTRA orchestrates from the center, and the crew works beside it.'],\n"},
+{"id": "ultra-templates-section", "file": "frontend/app/build.js",
+ "find": "(item.group === 'work' ? 'work' : 'look')",
+ "replace": "(item.group === 'work' ? 'work' : item.group === 'ultra' ? 'ultra' : 'look')"},
+{"id": "ultra-templates-script", "file": "frontend/index.html",
+ "find": "<script src=\"app/stationtemplates.js\"></script>",
+ "replace": "<script src=\"ultra-templates.js\"></script>\n<script src=\"app/stationtemplates.js\"></script>"}
+
 ]

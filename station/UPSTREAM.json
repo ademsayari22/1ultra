@@ -14884,9 +14884,10 @@
     },
     {
       "path": "frontend/app/build.js",
-      "current_sha256": "c9bb6f9773febe96f77c52673a6c6b3a2430eada8112649a5aa84354976e5ab6",
+      "current_sha256": "688bc7cfe0dd6e911ed91564f4432cd48e7df08d9d82aa595a1c20eef7a8be2d",
       "reasons": [
-        "brand"
+        "brand",
+        "patch:ultra-templates-group,ultra-templates-section"
       ]
     },
     {
@@ -15851,6 +15852,13 @@
       ]
     },
     {
+      "path": "frontend/app/stationtemplates.js",
+      "current_sha256": "09641fe009635ec9f64b53b45293f46bd00f0a8167877e9815e46ec5dd6b09de",
+      "reasons": [
+        "patch:ultra-templates-merge,ultra-templates-center,ultra-templates-seats"
+      ]
+    },
+    {
       "path": "frontend/app/stationui.js",
       "current_sha256": "149b59ea21fbf6f1093dc763c8b0c404f5efde24c5e3ccaf20baf72c303607a7",
       "reasons": [
@@ -16349,10 +16357,10 @@
     },
     {
       "path": "frontend/index.html",
-      "current_sha256": "6b9229a64d1254d96c4758c916c02480c90d70991bad025de20f949264e1aef3",
+      "current_sha256": "475f8b853e971168ea7326b37d4e2b94090204fc10e5c59ac226c6db76cd755f",
       "reasons": [
         "brand",
-        "patch:dock-campaign,dock-switches,ultra-window-script,ultra-brand-css,label-title-logo,label-console-wordmark,label-provider-wordmark,label-logo-img"
+        "patch:dock-campaign,dock-switches,ultra-window-script,ultra-brand-css,label-title-logo,label-console-wordmark,label-provider-wordmark,label-logo-img,ultra-templates-script"
       ]
     },
     {

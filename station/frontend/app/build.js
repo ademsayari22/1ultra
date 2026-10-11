@@ -2649,6 +2649,7 @@ const Build = (() => {
      a card previews what it builds; applying replaces the layout in one undoable step (the old one is backed up), and a
      WORK preset opens its setup guide straight after. Staffing is that guide's next click — a preset never hires. */
   const PRESET_GROUPS = [
+    ['ultra', '1ULTRA', 'Stations for your 1Ultra work: ULTRA orchestrates from the center, and the crew works beside it.'],
     ['work', 'BUILT FOR YOUR WORK', 'A whole station for one kind of work. Its line is wired, every step has instructions, and a sample job is ready to try.'],
     ['look', 'JUST THE LOOK', 'Rooms and furniture only. Add a line from the Lines shelf whenever you want one.'],
   ];
@@ -2689,7 +2690,7 @@ const Build = (() => {
     const backupButton = g.querySelector('[data-restore-build]');
     try { backupButton.disabled = !localStorage.getItem(backupKey); } catch (_) { backupButton.disabled = true; }
     for (const item of StationTemplates.catalog) {
-      const grid = g.querySelector('[data-build-section="' + (item.group === 'work' ? 'work' : 'look') + '"] .station-build-grid');
+      const grid = g.querySelector('[data-build-section="' + (item.group === 'work' ? 'work' : item.group === 'ultra' ? 'ultra' : 'look') + '"] .station-build-grid');
       const button = document.createElement('button'); button.className = 'bb station-build-card';
       button.type = 'button'; button.dataset.stationBuild = item.id; button.setAttribute('aria-pressed','false');
       const doc = StationTemplates.build(item.id, WorldModel, PropSprites);

@@ -182,16 +182,29 @@ const StationTemplates = (() => {
     if (!entry) throw new Error('Unknown station build');
     const station = model.create(model.starterDoc());
     const requireOK = r => { if (!r.ok) throw new Error(r.msg || r.error); return r; };
+    // 1Ultra: a preset may name and furnish its center room and seat an agent at the center desk (1ULTRA COMMAND).
+    if (entry.center) {
+      const home = station.rooms()[0];
+      if (entry.center.name) requireOK(station.renameRoom(home.id, entry.center.name));
+      for (const [t,x,y,facing=0] of entry.center.props || []) {
+        const spec = sprites.spec(t);
+        if (!spec) throw new Error('Missing station furniture: '+t);
+        requireOK(station.addProp({t,x,y,w:spec.w,h:spec.h,r:facing,block:spec.blocks!==false}));
+      }
+      const desk = entry.center.seat && station.props().find(p => p.t === 'desk' && station.roomAt(p.x, p.y) === home.id);
+      if (desk) requireOK(station.assignDesk(desk.id, entry.center.seat));
+    }
     entry.wings.forEach(([type, side]) => {
       const r = rooms[type], slot = slots[side];
       // Every room retains the familiar 18 x 11 size for straightforward expansion.
       requireOK(station.addRoom({kind:r.kind,name:r.name,floorStyle:r.floorStyle,floorMat:r.floorMat,
         rect:{x1:slot.x,y1:slot.y,x2:slot.x+17,y2:slot.y+10}}));
       requireOK(station.placeHallway({rect:slot.hall}));
-      for (const [t,x,y,facing=0] of r.props) {
+      for (const [t,x,y,facing=0,seat] of r.props) {
         const spec = sprites.spec(t);
         if (!spec) throw new Error('Missing station furniture: '+t);
-        requireOK(station.addProp({t,x:slot.x+x,y:slot.y+y,w:spec.w,h:spec.h,r:facing,block:spec.blocks!==false}));
+        const placed = requireOK(station.addProp({t,x:slot.x+x,y:slot.y+y,w:spec.w,h:spec.h,r:facing,block:spec.blocks!==false}));
+        if (seat) requireOK(station.assignDesk(placed.id, seat));   // 1Ultra: a preset desk can seat a named agent
       }
       if (r.line) {
         // the SAME stamp the Lines shelf places (one validated mutation); ids come back in the blueprint's prop order
@@ -225,6 +238,9 @@ const StationTemplates = (() => {
     }
     return doc;
   }
+  /* 1Ultra: the 1ULTRA COMMAND station and the 1Ultra room kits (station/frontend/ultra-templates.js) join the catalog and the kits. */
+  const ULTRA_TEMPLATES = (typeof module !== 'undefined' && module.exports) ? require('../ultra-templates.js') : (typeof UltraTemplates !== 'undefined' ? UltraTemplates : null);
+  if (ULTRA_TEMPLATES) { catalog.push(...ULTRA_TEMPLATES.catalog); Object.assign(rooms, ULTRA_TEMPLATES.rooms); Object.assign(KIT_ABOUT, ULTRA_TEMPLATES.kitAbout); }
   return { catalog: catalog.map(({wings,...entry}) => Object.freeze(entry)), guides, build, example, recommend, kits, presetKits };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = StationTemplates;

@@ -145,6 +145,17 @@ class PatchAnchorsTest(unittest.TestCase):
         self.assertGreater(ids.index('crew-codex-state'), ids.index('crew-provider-config'))
         self.assertGreater(ids.index('crew-codex-state'), ids.index('crew-fallback-receipts'))
 
+    def test_ultra_templates_are_merged_and_seat_preset_desks(self):
+        templates = (ROOT / 'station/frontend/app/stationtemplates.js').read_text()
+        self.assertIn("require('../ultra-templates.js')", templates)
+        self.assertIn('if (entry.center) {', templates)
+        self.assertIn('if (seat) requireOK(station.assignDesk(placed.id, seat));', templates)
+        build = (ROOT / 'station/frontend/app/build.js').read_text()
+        self.assertIn("['ultra', '1ULTRA',", build)
+        self.assertIn("item.group === 'ultra' ? 'ultra' : 'look'", build)
+        index = (ROOT / 'station/frontend/index.html').read_text()
+        self.assertLess(index.index('<script src="ultra-templates.js"></script>'), index.index('<script src="app/stationtemplates.js"></script>'))
+
 
 if __name__ == '__main__':
     unittest.main()
