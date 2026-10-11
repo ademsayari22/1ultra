@@ -5,7 +5,7 @@
    (one desk per agent). Kits never bind seats: ULTRA's station builder places their furniture unassigned. */
 'use strict';
 const UltraTemplates = (() => {
-  const RULES = 'Prepare only: never send, publish, buy or record outcomes. Stay inside Tunisia, respect exclusions, and mark anything unverified as unknown.';
+  const RULES = 'Nothing leaves the station: never send, publish, buy, sign or record outcomes — Adem does those.';
   const rooms = {
     ultraCampaign: { name: 'CAMPAIGN', kind: 'bridge', floorStyle: 'cobalt', floorMat: 'resin', props: [
       ['war_intelcab', 1, 0], ['whiteboard', 4, 0], ['comms_dish', 15, 0], ['gigs_servercart', 1, 9], ['plant', 17, 9],
@@ -13,14 +13,14 @@ const UltraTemplates = (() => {
     ultraResearch: { name: 'LEAD RESEARCH', kind: 'lab', floorStyle: 'teal', floorMat: 'resin', props: [
       ['war_intelcab', 0, 0], ['desk', 3, 1], ['research_samplecart', 11, 1], ['comms_dish', 15, 0], ['bookshelf', 2, 8], ['bookshelf', 12, 8]],
       line: { bp: 'research_line', x: 0, y: 4, label: 'TUNISIA · LEAD RESEARCH', briefs: {
-        RESEARCHER: 'Find Tunisian companies that could use a small, bounded data pilot. For each one record the source URL, the date you saw it and the exact quoted text, and check it with campaign.leads so you never repeat a known or excluded company. ' + RULES,
-        WRITER: 'Turn the research notes into proposed leads with campaign.propose_lead: one Tunisian company each, with its country, source URL, observed date and quoted text. Then write a short list of what you proposed and what stays unknown. ' + RULES
+        RESEARCHER: 'Find Tunisian companies that could use a small data or document job. Note where you found each one (link, date, what it said), and use campaign.leads to skip companies Adem already has. ' + RULES,
+        WRITER: 'Propose the best ones with campaign.propose_lead (one Tunisian company each, with its country, source link, the date you saw it and what it said), then list what you proposed. ' + RULES
       } } },
     ultraDraftCheck: { name: 'DRAFT & CHECK', kind: 'hab', floorStyle: 'ash', floorMat: 'plank', props: [
       ['desk', 3, 1], ['industrial_roundtable', 10, 2], ['dinerchair', 9, 2, 3], ['dinerchair', 12, 2, 1], ['bookshelf', 15, 1], ['plant', 17, 3]],
       line: { bp: 'revision_loop', x: 0, y: 4, label: 'TUNISIA · DRAFT & CHECK', briefs: {
-        WRITER: 'Write a short French pitch for the company named in the job, using only its packet from campaign.lead: no invented facts, prices, deadlines or results. Run campaign.check_draft, fix every problem it lists, then save it with campaign.save_draft. If QA sent it back, fix exactly what QA asked. ' + RULES,
-        REVIEWER: 'Check the pitch against the company packet (campaign.lead) and campaign.check_draft. List every problem you find. End with exactly one line: VERDICT: approved or VERDICT: revise. ' + RULES
+        WRITER: 'Write a natural, persuasive French email for the company in the job, from its packet (campaign.lead) and Adem\'s pitch kit (campaign.pitch_kit), and save it with campaign.save_draft. If QA sent it back, improve what QA asked. ' + RULES,
+        REVIEWER: 'Read the email the way the recipient would: is it clear, specific and worth answering? Say what would make it stronger. End with exactly one line: VERDICT: approved or VERDICT: revise. ' + RULES
       } } },
     ultraDelivery: { name: 'DELIVERY LAB', kind: 'lab', floorStyle: 'sterile', floorMat: null, props: [
       ['war_intelcab', 0, 0], ['desk', 3, 1], ['rack', 12, 1], ['plant', 16, 1], ['workbench', 12, 8], ['industrial_drawerbank', 2, 8]] },

@@ -76,3 +76,15 @@ test('Starnet\'s own presets are unchanged', () => {
   const doc = T.build('research', M, Sprites);
   assert.equal(M.create(doc).rooms().find(r => r.id === doc.meta.spawnRoomId).name, 'HOME', 'a preset without a center keeps HOME');
 });
+
+test('research and draft-check kits give the lenient brief and the owner-only rule to each step', () => {
+  const rules = 'Nothing leaves the station: never send, publish, buy, sign or record outcomes — Adem does those.';
+  assert.deepEqual(U.rooms.ultraResearch.line.briefs, {
+    RESEARCHER: 'Find Tunisian companies that could use a small data or document job. Note where you found each one (link, date, what it said), and use campaign.leads to skip companies Adem already has. ' + rules,
+    WRITER: 'Propose the best ones with campaign.propose_lead (one Tunisian company each, with its country, source link, the date you saw it and what it said), then list what you proposed. ' + rules
+  });
+  assert.deepEqual(U.rooms.ultraDraftCheck.line.briefs, {
+    WRITER: 'Write a natural, persuasive French email for the company in the job, from its packet (campaign.lead) and Adem\'s pitch kit (campaign.pitch_kit), and save it with campaign.save_draft. If QA sent it back, improve what QA asked. ' + rules,
+    REVIEWER: 'Read the email the way the recipient would: is it clear, specific and worth answering? Say what would make it stronger. End with exactly one line: VERDICT: approved or VERDICT: revise. ' + rules
+  });
+});

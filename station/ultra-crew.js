@@ -113,7 +113,7 @@ function makeCrew({fs,path,runtime,switches,port,durable,isHalted=()=>false,fetc
   };
   return {
     registerProviderConfig:fn=>wire.register(fn),isFreeTier:id=>wire.isFreeTier(id),adapterOptions,receiptsFor:id=>receipts.get(id),
-    seedRoster:()=>roster.seed(),profileFor:id=>roster.profileFor(id),isCrewProvider:crewProvider,status,
+    seedRoster:()=>roster.seed(),migrateTexts:()=>roster.migrateTexts(),profileFor:id=>roster.profileFor(id),isCrewProvider:crewProvider,status,
     accept:(job,row)=>supervisor.accept(job,row),supervise:(job,o2,h)=>supervisor.supervise(job,o2,h),movesFor:id=>supervisor.movesFor(id),
     resumeCheck:id=>roster.isKnownMember(id)?supervisor.resumeCheck(id):Promise.resolve({ready:true,reason:''}),
     registerTools:registry=>registry.register(healthTool),leadBrief:()=>LEAD_BRIEF,

@@ -4,6 +4,7 @@ const fs = require('node:fs'), os = require('node:os'), path = require('node:pat
 const { makeRoster } = require('../station/ultra-crew-roster.js');
 const { makeCrew } = require('../station/ultra-crew.js');
 const seed = require('../station/ultra-seed.js');
+const { oldTexts, newTexts } = require('./fixtures/station-agent-texts.cjs');
 const durable = (file, value) => fs.writeFileSync(file, JSON.stringify(value));
 const read = (rt, name) => JSON.parse(fs.readFileSync(path.join(rt, name), 'utf8'));
 function seededRuntime() {
@@ -29,12 +30,153 @@ test('the four crew members are added once, to the save and the roster, on the f
     assert.ok(env.doc.updatedAt >= 5000 && env.updatedAt === env.doc.updatedAt);
     const rows = read(rt, 'agent.roster.json');
     assert.deepEqual(rows.agents.map(r => r.agentId), ['agent', 'research', 'delivery', 'sales', 'qa']);
-    assert.match(rows.agents[1].system, /never send messages/);
+    assert.match(rows.agents[1].system, /nothing leaves the station without Adem/);
     assert.ok(rows.updatedAt >= 5000);
     assert.deepEqual(read(rt, 'ultra-crew.json').seeded, ['research', 'delivery', 'sales', 'qa']);
     assert.equal(roster.profileFor('sales').taskType, 'chat');
     assert.deepEqual(roster.memberIds(), ['research', 'delivery', 'sales', 'qa']);
     assert.deepEqual(roster.seed().added, [], 'a second boot adds nothing');
+  } finally { fs.rmSync(rt, { recursive: true, force: true }); }
+});
+
+function oldRuntime() {
+  const rt = seededRuntime();
+  makeRoster({ fs, path, runtime: rt, durable, now: () => 1000 }).seed();
+  const env = read(rt, 'agent.save.json');
+  for (const agent of [env.doc.agent, ...env.doc.agents]) {
+    agent.docs = { ...oldTexts[agent.id] };
+    agent.purpose = oldTexts[agent.id].purpose;
+  }
+  env.updatedAt = 12000; env.doc.updatedAt = 16000; env.requestUpdatedAt = 16000;
+  env.doc._saveRevision = 7; env.doc._saveDirty = true;
+  durable(path.join(rt, 'agent.save.json'), env);
+  const roster = read(rt, 'agent.roster.json');
+  roster.updatedAt = 18000;
+  for (const row of roster.agents) {
+    const text = Object.values(oldTexts[row.agentId]).join('\n\n');
+    row.system = 'Owner prefix\n' + text + '\n' + text + '\nOwner suffix';
+  }
+  durable(path.join(rt, 'agent.roster.json'), roster);
+  return rt;
+}
+
+test('old seeded texts migrate in every saved field and every roster occurrence with a new revision', () => {
+  const rt = oldRuntime();
+  try {
+    const before = read(rt, 'agent.save.json');
+    const beforeCrew = read(rt, 'ultra-crew.json');
+    const crew = makeCrew({ fs, path, runtime: rt, durable, switches: { isOn: () => false }, port: 3901, now: () => 5000 });
+    assert.deepEqual(crew.migrateTexts().changed, ['agent', 'research', 'delivery', 'sales', 'qa']);
+    const env = read(rt, 'agent.save.json');
+    for (const agent of [env.doc.agent, ...env.doc.agents]) {
+      assert.deepEqual(agent.docs, newTexts[agent.id], agent.id + ': all four docs');
+      assert.equal(agent.purpose, newTexts[agent.id].purpose, agent.id + ': top-level purpose');
+      const original = [before.doc.agent, ...before.doc.agents].find(a => a.id === agent.id);
+      assert.deepEqual({ ...agent, docs: original.docs, purpose: original.purpose }, original, 'other agent settings stay unchanged');
+    }
+    assert.equal(env.doc._saveRevision, 8);
+    assert.equal(env.doc._saveDirty, false);
+    assert.equal(env.updatedAt, 16001); assert.equal(env.doc.updatedAt, 16001);
+    assert.equal(env.requestUpdatedAt, 16001); assert.equal(env.savedAt, 5000);
+    const roster = read(rt, 'agent.roster.json');
+    assert.equal(roster.updatedAt, 18001);
+    for (const row of roster.agents) {
+      const text = Object.values(newTexts[row.agentId]).join('\n\n');
+      assert.equal(row.system, 'Owner prefix\n' + text + '\n' + text + '\nOwner suffix', row.agentId + ': every occurrence');
+    }
+    assert.deepEqual(read(rt, 'ultra-crew.json'), { ...beforeCrew, textsVersion: 2 });
+  } finally { fs.rmSync(rt, { recursive: true, force: true }); }
+});
+
+test('migration keeps owner-edited Sales fields while migrating its old identity', () => {
+  const rt = oldRuntime();
+  try {
+    const env = read(rt, 'agent.save.json');
+    const sales = env.doc.agents.find(a => a.id === 'sales');
+    const editedManual = 'Adem added a note. ' + oldTexts.sales.manual;
+    sales.docs.manual = editedManual;
+    sales.purpose = 'My Sales purpose';
+    env.doc.agents.push({ id: 'ordinary', docs: { ...oldTexts.sales }, purpose: oldTexts.sales.purpose });
+    durable(path.join(rt, 'agent.save.json'), env);
+    makeRoster({ fs, path, runtime: rt, durable, now: () => 5000 }).migrateTexts();
+    const saved = read(rt, 'agent.save.json').doc.agents;
+    const migrated = saved.find(a => a.id === 'sales');
+    assert.equal(migrated.docs.manual, editedManual, 'docs require an exact match, not a substring');
+    assert.equal(migrated.docs.identity, newTexts.sales.identity);
+    assert.equal(migrated.docs.purpose, newTexts.sales.purpose);
+    assert.equal(migrated.purpose, 'My Sales purpose');
+    assert.deepEqual(saved.find(a => a.id === 'ordinary'), env.doc.agents.at(-1), 'unrelated agents stay unchanged');
+  } finally { fs.rmSync(rt, { recursive: true, force: true }); }
+});
+
+test('a second boot skips migration without writing any runtime file', () => {
+  const rt = oldRuntime();
+  try {
+    makeRoster({ fs, path, runtime: rt, durable }).migrateTexts();
+    const files = ['agent.save.json', 'agent.roster.json', 'ultra-crew.json'];
+    const before = files.map(name => fs.readFileSync(path.join(rt, name), 'utf8'));
+    const writes = [];
+    const crew = makeCrew({ fs, path, runtime: rt, durable: (file, value) => { writes.push(file); durable(file, value); },
+      switches: { isOn: () => false }, port: 3901, now: () => 999999 });
+    assert.deepEqual(crew.seedRoster().added, []);
+    assert.deepEqual(crew.migrateTexts().changed, []);
+    assert.deepEqual(writes, []);
+    assert.deepEqual(files.map(name => fs.readFileSync(path.join(rt, name), 'utf8')), before);
+    assert.equal(makeRoster({ fs, path, runtime: rt, durable }).readCrew().textsVersion, 2);
+  } finally { fs.rmSync(rt, { recursive: true, force: true }); }
+});
+
+test('new crew seeds use the lenient texts and name each owner-only external action', () => {
+  const rt = seededRuntime();
+  try {
+    makeRoster({ fs, path, runtime: rt, durable }).seed();
+    for (const agent of read(rt, 'agent.save.json').doc.agents) {
+      assert.deepEqual(agent.docs, newTexts[agent.id]);
+      assert.equal(agent.purpose, newTexts[agent.id].purpose);
+      assert.match(agent.docs.manual, /nothing leaves the station without Adem/);
+      for (const action of ['send', 'publish', 'buy', 'sign', 'record']) assert.match(agent.docs.manual, new RegExp('\\b' + action + '\\b'));
+    }
+  } finally { fs.rmSync(rt, { recursive: true, force: true }); }
+});
+
+test('already current texts mark the version without rewriting agent files', () => {
+  const rt = seededRuntime();
+  try {
+    const roster = makeRoster({ fs, path, runtime: rt, durable });
+    roster.seed();
+    const files = ['agent.save.json', 'agent.roster.json'];
+    const before = files.map(name => fs.readFileSync(path.join(rt, name), 'utf8'));
+    const writes = [];
+    const migrator = makeRoster({ fs, path, runtime: rt, durable: (file, value) => { writes.push(path.basename(file)); durable(file, value); } });
+    assert.deepEqual(migrator.migrateTexts().changed, []);
+    assert.deepEqual(writes, ['ultra-crew.json']);
+    assert.deepEqual(files.map(name => fs.readFileSync(path.join(rt, name), 'utf8')), before);
+    assert.equal(read(rt, 'ultra-crew.json').textsVersion, 2);
+  } finally { fs.rmSync(rt, { recursive: true, force: true }); }
+});
+
+test('an interrupted text migration retries the missing roster write before marking the version', () => {
+  const rt = oldRuntime();
+  try {
+    const interrupted = makeRoster({ fs, path, runtime: rt, now: () => 5000, durable: (file, value) => {
+      if (path.basename(file) === 'agent.roster.json') throw new Error('interrupted migration');
+      durable(file, value);
+    } });
+    assert.throws(() => interrupted.migrateTexts(), /interrupted migration/);
+    assert.notEqual(read(rt, 'ultra-crew.json').textsVersion, 2);
+    assert.equal(read(rt, 'agent.save.json').doc._saveRevision, 8);
+    const writes = [];
+    const retry = makeRoster({ fs, path, runtime: rt, now: () => 6000, durable: (file, value) => {
+      writes.push(path.basename(file)); durable(file, value);
+    } });
+    assert.deepEqual(retry.migrateTexts().changed, ['agent', 'research', 'delivery', 'sales', 'qa']);
+    assert.deepEqual(writes, ['agent.roster.json', 'ultra-crew.json']);
+    assert.equal(read(rt, 'agent.save.json').doc._saveRevision, 8, 'the completed save is not rewritten');
+    assert.equal(read(rt, 'ultra-crew.json').textsVersion, 2);
+    for (const row of read(rt, 'agent.roster.json').agents) {
+      assert.ok(row.system.includes(newTexts[row.agentId].identity));
+      assert.ok(!row.system.includes(oldTexts[row.agentId].identity));
+    }
   } finally { fs.rmSync(rt, { recursive: true, force: true }); }
 });
 
@@ -60,6 +202,7 @@ test('without a station save nothing is written, so the next boot tries again', 
   try {
     const roster = makeRoster({ fs, path, runtime: rt, durable, now: () => 5000 });
     assert.deepEqual(roster.seed().added, []);
+    assert.deepEqual(roster.migrateTexts().changed, []);
     assert.equal(fs.existsSync(path.join(rt, 'ultra-crew.json')), false);
   } finally { fs.rmSync(rt, { recursive: true, force: true }); }
 });

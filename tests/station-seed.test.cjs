@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict'),test=require('node:test');
 const Seed=require('../station/ultra-seed.js');
+const {newTexts}=require('./fixtures/station-agent-texts.cjs');
 test('seed resumes straight into the station on the codex provider without inventing business facts',()=>{
   const files=Seed.files(1760054400000);
   assert.deepEqual(Object.keys(files).sort(),['_commander.dossier.json','agent.roster.json','agent.save.json']);
@@ -11,7 +12,9 @@ test('seed resumes straight into the station on the codex provider without inven
   assert.equal(files['agent.roster.json'].agents[0].provider,'codex');
   assert.doesNotMatch(JSON.stringify(files),/StarNet|STARNET/);
   assert.doesNotMatch(JSON.stringify(files),/revenue|\bTND\b/i);
-  assert.match(save.doc.agent.docs.manual,/^Drafts go to the Outbox for review\. Never claim a message was sent/);
+  assert.deepEqual(save.doc.agent.docs,newTexts.agent);
+  assert.equal(save.doc.agent.purpose,newTexts.agent.purpose);
+  assert.equal(files['agent.roster.json'].agents[0].system,newTexts.agent.identity);
   assert.deepEqual(save.doc.usage,{tokens:0,cost:0,calls:0});
   assert.match(files['_commander.dossier.json'].block,/Adem sends messages and records outcomes himself/);
 });
