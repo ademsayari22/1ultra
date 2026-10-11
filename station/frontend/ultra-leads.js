@@ -14,6 +14,17 @@
       + 'Do not send anything: I review the draft in LEADS.';
   }
 
+  function sessionTitle(lead) {
+    const prefix = 'Outreach · ', suffix = ' · ' + lead.id;
+    const companyLimit = 80 - prefix.length - suffix.length;
+    if (companyLimit < 0) throw new Error('Lead id is too long for an outreach conversation title.');
+    return prefix + String(lead.company).slice(0, companyLimit) + suffix;
+  }
+
+  function shouldPrefill(current, prompt) {
+    return !String(current ?? '').includes(prompt);
+  }
+
   function sourceLink(value) {
     try {
       const url = new URL(value);
@@ -37,7 +48,7 @@
       .sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
   }
 
-  window.UltraLeads = { view: { ranked, stageOf, outreachPrompt, cardModel } };
+  window.UltraLeads = { view: { ranked, stageOf, outreachPrompt, cardModel, sessionTitle, shouldPrefill } };
   if (typeof StationUI === 'undefined' || !StationUI.registerWindow) return;
   const esc = value => StationUI.h.esc(String(value ?? ''));
 
@@ -78,13 +89,15 @@
   function prepareOutreach(lead) {
     if (typeof Workstreams === 'undefined' || !Workstreams.create || typeof App === 'undefined' || !App.openWorkstream
       || typeof Chat === 'undefined' || !Chat.prefill) throw new Error('The outreach conversation is unavailable. Reopen the station and try again.');
-    const title = ('Outreach · ' + lead.company).slice(0, 80);
+    const title = sessionTitle(lead);
     const existing = (Workstreams.list ? Workstreams.list() : []).find(s => s && !s.archived && s.title === title && s.agentId === 'agent');
     const stream = existing || Workstreams.create(title, { activate: false, agentId: 'agent' });
     if (!stream || !stream.id) throw new Error('Could not create the outreach conversation.');
     if (!existing && App.persist) App.persist();
     App.openWorkstream(stream.id);
-    Chat.prefill(outreachPrompt(lead));
+    const prompt = outreachPrompt(lead);
+    const composer = typeof document !== 'undefined' ? document.getElementById('chat-input') : null;
+    if (shouldPrefill(composer ? composer.value : '', prompt)) Chat.prefill(prompt);
   }
 
   function build(body) {

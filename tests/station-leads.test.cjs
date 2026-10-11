@@ -30,6 +30,35 @@ test('asking ULTRA names the company, its id and the tools, and says nothing is 
   assert.match(text, /Do not send/);
 });
 
+test('outreach titles preserve distinct lead ids when company names share a long prefix', () => {
+  const prefix = 'A'.repeat(100);
+  const first = V.sessionTitle({ company: prefix + ' Alpha', id: 'lead-alpha' });
+  const second = V.sessionTitle({ company: prefix + ' Beta', id: 'lead-beta' });
+  assert.notEqual(first, second);
+  assert.ok(first.length <= 80);
+  assert.ok(second.length <= 80);
+  assert.ok(first.endsWith(' · lead-alpha'));
+  assert.ok(second.endsWith(' · lead-beta'));
+  assert.equal(V.sessionTitle({ company: 'Beta Data', id: 'b' }), 'Outreach · Beta Data · b');
+});
+
+test('outreach titles never truncate the id to fit the native store', () => {
+  const id = 'lead-' + 'x'.repeat(59);
+  const title = V.sessionTitle({ company: 'Beta Data', id });
+  assert.equal(title.length, 80);
+  assert.ok(title.endsWith(' · ' + id));
+  assert.throws(() => V.sessionTitle({ company: 'Beta Data', id: 'x'.repeat(67) }), /too long/);
+});
+
+test('shouldPrefill skips an exact existing prompt and accepts a missing prompt', () => {
+  const prompt = 'Prepare outreach for Beta Data (lead b).';
+  assert.equal(V.shouldPrefill('', prompt), true);
+  assert.equal(V.shouldPrefill('Adem has a question.', prompt), true);
+  assert.equal(V.shouldPrefill(prompt, prompt), false);
+  assert.equal(V.shouldPrefill('Adem note; ' + prompt + '\nKeep this wording.  ', prompt), false);
+  assert.equal(V.shouldPrefill('Prepare outreach for Alpha SARL (lead a).', prompt), true);
+});
+
 test('search ignores case and surrounding space without changing source order', () => {
   assert.deepEqual(V.ranked(W, C, '  ALPHA  ').map(r => r.id), ['a']);
   assert.deepEqual(W.hunt.leads.map(r => r.id), ['a', 'b']);
@@ -82,6 +111,8 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const leadsSource = fs.readFileSync(require.resolve('../station/frontend/ultra-leads.js'), 'utf8');
 const streamsSource = fs.readFileSync(require.resolve('../station/frontend/app/workstreams.js'), 'utf8');
+const chatSource = fs.readFileSync(require.resolve('../station/frontend/app/chat.js'), 'utf8');
+const nativePrefillSource = chatSource.slice(chatSource.indexOf('  function prefill(t) {'), chatSource.indexOf('  // a row of tappable suggestion pills'));
 const workspace = { ...W, hunt: { ...W.hunt, offers: [
   { id: 'documents', name: 'Checked table' }, { id: 'cleanup', name: 'Spreadsheet cleanup' }
 ] }, record_versions: { leads: 'fixture-leads-v1' } };
@@ -107,6 +138,8 @@ async function mounted(responses) {
   });
   const root = node();
   root.querySelector = selector => nodes[selector];
+  const composer = { value: '', focus() {}, setSelectionRange() {} };
+  const nativePrefill = vm.runInNewContext(nativePrefillSource + '\nprefill', { input: composer, autoGrowInput() {} });
   let bodyHTML = '';
   const body = { querySelector: () => root };
   Object.defineProperty(body, 'innerHTML', { get: () => bodyHTML, set(html) {
@@ -119,13 +152,14 @@ async function mounted(responses) {
   } });
   let builder;
   const context = vm.createContext({ URL, window: { __STARNET_API_TOKEN__: 'fixture-token' },
+    document: { getElementById: id => id === 'chat-input' ? composer : null },
     StationUI: { registerWindow: (key, title, build) => { builder = build; }, h: {
       esc: value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
       openTerm: key => doors.push(key)
     } },
     App: { persist: () => persisted.push(JSON.parse(JSON.stringify(context.Workstreams.serialize()))),
       openWorkstream: id => { opened.push(id); context.Workstreams.switch(id); } },
-    Chat: { prefill: text => prefills.push(text), send: () => { sends++; } },
+    Chat: { prefill: text => { prefills.push(text); nativePrefill(text); }, send: () => { sends++; } },
     fetch: async (url, options) => {
       requests.push({ url, ...options });
       const response = responses.shift();
@@ -140,7 +174,7 @@ async function mounted(responses) {
   builder(body);
   await settle();
   const click = action => root.handlers.click({ target: { closest: selector => selector === '[data-ul-action]' ? { dataset: { ulAction: action } } : null } });
-  return { nodes, body, requests, opened, persisted, prefills, doors, context, click, sends: () => sends };
+  return { nodes, body, requests, opened, persisted, prefills, doors, composer, context, click, sends: () => sends };
 }
 
 test('the native board loads authenticated campaign data and the classic link opens its registered window', async () => {
@@ -158,16 +192,58 @@ test('the native board loads authenticated campaign data and the classic link op
 test('Ask ULTRA persists and reuses a real lead-bound workstream and only prefills the composer', async () => {
   const ui = await mounted([{ body: workspace }, { body: campaign }]);
   ui.click('outreach'); ui.click('outreach');
-  const streams = ui.context.Workstreams.list().filter(s => s.title === 'Outreach · Beta Data');
+  const streams = ui.context.Workstreams.list().filter(s => s.title === 'Outreach · Beta Data · b');
   assert.equal(streams.length, 1);
   assert.equal(streams[0].agentId, 'agent');
   assert.equal(streams[0].history.length, 0);
   assert.equal(ui.persisted.length, 1);
   assert.ok(ui.persisted[0].workstreams.some(s => s.id === streams[0].id));
   assert.deepEqual(ui.opened, [streams[0].id, streams[0].id]);
-  assert.deepEqual(ui.prefills, [V.outreachPrompt(W.hunt.leads[1]), V.outreachPrompt(W.hunt.leads[1])]);
+  assert.deepEqual(ui.prefills, [V.outreachPrompt(W.hunt.leads[1])]);
+  assert.equal(ui.composer.value, V.outreachPrompt(W.hunt.leads[1]));
   assert.equal(ui.sends(), 0);
   assert.equal(ui.requests.length, 2);
+});
+
+test('Ask ULTRA preserves composer text when the exact outreach prompt is already present', async () => {
+  const ui = await mounted([{ body: workspace }, { body: campaign }]);
+  const typed = 'Adem note; ' + V.outreachPrompt(W.hunt.leads[1]) + '\nKeep this wording.  ';
+  ui.composer.value = typed;
+  ui.click('outreach');
+  assert.equal(ui.composer.value, typed);
+  assert.deepEqual(ui.prefills, []);
+  assert.equal(ui.sends(), 0);
+});
+
+test('Ask ULTRA appends a missing prompt through native Chat.prefill while preserving the owner note', async () => {
+  const ui = await mounted([{ body: workspace }, { body: campaign }]);
+  ui.composer.value = 'Adem has a question.';
+  ui.click('outreach');
+  assert.equal(ui.composer.value, 'Adem has a question.; ' + V.outreachPrompt(W.hunt.leads[1]));
+  assert.equal(ui.sends(), 0);
+});
+
+test('Ask ULTRA creates distinct conversations for long company names and reuses each by its id title', async () => {
+  const prefix = 'A'.repeat(100);
+  const leads = [{ ...W.hunt.leads[0], company: prefix + ' Alpha', id: 'lead-alpha' },
+    { ...W.hunt.leads[1], company: prefix + ' Beta', id: 'lead-beta' }];
+  const ui = await mounted([{ body: { ...workspace, hunt: { ...workspace.hunt, leads } } },
+    { body: { ...campaign, rankings: [{ id: 'lead-alpha', score: 80 }, { id: 'lead-beta', score: 40 }] } }]);
+  ui.click('outreach');
+  ui.nodes['.ul-search'].value = leads[1].company;
+  ui.nodes['.ul-search'].handlers.input();
+  ui.click('outreach');
+  ui.nodes['.ul-search'].value = leads[0].company;
+  ui.nodes['.ul-search'].handlers.input();
+  ui.click('outreach');
+  const streams = ui.context.Workstreams.list().filter(s => s.title && s.title.startsWith('Outreach · '));
+  assert.equal(streams.length, 2);
+  assert.ok(streams.every(s => s.title.length <= 80));
+  assert.ok(streams.some(s => s.title.endsWith(' · lead-alpha')));
+  assert.ok(streams.some(s => s.title.endsWith(' · lead-beta')));
+  assert.notEqual(ui.opened[0], ui.opened[1]);
+  assert.equal(ui.opened[0], ui.opened[2]);
+  assert.equal(ui.persisted.length, 2);
 });
 
 test('shortlist conflicts reload fresh facts and require another owner save with the new version', async () => {
