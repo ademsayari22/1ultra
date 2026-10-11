@@ -53,6 +53,17 @@ function num(v){const n=Number(v);return Number.isFinite(n)?n:0;}
 function makeRoster({fs,path,runtime,durable,now=()=>Date.now()}){
   const crewFile=path.join(runtime,'ultra-crew.json'),saveFile=path.join(runtime,'agent.save.json'),rosterFile=path.join(runtime,'agent.roster.json');
   function readJson(file,fallback){try{return JSON.parse(fs.readFileSync(file,'utf8'));}catch(e){if(e&&e.code==='ENOENT')return fallback;throw e;}}
+  function writeSave(env,doc,at){
+    const stamp=Math.max(at,num(env.updatedAt)+1,num(doc.updatedAt)+1);
+    doc.updatedAt=stamp;doc._saveRevision=num(doc._saveRevision)+1;doc._saveDirty=false;
+    env.updatedAt=stamp;env.savedAt=at;
+    if(Object.prototype.hasOwnProperty.call(env,'requestUpdatedAt'))env.requestUpdatedAt=stamp;
+    durable(saveFile,env);
+  }
+  function writeRoster(roster,rows,at){
+    roster.updatedAt=Math.max(at,num(roster.updatedAt)+1);roster.agents=rows;
+    durable(rosterFile,roster);
+  }
   function readCrew(){
     const c=readJson(crewFile,null);
     return c&&c.version===1?{version:1,textsVersion:c.textsVersion,seeded:Array.isArray(c.seeded)?c.seeded.slice():[],pending:Array.isArray(c.pending)?c.pending.slice():[],profiles:c.profiles&&typeof c.profiles==='object'?c.profiles:{}}:{version:1,seeded:[],pending:[],profiles:{}};
@@ -102,13 +113,9 @@ function makeRoster({fs,path,runtime,durable,now=()=>Date.now()}){
       crew.pending=[...new Set(crew.pending.concat(added))];
       durable(crewFile,crew);
       if(saveChanged){
-        const stamp=Math.max(at,num(env.updatedAt)+1,num(doc.updatedAt)+1);
-        doc.agents=agents;doc.updatedAt=stamp;doc._saveRevision=num(doc._saveRevision)+1;doc._saveDirty=false;
-        env.updatedAt=stamp;env.savedAt=at;
-        if(Object.prototype.hasOwnProperty.call(env,'requestUpdatedAt'))env.requestUpdatedAt=stamp;
-        durable(saveFile,env);
+        doc.agents=agents;writeSave(env,doc,at);
       }
-      if(rosterChanged)durable(rosterFile,{version:1,updatedAt:Math.max(at,num(roster.updatedAt)+1),agents:rows});
+      if(rosterChanged)writeRoster({version:1,updatedAt:roster.updatedAt},rows,at);
     }
     crew.seeded.push(...todo.map(m=>m.id));
     crew.pending=[];
@@ -138,14 +145,8 @@ function makeRoster({fs,path,runtime,durable,now=()=>Date.now()}){
       for(const texts of TEXTS)for(const field of TEXT_FIELDS)system=system.split(texts.before[field]).join(texts.after[field]);
       if(system!==row.system){row.system=system;rosterChanged=true;changed.add(row.agentId||'roster');}
     }
-    if(saveChanged){
-      const stamp=Math.max(at,num(env.updatedAt)+1,num(doc.updatedAt)+1);
-      doc.updatedAt=stamp;doc._saveRevision=num(doc._saveRevision)+1;doc._saveDirty=false;
-      env.updatedAt=stamp;env.savedAt=at;
-      if(Object.prototype.hasOwnProperty.call(env,'requestUpdatedAt'))env.requestUpdatedAt=stamp;
-      durable(saveFile,env);
-    }
-    if(rosterChanged){roster.updatedAt=Math.max(at,num(roster.updatedAt)+1);durable(rosterFile,roster);}
+    if(saveChanged)writeSave(env,doc,at);
+    if(rosterChanged)writeRoster(roster,roster.agents,at);
     // The marker is last: an interrupted write retries only the old values that remain on disk.
     crew.textsVersion=2;durable(crewFile,crew);
     return {changed:[...changed]};

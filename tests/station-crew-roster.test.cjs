@@ -321,3 +321,30 @@ test('a known crew member with an invalid profile stays supervised and cannot de
     assert.equal(calls, 1);
   } finally { fs.rmSync(rt, { recursive: true, force: true }); }
 });
+
+test('seeding and text migration persist the same revision and timestamp shape', () => {
+  for (const method of ['seed', 'migrateTexts']) {
+    const rt = method === 'seed' ? seededRuntime() : oldRuntime();
+    try {
+      const env = read(rt, 'agent.save.json');
+      env.updatedAt = 12000; env.doc.updatedAt = 16000; env.requestUpdatedAt = 16000;
+      env.doc._saveRevision = 7; env.doc._saveDirty = true;
+      durable(path.join(rt, 'agent.save.json'), env);
+      const rows = read(rt, 'agent.roster.json');
+      rows.updatedAt = 18000;
+      durable(path.join(rt, 'agent.roster.json'), rows);
+
+      makeRoster({ fs, path, runtime: rt, durable, now: () => 5000 })[method]();
+      const saved = read(rt, 'agent.save.json');
+      assert.deepEqual({
+        revisionDelta: saved.doc._saveRevision - env.doc._saveRevision,
+        docUpdatedAt: saved.doc.updatedAt, envUpdatedAt: saved.updatedAt,
+        savedAt: saved.savedAt, dirty: saved.doc._saveDirty, requestUpdatedAt: saved.requestUpdatedAt,
+        rosterUpdatedAt: read(rt, 'agent.roster.json').updatedAt
+      }, {
+        revisionDelta: 1, docUpdatedAt: 16001, envUpdatedAt: 16001,
+        savedAt: 5000, dirty: false, requestUpdatedAt: 16001, rosterUpdatedAt: 18001
+      }, method);
+    } finally { fs.rmSync(rt, { recursive: true, force: true }); }
+  }
+});
