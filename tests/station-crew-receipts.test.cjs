@@ -28,6 +28,17 @@ test('a failed connection is recorded and still thrown; a run keeps at most 20 r
   assert.equal(r.get('run-3').length, 20);
 });
 
+test('a run keeps its newest 20 receipts, including a success after 20 failures', async () => {
+  let at = 0, requests = 0;
+  const r = makeReceipts({ now: () => ++at });
+  const f = r.observe(async () => ++requests <= 20 ? response(429) : response(200, { 'x-routed-via': 'ovh/m' }), 'run-8');
+  for (let i = 0; i < 21; i++) await f('http://127.0.0.1:3901/v1/chat/completions');
+  const rows = r.get('run-8');
+  assert.equal(rows.length, 20);
+  assert.deepEqual(rows[rows.length - 1], { at: 21, status: 200, routedVia: 'ovh/m', fallbackAttempts: 0, fallbackTrail: '' });
+  assert.equal(rows[0].at, 2, 'the oldest receipt is dropped');
+});
+
 test('adapterOptions wraps fetch only for crew providers with a run id', async () => {
   const rt = fs.mkdtempSync(path.join(os.tmpdir(), 'ultra-receipts-'));
   try {

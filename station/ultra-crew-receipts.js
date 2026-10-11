@@ -8,7 +8,8 @@ function makeReceipts({now=()=>Date.now()}={}){
     if(!runId)return;
     let list=runs.get(runId);
     if(!list){list=[];runs.set(runId,list);if(runs.size>MAX_RUNS)runs.delete(runs.keys().next().value);}
-    if(list.length<MAX_PER_RUN)list.push(row);
+    if(list.length>=MAX_PER_RUN)list.shift();
+    list.push(row);
   }
   const header=(res,name)=>{try{return String((res&&res.headers&&res.headers.get(name))||'');}catch(_){return '';}};
   function observe(fetchFn,runId){
