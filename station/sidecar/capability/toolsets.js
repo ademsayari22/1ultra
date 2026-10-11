@@ -32,6 +32,8 @@
     { id: 'orchestrator', label: 'TASK DELEGATION',          glyph: '🕸', desc: 'Delegate subtasks to summoned crew, summon new agents, and schedule routines.' },
     { id: 'studio',       label: 'MEDIA STUDIO',             glyph: '🎨', desc: 'Generate images, analyse images, record voice clips, and cut DaVinci Resolve timelines — on the keys the agent already uses.' },
     { id: 'memory',       label: 'MEMORY NOTEBOOK',          glyph: '📓', desc: 'The agent’s private memory and saved skills.' },   // task plans moved to the computer (taskplan freebie, 2026-08-17)
+    // 1Ultra: the campaign tools are a toggleable family, like every other non-freebie on the computer.
+    { id: 'campaign',     label: '1ULTRA CAMPAIGN',          glyph: '◆',  desc: 'Read the Tunisia campaign (companies and checked packets), check and save pitch drafts, and propose sourced leads. Never sends anything.' },
     { id: 'jukebox',      label: 'JUKEBOX (SPOTIFY)',        glyph: '♫',  desc: 'Search and control your Spotify — play, pause, queue, “what’s playing”.' }
   ];
 

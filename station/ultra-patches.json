@@ -436,5 +436,8 @@
  "replace": "<link rel=\"stylesheet\" href=\"ultra-leads.css\">\n<script src=\"ultra-window.js\"></script>\n<script src=\"ultra-leads.js\"></script>"},
 {"id": "ultra-room-templates-dock", "file": "frontend/index.html",
  "find": "        <button class=\"bb\" id=\"bb-build\" data-hint=\"refit\"><span class=\"bb-i\">⌂</span><span class=\"bb-tx\"><b>BUILD MODE</b><small>rooms, corridors, gear &amp; workflow lines</small></span></button>",
- "replace": "        <button class=\"bb\" id=\"bb-build\" data-hint=\"refit\"><span class=\"bb-i\">⌂</span><span class=\"bb-tx\"><b>BUILD MODE</b><small>rooms, corridors, gear &amp; workflow lines</small></span></button>\n        <button class=\"bb\" data-term=\"ultra-room-templates\"><span class=\"bb-i\">▤</span><span class=\"bb-tx\"><b>ROOM TEMPLATES</b><small>1Ultra rooms ULTRA can add for future work</small></span></button>"}
+ "replace": "        <button class=\"bb\" id=\"bb-build\" data-hint=\"refit\"><span class=\"bb-i\">⌂</span><span class=\"bb-tx\"><b>BUILD MODE</b><small>rooms, corridors, gear &amp; workflow lines</small></span></button>\n        <button class=\"bb\" data-term=\"ultra-room-templates\"><span class=\"bb-i\">▤</span><span class=\"bb-tx\"><b>ROOM TEMPLATES</b><small>1Ultra rooms ULTRA can add for future work</small></span></button>"},
+{"id": "campaign-toolset-row", "file": "sidecar/capability/toolsets.js",
+ "find": "    { id: 'jukebox',      label: 'JUKEBOX (SPOTIFY)',",
+ "replace": "    // 1Ultra: the campaign tools are a toggleable family, like every other non-freebie on the computer.\n    { id: 'campaign',     label: '1ULTRA CAMPAIGN',          glyph: '◆',  desc: 'Read the Tunisia campaign (companies and checked packets), check and save pitch drafts, and propose sourced leads. Never sends anything.' },\n    { id: 'jukebox',      label: 'JUKEBOX (SPOTIFY)',"}
 ]

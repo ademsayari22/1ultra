@@ -16484,6 +16484,13 @@
       ]
     },
     {
+      "path": "sidecar/capability/toolsets.js",
+      "current_sha256": "b05f2f20f229ab151e02931b126561a1903bb9c0ebb1d8e91d78df3301f3666d",
+      "reasons": [
+        "patch:campaign-toolset-row"
+      ]
+    },
+    {
       "path": "sidecar/capability/withheld.js",
       "current_sha256": "74321a83d41dc871f2115422d7238f1faaeef6b0b9b2fdcecd1c43dc0ca51f33",
       "reasons": [

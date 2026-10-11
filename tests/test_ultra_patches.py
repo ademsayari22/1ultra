@@ -145,6 +145,11 @@ class PatchAnchorsTest(unittest.TestCase):
         self.assertGreater(ids.index('crew-codex-state'), ids.index('crew-provider-config'))
         self.assertGreater(ids.index('crew-codex-state'), ids.index('crew-fallback-receipts'))
 
+    def test_campaign_tools_are_a_toggleable_toolset(self):
+        toolsets = (ROOT / 'station/sidecar/capability/toolsets.js').read_text()
+        self.assertIn("{ id: 'campaign',     label: '1ULTRA CAMPAIGN',", toolsets)
+        self.assertLess(toolsets.index("id: 'campaign'"), toolsets.index("id: 'jukebox'"))
+
     def test_ultra_templates_are_merged_and_seat_preset_desks(self):
         templates = (ROOT / 'station/frontend/app/stationtemplates.js').read_text()
         self.assertIn("require('../ultra-templates.js')", templates)
