@@ -25,6 +25,7 @@ def main():
             source = project / relative
             if source.exists():
                 target = root / relative; target.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(source, target)
+        original_leads = json.loads((root / 'data/leads.json').read_text())
         (root / 'runs').mkdir()
         runtime = root / 'runtime'; runtime.mkdir()
         import base64
@@ -94,6 +95,15 @@ def main():
                 if row['status']!='running':return row
                 time.sleep(.1)
             raise AssertionError('Job completion deadline exceeded')
+        def fixture_python(code, payload):
+            assert root.resolve() != project, 'Campaign tools must only write to the copied fixture root'
+            return json.loads(subprocess.check_output(['python3', '-c',
+                'import json, sys; from pathlib import Path; sys.path.insert(0, sys.argv[1]); '
+                'import campaign, campaign_tools; from ultra_ui import Workspace; '
+                'root = Path(sys.argv[2]); store = campaign.Campaign(Workspace(root, root)); '
+                'args = json.loads(sys.argv[3]); ' + code,
+                str(project / 'scripts'), str(root), json.dumps(payload)], cwd=root,
+                env={**os.environ, 'PYTHONDONTWRITEBYTECODE': '1'}, text=True, timeout=20))
         checks = []
         try:
             for attempt in range(60):
@@ -187,6 +197,66 @@ def main():
             assert len(workspace['leads']) == len(json.loads((root / 'data/leads.json').read_text()))
             checks.append('Authenticated workspace and deterministic ranking')
             lead = workspace['hunt']['leads'][0]
+            # /tools only lists toggleable families; station.inspect has no tool list.
+            # Check the host registration and generated computer grants instead.
+            subprocess.run(['node', '-e',
+                "const assert=require('node:assert/strict'); const tools=[]; "
+                "require('./station/ultra-host.js').registerCampaignTools({register:t=>tools.push(t)}); "
+                "const {CAP_REGISTRY}=require('./station/sidecar/capability/registry.js'); "
+                "const want={'campaign.leads':'read','campaign.lead':'read','campaign.check_draft':'read',"
+                "'campaign.save_draft':'write','campaign.propose_lead':'write'}; "
+                "assert.equal(tools.length,5); "
+                "assert.deepEqual(Object.fromEntries(tools.map(t=>[t.name,t.scope])),want); "
+                "const grants=CAP_REGISTRY.computer.filter(g=>g.capId==='campaign'); "
+                "assert.equal(grants.length,5); "
+                "assert.deepEqual(Object.fromEntries(grants.map(g=>[g.tool,g.scope])),want); "
+                "assert.ok(grants.every(g=>!g.requiresConsent&&!g.network));"], cwd=project,
+                env={**os.environ, 'ULTRA_ROOT': str(root), 'ULTRA_RUNTIME': str(root / 'runtime'),
+                     'ULTRA_FREELLMAPI_PORT': str(crew_port)},
+                check=True, timeout=20)
+            campaign = request('/api/ultra/campaign')
+            contact = {'lead_id': lead['id'], 'name': 'FICTIONAL smoke contact person', 'role': 'Fixture buyer',
+                'route': 'smoke-private@example.invalid', 'source_url': 'https://example.invalid/team',
+                'checked_on': workspace['local_date']}
+            request('/api/ultra/campaign/contact', contact, campaign['version'])
+            packet = fixture_python('print(json.dumps(campaign_tools.packet(store, args)))', {'id': lead['id']})
+            copied_lead = next(row for row in original_leads if row['id'] == lead['id'])
+            assert packet['lead']['has_contact_route'] is bool(copied_lead.get('contact_route'))
+            assert 'contact_route' not in packet['lead']
+            assert packet['contacts'] == [{'role': 'Fixture buyer', 'channel': 'email',
+                'source_url': contact['source_url'], 'checked_on': contact['checked_on']}]
+            for private in [contact['name'], contact['route']]: assert private not in json.dumps(packet)
+            for route in ['leads', 'lead', 'check-draft', 'save-draft', 'propose-lead', '']:
+                request('/api/ultra/tools/' + route, expected=404)
+                request('/api/ultra/tools/' + route, {}, expected=404)
+            assert json.loads((root / 'data/leads.json').read_text()) == original_leads
+            checks.append('Campaign tools: ULTRA and the crew get campaign.* tools; a crew packet carries no contact route or names; /api/ultra/tools/ answers 404')
+            campaign = request('/api/ultra/campaign')
+            assert campaign['crew_drafts'] == [] and campaign['proposals'] == []
+            proposal = fixture_python('print(json.dumps(campaign_tools.propose_lead(store, args, "research")))',
+                {'company': 'FICTIONAL Smoke Proposal ' + root.name, 'country': 'TN', 'location': 'Tunis',
+                 'website': 'https://station-smoke.example.invalid', 'source_url': 'https://station-smoke.example.invalid/services',
+                 'observed_on': workspace['local_date'], 'quote': 'FICTIONAL HTTP TEST: this copied fixture company publishes services.'})
+            campaign = request('/api/ultra/campaign')
+            assert campaign['proposals'] == [proposal] and proposal['status'] == 'proposed'
+            assert json.loads((root / 'data/leads.json').read_text()) == original_leads
+            request('/api/ultra/campaign/accept-proposal', {'id': proposal['id']}, 'stale', expected=409)
+            accepted = request('/api/ultra/campaign/accept-proposal', {'id': proposal['id']}, campaign['version'])['record']
+            assert accepted['status'] == 'accepted'
+            copied_leads = json.loads((root / 'data/leads.json').read_text())
+            assert copied_leads[:-1] == original_leads and len(copied_leads) == len(original_leads) + 1
+            accepted_lead = copied_leads[-1]
+            assert accepted_lead['id'] == accepted['lead_id'] and accepted_lead['source_type'] == 'crew_proposal'
+            assert accepted_lead['company'] == proposal['company'] and accepted_lead['observed_text'] == proposal['quote']
+            assert accepted_lead['contact_sent'] is False and accepted_lead['buyer_need_confirmed'] is False
+            draft = fixture_python('print(json.dumps(campaign_tools.save_draft(store, args, "sales")))',
+                {'lead_id': accepted_lead['id'], 'subject': 'FICTIONAL HTTP TEST', 'language': 'fr',
+                 'body': 'Bonjour, un petit échantillon à vérifier ensemble vous intéresserait-il ?'})
+            campaign = request('/api/ultra/campaign')
+            assert campaign['crew_drafts'] == [draft] and draft['reviewed'] is False and draft['status'] == 'proposed'
+            assert campaign['proposals'] == [accepted]
+            for relative, digest in baseline.items(): assert hashlib.sha256((project / relative).read_bytes()).hexdigest() == digest
+            checks.append('LEADS: /api/ultra/campaign carries crew_drafts and proposals; accept-proposal adds a crew_proposal lead in the copied records only; the original business records are unchanged')
             proof = request('/api/ultra/campaign/proof', {'lead_id': lead['id'], 'offer': 'documents'}, campaign['version'])['proof']
             artifact = request('/api/ultra/artifact?path=' + proof['path'])
             assert 'SYNTHETIC' in artifact['content'] and 'UNSENT' in artifact['content']
@@ -270,7 +340,7 @@ def main():
             assert '/classic/game-app.js' in classic and 'ULTRA_API_BASE' in classic
             assert 'loadWorkspace' in request('/classic/game-app.js', authenticated=False)
             checks.append('Classic interface and namespaced assets served')
-            assert json.loads((root / 'data/leads.json').read_text()) == json.loads((project / 'data/leads.json').read_text())
+            assert json.loads((root / 'data/leads.json').read_text()) == [*original_leads, accepted_lead]
             for relative, digest in baseline.items(): assert hashlib.sha256((project / relative).read_bytes()).hexdigest() == digest
             checks.append('Project business records unchanged by fixture tests')
             print(json.dumps({'passed': len(checks), 'checks': checks, 'browser_rendered': False, 'live_provider_tested': False}, indent=2))
