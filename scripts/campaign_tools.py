@@ -1,5 +1,6 @@
 """Field-filtered campaign packets and unreviewed crew preparation. No external I/O."""
 import datetime
+import json
 import re
 import secrets
 from urllib.parse import urlsplit
@@ -66,6 +67,13 @@ def _text(args, key, minimum, maximum, default=None):
     return value
 
 
+def pitch_kit(store, args):
+    try:
+        return json.loads(ultra.inside(store.root, 'sales/pitch-kit.json').read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        raise ValueError('The pitch kit sales/pitch-kit.json is missing or invalid.') from None
+
+
 def check_draft(store, args):
     with store.workspace.lock:
         lead = next((row for row in prospecting.in_scope(store.leads()) if row['id'] == args.get('lead_id')), None)
@@ -75,22 +83,22 @@ def check_draft(store, args):
         subject = _text(args, 'subject', 0, 200, '')
         state = store.read()
         text = subject + '\n' + body
-        problems = [{'rule': rule, 'text': message} for rule, regex, message in CLAIM_RULES if regex.search(text)]
+        notes = [{'rule': rule, 'text': message} for rule, regex, message in CLAIM_RULES if regex.search(text)]
         flags = automation.audit_leads([lead], ultra.read_json(store.root, 'data/exclusions.json'))[0]['flags']
         if lead.get('exclusion_check') != 'not_excluded' or 'excluded' in flags:
-            problems.append({'rule': 'excluded', 'text': 'Check company exclusions before preparing outreach.'})
+            notes.append({'rule': 'excluded', 'text': 'Check company exclusions before preparing outreach.'})
         if lead.get('status') in {'declined', 'rejected'}:
-            problems.append({'rule': 'closed', 'text': 'Outreach is closed for this company.'})
+            notes.append({'rule': 'closed', 'text': 'Outreach is closed for this company.'})
         if campaign.suppressed(state, lead['id']) or campaign.route_suppressed(state, lead):
-            problems.append({'rule': 'suppressed', 'text': 'Outreach is suppressed for this company.'})
+            notes.append({'rule': 'suppressed', 'text': 'Outreach is suppressed for this company.'})
         try:
             checked = records.date_value(lead.get('checked_date'))
             stale = not checked or (records.local_today() - datetime.date.fromisoformat(checked)).days > STALE_SOURCE_DAYS
         except ValueError:
             stale = True
         if stale:
-            problems.append({'rule': 'stale_source', 'text': 'Refresh the source observation before preparing outreach.'})
-        return {'ok': not problems, 'problems': problems, 'lead_id': lead['id'], 'source_version': campaign.fingerprint(lead)}
+            notes.append({'rule': 'stale_source', 'text': 'Refresh the source observation before preparing outreach.'})
+        return {'ok': not notes, 'notes': notes, 'lead_id': lead['id'], 'source_version': campaign.fingerprint(lead)}
 
 
 def _write_preparation(store, state, action, row):
@@ -103,13 +111,11 @@ def _write_preparation(store, state, action, row):
 def save_draft(store, args, agent_id):
     with store.workspace.lock:
         checked = check_draft(store, args)
-        if not checked['ok']:
-            raise ValueError('Fix these first: ' + '; '.join(p['text'] for p in checked['problems']))
         state = store.read()
         row = {'id': 'cd-' + secrets.token_hex(4), 'lead_id': checked['lead_id'], 'agent_id': agent_id,
                'subject': args.get('subject', ''), 'body': args['body'], 'language': 'en' if args.get('language') == 'en' else 'fr',
                'source_version': checked['source_version'], 'created_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
-               'status': 'proposed', 'reviewed': False}
+               'status': 'proposed', 'reviewed': False, 'notes': checked['notes']}
         drafts = state.setdefault('crew_drafts', [])
         drafts.append(row)
         for_lead = [draft for draft in drafts if draft['lead_id'] == row['lead_id']]

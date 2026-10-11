@@ -172,6 +172,7 @@ class PatchAnchorsTest(unittest.TestCase):
                     '      // 1Ultra: the campaign tools ride compute, like quest.update, so ULTRA and every crew member can read the campaign.\n'
                     "      { capId: 'campaign', tool: 'campaign.leads', scope: 'read', requiresConsent: false, network: false },\n"
                     "      { capId: 'campaign', tool: 'campaign.lead', scope: 'read', requiresConsent: false, network: false },\n"
+                    "      { capId: 'campaign', tool: 'campaign.pitch_kit', scope: 'read', requiresConsent: false, network: false },\n"
                     "      { capId: 'campaign', tool: 'campaign.check_draft', scope: 'read', requiresConsent: false, network: false },\n"
                     "      { capId: 'campaign', tool: 'campaign.save_draft', scope: 'write', requiresConsent: false, network: false },\n"
                     "      { capId: 'campaign', tool: 'campaign.propose_lead', scope: 'write', requiresConsent: false, network: false },\n")

@@ -38,6 +38,51 @@ class CampaignToolTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
+    def write_kit(self, text=None):
+        (self.root / 'sales').mkdir(exist_ok=True)
+        source = Path(__file__).resolve().parents[1] / 'sales/pitch-kit.json'
+        (self.root / 'sales/pitch-kit.json').write_text(text if text is not None else source.read_text())
+
+    def test_pitch_kit_serves_adem_facts_offers_and_example(self):
+        self.write_kit()
+        kit = campaign_tools.pitch_kit(self.store, {})
+        self.assertEqual(kit['sender']['fr'], 'Adem Sayari, ingénieur IA et data science, basé à Sousse')
+        self.assertEqual([r['id'] for r in kit['references']], ['cour-des-comptes', 'stb'])
+        self.assertEqual([o['id'] for o in kit['offers']], ['spreadsheet-cleanup', 'pdf-batch', 'automation'])
+        self.assertIn('Objet :', kit['example_email_fr'])
+        self.assertNotIn('99.92', json.dumps(kit, ensure_ascii=False))
+
+    def test_pitch_kit_missing_or_malformed_is_a_readable_error(self):
+        with self.assertRaisesRegex(ValueError, 'pitch kit'): campaign_tools.pitch_kit(self.store, {})
+        self.write_kit('{not json')
+        with self.assertRaisesRegex(ValueError, 'pitch kit'): campaign_tools.pitch_kit(self.store, {})
+
+    def test_check_draft_notes_never_block_saving(self):
+        body = 'Bonjour, pour 500 DT nous garantissons 99 % de précision en 48h, comme pour nos clients actuels.'
+        out = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': body})
+        self.assertFalse(out['ok'])
+        self.assertEqual({n['rule'] for n in out['notes']}, {'price', 'percentage', 'time_promise', 'guarantee', 'invented_clients'})
+        saved = campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'subject': 'Offre', 'body': body}, 'sales')
+        self.assertEqual(saved['status'], 'proposed')
+        self.assertEqual({n['rule'] for n in saved['notes']}, {'price', 'percentage', 'time_promise', 'guarantee', 'invented_clients'})
+
+    def test_pitch_kit_private_rpc_reads_kit_without_writing_records(self):
+        self.write_kit()
+        before = {p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
+        request = {'id': 11, 'route': '/api/tools/pitch-kit', 'method': 'GET', 'body': None, 'version': ''}
+        response = self.rpc_response(request)
+        self.assertEqual(response, {'id': 11, 'status': 200,
+                                   'value': json.loads((self.root / 'sales/pitch-kit.json').read_text())})
+        self.assertEqual(before, {p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()})
+
+    def test_pitch_kit_private_rpc_explains_missing_and_invalid_kit(self):
+        request = {'id': 12, 'route': '/api/tools/pitch-kit', 'method': 'GET', 'body': None, 'version': ''}
+        expected = {'id': 12, 'status': 400,
+                    'value': {'error': 'The pitch kit sales/pitch-kit.json is missing or invalid.'}}
+        self.assertEqual(self.rpc_response(request), expected)
+        self.write_kit('{not json')
+        self.assertEqual(self.rpc_response(request), expected)
+
     def test_leads_lists_only_tunisian_companies_ranked(self):
         out = campaign_tools.leads(self.store, {})
         self.assertEqual([r['id'] for r in out['leads']], ['tn'])
@@ -269,25 +314,30 @@ class CampaignToolTests(unittest.TestCase):
                'comme pour nos clients actuels.')
         out = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': bad})
         self.assertFalse(out['ok'])
-        self.assertEqual({p['rule'] for p in out['problems']}, {'price', 'percentage', 'time_promise', 'guarantee', 'invented_clients'})
+        self.assertEqual({p['rule'] for p in out['notes']}, {'price', 'percentage', 'time_promise', 'guarantee', 'invented_clients'})
         good = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour, votre site présente des services ERP. Un court échange vous intéresserait-il ?'})
-        self.assertTrue(good['ok'], good['problems'])
+        self.assertTrue(good['ok'], good['notes'])
 
     def test_check_draft_flags_scope_suppression_and_stale_source(self):
         with self.assertRaises(ValueError): campaign_tools.check_draft(self.store, {'lead_id': 'fr', 'body': 'Bonjour'})
         old = {**self.lead, 'id': 'old', 'company': 'Old SARL', 'checked_date': '2025-01-01'}
         (self.root / 'data/leads.json').write_text(json.dumps([self.lead, old]))
         out = campaign_tools.check_draft(self.store, {'lead_id': 'old', 'body': 'Bonjour, une question courte.'})
-        self.assertIn('stale_source', {p['rule'] for p in out['problems']})
+        self.assertIn('stale_source', {p['rule'] for p in out['notes']})
 
-    def test_save_draft_refuses_problems_and_keeps_a_checked_unreviewed_draft(self):
+    def test_save_draft_keeps_notes_and_an_unreviewed_draft(self):
         before = (self.root / 'data/leads.json').read_bytes()
-        with self.assertRaises(ValueError): campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'body': 'Garanti à 100 %.'}, 'sales')
+        noted = campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'body': 'Garanti à 100 %.'}, 'sales')
+        self.assertEqual({n['rule'] for n in noted['notes']}, {'percentage', 'guarantee'})
+        self.assertEqual((noted['reviewed'], noted['status']), (False, 'proposed'))
         saved = campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'subject': 'Services ERP', 'body': 'Bonjour, votre site présente des services ERP.'}, 'sales')
         self.assertEqual((saved['lead_id'], saved['agent_id'], saved['reviewed'], saved['status']), ('tn', 'sales', False, 'proposed'))
+        self.assertEqual(saved['notes'], [])
         self.assertEqual(saved['source_version'], campaign.fingerprint(self.lead))
         self.assertEqual((self.root / 'data/leads.json').read_bytes(), before, 'an agent never writes leads.json')
-        self.assertEqual(campaign_tools.packet(self.store, {'id': 'tn'})['crew_drafts'][0]['id'], saved['id'])
+        drafts = campaign_tools.packet(self.store, {'id': 'tn'})['crew_drafts']
+        self.assertEqual([d['id'] for d in drafts], [noted['id'], saved['id']])
+        self.assertEqual(drafts[0]['notes'], noted['notes'])
 
     def test_propose_lead_refuses_duplicates_exclusions_and_foreign_companies(self):
         base = {'company': 'Nouvelle Data SARL', 'country': 'Tunisia', 'location': 'Tunis', 'website': 'https://nouvelle.tn',
@@ -330,9 +380,9 @@ class CampaignToolTests(unittest.TestCase):
             for text in texts:
                 with self.subTest(rule=rule, text=text):
                     result = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': text.upper()})
-                    self.assertIn(rule, {p['rule'] for p in result['problems']})
+                    self.assertIn(rule, {p['rule'] for p in result['notes']})
         result = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'subject': 'Garanti', 'body': 'Bonjour'})
-        self.assertIn('guarantee', {p['rule'] for p in result['problems']})
+        self.assertIn('guarantee', {p['rule'] for p in result['notes']})
 
     def test_draft_bounds_and_freshness_boundary(self):
         for args in ({'body': ''}, {'body': None}, {'body': 'x' * 8001}, {'body': 'Bonjour', 'subject': 'x' * 201},
@@ -348,7 +398,7 @@ class CampaignToolTests(unittest.TestCase):
                 self.assertEqual(result['ok'], expected)
             for date in (None, 'invalid'):
                 (self.root / 'data/leads.json').write_text(json.dumps([{**self.lead, 'checked_date': date}]))
-                self.assertIn('stale_source', {p['rule'] for p in campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'})['problems']})
+                self.assertIn('stale_source', {p['rule'] for p in campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'})['notes']})
 
     def test_draft_checks_exclusions_and_suppression_without_writes(self):
         (self.root / 'data/exclusions.json').write_text('{"companies":[{"company":"Parent", "aliases":["LÓCAL-ERP"]}]}')
@@ -357,26 +407,28 @@ class CampaignToolTests(unittest.TestCase):
         self.store.path.write_text(json.dumps(state))
         before = self.store.path.read_bytes()
         out = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'})
-        self.assertEqual({p['rule'] for p in out['problems']}, {'excluded', 'suppressed'})
-        with self.assertRaisesRegex(ValueError, 'Fix these first:'):
-            campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'}, 'sales')
+        self.assertEqual({p['rule'] for p in out['notes']}, {'excluded', 'suppressed'})
         self.assertEqual(self.store.path.read_bytes(), before)
+        saved = campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'}, 'sales')
+        self.assertEqual(saved['notes'], out['notes'])
+        self.assertEqual(self.store.read()['crew_drafts'], [saved])
         (self.root / 'data/exclusions.json').write_text('{"companies":[]}')
         (self.root / 'data/leads.json').write_text(json.dumps([{**self.lead, 'exclusion_check': None}]))
-        self.assertIn('excluded', {p['rule'] for p in campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'})['problems']})
+        self.assertIn('excluded', {p['rule'] for p in campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'})['notes']})
 
-    def test_draft_checks_refuse_closed_leads_without_saving(self):
+    def test_draft_checks_note_closed_leads_and_allow_saving(self):
         for status in ('declined', 'rejected'):
             with self.subTest(status=status):
                 (self.root / 'data/leads.json').write_text(json.dumps([{**self.lead, 'status': status}]))
                 before = self.store.path.read_bytes()
                 checked = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'})
-                self.assertIn('closed', {p['rule'] for p in checked['problems']})
-                with self.assertRaisesRegex(ValueError, 'Fix these first:'):
-                    campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'}, 'sales')
+                self.assertIn('closed', {p['rule'] for p in checked['notes']})
                 self.assertEqual(self.store.path.read_bytes(), before)
+                saved = campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'}, 'sales')
+                self.assertEqual(saved['notes'], checked['notes'])
+                self.assertEqual(self.store.read()['crew_drafts'][-1], saved)
 
-    def test_draft_checks_refuse_the_current_suppressed_contact_route_without_saving(self):
+    def test_draft_checks_note_the_current_suppressed_contact_route_and_allow_saving(self):
         state = self.store.read()
         state['contacts'][0]['route'] = 'ceo@example.tn'
         state['events'].append({'lead_id': 'tn', 'kind': 'do_not_contact', 'confirmed': True,
@@ -386,10 +438,20 @@ class CampaignToolTests(unittest.TestCase):
         self.assertTrue(campaign.route_suppressed(state, self.lead))
         before = self.store.path.read_bytes()
         checked = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'})
-        self.assertIn('suppressed', {p['rule'] for p in checked['problems']})
-        with self.assertRaisesRegex(ValueError, 'Fix these first:'):
-            campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'}, 'sales')
+        self.assertIn('suppressed', {p['rule'] for p in checked['notes']})
         self.assertEqual(self.store.path.read_bytes(), before)
+        saved = campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'}, 'sales')
+        self.assertEqual(saved['notes'], checked['notes'])
+        self.assertEqual(self.store.read()['crew_drafts'], [saved])
+
+    def test_save_draft_still_refuses_out_of_scope_or_invalid_inputs_without_writes(self):
+        before = {p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
+        for args in ({'lead_id': 'fr', 'body': 'Bonjour'}, {'lead_id': 'missing', 'body': 'Bonjour'},
+                     {'lead_id': 'tn', 'body': ''}, {'lead_id': 'tn', 'body': 'x' * 8001},
+                     {'lead_id': 'tn', 'body': 'Bonjour', 'subject': 'x' * 201}):
+            with self.subTest(args=args), self.assertRaises(ValueError):
+                campaign_tools.save_draft(self.store, args, 'sales')
+        self.assertEqual(before, {p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()})
 
     def test_save_keeps_newest_five_per_lead_and_owner_reviews_with_version(self):
         other = {**self.lead, 'id': 'other', 'company': 'Other'}

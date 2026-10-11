@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "sender": {
+    "fr": "Adem Sayari, ingénieur IA et data science, basé à Sousse",
+    "en": "Adem Sayari, AI and data science engineer based in Sousse, Tunisia"
+  },
+  "references": [
+    {
+      "id": "cour-des-comptes",
+      "fr": "J'ai travaillé sur un outil de traitement de documents et de revue des données pour la Chambre régionale de la Cour des comptes : extraction OCR, import en tableaux structurés, traçabilité vers la page source et contrôles des montants.",
+      "note": "A work reference, never an endorsement by the Court. Do not quote the OCR accuracy figure: it covers one held-out section and does not carry over to other documents."
+    },
+    {
+      "id": "stb",
+      "fr": "Lors d'un stage à la STB (août–octobre 2025), j'ai automatisé le passage de documents vers des données, avec standardisation et contrôle des champs manquants et des doublons.",
+      "note": "Productivity figures from the internship are estimates; do not quote them."
+    }
+  ],
+  "how_the_work_is_done": {
+    "fr": "Le travail est assisté par l'IA : je fixe les exigences et je vérifie les résultats.",
+    "note": "Say this when someone asks how the work is done."
+  },
+  "offers": [
+    {"id": "spreadsheet-cleanup", "fr": "Nettoyer un fichier Excel : une copie propre au format convenu, avec la liste des doublons et des modifications.", "scope": "one file, up to 500 rows and eight columns"},
+    {"id": "pdf-batch", "fr": "Transformer un petit lot de PDF en tableau vérifié : chaque valeur avec sa page source, et une liste des valeurs ambiguës à revoir.", "scope": "one consistent layout, up to 20 pages or 200 rows, five fields"},
+    {"id": "automation", "fr": "Automatiser un traitement répétitif : entrée et sortie fixes, quelques contrôles, le script et une prise en main.", "scope": "up to three transformations or checks"}
+  ],
+  "pricing": "Prices and deadlines are agreed after seeing a sample; a first email proposes to look at a few anonymised pages instead.",
+  "next_step": {"fr": "Proposer d'examiner quelques pages anonymisées, puis de convenir ensemble du périmètre, du prix et du délai."},
+  "example_email_fr": "Objet : Petit lot de PDF en tableau vérifié\n\nBonjour [Nom], je suis Adem Sayari, ingénieur IA et data science à Sousse. J'ai travaillé sur un outil de traitement de documents et de revue des données pour la Chambre régionale de la Cour des comptes. Je propose une mission courte : convertir un petit lot de PDF en fichier Excel, avec référence à la page source et signalement des valeurs ambiguës. Si vous avez ce type de tâche, nous pouvons examiner quelques pages anonymisées, puis convenir d'un prix et d'un délai. Qui s'occupe de ces tâches dans votre cabinet ?",
+  "guidance": "Pick the one problem this company most likely has, write like a person, keep it short, and end with one easy question. Adem reviews and sends every email himself."
+}

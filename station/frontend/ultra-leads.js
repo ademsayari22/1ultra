@@ -54,6 +54,10 @@
     } catch { return ''; }
   }
 
+  function noteText(notes) {
+    return (notes || []).map(note => note.text).filter(Boolean).join(' · ');
+  }
+
   function cardModel(lead, C) {
     C = C || {};
     const ranking = (C.rankings || []).find(r => r.id === lead.id);
@@ -62,6 +66,7 @@
       suppressed: (C.suppressed_ids || []).includes(lead.id), source_url: sourceLink(lead.source_url),
       sourceVersion: ranking ? ranking.source_version : null,
       crewDrafts: (C.crew_drafts || []).filter(d => d.lead_id === lead.id && d.status === 'proposed')
+        .map(d => ({ ...d, notes: d.notes || [] }))
         .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || ''))) };
   }
 
@@ -74,7 +79,7 @@
   }
 
   window.UltraLeads = { view: { ranked, stageOf, outreachPrompt, cardModel, sessionTitle, sessionFor, shouldPrefill,
-    openProposals, evidenceOk, adoptionSteps, subjectOk } };
+    openProposals, evidenceOk, adoptionSteps, subjectOk, noteText } };
   if (typeof StationUI === 'undefined' || !StationUI.registerWindow) return;
   const esc = value => StationUI.h.esc(String(value ?? ''));
 
@@ -100,10 +105,11 @@
       const compared = !!(d.source_version && card.sourceVersion);
       const changed = compared && d.source_version !== card.sourceVersion;
       return '<article class="ul-record"><b>' + esc(d.agent_id) + '</b> · <time>' + esc(d.created_at || 'Time unknown') + '</time>'
-        + '<div class="ul-chips"><span class="ul-chip ul-ok">Check passed at save</span><span class="ul-chip'
+        + '<div class="ul-chips"><span class="ul-chip">Saved for review</span><span class="ul-chip'
         + (changed || !compared ? ' ul-warn' : '') + '">' + (compared ? changed ? 'Source changed since this draft' : 'Source unchanged since this draft' : 'Source comparison unavailable')
         + '</span></div><p><b>' + esc(d.subject || 'Subject needed') + '</b></p><div class="ul-message">' + esc(d.body)
-        + '</div><div class="ul-actions">' + button('adopt', 'Use this draft', d.id) + button('dismiss', 'Dismiss', d.id) + '</div>'
+        + '</div>' + (d.notes.length ? '<p class="dim">' + esc(noteText(d.notes)) + '</p>' : '')
+        + '<div class="ul-actions">' + button('adopt', 'Use this draft', d.id) + button('dismiss', 'Dismiss', d.id) + '</div>'
         + (editing && editing.kind === 'adopt' && editing.id === d.id ? inlineForm : '') + '</article>';
     }).join('');
     return '<section class="ul-section"><h4>Your current draft</h4>' + own + '</section>'

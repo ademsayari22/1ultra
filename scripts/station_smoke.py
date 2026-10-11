@@ -204,11 +204,11 @@ def main():
                 "require('./station/ultra-host.js').registerCampaignTools({register:t=>tools.push(t)}); "
                 "const {CAP_REGISTRY}=require('./station/sidecar/capability/registry.js'); "
                 "const want={'campaign.leads':'read','campaign.lead':'read','campaign.check_draft':'read',"
-                "'campaign.save_draft':'write','campaign.propose_lead':'write'}; "
-                "assert.equal(tools.length,5); "
+                "'campaign.save_draft':'write','campaign.propose_lead':'write','campaign.pitch_kit':'read'}; "
+                "assert.equal(tools.length,6); "
                 "assert.deepEqual(Object.fromEntries(tools.map(t=>[t.name,t.scope])),want); "
                 "const grants=CAP_REGISTRY.computer.filter(g=>g.capId==='campaign'); "
-                "assert.equal(grants.length,5); "
+                "assert.equal(grants.length,6); "
                 "assert.deepEqual(Object.fromEntries(grants.map(g=>[g.tool,g.scope])),want); "
                 "assert.ok(grants.every(g=>!g.requiresConsent&&!g.network));"], cwd=project,
                 env={**os.environ, 'ULTRA_ROOT': str(root), 'ULTRA_RUNTIME': str(root / 'runtime'),

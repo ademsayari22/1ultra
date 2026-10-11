@@ -17,6 +17,7 @@ def dispatch(workspace, request):
     if method == 'GET':
         if path == '/api/tools/leads': return campaign_tools.leads(store, {k: v[0] for k, v in parse_qs(route.query).items()})
         if path == '/api/tools/lead': return campaign_tools.packet(store, {k: v[0] for k, v in parse_qs(route.query).items()})
+        if path == '/api/tools/pitch-kit': return campaign_tools.pitch_kit(store, {})
         if path == '/api/agents/readiness':
             from station_agents import readiness
             return readiness()

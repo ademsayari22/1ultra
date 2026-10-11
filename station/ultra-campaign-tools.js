@@ -2,7 +2,7 @@
 
 const {validate} = require('./shared/schema.js');
 
-const BRIEF = "[CAMPAIGN] Campaign tools read Adem's Tunisia campaign: campaign.leads lists companies and campaign.lead gives one company's checked packet. Hand the crew the packet, never your own guesses. Nothing is ever sent: Adem reviews every draft and proposed lead in LEADS.";
+const BRIEF = "[CAMPAIGN] campaign.leads lists Adem's companies, campaign.lead gives one company's packet, and campaign.pitch_kit gives Adem's own facts, offers and an example email. Give the crew the goal, the packet and the kit, and let them write. Nothing leaves the station: Adem reviews every draft and proposed lead in LEADS.";
 
 function makeCampaignTools({call, isHalted}) {
   function campaignTool(name, path, keys, description, schema, method = 'GET', scope = 'read') {
@@ -59,11 +59,14 @@ function makeCampaignTools({call, isHalted}) {
     campaignTool('campaign.lead', '/api/tools/lead', ['id'],
       "Read one company's checked packet by id: public source facts, ranking reasons, contact roles (no names), signals, proofs and drafts. Use it before any research, pitch or check about that company. Read-only.",
       {type: 'object', additionalProperties: false, properties: {id: {type: 'string'}}, required: ['id']}),
+    campaignTool('campaign.pitch_kit', '/api/tools/pitch-kit', [],
+      "Read Adem's pitch kit: who he is, his work references, his offers, how the work is done, the next step to propose, an example email and writing guidance. Use it with the company's packet when writing outreach.",
+      {type: 'object', additionalProperties: false, properties: {}}),
     campaignTool('campaign.check_draft', '/api/tools/check-draft', ['lead_id', 'subject', 'body'],
-      "Check a pitch draft for one company against Adem's rules (no prices, percentages, time promises, guarantees or invented clients; scope, exclusions, suppression, source age). Read-only. Fix every problem before saving.",
+      "Optional: list things in a draft Adem may want to look at (a price, a percentage, a time promise, a guarantee, a client claim, an old source, a closed or suppressed contact). Notes only; it never blocks saving.",
       {type: 'object', additionalProperties: false, properties: draftProperties, required: ['lead_id', 'body']}, 'POST'),
     campaignTool('campaign.save_draft', '/api/tools/save-draft', ['lead_id', 'subject', 'body', 'language'],
-      "Save a checked pitch draft for one company as unreviewed. Adem reviews it in LEADS. Refused while the draft has problems. Never sends anything.",
+      "Save a pitch draft for one company for Adem's review in LEADS, with any check notes attached. Never sends anything.",
       {type: 'object', additionalProperties: false, properties: {...draftProperties, language: {type: 'string', enum: ['fr', 'en']}}, required: ['lead_id', 'body']}, 'POST', 'write'),
     campaignTool('campaign.propose_lead', '/api/tools/propose-lead', ['company', 'country', 'location', 'industry', 'website', 'source_url', 'observed_on', 'quote'],
       "Propose one new Tunisian company with its source URL, the date you saw it and the exact quoted text. Refused for known, excluded or non-Tunisian companies. Adem accepts or rejects it in LEADS.",

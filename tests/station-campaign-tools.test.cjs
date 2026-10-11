@@ -11,7 +11,7 @@ test('campaign tools register as read tools on the campaign capability and call 
   const tools = makeCampaignTools({ call: async req => { calls.push(req); return { ok: true, route: req.route }; }, isHalted: () => false });
   const reg = fakeRegistry();
   tools.register(reg);
-  for (const name of ['campaign.leads', 'campaign.lead']) {
+  for (const name of ['campaign.leads', 'campaign.lead', 'campaign.pitch_kit']) {
     const t = reg.tools.get(name);
     assert.ok(t, name);
     assert.equal(t.capability, 'campaign');
@@ -24,7 +24,10 @@ test('campaign tools register as read tools on the campaign capability and call 
   assert.match(out.content, /"route"/);
   await reg.tools.get('campaign.leads').run({ query: 'ERP & co', limit: 5 }, {});
   assert.equal(calls[1].route, '/api/tools/leads?query=ERP+%26+co&limit=5');
+  await reg.tools.get('campaign.pitch_kit').run({}, {});
+  assert.deepEqual(calls[2], { route: '/api/tools/pitch-kit', method: 'GET', body: null, version: '' });
   assert.match(tools.brief(), /campaign\.lead/);
+  assert.match(tools.brief(), /campaign\.pitch_kit/);
 });
 
 test('a worker refusal rejects with a readable tool error', async () => {
@@ -180,7 +183,7 @@ test('drafting tools filter arguments, keep checks read-only, and never request 
 test('drafting tools reject invalid arguments and worker refusals', async () => {
   let calls = 0;
   const reg = fakeRegistry();
-  makeCampaignTools({ call: async () => { calls++; return { status: 400, value: { error: 'Fix these first: guarantee' } }; }, isHalted: () => false }).register(reg);
+  makeCampaignTools({ call: async () => { calls++; return { status: 400, value: { error: 'Unknown or out-of-scope company.' } }; }, isHalted: () => false }).register(reg);
   for (const [name, args] of [
     ['campaign.check_draft', {}], ['campaign.check_draft', { lead_id: 4, body: 'Bonjour' }],
     ['campaign.save_draft', { lead_id: 'tn', body: 3 }], ['campaign.save_draft', { lead_id: 'tn', body: '' }],
@@ -191,7 +194,7 @@ test('drafting tools reject invalid arguments and worker refusals', async () => 
   for (const name of ['campaign.check_draft', 'campaign.save_draft', 'campaign.propose_lead']) {
     const args = name === 'campaign.propose_lead' ? { company: 'Company', country: 'TN', source_url: 'https://company.tn',
       observed_on: '2026-10-10', quote: 'Des services ERP.' } : { lead_id: 'tn', body: 'Bonjour' };
-    await assert.rejects(reg.tools.get(name).run(args, {}), /Campaign tool error: Fix these first: guarantee/);
+    await assert.rejects(reg.tools.get(name).run(args, {}), /Campaign tool error: Unknown or out-of-scope company\./);
   }
   assert.equal(calls, 3);
 });

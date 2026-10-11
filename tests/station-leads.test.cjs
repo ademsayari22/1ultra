@@ -18,6 +18,23 @@ test('crew drafts show newest first with who wrote them, and adopted or dismisse
   assert.deepEqual(V.cardModel(W.hunt.leads[0], C2).crewDrafts.map(d => d.id), ['d2', 'd1']);
 });
 
+test('crew draft cards carry saved notes and default older drafts to no notes', () => {
+  const notes = [{ rule: 'price', text: 'Look at the price.' }, { rule: 'percentage', text: 'Look at the percentage.' }];
+  const draft = { id: 'd1', lead_id: 'a', status: 'proposed', notes };
+  const card = V.cardModel(W.hunt.leads[0], { ...C, crew_drafts: [draft] });
+  assert.deepEqual(card.crewDrafts[0].notes, notes);
+  const older = { id: 'd2', lead_id: 'a', status: 'proposed' };
+  assert.deepEqual(V.cardModel(W.hunt.leads[0], { ...C, crew_drafts: [older] }).crewDrafts[0].notes, []);
+  assert.equal(older.notes, undefined, 'the card does not rewrite saved records');
+});
+
+test('noteText joins draft notes into a readable line and handles no notes', () => {
+  assert.equal(V.noteText([{ rule: 'price', text: 'Look at the price.' },
+    { rule: 'percentage', text: 'Look at the percentage.' }]), 'Look at the price. · Look at the percentage.');
+  assert.equal(V.noteText([]), '');
+  assert.equal(V.noteText(), '');
+});
+
 test('proposed leads list only open proposals, with their source, date and quote', () => {
   const rows = V.openProposals({ proposals: [
     { id: 'p1', company: 'X', source_url: 'https://x.tn', observed_on: '2026-10-10', quote: 'Q', status: 'proposed', agent_id: 'research' },
@@ -421,7 +438,7 @@ test('crew cards show author, time, saved check and changed source without expos
   assert.match(html, /Owner pitch/); assert.match(html, /Mark reviewed/);
   assert.ok(html.indexOf('Owner pitch') < html.indexOf('Crew pitch'));
   assert.match(html, /sales/); assert.match(html, /2026-10-11T09:00:00Z/);
-  assert.match(html, /Check passed at save/); assert.match(html, /Source changed/);
+  assert.match(html, /Saved for review/); assert.match(html, /Source changed/);
   assert.match(html, /Crew pitch &lt;checked&gt;/);
   assert.doesNotMatch(html, /Adopted copy|Other company copy/);
   ui.click('adopt', 'cd-1');
@@ -429,6 +446,20 @@ test('crew cards show author, time, saved check and changed source without expos
   assert.match(ui.nodes['.ul-card'].innerHTML, /name="subject"[^>]*required/);
   assert.match(ui.nodes['.ul-card'].innerHTML, /Crew pitch &lt;checked&gt;/);
   assert.ok(ui.nodes['.ul-card'].innerHTML.indexOf('data-ul-form="adopt"') < ui.nodes['.ul-card'].innerHTML.indexOf('Conversation room'), 'adoption form stays beside its crew draft');
+});
+
+test('crew draft notes render as escaped dim text and allow owner adoption', async () => {
+  const notes = [{ rule: 'price', text: 'Look at the price <sample>.' },
+    { rule: 'guarantee', text: 'Look at the guarantee.' }];
+  const ui = await mounted([{ body: workspace },
+    { body: { ...withCrew, crew_drafts: [{ ...crewDraft, notes }] } }]);
+  const html = ui.nodes['.ul-card'].innerHTML;
+  assert.match(html, /<p class="dim">Look at the price &lt;sample&gt;\. · Look at the guarantee\.<\/p>/);
+  assert.doesNotMatch(html, /Check passed at save|Look at the price <sample>/);
+  assert.match(html, /Saved for review/);
+  ui.click('adopt', 'cd-1');
+  assert.match(ui.nodes['.ul-card'].innerHTML, /data-ul-form="adopt"/);
+  assert.equal(posts(ui).length, 0, 'notes do not create a separate blocking action');
 });
 
 test('first crew adoption creates the owner template, reloads versions, edits, then marks adopted', async () => {
