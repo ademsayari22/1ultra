@@ -131,3 +131,56 @@ test('the real dispatcher marks campaign failures as errors and successful packe
   assert.match(invalid.content, /invalid arguments/);
   assert.equal(called, 3);
 });
+
+test('drafting tools pass the calling agent and use the right scopes', async () => {
+  const calls = [];
+  const tools = makeCampaignTools({ call: async req => { calls.push(req); return { ok: true }; }, isHalted: () => false });
+  const reg = fakeRegistry(); tools.register(reg);
+  assert.equal(reg.tools.get('campaign.check_draft').scope, 'read');
+  assert.equal(reg.tools.get('campaign.save_draft').scope, 'write');
+  assert.equal(reg.tools.get('campaign.propose_lead').scope, 'write');
+  await reg.tools.get('campaign.save_draft').run({ lead_id: 'tn', body: 'Bonjour', agent_id: 'forged' }, { agentId: 'sales' });
+  assert.deepEqual(calls[0], { route: '/api/tools/save-draft', method: 'POST', body: { lead_id: 'tn', body: 'Bonjour', agent_id: 'sales' }, version: '' });
+  await reg.tools.get('campaign.propose_lead').run({ company: 'X' }, {});
+  assert.equal(calls[1].body.agent_id, 'unknown');
+});
+
+
+test('drafting tools filter arguments, keep checks read-only, and never request consent', async () => {
+  const calls = [];
+  const reg = fakeRegistry();
+  makeCampaignTools({ call: async req => { calls.push(req); return { status: 200, value: {} }; }, isHalted: () => false }).register(reg);
+  const args = { lead_id: 'tn', subject: 'ERP', body: 'Bonjour', language: 'en', agent_id: 'forged', route: '/api/leads' };
+  await reg.tools.get('campaign.check_draft').run(args, { agentId: 'sales' });
+  assert.deepEqual(calls[0], { route: '/api/tools/check-draft', method: 'POST', body: { lead_id: 'tn', subject: 'ERP', body: 'Bonjour' }, version: '' });
+  await reg.tools.get('campaign.save_draft').run(args, { agentId: 'sales' });
+  assert.deepEqual(calls[1].body, { lead_id: 'tn', subject: 'ERP', body: 'Bonjour', language: 'en', agent_id: 'sales' });
+  const proposal = { company: 'Company', country: 'TN', location: 'Tunis', industry: 'ERP', website: 'https://company.tn',
+    source_url: 'https://company.tn/about', observed_on: '2026-10-10', quote: 'Des services ERP.', agent_id: 'forged', status: 'accepted' };
+  await reg.tools.get('campaign.propose_lead').run(proposal, { agentId: 'research' });
+  assert.deepEqual(calls[2], { route: '/api/tools/propose-lead', method: 'POST', body: { company: 'Company', country: 'TN',
+    location: 'Tunis', industry: 'ERP', website: 'https://company.tn', source_url: 'https://company.tn/about',
+    observed_on: '2026-10-10', quote: 'Des services ERP.', agent_id: 'research' }, version: '' });
+  for (const name of ['campaign.check_draft', 'campaign.save_draft', 'campaign.propose_lead']) {
+    assert.equal(reg.tools.get(name).capability, 'campaign');
+    assert.equal(reg.tools.get(name).requiresConsent, false);
+  }
+});
+
+test('drafting tools reject invalid arguments and worker refusals', async () => {
+  let calls = 0;
+  const reg = fakeRegistry();
+  makeCampaignTools({ call: async () => { calls++; return { status: 400, value: { error: 'Fix these first: guarantee' } }; }, isHalted: () => false }).register(reg);
+  for (const [name, args] of [
+    ['campaign.check_draft', {}], ['campaign.check_draft', { lead_id: 4, body: 'Bonjour' }],
+    ['campaign.save_draft', { lead_id: 'tn', body: 3 }], ['campaign.save_draft', { lead_id: 'tn', body: '' }],
+    ['campaign.save_draft', { lead_id: 'tn', body: 'Bonjour', language: 'ar' }],
+    ['campaign.propose_lead', { company: 3 }], ['campaign.propose_lead', { company: 'Company', country: 3 }],
+  ]) await assert.rejects(reg.tools.get(name).run(args, {}), /Campaign tool error: invalid arguments/);
+  assert.equal(calls, 0);
+  for (const name of ['campaign.check_draft', 'campaign.save_draft', 'campaign.propose_lead']) {
+    const args = name === 'campaign.propose_lead' ? { company: 'Company' } : { lead_id: 'tn', body: 'Bonjour' };
+    await assert.rejects(reg.tools.get(name).run(args, {}), /Campaign tool error: Fix these first: guarantee/);
+  }
+  assert.equal(calls, 3);
+});

@@ -1,4 +1,5 @@
 import json
+import datetime
 import io
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -11,7 +12,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import campaign
 import campaign_tools
 import campaign_rpc
-from ultra_ui import Workspace
+import records
+from ultra_ui import Workspace, RequestError
 
 
 class CampaignToolTests(unittest.TestCase):
@@ -193,6 +195,192 @@ class CampaignToolTests(unittest.TestCase):
             campaign_rpc.main()
         self.assertEqual(json.loads(output.getvalue()), {'id': 7, 'status': 400,
                                                         'value': {'error': 'Invalid campaign request.'}})
+
+    def test_check_draft_names_each_broken_rule(self):
+        bad = ('Bonjour, pour 500 DT nous garantissons 99 % de précision en 48h, '
+               'comme pour nos clients actuels.')
+        out = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': bad})
+        self.assertFalse(out['ok'])
+        self.assertEqual({p['rule'] for p in out['problems']}, {'price', 'percentage', 'time_promise', 'guarantee', 'invented_clients'})
+        good = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour, votre site présente des services ERP. Un court échange vous intéresserait-il ?'})
+        self.assertTrue(good['ok'], good['problems'])
+
+    def test_check_draft_flags_scope_suppression_and_stale_source(self):
+        with self.assertRaises(ValueError): campaign_tools.check_draft(self.store, {'lead_id': 'fr', 'body': 'Bonjour'})
+        old = {**self.lead, 'id': 'old', 'company': 'Old SARL', 'checked_date': '2025-01-01'}
+        (self.root / 'data/leads.json').write_text(json.dumps([self.lead, old]))
+        out = campaign_tools.check_draft(self.store, {'lead_id': 'old', 'body': 'Bonjour, une question courte.'})
+        self.assertIn('stale_source', {p['rule'] for p in out['problems']})
+
+    def test_save_draft_refuses_problems_and_keeps_a_checked_unreviewed_draft(self):
+        before = (self.root / 'data/leads.json').read_bytes()
+        with self.assertRaises(ValueError): campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'body': 'Garanti à 100 %.'}, 'sales')
+        saved = campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'subject': 'Services ERP', 'body': 'Bonjour, votre site présente des services ERP.'}, 'sales')
+        self.assertEqual((saved['lead_id'], saved['agent_id'], saved['reviewed'], saved['status']), ('tn', 'sales', False, 'proposed'))
+        self.assertEqual(saved['source_version'], campaign.fingerprint(self.lead))
+        self.assertEqual((self.root / 'data/leads.json').read_bytes(), before, 'an agent never writes leads.json')
+        self.assertEqual(campaign_tools.packet(self.store, {'id': 'tn'})['crew_drafts'][0]['id'], saved['id'])
+
+    def test_propose_lead_refuses_duplicates_exclusions_and_foreign_companies(self):
+        base = {'company': 'Nouvelle Data SARL', 'country': 'Tunisia', 'location': 'Tunis', 'website': 'https://nouvelle.tn',
+                'source_url': 'https://nouvelle.tn/a-propos', 'observed_on': '2026-10-10', 'quote': 'Nous numérisons des archives pour nos clients.'}
+        made = campaign_tools.propose_lead(self.store, base, 'research')
+        self.assertEqual((made['status'], made['agent_id']), ('proposed', 'research'))
+        for change, reason in [({'company': 'Local ERP', 'website': 'https://other.tn'}, 'Duplicate company'),
+                               ({'company': 'Other Co', 'website': 'https://example.tn'}, 'Duplicate company website'),
+                               ({}, 'Already proposed'),
+                               ({'company': 'Lyon SA', 'website': 'https://lyon.fr', 'country': 'France'}, 'outside Tunisia')]:
+            with self.assertRaisesRegex(ValueError, reason): campaign_tools.propose_lead(self.store, {**base, **change}, 'research')
+        (self.root / 'data/exclusions.json').write_text('{"companies":[{"company":"Blocked SA"}]}')
+        with self.assertRaisesRegex(ValueError, 'Company excluded'): campaign_tools.propose_lead(self.store, {**base, 'company': 'Blocked SA', 'website': 'https://blocked.tn'}, 'research')
+
+    def test_owner_accepts_a_proposal_into_leads_and_rejects_another(self):
+        made = campaign_tools.propose_lead(self.store, {'company': 'Nouvelle Data SARL', 'country': 'Tunisia', 'location': 'Tunis', 'website': 'https://nouvelle.tn',
+            'source_url': 'https://nouvelle.tn/a-propos', 'observed_on': '2026-10-10', 'quote': 'Nous numérisons des archives.'}, 'research')
+        self.store.action('accept-proposal', {'id': made['id']}, self.store.version())
+        added = [l for l in json.loads((self.root / 'data/leads.json').read_text()) if l['company'] == 'Nouvelle Data SARL'][0]
+        self.assertEqual((added['source_type'], added['status'], added['source_live_checked'], added['contact_route'], added['country']), ('crew_proposal', 'discovered', False, None, 'TN'))
+        self.assertEqual(added['observed_text'], 'Nous numérisons des archives.')
+        other = campaign_tools.propose_lead(self.store, {'company': 'Autre SARL', 'country': 'TN', 'location': 'Sousse', 'source_url': 'https://autre.tn',
+            'observed_on': '2026-10-10', 'quote': 'Archives papier à numériser.'}, 'research')
+        self.store.action('proposal-status', {'id': other['id'], 'status': 'rejected', 'reason': 'Too small'}, self.store.version())
+        self.assertEqual(self.store.read()['proposals'][-1]['status'], 'rejected')
+
+
+    def proposal_args(self, **changes):
+        return {**{'company': 'Nouvelle Data SARL', 'country': 'TN', 'location': 'Tunis',
+                   'website': 'https://nouvelle.tn', 'source_url': 'https://nouvelle.tn/about',
+                   'observed_on': '2026-10-10', 'quote': 'Nous numérisons des archives.'}, **changes}
+
+    def test_claim_rules_cover_french_english_and_subject_claims(self):
+        cases = {'price': ['500 DT', '10 TND', '20 dinars', '5 €', '10 EUR', '12 euros', '5 $', '6 USD'],
+                 'percentage': ['99 %', '12.5%'],
+                 'time_promise': ['en 2 heures', 'in 3 days', 'within 1 week', 'sous 2 jours', '24h', '48h', '72h'],
+                 'guarantee': ['garantissons', 'guaranteed', '100 %'],
+                 'invented_clients': ['nos clients', 'our clients', 'déjà travaillé avec', 'already worked with', 'références clients']}
+        for rule, texts in cases.items():
+            for text in texts:
+                with self.subTest(rule=rule, text=text):
+                    result = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': text.upper()})
+                    self.assertIn(rule, {p['rule'] for p in result['problems']})
+        result = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'subject': 'Garanti', 'body': 'Bonjour'})
+        self.assertIn('guarantee', {p['rule'] for p in result['problems']})
+
+    def test_draft_bounds_and_freshness_boundary(self):
+        for args in ({'body': ''}, {'body': None}, {'body': 'x' * 8001}, {'body': 'Bonjour', 'subject': 'x' * 201},
+                     {'body': 'Bonjour', 'subject': 3}):
+            with self.subTest(args=args), self.assertRaises(ValueError):
+                campaign_tools.check_draft(self.store, {'lead_id': 'tn', **args})
+        today = datetime.date(2026, 10, 11)
+        with patch.object(records, 'local_today', return_value=today):
+            for age, expected in [(180, True), (181, False)]:
+                lead = {**self.lead, 'checked_date': (today - datetime.timedelta(days=age)).isoformat()}
+                (self.root / 'data/leads.json').write_text(json.dumps([lead]))
+                result = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'subject': 'x' * 200, 'body': 'x' * 8000})
+                self.assertEqual(result['ok'], expected)
+            for date in (None, 'invalid'):
+                (self.root / 'data/leads.json').write_text(json.dumps([{**self.lead, 'checked_date': date}]))
+                self.assertIn('stale_source', {p['rule'] for p in campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'})['problems']})
+
+    def test_draft_checks_exclusions_and_suppression_without_writes(self):
+        (self.root / 'data/exclusions.json').write_text('{"companies":[{"company":"Parent", "aliases":["LÓCAL-ERP"]}]}')
+        state = self.store.read()
+        state['events'].append({'lead_id': 'tn', 'kind': 'do_not_contact', 'confirmed': True})
+        self.store.path.write_text(json.dumps(state))
+        before = self.store.path.read_bytes()
+        out = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'})
+        self.assertEqual({p['rule'] for p in out['problems']}, {'excluded', 'suppressed'})
+        with self.assertRaisesRegex(ValueError, 'Fix these first:'):
+            campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'}, 'sales')
+        self.assertEqual(self.store.path.read_bytes(), before)
+        (self.root / 'data/exclusions.json').write_text('{"companies":[]}')
+        (self.root / 'data/leads.json').write_text(json.dumps([{**self.lead, 'exclusion_check': None}]))
+        self.assertIn('excluded', {p['rule'] for p in campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'})['problems']})
+
+    def test_save_keeps_newest_five_per_lead_and_owner_reviews_with_version(self):
+        other = {**self.lead, 'id': 'other', 'company': 'Other'}
+        (self.root / 'data/leads.json').write_text(json.dumps([self.lead, other]))
+        old_version = self.store.version()
+        kept = campaign_tools.save_draft(self.store, {'lead_id': 'other', 'body': 'Bonjour'}, 'sales')
+        saved = [campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'body': f'Bonjour {i}', 'language': 'en'}, 'sales') for i in range(7)]
+        state = self.store.read()
+        self.assertEqual([r['id'] for r in state['crew_drafts']], [kept['id'], *[r['id'] for r in saved[-5:]]])
+        self.assertEqual({r['id']: r['crew_drafts'] for r in campaign_tools.leads(self.store, {})['leads']}, {'tn': 5, 'other': 1})
+        self.assertEqual(saved[-1]['language'], 'en')
+        with self.assertRaises(RequestError) as conflict:
+            self.store.action('crew-draft-status', {'id': saved[-1]['id'], 'status': 'adopted'}, old_version)
+        self.assertEqual(conflict.exception.status, 409)
+        for draft, status in [(saved[-1], 'adopted'), (saved[-2], 'dismissed')]:
+            self.store.action('crew-draft-status', {'id': draft['id'], 'status': status}, self.store.version())
+        self.assertEqual([r['status'] for r in self.store.read()['crew_drafts'][-2:]], ['dismissed', 'adopted'])
+        self.assertTrue(all(r['reviewed'] for r in self.store.read()['crew_drafts'][-2:]))
+
+    def test_proposal_bounds_normalization_and_open_limit(self):
+        before = (self.root / 'data/leads.json').read_bytes()
+        for changes in ({'company': 'x'}, {'company': ' x '}, {'company': 'x' * 201}, {'country': 'Tunis'}, {'source_url': 'file:///tmp/x'},
+                        {'website': 'https://'}, {'observed_on': '2999-01-01'}, {'observed_on': ''},
+                        {'quote': 'short'}, {'quote': 'x' * 1001}, {'location': 'x' * 101}):
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                campaign_tools.propose_lead(self.store, self.proposal_args(**changes), 'research')
+        with self.assertRaisesRegex(ValueError, 'Duplicate company'):
+            campaign_tools.propose_lead(self.store, self.proposal_args(company=' LÓCAL-ERP '), 'research')
+        (self.root / 'data/exclusions.json').write_text('{"companies":[{"company":"Parent", "aliases":["Nouvelle Data SARL"]}]}')
+        with self.assertRaisesRegex(ValueError, 'outside Tunisia'):
+            campaign_tools.propose_lead(self.store, self.proposal_args(country='France'), 'research')
+        with self.assertRaisesRegex(ValueError, 'Company excluded'):
+            campaign_tools.propose_lead(self.store, self.proposal_args(), 'research')
+        (self.root / 'data/exclusions.json').write_text('{"companies":[]}')
+        made = campaign_tools.propose_lead(self.store, self.proposal_args(country='تونس'), 'research')
+        with self.assertRaisesRegex(ValueError, 'Already proposed'):
+            campaign_tools.propose_lead(self.store, self.proposal_args(company='Other', website='https://nouvelle.tn/'), 'research')
+        state = self.store.read()
+        state['proposals'] = [{**made, 'id': f'pl-{i}', 'company': f'Company {i}', 'website': None} for i in range(200)]
+        state['proposals'].append({**made, 'status': 'rejected'})
+        self.store.path.write_text(json.dumps(state))
+        with self.assertRaises(ValueError):
+            campaign_tools.propose_lead(self.store, self.proposal_args(), 'research')
+        self.assertEqual((self.root / 'data/leads.json').read_bytes(), before)
+
+    def test_acceptance_rechecks_duplicates_exclusions_and_writes_csv_shape(self):
+        made = campaign_tools.propose_lead(self.store, self.proposal_args(location=''), 'research')
+        for added in ({**self.lead, 'id': 'new', 'company': 'Nouvelle-Data SARL', 'website': None},
+                      {**self.lead, 'id': 'new', 'company': 'Another', 'website': 'https://nouvelle.tn/'}):
+            (self.root / 'data/leads.json').write_text(json.dumps([self.lead, added]))
+            with self.assertRaises(RequestError):
+                self.store.action('accept-proposal', {'id': made['id']}, self.store.version())
+            self.assertEqual(self.store.read()['proposals'][0]['status'], 'proposed')
+        (self.root / 'data/leads.json').write_text(json.dumps([self.lead]))
+        (self.root / 'data/exclusions.json').write_text('{"companies":[{"company":"Nouvelle Data SARL"}]}')
+        with self.assertRaises(RequestError):
+            self.store.action('accept-proposal', {'id': made['id']}, self.store.version())
+        (self.root / 'data/exclusions.json').write_text('{"companies":[]}')
+        self.store.action('accept-proposal', {'id': made['id']}, self.store.version())
+        added = json.loads((self.root / 'data/leads.json').read_text())[-1]
+        self.assertRegex(added['id'], r'^lead-[0-9a-f]{12}$')
+        self.assertEqual(added['location'], 'Tunisia')
+        self.assertEqual(added['source_reference'], 'Crew proposal ' + made['id'] + ' by research')
+        self.assertEqual(added['observed_fact'], 'Nous numérisons des archives.')
+        self.assertNotIn('raw_import', added)
+        self.assertNotIn('import_row', added)
+        self.assertEqual(added['history'][0]['after']['company'], 'Nouvelle Data SARL')
+        with self.assertRaises(RequestError):
+            self.store.action('accept-proposal', {'id': made['id']}, self.store.version())
+
+    def test_private_drafting_routes_use_host_agent_and_owner_status_is_bounded(self):
+        workspace = self.store.workspace
+        def post(route, body):
+            return campaign_rpc.dispatch(workspace, {'route': '/api/tools/' + route, 'method': 'POST', 'body': body})
+        self.assertTrue(post('check-draft', {'lead_id': 'tn', 'body': 'Bonjour', 'agent_id': 'sales'})['ok'])
+        saved = post('save-draft', {'lead_id': 'tn', 'body': 'Bonjour', 'agent_id': 'sales'})
+        self.assertEqual(saved['agent_id'], 'sales')
+        made = post('propose-lead', self.proposal_args())
+        self.assertEqual(made['agent_id'], 'unknown')
+        for action, body in [('crew-draft-status', {'id': saved['id'], 'status': 'sent'}),
+                             ('proposal-status', {'id': made['id'], 'status': 'accepted', 'reason': 'No fit'}),
+                             ('proposal-status', {'id': made['id'], 'status': 'rejected', 'reason': 'No'}),
+                             ('proposal-status', {'id': made['id'], 'status': 'rejected', 'reason': 'x' * 301})]:
+            with self.subTest(action=action, body=body), self.assertRaises(RequestError):
+                self.store.action(action, body, self.store.version())
 
 
 if __name__ == '__main__':

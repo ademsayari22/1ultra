@@ -32,6 +32,11 @@ def dispatch(workspace, request):
         if path == '/api/artifact': return workspace.artifact(parse_qs(route.query).get('path', [''])[0])
         raise RequestError(404, 'Unknown read route.')
     if method != 'POST': raise RequestError(405, 'Unsupported method.')
+    if path == '/api/tools/check-draft':
+        body.pop('agent_id', 'unknown')
+        return campaign_tools.check_draft(store, body)
+    if path == '/api/tools/save-draft': return campaign_tools.save_draft(store, body, body.pop('agent_id', 'unknown'))
+    if path == '/api/tools/propose-lead': return campaign_tools.propose_lead(store, body, body.pop('agent_id', 'unknown'))
     if path == '/api/agents/adopt':
         from station_agents import adopt
         return adopt(workspace, body, version)

@@ -22,7 +22,30 @@ INTENTS = {'wrong_person': ('contacts', 'Find the right contact', 'Ask for a per
            'do_not_contact': ('closed', 'Do not contact', 'Suppress outreach at the recorded scope.'),
            'unclear': ('reply', 'Review the reply', 'Confirm or correct its interpretation before preparing the next step.')}
 EMPTY = {'schema_version': 1, 'contacts': [], 'events': [], 'followups': [], 'signals': [],
-         'proofs': [], 'variants': [], 'experiments': [], 'weights': DEFAULT_WEIGHTS, 'weights_version': 1, 'history': []}
+         'proofs': [], 'variants': [], 'experiments': [], 'crew_drafts': [], 'proposals': [],
+         'weights': DEFAULT_WEIGHTS, 'weights_version': 1, 'history': []}
+
+
+def check_new_company(country, company, website, leads, exclusions, proposals=()):
+    """Share CSV intake's name/website normalization and refusal order with crew intake."""
+    if not prospecting.tunisian(country):
+        raise ValueError('Company country is outside Tunisia or unknown')
+    normalized = automation.normalize_company(company)
+    excluded = {automation.normalize_company(value) for row in exclusions.get('companies', [])
+                for value in [row.get('company'), *row.get('aliases', [])] if value}
+    if normalized in excluded:
+        raise ValueError('Company excluded')
+    if normalized in {automation.normalize_company(row.get('company')) for row in leads if row.get('company')}:
+        raise ValueError('Duplicate company')
+    def website_key(value):
+        return value.strip().rstrip('/') if isinstance(value, str) else ''
+    key = website_key(website)
+    known = {website_key(row.get('website', row.get('source_url', ''))) for row in leads}
+    if key and key in known:
+        raise ValueError('Duplicate company website')
+    if any(row.get('status') == 'proposed' and (automation.normalize_company(row.get('company')) == normalized or
+            key and website_key(row.get('website')) == key) for row in proposals):
+        raise ValueError('Already proposed')
 
 
 def fingerprint(lead, draft=False):
@@ -287,8 +310,39 @@ class Campaign:
             'interpret': {'id', 'intent', 'confirmed'}, 'followup': {'lead_id', 'contact_id', 'on', 'text'},
             'proof': {'lead_id', 'offer'}, 'review-proof': {'id', 'confirmed'},
             'variant': {'lead_id', 'language', 'channel'}, 'review-variant': {'id', 'confirmed'},
-            'experiment': {'name', 'lead_ids', 'a', 'b', 'start', 'end'}}
+            'experiment': {'name', 'lead_ids', 'a', 'b', 'start', 'end'},
+            'crew-draft-status': {'id', 'status'}, 'proposal-status': {'id', 'status', 'reason'},
+            'accept-proposal': {'id'}}
         if name not in allowed or set(body) - allowed[name]: raise ValueError('Unsupported campaign fields.')
+        if name in {'crew-draft-status', 'proposal-status', 'accept-proposal'}:
+            collection = 'crew_drafts' if name == 'crew-draft-status' else 'proposals'
+            row = next((r for r in state.get(collection, []) if r['id'] == body.get('id')), None)
+            if not row or row.get('status') != 'proposed': raise ValueError('Select an open draft or proposal.')
+            if name == 'crew-draft-status':
+                if body.get('status') not in {'adopted', 'dismissed'}: raise ValueError('Adopt or dismiss the crew draft.')
+                row.update(status=body['status'], reviewed=True)
+            elif name == 'proposal-status':
+                reason = required(body, 'reason')
+                if body.get('status') != 'rejected' or not 3 <= len(reason) <= 300:
+                    raise ValueError('Reject the proposal with a reason of 3–300 characters.')
+                row.update(status='rejected', reason=reason)
+            else:
+                leads = self.leads()
+                check_new_company(row.get('country'), row['company'], row.get('website'), leads,
+                                  ultra.read_json(self.root, 'data/exclusions.json'))
+                # Match the accepted CSV row shape and its journal, ID and atomic write path.
+                lead = records.journal({}, {
+                    'id': 'lead-' + secrets.token_hex(6), 'company': row['company'], 'kind': 'service_prospect',
+                    'country': 'TN', 'location': row.get('location') or 'Tunisia', 'industry': row.get('industry'),
+                    'website': row.get('website'), 'source_url': row['source_url'],
+                    'source_reference': 'Crew proposal ' + row['id'] + ' by ' + row['agent_id'],
+                    'observed_fact': row['quote'], 'observed_text': row['quote'], 'checked_date': row['observed_on'],
+                    'source_type': 'crew_proposal', 'source_live_checked': False, 'contact_route': None,
+                    'mode': 'real', 'status': 'discovered', 'contact_sent': False, 'buyer_need_confirmed': False,
+                    'exclusion_check': 'not_excluded', 'need_hypothesis': 'À qualifier avec le décideur ; aucun besoin confirmé.'})
+                self.workspace.atomic_json(ultra.inside(self.root, 'data/leads.json'), [*leads, lead], '.leads-import-')
+                row.update(status='accepted', lead_id=lead['id'])
+            return row
         if name == 'weights':
             weights = body['weights']
             if not isinstance(weights, dict) or set(weights) != set(DEFAULT_WEIGHTS) or any(type(v) is not int or not 0 <= v <= 100 for v in weights.values()) or not sum(weights.values()):

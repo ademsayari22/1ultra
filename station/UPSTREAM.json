@@ -16477,7 +16477,7 @@
     },
     {
       "path": "sidecar/capability/registry.js",
-      "current_sha256": "4c2be9ff8c04cf1b41d0d123c39637d461a58d67b8da1524fa5467ed058aa8ba",
+      "current_sha256": "4776f57117022a7b0b7f57265d6a125de7491c43fba4688732a9560607faa010",
       "reasons": [
         "brand",
         "patch:crew-health-capability,campaign-tools-capability"
