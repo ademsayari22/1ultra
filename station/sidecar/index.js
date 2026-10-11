@@ -21619,8 +21619,8 @@ async function runOnceCore(o) {
     // in-flight tally — record-before-clear so the spend is always counted by at least one source, never neither.
     // result.usd/tokens already INCLUDE the summarizer's spend (the loop folds it into spentUsd as it accrues).
     const finalModel = resolveEffectiveModel({ result, requestedModel: o.model, usingCodex, codexDefaultModel: CODEX_DEFAULT_MODEL, defaultModel: CRON_DEFAULT_MODEL });
-    // 1Ultra: crew runs on the local FreeLLMAPI service use free tiers only and are booked at $0 (paid media stays real).
-    const finalUsd = ultraHost.crew.isFreeTier(activeProviderId) && !mediaUsd ? 0 : effectiveRunUsd({ usd: (result && result.usd) || 0, mediaUsd, unmetered: runUnmetered, unpricedUsage: result && result.unpricedUsage, priceOf: provider && provider.priceOf });
+    // 1Ultra: a run on the local FreeLLMAPI service books only its paid media; the free model itself costs $0.
+    const finalUsd = require('../ultra-crew-wire.js').freeTierUsd(ultraHost.crew.isFreeTier(activeProviderId), mediaUsd, () => effectiveRunUsd({ usd: (result && result.usd) || 0, mediaUsd, unmetered: runUnmetered, unpricedUsage: result && result.unpricedUsage, priceOf: provider && provider.priceOf }));
     const finalTurns = (result && result.turns) || 0;
     const finalTokens = (result && result.tokens) || 0;
     try { ledger.record({ runId, agentId, turns: finalTurns, usd: finalUsd, tokens: finalTokens, model: finalModel, unmetered: runUnmetered && mediaUsd === 0 }); } catch (_) {}

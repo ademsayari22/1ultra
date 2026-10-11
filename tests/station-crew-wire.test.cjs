@@ -1,7 +1,7 @@
 'use strict';
 const assert = require('node:assert/strict'), test = require('node:test');
 const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
-const { makeWire, portFrom } = require('../station/ultra-crew-wire.js');
+const { makeWire, portFrom, freeTierUsd } = require('../station/ultra-crew-wire.js');
 const { makeCrew } = require('../station/ultra-crew.js');
 const KEY = 'freellmapi-' + 'ab'.repeat(24);
 const durable = (file, value) => fs.writeFileSync(file, JSON.stringify(value));
@@ -15,6 +15,17 @@ test('the FreeLLMAPI port comes from ULTRA_FREELLMAPI_PORT and defaults to 3001'
   assert.equal(portFrom({}), 3001);
   assert.equal(portFrom({ ULTRA_FREELLMAPI_PORT: '3901' }), 3901);
   for (const bad of ['80', '70000', 'x', '3001.5']) assert.throws(() => portFrom({ ULTRA_FREELLMAPI_PORT: bad }), /ULTRA_FREELLMAPI_PORT/);
+});
+
+test('free-tier runs book only paid media and skip ordinary model cost computation', () => {
+  let calls = 0;
+  const compute = usd => () => { calls++; return usd; };
+  assert.equal(freeTierUsd(true, 0.10, compute(0.25)), 0.10);
+  assert.equal(freeTierUsd(true, 0, compute(0.15)), 0);
+  assert.equal(freeTierUsd(true, undefined, compute(0.15)), 0);
+  assert.equal(calls, 0, 'free-tier accounting never computes model cost');
+  assert.equal(freeTierUsd(false, 0.10, compute(0.25)), 0.25);
+  assert.equal(calls, 1, 'other providers retain ordinary cost computation');
 });
 
 test('provider custom is configured only from a loopback URL on the configured port and a well-formed key', () => {

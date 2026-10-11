@@ -322,5 +322,5 @@
  "replace": "ultraHost.registerStationHalt(() => { handleHalt(null, { writeHead() {}, end() {} }); try { killAll(runStopHandles); } catch (e) { failNote('ultra.station-halt.killAll', e); } });\nultraHost.registerProviderConfig(setProviderRuntimeConfig);\n"},
 {"id": "crew-free-tier-cost", "file": "sidecar/index.js",
  "find": "    const finalUsd = effectiveRunUsd({ usd: (result && result.usd) || 0, mediaUsd, unmetered: runUnmetered, unpricedUsage: result && result.unpricedUsage, priceOf: provider && provider.priceOf });\n",
- "replace": "    // 1Ultra: crew runs on the local FreeLLMAPI service use free tiers only and are booked at $0 (paid media stays real).\n    const finalUsd = ultraHost.crew.isFreeTier(activeProviderId) && !mediaUsd ? 0 : effectiveRunUsd({ usd: (result && result.usd) || 0, mediaUsd, unmetered: runUnmetered, unpricedUsage: result && result.unpricedUsage, priceOf: provider && provider.priceOf });\n"}
+ "replace": "    // 1Ultra: a run on the local FreeLLMAPI service books only its paid media; the free model itself costs $0.\n    const finalUsd = require('../ultra-crew-wire.js').freeTierUsd(ultraHost.crew.isFreeTier(activeProviderId), mediaUsd, () => effectiveRunUsd({ usd: (result && result.usd) || 0, mediaUsd, unmetered: runUnmetered, unpricedUsage: result && result.unpricedUsage, priceOf: provider && provider.priceOf }));\n"}
 ]

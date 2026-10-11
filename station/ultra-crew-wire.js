@@ -30,4 +30,5 @@ function makeWire({fs,path,runtime,port}){
     isFreeTier:id=>String(id||'')==='custom'&&!!current,
     status:()=>({configured:!!current,problem,baseUrl:expected})};
 }
-module.exports={makeWire,portFrom,KEY_RE};
+function freeTierUsd(isFreeTier,mediaUsd,compute){return isFreeTier?Math.max(0,Number(mediaUsd)||0):compute();}
+module.exports={makeWire,portFrom,KEY_RE,freeTierUsd};

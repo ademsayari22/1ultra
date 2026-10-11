@@ -61,7 +61,7 @@ class PatchAnchorsTest(unittest.TestCase):
     def test_free_tier_wire_and_zero_cost(self):
         text = (ROOT / 'station/sidecar/index.js').read_text()
         self.assertIn('ultraHost.registerProviderConfig(setProviderRuntimeConfig);', text)
-        self.assertIn('const finalUsd = ultraHost.crew.isFreeTier(activeProviderId) && !mediaUsd ? 0 : effectiveRunUsd(', text)
+        self.assertIn("require('../ultra-crew-wire.js').freeTierUsd(ultraHost.crew.isFreeTier(activeProviderId), mediaUsd, () => effectiveRunUsd(", text)
 
 
 if __name__ == '__main__':
