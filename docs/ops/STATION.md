@@ -6,12 +6,23 @@ The merged app runs the pinned Starnet Node host with a private Python campaign 
 
 Requires Python 3.10+ and Node.js 20.3+. Install pinned dependencies once with `cd station && npm ci --ignore-scripts --no-audit --no-fund`, then run `python3 scripts/station.py` and open http://127.0.0.1:8541.
 
-- `/` is the Starnet station (1Ultra build). **WORK → CAMPAIGN** opens the Tunisia campaign; **SYSTEM → SWITCHES** shows what agents may use.
-- `/campaign/` is the campaign page on its own. `/classic/` is the original Python interface. For a separate standard-library fallback, run `python3 scripts/station.py --classic --port 8542`.
+- `/` is the Starnet station (1Ultra build). **WORK → LEADS** opens the Tunisia campaign in the station's own design; **SYSTEM → SWITCHES** shows what agents may use; **BUILD → ROOM TEMPLATES** lists the 1Ultra rooms.
+- `/campaign/` is the classic campaign page on its own (also linked from LEADS until Stage 4 retires it). `/classic/` is the original Python interface. For a separate standard-library fallback, run `python3 scripts/station.py --classic --port 8542`.
 - Switches you can turn on now: **lead.codex** (then sign in: model dock → GPT / CODEX → Sign in with ChatGPT, and pick GPT 6.1 SOL · XHIGH), **crew.freellmapi** (crew on the local FreeLLMAPI service; see "Crew on FreeLLMAPI"), **crew.escalate_to_lead** (on by default: ULTRA takes over crew work that fails on every free option, while lead.codex is on) and **tools.web** (public web search and reading for agents; private network addresses stay blocked).
 - One emergency stop: the 1Ultra stop halts Starnet too, Starnet's E-STOP sets the 1Ultra stop, and Starnet's RESUME clears both.
 - Agents can never read or write the 1Ultra project folder, and it cannot be added as a project. Inside the station runtime each agent reaches only its own workspace, never the switches, the stop, saved settings or the ChatGPT tokens — even in Full Power. Searches and recursive listings skip protected files.
 - Every model request (including retries, model catalogs and sign-in renewals) checks the emergency stop and the provider switch again, so turning `lead.codex` off takes effect on the next request, and pressing stop also aborts model requests already in flight.
+
+## Your station layout
+
+**1ULTRA COMMAND** is the station preset for this work. Apply it in **BUILD → BUILD MODE → STATION PRESETS → 1ULTRA COMMAND**, then confirm, or ask ULTRA to switch the station to it (you approve ULTRA's card).
+
+- **COMMAND**, in the center, is ULTRA's room: ULTRA's desk, all five essentials (files, web, memory, terminal and images), screens and a meeting table. ULTRA orchestrates from here.
+- **CAMPAIGN**, east of COMMAND, has a desk each for Research, Delivery, Sales and QA, plus an INTEL CAB, a dish, a server cart and a whiteboard. Its open lower half is kept for the Tunisia Lead Line (Stage 3).
+- Applying the preset replaces rooms, furniture and conveyors. Agents and conversations stay. **RESTORE PREVIOUS** in the same dialog brings back the layout you had before.
+- Until an agent works a line step (a bay), it uses equipment from anywhere on the station, so desks never take a power away.
+
+**Room templates for future work.** Six 1Ultra rooms are ready to add beside the station: CAMPAIGN; LEAD RESEARCH (a research line that proposes sourced companies); DRAFT & CHECK (a draft and QA loop for pitches); DELIVERY LAB; CLIENT PILOT; and RECORDS. **BUILD → ROOM TEMPLATES** lists them, and **Ask ULTRA to add** prepares the request; ULTRA's station builder shows you the plan on a card before anything is built. A line room's steps come with written instructions; you choose who works each step.
 
 ## Crew on FreeLLMAPI
 
@@ -34,6 +45,12 @@ How the crew stays capable:
 - **team.health:** ULTRA can read all of this with `team.health`.
 - **Free-tier ULTRA:** if Codex is signed out or out of allowance and the crew is on, ULTRA continues on the free tier with a visible "lead running on free tier" notice.
 
+Campaign tools (every agent with a computer gets them; **1ULTRA CAMPAIGN** in the TOOLSETS console can switch them off):
+- `campaign.leads` and `campaign.lead` read the campaign. A company's packet carries public, sourced company facts, the ranking reasons, signals, proof metadata and drafts. Contacts appear only as role, channel type (email, phone, LinkedIn, website or other) and source link: no names, addresses, phone numbers or imported raw rows. Excluded companies are never offered.
+- `campaign.check_draft` checks a pitch against fixed rules: no prices, percentages, time promises, guarantees or invented clients, and the company's scope, exclusions, suppression and source age (a source older than 180 days counts as stale; that limit is a setting). `campaign.save_draft` saves only a draft with no problems, as unreviewed.
+- `campaign.propose_lead` proposes one Tunisian company with its source URL, date seen and exact quote; known, excluded or non-Tunisian companies are refused.
+- No campaign tool sends anything or changes `data/leads.json`; agent drafts and proposals wait in `data/campaign-workbench.json` for your decision in LEADS.
+
 Privacy:
 - Free providers may log prompts. Crew models get only public research, campaign drafts and synthetic examples, and agents still cannot read the project folder.
 - FreeLLMAPI keeps request metadata (not message bodies) for 90 days in `services/freellmapi/state/`.
@@ -42,6 +59,15 @@ Privacy:
 After the first start with this update, close and reopen any station tab, so the page picks up the new crew members.
 
 ## Find leads and convince a buyer
+
+**LEADS** (WORK → LEADS) is the campaign's own window in the station:
+
+- **Board:** the ranked Tunisian companies with search, the offer used for ranking, and the funnel counts (sourced, shortlisted, contacted, replies).
+- **Company card:** the observed fact, source link and date, why it ranks where it does (preparation priority, never a buying probability), and **Shortlist**.
+- **Ask ULTRA to prepare outreach** opens that company's own conversation with ULTRA, with a prepared request: read the packet with `campaign.lead`, have Sales write and check a French pitch and QA give a verdict. Nothing is sent; the draft comes back to LEADS.
+- **Crew drafts:** each saved crew draft shows who wrote it and whether the company's source changed since. **Use this draft** makes it your own unreviewed draft (subject and body editable); **Dismiss** removes it from the queue. **Mark reviewed** stays your own step.
+- **PROPOSED:** companies the crew proposed, with source link, date and quote. **Accept** adds one to your leads (its source still needs your own check); **Reject** records why.
+- **Record real outcome** saves an actual send or reply with its date and at least ten characters of evidence, exactly as before.
 
 1. Inspect sourced Tunisian company cards and the contribution behind each ranking factor. Adjust the offer or versioned weights. Choose your offer/capacity and shortlist five companies.
 2. Prepare a company pitch and a small proof pack. Open its source, checked output and exception list. Synthetic examples are labelled; they establish no client result or accuracy promise.

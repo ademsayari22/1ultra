@@ -8,6 +8,8 @@ Rerun on 10 October 2026 after Stage 1a (ULTRA on Codex and the safety rails): t
 
 Rerun on 11 October 2026 after Stage 1b (the crew on FreeLLMAPI): the same 1101 steps, 955 passed, and the same 146 steps failed for the same reasons; the real `runs/station-runtime` was unchanged. Two Stage 1b runs found one new failure each, both source-pattern guards, and both were fixed rather than excused. `test/comms-presence.test.js` needs the per-tool duration within 1300 characters of `function telemetryRun`; the "answered by" line now comes from a helper defined before that function. `test/update-drain-wiring.test.js` allows only two bare `runOnceCore(` mentions; the free-tier restart after a failed Codex sign-in now goes through the same single counted call, at most once.
 
+Rerun on 11 October 2026 after Stage 2 (the 1ULTRA COMMAND layout, room templates, campaign tools and LEADS): 1101 steps, 951 passed and 150 failed: the same 146, plus four `patch` failures listed below; the real `runs/station-runtime` was unchanged. The first Stage 2 run also failed `test/inputpolicy.test.js`, which requires every tool family on the computer to be a freebie or a toggleable toolset; the campaign tools are now the toggleable **1ULTRA CAMPAIGN** toolset, and that test passes.
+
 | Reason | Failures | Meaning |
 |---|---|---|
 | `excluded-tooling` | 89 | reads website/, src-tauri/, .github/, qa/, dev/, relay/, bin/, release or eval files that are not imported |
@@ -15,7 +17,7 @@ Rerun on 11 October 2026 after Stage 1b (the crew on FreeLLMAPI): the same 1101 
 | `excluded-art` | 18 | reads frontend/assets or review pages (Starnet art is not imported; Phase 2 adds CC0 art) |
 | `dependency` | 6 | needs ogg-opus-decoder, sharp, @napi-rs/canvas or a Chrome binary, not installed in Phase 1 |
 | `policy` | 6 | calls a route refused while its owner switch is off |
-| `patch` | 2 | asserts upstream behavior a listed 1Ultra patch changes |
+| `patch` | 6 | asserts upstream behavior a listed 1Ultra patch changes |
 
 Two real defects were found by this run and fixed before recording it: test-started servers used the owner runtime and port (now only a deliberate `ULTRA_ROOT` launch does), and the Outbox file route and the station event bridge were wrongly switch-gated (now local).
 
@@ -144,6 +146,10 @@ Two real defects were found by this run and fixed before recording it: test-star
 | `test/free-path-ollama.test.js` | `brand` | expects "LINK STARNET"; also reads the unimported README.md |
 | `test/keycta-recovery.test.js` | `brand` | passes on an unbranded copy of the same build |
 | `test/process-fault.test.js` | `patch` | no-trigger-poll: the folder-trigger timer is off until the cron switch |
+| `test/station-templates.test.js` | `patch` | asserts exactly seven station presets; 1Ultra adds 1ULTRA COMMAND |
+| `test/capgate.test.js` | `patch` | asserts the computer's exact tool list; the campaign tools ride the computer |
+| `test/harness.integration.test.js` | `patch` | asserts the computer's exact tool list; the campaign tools ride the computer |
+| `test/routing.b5.test.js` | `patch` | asserts the computer's exact tool list; the campaign tools ride the computer |
 | `test/value-loop-replay.test.mjs` | `excluded-tooling` |  |
 | `test/session-typing-safety.test.js` | `excluded-tooling` |  |
 | `test/session-continuity.test.js` | `excluded-tooling` |  |
