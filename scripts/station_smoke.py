@@ -98,7 +98,7 @@ def main():
             classes = request('/api/ultra/route-classes')
             assert len(classes['routes']) > 300 and classes['unclassified'] == [], classes['unclassified']
             refused = request('/api/run', {'messages': []}, expected=403)
-            assert refused['switch'] == 'lead.codex' and 'lead.codex' in refused['error']
+            assert refused['switch'] == 'models' and 'lead.codex' in refused['error'] and 'crew.freellmapi' in refused['error']
             request('/api/save?agent=agent')  # local family answers 200 (request() raises on any other status)
             request('/v1/chat/completions', {'model': 'x'}, expected=403)
             checks.append('route classes: none unclassified; model route refused with its switch; local routes answer')

@@ -2,7 +2,8 @@
 const { urlToHttpOptions } = require('node:url');
 const deny = () => { throw new Error('Live models and external connections are disabled in this campaign.'); };
 // Every Starnet API family by path prefix. 'local' = station state on this machine only. A switch id = answers only
-// while the owner has that switch on ('channels'/'providers' = any switch of that family). 'blocked' = not part of
+// while the owner has that switch on ('channels'/'providers' = any switch of that family; 'models' = lead.codex or crew.freellmapi, and the provider gate
+// then decides which provider a run may use). 'blocked' = not part of
 // 1Ultra. No match = 'unclassified' and refused. policy.install() guards outbound calls with the same switches.
 const ROUTE_CLASSES = Object.freeze({
   '/api/activity':'local','/api/agent-skills':'local','/api/agents':'local','/api/attachments':'local','/api/budget':'local',
@@ -16,10 +17,10 @@ const ROUTE_CLASSES = Object.freeze({
   '/api/toolsets':'local','/api/transcript':'local','/api/userprops':'local','/api/version':'local','/api/widgets':'local',
   '/api/workspace':'local','/shared':'local','/view':'local',
   '/api/file':'local', // Outbox: serves files jailed to an agent workspace or an owner-approved project folder
-  '/workshop-run':'lead.codex','/app-ui':'lead.codex','/api/agent':'lead.codex','/api/apps':'lead.codex','/api/fallback':'lead.codex','/api/growth':'lead.codex','/api/insights':'lead.codex',
-  '/api/line-jobs':'lead.codex','/api/model-tiers':'lead.codex','/api/models':'lead.codex','/api/overseer':'lead.codex',
-  '/api/realtime':'lead.codex','/api/routing':'lead.codex','/api/run':'lead.codex','/api/scout':'lead.codex','/api/slash':'lead.codex',
-  '/api/study':'lead.codex','/api/subagents':'lead.codex','/api/summon':'lead.codex','/api/workshop':'lead.codex','/api/auth/codex':'lead.codex',
+  '/workshop-run':'models','/app-ui':'models','/api/agent':'models','/api/apps':'models','/api/fallback':'models','/api/growth':'models','/api/insights':'models',
+  '/api/line-jobs':'models','/api/model-tiers':'models','/api/models':'models','/api/overseer':'models',
+  '/api/realtime':'models','/api/routing':'models','/api/run':'models','/api/scout':'models','/api/slash':'models',
+  '/api/study':'models','/api/subagents':'models','/api/summon':'models','/api/workshop':'models','/api/auth/codex':'lead.codex',
   '/api/auth':'providers','/api/key':'providers','/api/providers':'providers',
   '/api/skill-exchange':'skills.market','/api/skill-market':'skills.market',
   '/api/channels':'channels',
@@ -58,16 +59,18 @@ function gate(cls, switches) {
   if (cls === 'local') return { ok: true, cls };
   if (cls === 'blocked' || cls === 'unclassified') return { ok: false, cls, error: 'This Starnet feature is not part of 1Ultra.' };
   const isOn = id => { try { return switches.isOn(id) === true; } catch (_) { return false; } };
-  const open = cls === 'providers' ? (isOn('providers') || isOn('lead.codex') || isOn('crew.freellmapi')) : isOn(cls);
+  const open = cls === 'providers' ? (isOn('providers') || isOn('lead.codex') || isOn('crew.freellmapi'))
+    : cls === 'models' ? (isOn('lead.codex') || isOn('crew.freellmapi')) : isOn(cls);
   if (open) return { ok: true, cls };
-  return { ok: false, cls, switch: cls, error: 'Turn on "' + cls + '" in 1Ultra switches first.' };
+  const which = cls === 'models' ? '"lead.codex" or "crew.freellmapi"' : '"' + cls + '"';
+  return { ok: false, cls, switch: cls, error: 'Turn on ' + which + ' in 1Ultra switches first.' };
 }
 function routeGate(r, switches) { return gate(classifyPath(routeKey(r)), switches); }
 function preGate(method, url, switches) {
   const p = String(url || '/').split('?')[0];
   if (p === '/v1' || p.startsWith('/v1/')) return gate('blocked', switches);
   if (p.startsWith('/api/hooks/')) return gate('cron', switches);
-  if (p.startsWith('/workshop-run/')) return gate('lead.codex', switches);
+  if (p.startsWith('/workshop-run/')) return gate('models', switches);
   if (p === '/health') return { ok: method === 'GET', cls: 'local' };
   if (p === '/api' || p.startsWith('/api/')) return { ok: true, cls: 'table' };
   return (method === 'GET' || method === 'HEAD') ? { ok: true, cls: 'static' } : { ok: false, cls: 'static', error: 'Static files are read-only.' };

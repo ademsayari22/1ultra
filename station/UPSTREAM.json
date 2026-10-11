@@ -16650,10 +16650,10 @@
     },
     {
       "path": "sidecar/index.js",
-      "current_sha256": "fe58e04895503433a2d1ac97aa59686cf52b02f283844a00b1f45aff7cf2be80",
+      "current_sha256": "e3df27fb0bcd43c905f8316976e39905b0b10698c1e25dc44eb7c660f28bb88b",
       "reasons": [
         "brand",
-        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty,bless-refusal,model-request-gate,codex-token-gate,codex-refresh-gate"
+        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty,bless-refusal,model-request-gate,codex-token-gate,codex-refresh-gate,crew-provider-config,crew-free-tier-cost"
       ]
     },
     {

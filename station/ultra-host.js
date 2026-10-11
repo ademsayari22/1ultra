@@ -37,6 +37,9 @@ function ensureRpc(){if(rpc)return;rpc=child();
   readline.createInterface({input:rpc.stdout}).on('line',line=>{try{const msg=JSON.parse(line),wait=pending.get(msg.id);if(wait){pending.delete(msg.id);clearTimeout(wait.timer);wait.resolve(msg);}}catch{}});
   rpc.stderr.on('data',()=>{});rpc.on('exit',()=>{rpc=null;for(const wait of pending.values()){clearTimeout(wait.timer);wait.reject(new Error('Campaign worker stopped. Reload before retry.'));}pending.clear();});
 }
+// Crew on FreeLLMAPI (Stage 1b): unified-key wire, routing receipts, crew roster, capability ladder, lead fallback.
+const crewPort=require('./ultra-crew-wire.js').portFrom(process.env);
+const crew=require('./ultra-crew.js').makeCrew({fs,path,runtime,switches,port:crewPort,durable,isHalted:()=>halted});
 function call(request){ensureRpc();const id=++seq;return new Promise((resolve,reject)=>{
   const timer=setTimeout(()=>{pending.delete(id);reject(new Error('Campaign request timed out. Refresh before retrying a save.'));},20000);
   pending.set(id,{resolve,reject,timer});rpc.stdin.write(JSON.stringify({...request,id})+'\n');
@@ -152,6 +155,7 @@ async function handle(req,res){
       const routes=routeTable.map(r=>({key:policy.routeKey(r),cls:policy.classifyPath(policy.routeKey(r))}));
       return json(res,200,{routes,unclassified:routes.filter(r=>r.cls==='unclassified').map(r=>r.key)});
     }
+    if(p==='/api/ultra/crew'&&req.method==='GET')return json(res,200,await crew.status());
     if(p==='/api/ultra/readiness'&&req.method==='GET')return json(res,200,{
       providers:registry.listProviderProfiles().map(p=>({...p,connected:false,modelInvoked:false,status:'disabled by campaign policy'})),
       connectors:connectorCatalog.list().map(c=>({id:c.id,name:c.name,category:c.category,authType:c.authType,connected:false})),
@@ -258,6 +262,6 @@ function registerRoutes(routes){routeTable=routes;}
 const preGate=(method,url)=>policy.preGate(method,url,switches);
 const routeGate=r=>policy.routeGate(r,switches);
 process.on('exit',()=>{if(rpc)rpc.kill('SIGTERM');for(const job of jobs.values())terminateJob(job);});
-module.exports={root,runtime,policy,handle,classic,campaign,switches,preGate,routeGate,registerRoutes,beforeRun,assertProviderAllowed,assertModelRequest,stopSignal,onStationHalt,onStationResume,registerStationHalt,isHalted};
+module.exports={root,runtime,policy,handle,classic,campaign,switches,preGate,routeGate,registerRoutes,beforeRun,assertProviderAllowed,assertModelRequest,stopSignal,onStationHalt,onStationResume,registerStationHalt,isHalted,crew,registerProviderConfig:fn=>crew.registerProviderConfig(fn)};
 policy.setProtectedRoots({root,runtime});
-policy.install(runtime,switches,{freellmapiPort:3001});
+policy.install(runtime,switches,{freellmapiPort:crewPort});

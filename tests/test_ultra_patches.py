@@ -58,6 +58,11 @@ class PatchAnchorsTest(unittest.TestCase):
         self.assertIn("{ id: 'gpt-6.1-sol'", (ROOT / 'station/sidecar/providers/codex.js').read_text())
         self.assertIn("'gpt-6.1-sol'", (ROOT / 'station/frontend/app/modeldock.js').read_text())
 
+    def test_free_tier_wire_and_zero_cost(self):
+        text = (ROOT / 'station/sidecar/index.js').read_text()
+        self.assertIn('ultraHost.registerProviderConfig(setProviderRuntimeConfig);', text)
+        self.assertIn('const finalUsd = ultraHost.crew.isFreeTier(activeProviderId) && !mediaUsd ? 0 : effectiveRunUsd(', text)
+
 
 if __name__ == '__main__':
     unittest.main()

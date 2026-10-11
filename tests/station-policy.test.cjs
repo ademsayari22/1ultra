@@ -3,12 +3,12 @@ const test = require('node:test');
 const Policy = require('../station/ultra-policy.js');
 const switches = (...on) => ({ isOn: id => on.includes(id) || (id === 'channels' && on.some(x => x.startsWith('channels.'))) || (id === 'providers' && on.some(x => x.startsWith('providers.'))) });
 test('path classes use prefix boundaries and longest match', () => {
-  const cases = {'/api/memory/notes':'local','/api/runs':'local','/api/run-recoveries':'local','/api/run':'lead.codex','/api/agents/affinity':'local',
-    '/api/agent':'lead.codex','/api/auth/codex/start':'lead.codex','/api/auth/grok/start':'providers','/api/execution-profiles':'tools.shell',
+  const cases = {'/api/memory/notes':'local','/api/runs':'local','/api/run-recoveries':'local','/api/run':'models','/api/agents/affinity':'local',
+    '/api/agent':'models','/api/auth/codex/start':'lead.codex','/api/auth/grok/start':'providers','/api/execution-profiles':'tools.shell',
     '/api/channels/telegram/bots':'channels','/api/cron/arm':'cron','/api/nightshift':'nightshift','/api/connectors':'tools.mcp',
     '/api/tts':'voice','/api/browser/reset':'tools.browser','/api/credits':'blocked','/api/update/prepare':'blocked','/api/nope':'unclassified',
-    '/shared/events.js':'local','/workshop-run/abc/index.html':'lead.codex','/view/t/index.html':'local',
-    '/plugin-ui/p/index.html':'tools.mcp','/plugin-draft/d':'tools.mcp','/app-ui/a/index.html':'lead.codex',
+    '/shared/events.js':'local','/workshop-run/abc/index.html':'models','/view/t/index.html':'local',
+    '/plugin-ui/p/index.html':'tools.mcp','/plugin-draft/d':'tools.mcp','/app-ui/a/index.html':'models',
     '/api/file?agent=agent&path=deliverable.html':'local','/api/fs/dirstat':'tools.shell',
     '/api/channels/events?cursor=0':'local','/api/channels/telegram/connect':'channels'};
   for (const [p, cls] of Object.entries(cases)) assert.equal(Policy.classifyPath(p), cls, p);
@@ -25,8 +25,10 @@ test('gates refuse switch families until the owner turns the switch on', () => {
   const off = switches();
   assert.equal(Policy.routeGate({ exact: '/api/memory' }, off).ok, true);
   const refused = Policy.routeGate({ exact: '/api/run' }, off);
-  assert.deepEqual([refused.ok, refused.switch], [false, 'lead.codex']); assert.match(refused.error, /lead\.codex/);
+  assert.deepEqual([refused.ok, refused.switch], [false, 'models']); assert.match(refused.error, /"lead\.codex" or "crew\.freellmapi"/);
   assert.equal(Policy.routeGate({ exact: '/api/run' }, switches('lead.codex')).ok, true);
+  assert.equal(Policy.routeGate({ exact: '/api/run' }, switches('crew.freellmapi')).ok, true, 'crew members chat with only the crew switch on');
+  assert.equal(Policy.routeGate({ exact: '/api/auth/codex/start' }, switches('crew.freellmapi')).ok, false, 'Codex sign-in still needs lead.codex');
   assert.equal(Policy.routeGate({ exact: '/api/channels/x' }, switches('channels.telegram')).ok, true);
   assert.equal(Policy.routeGate({ exact: '/api/credits' }, switches('lead.codex')).ok, false);
   assert.equal(Policy.routeGate({ exact: '/api/nope' }, off).ok, false);

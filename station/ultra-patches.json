@@ -316,5 +316,11 @@
     "file": "sidecar/providers/errorClass.js",
     "find": "    if (isLocalError(err, status, extractBody(err), low)) return 'local_error';\n",
     "replace": "    if (!status && err && /^ULTRA_/.test(String(err.code || ''))) return 'local_error'; // 1Ultra refused it locally: never retry or fall back\n    if (isLocalError(err, status, extractBody(err), low)) return 'local_error';\n"
-  }
+  },
+{"id": "crew-provider-config", "file": "sidecar/index.js",
+ "find": "ultraHost.registerStationHalt(() => { handleHalt(null, { writeHead() {}, end() {} }); try { killAll(runStopHandles); } catch (e) { failNote('ultra.station-halt.killAll', e); } });\n",
+ "replace": "ultraHost.registerStationHalt(() => { handleHalt(null, { writeHead() {}, end() {} }); try { killAll(runStopHandles); } catch (e) { failNote('ultra.station-halt.killAll', e); } });\nultraHost.registerProviderConfig(setProviderRuntimeConfig);\n"},
+{"id": "crew-free-tier-cost", "file": "sidecar/index.js",
+ "find": "    const finalUsd = effectiveRunUsd({ usd: (result && result.usd) || 0, mediaUsd, unmetered: runUnmetered, unpricedUsage: result && result.unpricedUsage, priceOf: provider && provider.priceOf });\n",
+ "replace": "    // 1Ultra: crew runs on the local FreeLLMAPI service use free tiers only and are booked at $0 (paid media stays real).\n    const finalUsd = ultraHost.crew.isFreeTier(activeProviderId) && !mediaUsd ? 0 : effectiveRunUsd({ usd: (result && result.usd) || 0, mediaUsd, unmetered: runUnmetered, unpricedUsage: result && result.unpricedUsage, priceOf: provider && provider.priceOf });\n"}
 ]
