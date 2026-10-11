@@ -255,7 +255,7 @@ function onStationHalt(){
 }
 function onStationResume(){durable(controlFile,{halted:false});halted=false;if(stopCtl.signal.aborted)stopCtl=new AbortController();}
 function isHalted(){return halted;}
-function beforeRun(o){const r=policy.admitRun({halted});if(!r.ok)throw Object.assign(new Error(r.error),{code:'ULTRA_EMERGENCY_STOP'});}
+function beforeRun(o){const r=policy.admitRun({halted});if(!r.ok)throw Object.assign(new Error(r.error),{code:'ULTRA_EMERGENCY_STOP'});crew.rewriteLeadRun(o);}
 function assertProviderAllowed(opts){const r=policy.providerAllowed(opts&&opts.provider,switches);if(!r.ok)throw Object.assign(new Error(r.error),{code:'ULTRA_PROVIDER_OFF'});}
 // Checked on every model request (each stream call, each Codex token use), not only when an adapter is built.
 function assertModelRequest(opts){if(halted)throw Object.assign(new Error('Emergency stop is on. Resume before any model call.'),{code:'ULTRA_EMERGENCY_STOP'});assertProviderAllowed(opts);}
@@ -264,6 +264,6 @@ function registerRoutes(routes){routeTable=routes;}
 const preGate=(method,url)=>policy.preGate(method,url,switches);
 const routeGate=r=>policy.routeGate(r,switches);
 process.on('exit',()=>{if(rpc)rpc.kill('SIGTERM');for(const job of jobs.values())terminateJob(job);});
-module.exports={root,runtime,policy,handle,classic,campaign,switches,preGate,routeGate,registerRoutes,beforeRun,assertProviderAllowed,assertModelRequest,stopSignal,onStationHalt,onStationResume,registerStationHalt,isHalted,crew,registerProviderConfig:fn=>crew.registerProviderConfig(fn)};
+module.exports={root,runtime,policy,handle,classic,campaign,switches,preGate,routeGate,registerRoutes,beforeRun,assertProviderAllowed,assertModelRequest,stopSignal,onStationHalt,onStationResume,registerStationHalt,isHalted,crew,registerProviderConfig:fn=>crew.registerProviderConfig(fn),registerCodexState:fn=>crew.registerCodexState(fn)};
 policy.setProtectedRoots({root,runtime});
 policy.install(runtime,switches,{freellmapiPort:crewPort});

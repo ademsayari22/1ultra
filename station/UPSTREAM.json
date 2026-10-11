@@ -16652,10 +16652,10 @@
     },
     {
       "path": "sidecar/index.js",
-      "current_sha256": "b6c3d1295f8139e51aa962dfaca703c132eb7f2eea5257058ce59f9d22494850",
+      "current_sha256": "c6a69b7cacdbf21aa35403f647934ed26b38f0fae6a608471cc0834d861bc451",
       "reasons": [
         "brand",
-        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty,bless-refusal,model-request-gate,codex-token-gate,codex-refresh-gate,crew-provider-config,crew-free-tier-cost,crew-run-receipts,crew-run-record,crew-dispatch-deps,crew-health-tool,crew-health-brief"
+        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty,bless-refusal,model-request-gate,codex-token-gate,codex-refresh-gate,crew-provider-config,crew-codex-state,crew-free-tier-cost,crew-run-receipts,crew-run-record,crew-dispatch-deps,crew-health-tool,crew-health-brief,crew-lead-start,crew-lead-notice,crew-lead-fallbacks,crew-fallback-receipts"
       ]
     },
     {

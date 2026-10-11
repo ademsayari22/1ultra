@@ -95,6 +95,16 @@ class PatchAnchorsTest(unittest.TestCase):
         self.assertIn('crewMoves: r.crewMoves, note: r.note,', orchestration)
         self.assertIn("result: r.result + (Array.isArray(r.crewMoves) && r.crewMoves.length && r.note ? '\\n\\n[' + r.note + ']' : ''),", orchestration)
 
+    def test_codex_lead_falls_back_to_the_free_tier(self):
+        index = (ROOT / 'station/sidecar/index.js').read_text()
+        for needle in ('ultraHost.registerCodexState(() => !!(codexTokens && codexTokens.access_token) && !codexAuthDead);',
+                       "!ultraHost.crew.leadStartFallback(agentId, runProvider)",
+                       "if (o.ultraLeadFreeTier) emit('provider.fallback', ",
+                       'ultraHost.crew.leadFallbacks(providerId, agentId));',
+                       'key: fbKey, baseUrl: fbBaseUrl, reasoningEffort, ultraRunId: runId, ultraAgentId: agentId });'):
+            self.assertIn(needle, index)
+        self.assertIn('crew.rewriteLeadRun(o);', (ROOT / 'station/ultra-host.js').read_text())
+
 
 if __name__ == '__main__':
     unittest.main()

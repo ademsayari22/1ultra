@@ -10,6 +10,7 @@ const {makeRoster}=require('./ultra-crew-roster.js');
 const {makeSupervisor}=require('./ultra-crew-supervisor.js');
 const {parseVerdict}=require('./sidecar/routing/verdict.js');
 const READY_TTL_MS=30000;
+const LEAD='agent';
 const LEAD_BRIEF='[CREW HEALTH] Your crew runs on free FreeLLMAPI models whose quality changes during the day. Call team.health before you plan crew assignments. When a crew result is downgraded, fails its checks, or its member is benched, the station retries it, reassigns it or hands the subtask back to you; team.dispatch rows list these moves in crewMoves. Tell the Commander about every move and every failed subtask.';
 function makeCrew({fs,path,runtime,switches,port,durable,isHalted=()=>false,fetchFn=(...a)=>globalThis.fetch(...a),now=()=>Date.now()}){
   const wire=makeWire({fs,path,runtime,port});
@@ -76,6 +77,25 @@ function makeCrew({fs,path,runtime,switches,port,durable,isHalted=()=>false,fetc
     }
     return out;
   }
+  // Lead fallback (full-merge spec, "Lead fallback"): when Codex is unavailable the lead continues on FreeLLMAPI auto:smart,
+  // only while the crew is on and keyed, and always with a visible notice.
+  let codexSignedIn=()=>true;
+  function freeTierOpen(){return switches.isOn('crew.freellmapi')&&!!wire.refresh();}
+  function leadFallbacks(providerId,agentId){
+    return String(providerId||'')==='codex'&&String(agentId||LEAD)===LEAD&&freeTierOpen()?[{provider:'custom',model:Health.ROUTING.smart}]:[];
+  }
+  function leadStartFallback(agentId,providerId){
+    let signedIn=true;try{signedIn=!!codexSignedIn();}catch(_){signedIn=false;}
+    return String(providerId||'')==='codex'&&String(agentId||LEAD)===LEAD&&!signedIn&&freeTierOpen();
+  }
+  function rewriteLeadRun(o){
+    if(!o)return;
+    const agentId=String(o.agentId||LEAD),providerId=String(o.provider||(agentId===LEAD?'codex':'')).toLowerCase();
+    if(!leadStartFallback(agentId,providerId))return;
+    const w=wire.get();
+    o.ultraLeadFreeTier={fromModel:String(o.model||'gpt-6.1-sol')};
+    o.provider='custom';o.model=Health.ROUTING.smart;o.key=w.key;o.baseUrl=w.baseUrl;
+  }
   const healthTool={
     name:'team.health',capability:'orchestrator',scope:'read',requiresConsent:false,
     description:'Read your crew\'s health before assigning work: each crew member\'s capability profile (minimum tier, tools, languages), whether a FreeLLMAPI model at that tier is ready now and why not, recent results, bench state, and whether a failed crew subtask comes back to you (crew.escalate_to_lead). Read-only.',
@@ -87,6 +107,7 @@ function makeCrew({fs,path,runtime,switches,port,durable,isHalted=()=>false,fetc
     seedRoster:()=>roster.seed(),profileFor:id=>roster.profileFor(id),isCrewProvider:crewProvider,status,
     accept:(job,row)=>supervisor.accept(job,row),supervise:(job,o2,h)=>supervisor.supervise(job,o2,h),movesFor:id=>supervisor.movesFor(id),
     registerTools:registry=>registry.register(healthTool),leadBrief:()=>LEAD_BRIEF,
+    registerCodexState:fn=>{codexSignedIn=typeof fn==='function'?fn:()=>true;},leadFallbacks,leadStartFallback,rewriteLeadRun,
   };
 }
 module.exports={makeCrew};

@@ -320,6 +320,9 @@
 {"id": "crew-provider-config", "file": "sidecar/index.js",
  "find": "ultraHost.registerStationHalt(() => { handleHalt(null, { writeHead() {}, end() {} }); try { killAll(runStopHandles); } catch (e) { failNote('ultra.station-halt.killAll', e); } });\n",
  "replace": "ultraHost.registerStationHalt(() => { handleHalt(null, { writeHead() {}, end() {} }); try { killAll(runStopHandles); } catch (e) { failNote('ultra.station-halt.killAll', e); } });\nultraHost.registerProviderConfig(setProviderRuntimeConfig);\n"},
+{"id": "crew-codex-state", "file": "sidecar/index.js",
+ "find": "ultraHost.registerProviderConfig(setProviderRuntimeConfig);\n",
+ "replace": "ultraHost.registerProviderConfig(setProviderRuntimeConfig);\nultraHost.registerCodexState(() => !!(codexTokens && codexTokens.access_token) && !codexAuthDead);\n"},
 {"id": "crew-free-tier-cost", "file": "sidecar/index.js",
  "find": "    const finalUsd = effectiveRunUsd({ usd: (result && result.usd) || 0, mediaUsd, unmetered: runUnmetered, unpricedUsage: result && result.unpricedUsage, priceOf: provider && provider.priceOf });\n",
  "replace": "    // 1Ultra: a run on the local FreeLLMAPI service books only its paid media; the free model itself costs $0.\n    const finalUsd = require('../ultra-crew-wire.js').freeTierUsd(ultraHost.crew.isFreeTier(activeProviderId), mediaUsd, () => effectiveRunUsd({ usd: (result && result.usd) || 0, mediaUsd, unmetered: runUnmetered, unpricedUsage: result && result.unpricedUsage, priceOf: provider && provider.priceOf }));\n"},
@@ -367,5 +370,17 @@
  "replace": "        const wire = workerWire(ident);   // same cross-provider resolution as a fresh dispatch\n        if (wire.refused) return { status: 'error', reason: 'error', result: wire.refused, usd: 0 };\n"},
 {"id": "crew-background-moves", "file": "sidecar/tools/builtin/orchestration.js",
  "find": "              return { status: r.reason === 'done' ? 'done' : 'error', reason: r.reason, result: r.result, usd: r.usd || 0,\n                structuredResult: r.structuredResult, validation: r.validation, repairRunId: r.repairRunId, artifacts: r.artifacts,\n                taintedBy: r.taintedBy || '' };\n",
- "replace": "              return { status: r.reason === 'done' ? 'done' : 'error', reason: r.reason,\n                result: r.result + (Array.isArray(r.crewMoves) && r.crewMoves.length && r.note ? '\\n\\n[' + r.note + ']' : ''), usd: r.usd || 0,\n                crewMoves: r.crewMoves, note: r.note,\n                structuredResult: r.structuredResult, validation: r.validation, repairRunId: r.repairRunId, artifacts: r.artifacts,\n                taintedBy: r.taintedBy || '' };\n"}
+ "replace": "              return { status: r.reason === 'done' ? 'done' : 'error', reason: r.reason,\n                result: r.result + (Array.isArray(r.crewMoves) && r.crewMoves.length && r.note ? '\\n\\n[' + r.note + ']' : ''), usd: r.usd || 0,\n                crewMoves: r.crewMoves, note: r.note,\n                structuredResult: r.structuredResult, validation: r.validation, repairRunId: r.repairRunId, artifacts: r.artifacts,\n                taintedBy: r.taintedBy || '' };\n"},
+{"id": "crew-lead-start", "file": "sidecar/index.js",
+ "find": "  if (!providerHasCredential(runProvider, key, baseUrl)) { res.writeHead(400); return res.end('missing key/model — ' + providerCredentialError(runProvider)); }\n",
+ "replace": "  // 1Ultra: a signed-out Codex lead continues on the free tier; ultraHost.beforeRun rewrites the run inside the run host.\n  if (!providerHasCredential(runProvider, key, baseUrl) && !ultraHost.crew.leadStartFallback(agentId, runProvider)) { res.writeHead(400); return res.end('missing key/model — ' + providerCredentialError(runProvider)); }\n"},
+{"id": "crew-lead-notice", "file": "sidecar/index.js",
+ "find": "  let activeProviderId = providerId;\n  auxVisionProvider = provider;",
+ "replace": "  if (o.ultraLeadFreeTier) emit('provider.fallback', { agentId, runId, fromModel: o.ultraLeadFreeTier.fromModel, toModel: model, reason: 'lead running on free tier: Codex is signed out', rotate: false });\n  let activeProviderId = providerId;\n  auxVisionProvider = provider;"},
+{"id": "crew-lead-fallbacks", "file": "sidecar/index.js",
+ "find": "  const rawProviderFallbacks = savedProviderFallbacks.concat(Array.isArray(o.fallbackProviders) ? o.fallbackProviders : []);\n",
+ "replace": "  const rawProviderFallbacks = savedProviderFallbacks.concat(Array.isArray(o.fallbackProviders) ? o.fallbackProviders : [], ultraHost.crew.leadFallbacks(providerId, agentId));\n"},
+{"id": "crew-fallback-receipts", "file": "sidecar/index.js",
+ "find": "      fbProvider = selectProvider({ provider: fbProviderId, fetch: globalThis.fetch, key: fbKey, baseUrl: fbBaseUrl, reasoningEffort });\n",
+ "replace": "      fbProvider = selectProvider({ provider: fbProviderId, fetch: globalThis.fetch, key: fbKey, baseUrl: fbBaseUrl, reasoningEffort, ultraRunId: runId, ultraAgentId: agentId });\n"}
 ]

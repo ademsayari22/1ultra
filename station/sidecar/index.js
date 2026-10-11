@@ -11478,6 +11478,7 @@ const ROUTES = [
 ultraHost.registerRoutes(ROUTES);
 ultraHost.registerStationHalt(() => { handleHalt(null, { writeHead() {}, end() {} }); try { killAll(runStopHandles); } catch (e) { failNote('ultra.station-halt.killAll', e); } });
 ultraHost.registerProviderConfig(setProviderRuntimeConfig);
+ultraHost.registerCodexState(() => !!(codexTokens && codexTokens.access_token) && !codexAuthDead);
 function dispatchRoute(req, res) {
   const url = req.url || '';
   const bare = url.split('?')[0];
@@ -18184,7 +18185,8 @@ async function handleRun(req, res) {
   // signed out of GROK OAUTH as "add a provider key (or sign in with ChatGPT)": wrong provider, wrong door
   // (2026-09-27). The "missing key/model" prefix stays; older pages and tests classify on it.
   if (!model) { res.writeHead(400); return res.end('no model selected — pick a model for ' + oauthLabel(runProvider) + ' first'); }
-  if (!providerHasCredential(runProvider, key, baseUrl)) { res.writeHead(400); return res.end('missing key/model — ' + providerCredentialError(runProvider)); }
+  // 1Ultra: a signed-out Codex lead continues on the free tier; ultraHost.beforeRun rewrites the run inside the run host.
+  if (!providerHasCredential(runProvider, key, baseUrl) && !ultraHost.crew.leadStartFallback(agentId, runProvider)) { res.writeHead(400); return res.end('missing key/model — ' + providerCredentialError(runProvider)); }
 
   // Consume a continuation before opening the response stream or doing provider/tool work. The durable start
   // record is intentionally one-way: losing this response may require another review, but retrying cannot run
@@ -20048,6 +20050,7 @@ async function runOnceCore(o) {
   } else {
     provider = selectProvider({ provider: providerId, fetch: globalThis.fetch, key: runKey, baseUrl, reasoningEffort, ultraRunId: runId, ultraAgentId: agentId });
   }
+  if (o.ultraLeadFreeTier) emit('provider.fallback', { agentId, runId, fromModel: o.ultraLeadFreeTier.fromModel, toModel: model, reason: 'lead running on free tier: Codex is signed out', rotate: false });
   let activeProviderId = providerId;
   auxVisionProvider = provider;   // late-bind the aux vision route to the run's real provider (see makeImageTools above)
   let cost = makeCostEngine({ priceOf: provider.priceOf });
@@ -20139,7 +20142,7 @@ async function runOnceCore(o) {
     rotationFallbacks = oauthAccounts.slice(1).map(a => ({ provider: oauthAccountProvider(providerId, a, baseUrl, reasoningEffort), providerId, model, credKey: a.credKey, account: a.label }));
   } else if (oauthAccounts) activePrimaryKey = oauthAccounts[0].credKey;
   const providerFallbacks = [];
-  const rawProviderFallbacks = savedProviderFallbacks.concat(Array.isArray(o.fallbackProviders) ? o.fallbackProviders : []);
+  const rawProviderFallbacks = savedProviderFallbacks.concat(Array.isArray(o.fallbackProviders) ? o.fallbackProviders : [], ultraHost.crew.leadFallbacks(providerId, agentId));
   for (const fb of rawProviderFallbacks) {
     if (!fb || typeof fb !== 'object') continue;
     const fbProviderId = normalizeProvider(fb.provider || providerId);
@@ -20158,7 +20161,7 @@ async function runOnceCore(o) {
     } else if (providerUsesDeviceOAuth(fbProviderId)) {
       fbProvider = selectProvider({ provider: fbProviderId, fetch: globalThis.fetch, tokenProvider: () => ensureOAuthAccessToken(fbProviderId), headersProvider: () => oauthInferenceHeaders(fbProviderId), baseUrl: fbBaseUrl, reasoningEffort });
     } else {
-      fbProvider = selectProvider({ provider: fbProviderId, fetch: globalThis.fetch, key: fbKey, baseUrl: fbBaseUrl, reasoningEffort });
+      fbProvider = selectProvider({ provider: fbProviderId, fetch: globalThis.fetch, key: fbKey, baseUrl: fbBaseUrl, reasoningEffort, ultraRunId: runId, ultraAgentId: agentId });
     }
     providerFallbacks.push({ provider: fbProvider, providerId: fbProviderId, model: fbModel, credKey: fbKey || null, cost: makeCostEngine({ priceOf: fbProvider.priceOf }),
       unmetered: fbUnmetered,
