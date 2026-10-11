@@ -74,6 +74,7 @@ def config(admin: dict) -> dict:
 def ensure_state(state: Path) -> dict:
     """Create the dashboard login and encryption key once, then (re)write the boot config. Returns the login."""
     state.mkdir(parents=True, exist_ok=True, mode=0o700)
+    os.chmod(state, 0o700)
     admin_file, key_file, env_file = state / 'admin.json', state / 'encryption.key', state / 'freellmapi.env'
     if not admin_file.exists():
         write_private(admin_file, json.dumps({'email': ADMIN_EMAIL, 'password': secrets.token_urlsafe(18)}) + '\n')
@@ -81,8 +82,12 @@ def ensure_state(state: Path) -> dict:
         write_private(key_file, secrets.token_hex(32) + '\n')
     if not env_file.exists():
         write_private(env_file, '')
+    for path in (admin_file, key_file, env_file):
+        os.chmod(path, 0o600)
     admin = json.loads(admin_file.read_text())
-    write_private(state / 'freellmapi.config.json', json.dumps(config(admin), indent=2) + '\n')
+    config_file = state / 'freellmapi.config.json'
+    write_private(config_file, json.dumps(config(admin), indent=2) + '\n')
+    os.chmod(config_file, 0o600)
     return admin
 
 
@@ -205,46 +210,95 @@ def alive(pid) -> bool:
     return True
 
 
-def start(service: Path, port: int, http=http, popen=subprocess.Popen, sleep=time.sleep) -> dict:
+def read_cmdline(pid) -> bytes:
+    return (Path('/proc') / str(pid) / 'cmdline').read_bytes()
+
+
+def owned(pid, entry: Path, cmdline=read_cmdline) -> bool:
+    """Identify the service by its exact absolute entry argument; unreadable processes are foreign."""
+    try:
+        arguments = os.fsdecode(cmdline(pid)).split('\0')
+    except OSError:
+        return False
+    return str(entry.resolve()) in arguments
+
+
+def start(service: Path, port: int, http=http, popen=subprocess.Popen, sleep=time.sleep,
+          *, cmdline=read_cmdline, is_alive=None, killpg=None) -> dict:
     app, state = service / 'app', service / 'state'
-    entry = app / 'server' / 'dist' / 'index.js'
+    entry = (app / 'server' / 'dist' / 'index.js').resolve()
     if not entry.exists():
         raise SystemExit('FreeLLMAPI is not installed. Run: python3 scripts/freellmapi.py install')
     base = 'http://127.0.0.1:%d' % port
     pid = read_pid(state)
-    if alive(pid):
+    is_alive = alive if is_alive is None else is_alive
+    if is_alive(pid) and owned(pid, entry, cmdline):
         return {'running': True, 'pid': pid, 'dashboard': base + '/keys', 'note': 'already running'}
     ensure_state(state)
-    with open(state / 'server.log', 'ab') as log:
-        proc = popen(['node', str(entry)], cwd=str(app), env=server_env(state, port), stdout=log, stderr=log, start_new_session=True)
-    write_private(state / 'server.pid', '%d\n' % proc.pid)
-    for _ in range(60):
+    pid_file, proc = state / 'server.pid', None
+    killpg = os.killpg if killpg is None else killpg
+    try:
+        log_file = state / 'server.log'
+        fd = os.open(log_file, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+        with os.fdopen(fd, 'ab') as log:
+            os.chmod(log_file, 0o600)
+            proc = popen(['node', str(entry)], cwd=str(app), env=server_env(state, port), stdout=log, stderr=log, start_new_session=True)
+        write_private(pid_file, '%d\n' % proc.pid)
+        for _ in range(60):
+            if proc.poll() is not None:
+                raise SystemExit('FreeLLMAPI stopped during startup; see services/freellmapi/state/server.log')
+            try:
+                if http('GET', base + '/v1/models', timeout=2)[0] in (200, 401):
+                    if proc.poll() is not None:
+                        raise SystemExit('FreeLLMAPI stopped during startup; see services/freellmapi/state/server.log')
+                    return {'running': True, 'pid': proc.pid, 'dashboard': base + '/keys'}
+            except OSError:
+                pass
+            if proc.poll() is not None:
+                raise SystemExit('FreeLLMAPI stopped during startup; see services/freellmapi/state/server.log')
+            sleep(0.5)
+        raise SystemExit('FreeLLMAPI did not answer within 30 seconds; see services/freellmapi/state/server.log')
+    except BaseException:
         try:
-            if http('GET', base + '/v1/models', timeout=2)[0] in (200, 401):
-                return {'running': True, 'pid': proc.pid, 'dashboard': base + '/keys'}
-        except OSError:
-            pass
-        if proc.poll() is not None:
-            raise SystemExit('FreeLLMAPI stopped during startup; see services/freellmapi/state/server.log')
-        sleep(0.5)
-    raise SystemExit('FreeLLMAPI did not answer within 30 seconds; see services/freellmapi/state/server.log')
+            if proc is not None:
+                for sig in (signal.SIGTERM, signal.SIGKILL):
+                    if proc.poll() is not None:
+                        break
+                    try:
+                        killpg(proc.pid, sig)
+                    except ProcessLookupError:
+                        pass
+                    try:
+                        proc.wait(timeout=2)
+                        break
+                    except subprocess.TimeoutExpired:
+                        pass
+        finally:
+            pid_file.unlink(missing_ok=True)
+        raise
 
 
-def stop(service: Path, sleep=time.sleep) -> dict:
+def stop(service: Path, sleep=time.sleep, *, cmdline=read_cmdline, is_alive=None, killpg=None) -> dict:
     state = service / 'state'
     pid = read_pid(state)
-    if alive(pid):
+    entry = (service / 'app' / 'server' / 'dist' / 'index.js').resolve()
+    is_alive = alive if is_alive is None else is_alive
+    killpg = os.killpg if killpg is None else killpg
+    if is_alive(pid):
+        if not owned(pid, entry, cmdline):
+            (state / 'server.pid').unlink(missing_ok=True)
+            return {'running': False, 'note': 'stale pid file removed'}
         try:
-            os.killpg(pid, signal.SIGTERM)
+            killpg(pid, signal.SIGTERM)
         except ProcessLookupError:
             pass
         for _ in range(40):
-            if not alive(pid):
+            if not is_alive(pid):
                 break
             sleep(0.25)
-    if not alive(pid):
+    if not is_alive(pid):
         (state / 'server.pid').unlink(missing_ok=True)
-    return {'running': alive(pid)}
+    return {'running': is_alive(pid)}
 
 
 def status(service: Path, runtime: Path, port: int, http=http) -> dict:
