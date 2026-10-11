@@ -215,12 +215,16 @@ def read_cmdline(pid) -> bytes:
 
 
 def owned(pid, entry: Path, cmdline=read_cmdline) -> bool:
-    """Identify the service by its exact absolute entry argument; unreadable processes are foreign."""
+    """Own only a Node process whose second argument is the exact absolute service entry."""
     try:
         arguments = os.fsdecode(cmdline(pid)).split('\0')
     except OSError:
         return False
-    return str(entry.resolve()) in arguments
+    if len(arguments) < 2 or not entry.is_absolute():
+        return False
+    executable = Path(arguments[0])
+    is_node = arguments[0] == 'node' or (executable.is_absolute() and executable.name == 'node')
+    return is_node and arguments[1] == str(entry)
 
 
 def start(service: Path, port: int, http=http, popen=subprocess.Popen, sleep=time.sleep,

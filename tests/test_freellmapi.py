@@ -117,6 +117,68 @@ class FreeLLMAPIScriptTest(unittest.TestCase):
         source.unlink()
         self.assertFalse(fl.owned(12345, entry, cmdline=lambda _: source.read_bytes()))
 
+    def test_owned_requires_node_with_entry_as_second_argument(self):
+        _, entry = self.service()
+        source = self.tmp / 'cmdline'
+        path = str(entry)
+        cases = [('node', ['node', path], True),
+                 ('absolute-node', ['/usr/bin/node', path], True),
+                 ('further-arguments', ['node', path, '--extra'], True),
+                 ('absolute-node-with-further-arguments', ['/usr/bin/node', path, '--extra'], True),
+                 ('vim', ['vim', path], False),
+                 ('less', ['less', path], False),
+                 ('other-node-script', ['node', '/tmp/other.js', path], False),
+                 ('empty', [], False),
+                 ('relative-node', ['bin/node', path], False),
+                 ('other-executable', ['nodejs', path], False),
+                 ('absolute-other-executable', ['/usr/bin/nodejs', path], False),
+                 ('missing-script', ['node'], False)]
+        for label, argv, expected in cases:
+            with self.subTest(command=label):
+                source.write_bytes(b'\0'.join(arg.encode() for arg in argv) + (b'\0' if argv else b''))
+                self.assertEqual(fl.owned(12345, entry, cmdline=lambda _: source.read_bytes()), expected)
+
+    def test_stop_does_not_signal_editors_or_other_node_scripts(self):
+        for label, command in [('vim', ['vim']), ('less', ['less']),
+                               ('other-node-script', ['node', '/tmp/other.js']), ('empty', [])]:
+            with self.subTest(command=label):
+                service, entry = self.service('stop-' + label)
+                state = service / 'state'
+                state.mkdir()
+                pid_file = state / 'server.pid'
+                pid_file.write_text('12345\n')
+                source = self.tmp / ('cmdline-' + label)
+                argv = command + [str(entry)] if command else []
+                source.write_bytes(b'\0'.join(arg.encode() for arg in argv) + (b'\0' if argv else b''))
+                signals = []
+                result = fl.stop(service, sleep=lambda _: None, is_alive=lambda _: True,
+                                 cmdline=lambda _: source.read_bytes(), killpg=lambda pid, sig: signals.append((pid, sig)))
+                self.assertEqual(signals, [])
+                self.assertFalse(pid_file.exists())
+                self.assertEqual(result, {'running': False, 'note': 'stale pid file removed'})
+
+    def test_start_does_not_reuse_editors_or_other_node_scripts(self):
+        for label, command in [('vim', ['vim']), ('less', ['less']),
+                               ('other-node-script', ['node', '/tmp/other.js']), ('empty', [])]:
+            with self.subTest(command=label):
+                service, entry = self.service('start-' + label)
+                state = service / 'state'
+                state.mkdir()
+                pid_file = state / 'server.pid'
+                pid_file.write_text('12345\n')
+                source = self.tmp / ('cmdline-' + label)
+                argv = command + [str(entry)] if command else []
+                source.write_bytes(b'\0'.join(arg.encode() for arg in argv) + (b'\0' if argv else b''))
+                proc = Mock(pid=23456)
+                proc.poll.return_value = None
+                result = fl.start(service, 3901, http=FakeHttp({('GET', '/v1/models'): (200, {})}),
+                                  popen=Mock(return_value=proc), sleep=lambda _: None,
+                                  is_alive=lambda _: True, cmdline=lambda _: source.read_bytes(), killpg=Mock())
+                self.assertTrue(result['running'])
+                self.assertEqual(result['pid'], 23456)
+                self.assertNotIn('note', result)
+                self.assertEqual(pid_file.read_text(), '23456\n')
+
     def test_stop_signals_only_an_owned_pid(self):
         for identity in ('foreign', 'owned', 'unreadable'):
             with self.subTest(identity=identity):
