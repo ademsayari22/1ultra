@@ -21,6 +21,11 @@
     return prefix + String(lead.company).slice(0, companyLimit) + suffix;
   }
 
+  function sessionFor(streams, lead) {
+    return (streams || []).find(s => s && !s.archived && s.agentId === 'agent'
+      && typeof s.title === 'string' && s.title.endsWith(' · ' + lead.id));
+  }
+
   function shouldPrefill(current, prompt) {
     return !String(current ?? '').includes(prompt);
   }
@@ -68,7 +73,7 @@
       .sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
   }
 
-  window.UltraLeads = { view: { ranked, stageOf, outreachPrompt, cardModel, sessionTitle, shouldPrefill,
+  window.UltraLeads = { view: { ranked, stageOf, outreachPrompt, cardModel, sessionTitle, sessionFor, shouldPrefill,
     openProposals, evidenceOk, adoptionSteps, subjectOk } };
   if (typeof StationUI === 'undefined' || !StationUI.registerWindow) return;
   const esc = value => StationUI.h.esc(String(value ?? ''));
@@ -168,12 +173,12 @@
   function prepareOutreach(lead) {
     if (typeof Workstreams === 'undefined' || !Workstreams.create || typeof App === 'undefined' || !App.openWorkstream
       || typeof Chat === 'undefined' || !Chat.prefill) throw new Error('The outreach conversation is unavailable. Reopen the station and try again.');
-    const title = sessionTitle(lead);
-    const existing = (Workstreams.list ? Workstreams.list() : []).find(s => s && !s.archived && s.title === title && s.agentId === 'agent');
-    const stream = existing || Workstreams.create(title, { activate: false, agentId: 'agent' });
+    const existing = sessionFor(Workstreams.list ? Workstreams.list() : [], lead);
+    const stream = existing || Workstreams.create(sessionTitle(lead), { activate: false, agentId: 'agent' });
     if (!stream || !stream.id) throw new Error('Could not create the outreach conversation.');
     if (!existing && App.persist) App.persist();
     App.openWorkstream(stream.id);
+    if (StationUI.h.workConversation) StationUI.h.workConversation('leads');
     const prompt = outreachPrompt(lead);
     const composer = typeof document !== 'undefined' ? document.getElementById('chat-input') : null;
     if (shouldPrefill(composer ? composer.value : '', prompt)) Chat.prefill(prompt);
@@ -243,13 +248,33 @@
         + (kind === 'adopt' ? 'Save as my unreviewed draft' : kind === 'reject' ? 'Reject proposal' : 'Save actual event')
         + '</button>' + button('cancel', 'Cancel') + '</div></form>';
     }
+    function editingForm() {
+      if (!editing) return null;
+      const form = root.querySelector('.ul-inline-form');
+      return form && form.dataset.ulForm === editing.kind && form.dataset.id === (editing.id || '')
+        && form.dataset.leadId === (editing.leadId || '') ? form : null;
+    }
+    function captureForm() {
+      const form = editingForm();
+      if (form) Array.from(form.elements).forEach(control => {
+        if (control.name) editing.values[control.name] = control.value;
+      });
+    }
+    function restoreForm() {
+      const form = editingForm();
+      if (form) Object.entries(editing.values).forEach(([name, value]) => {
+        if (form.elements[name]) form.elements[name].value = value;
+      });
+    }
     function renderCard() {
+      captureForm();
       const lead = currentLead();
       card.innerHTML = lead ? cardHTML(lead, C, editing, formHTML())
         : '<p class="dim">Choose a company to inspect its facts.</p>';
-      setBusy(busy);
+      restoreForm(); setBusy(busy);
     }
     function renderProposals() {
+      captureForm();
       const needle = search.value.trim().toLocaleLowerCase();
       const rows = openProposals(C).filter(p => [p.company, p.location, p.industry].some(value => String(value || '').toLocaleLowerCase().includes(needle)));
       proposed.innerHTML = '<h3>Proposed leads</h3><p class="dim">Crew research for your review; source checks and buying interest remain unconfirmed.</p>'
@@ -259,7 +284,7 @@
           + button('accept', 'Accept', p.id) + button('reject', 'Reject', p.id) + '</div>'
           + (editing && editing.kind === 'reject' && editing.id === p.id ? formHTML() : '') + '</article>').join('')
           : '<p class="dim">No open proposals match this search.</p>');
-      setBusy(busy);
+      restoreForm(); setBusy(busy);
     }
     function renderBoard() {
       panes.hidden = tab !== 'leads'; proposed.hidden = tab !== 'proposed';

@@ -62,10 +62,12 @@ def main():
     args = parser.parse_args(); workspace = Workspace(args.root, Path(__file__).resolve().parents[1] / 'web')
     for line in sys.stdin:
         request = {}
+        path = ''
         try:
             if len(line.encode()) > 450000: raise RequestError(413, 'RPC request too large.')
             request = json.loads(line)
             if not isinstance(request, dict): raise RequestError(400, 'RPC object required.')
+            path = urlsplit(request.get('route', '')).path
             if request.get('route') == '/api/agents/run' and args.once and request.get('method') == 'POST':
                 from station_agents import execute
                 def emit(event):
@@ -77,7 +79,7 @@ def main():
         except RequestError as error:
             result = {'id': request.get('id') if isinstance(request, dict) else None, 'status': error.status, 'value': {'error': error.message}}
         except ValueError as error:
-            message = str(error) if request.get('route') == '/api/agents/run' else 'Invalid campaign request.'
+            message = str(error) if path.startswith('/api/tools/') or request.get('route') == '/api/agents/run' else 'Invalid campaign request.'
             result = {'id': request.get('id'), 'status': 400, 'value': {'error': message}}
         except (KeyError, TypeError):
             result = {'id': request.get('id') if isinstance(request, dict) else None, 'status': 400, 'value': {'error': 'Invalid campaign request.'}}

@@ -84,6 +84,19 @@ test('outreach titles never truncate the id to fit the native store', () => {
   assert.throws(() => V.sessionTitle({ company: 'Beta Data', id: 'x'.repeat(67) }), /too long/);
 });
 
+test('sessionFor uses the exact lead id suffix across renames and ignores archived or other-agent streams', () => {
+  const streams = [
+    { id: 'other-lead', title: 'Outreach · Beta Data · lead-ab', agentId: 'agent' },
+    { id: 'archived', title: 'Outreach · Beta Data · b', agentId: 'agent', archived: true },
+    { id: 'sales-only', title: 'Outreach · Beta Data · b', agentId: 'sales' },
+    { id: 'original', title: 'Outreach · Beta Data · b', agentId: 'agent', archived: false }
+  ];
+  const lead = { id: 'b', company: 'Beta Data SARL' };
+  assert.equal(V.sessionFor?.(streams, lead), streams[3]);
+  assert.equal(V.sessionFor?.(streams.slice(0, 3), lead), undefined);
+  assert.equal(V.sessionFor?.([null, { id: 'untitled', agentId: 'agent' }], lead), undefined);
+});
+
 test('shouldPrefill skips an exact existing prompt and accepts a missing prompt', () => {
   const prompt = 'Prepare outreach for Beta Data (lead b).';
   assert.equal(V.shouldPrefill('', prompt), true);
@@ -147,11 +160,36 @@ const leadsSource = fs.readFileSync(require.resolve('../station/frontend/ultra-l
 const streamsSource = fs.readFileSync(require.resolve('../station/frontend/app/workstreams.js'), 'utf8');
 const chatSource = fs.readFileSync(require.resolve('../station/frontend/app/chat.js'), 'utf8');
 const nativePrefillSource = chatSource.slice(chatSource.indexOf('  function prefill(t) {'), chatSource.indexOf('  // a row of tappable suggestion pills'));
+const stationUISource = fs.readFileSync(require.resolve('../station/frontend/app/stationui.js'), 'utf8');
+const nativeWorkConversationSource = stationUISource.slice(stationUISource.indexOf('  function workConversation(from) {'),
+  stationUISource.indexOf("  // the sidecar's bare-string 'notify' bus event"));
 const workspace = { ...W, hunt: { ...W.hunt, offers: [
   { id: 'documents', name: 'Checked table' }, { id: 'cleanup', name: 'Spreadsheet cleanup' }
 ] }, record_versions: { leads: 'fixture-leads-v1' } };
 const campaign = { ...C, version: 'fixture-campaign-v1', analytics: { counts: { sourced: 2, shortlisted: 1, contacted: 0, replied: 0 } } };
 const settle = () => new Promise(resolve => setImmediate(resolve));
+
+// Minimal DOM form adapter: replacing innerHTML creates fresh controls with
+// their rendered defaults, just as the browser does. It does not retain edits.
+function inlineForms(html) {
+  const decode = text => String(text).replace(/&(amp|lt|gt|quot|#39);/g,
+    (_, entity) => ({ amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" }[entity]));
+  return Array.from(html.matchAll(/<form\b([^>]*)>([\s\S]*?)<\/form>/g), ([, attrs, fields]) => {
+    const attr = name => decode(new RegExp('\\b' + name + '="([^"]*)"').exec(attrs)?.[1] || '');
+    const elements = [];
+    for (const match of fields.matchAll(/<input\b([^>]*)>|<(textarea|select)\b([^>]*)>([\s\S]*?)<\/\2>/g)) {
+      const fieldAttrs = match[1] || match[3], name = /\bname="([^"]*)"/.exec(fieldAttrs)?.[1];
+      if (!name) continue;
+      const content = match[4] || '';
+      const value = match[2] === 'textarea' ? content : match[2] === 'select'
+        ? (/<option value="([^"]*)" selected/.exec(content) || /<option value="([^"]*)"/.exec(content))?.[1] || ''
+        : /\bvalue="([^"]*)"/.exec(fieldAttrs)?.[1] || '';
+      const control = { name, value: decode(value) };
+      elements.push(control); elements[name] = control;
+    }
+    return { dataset: { ulForm: attr('data-ul-form'), id: attr('data-id'), leadId: attr('data-lead-id') }, elements };
+  });
+}
 
 async function mounted(responses, confirmed = true) {
   const requests = [], opened = [], persisted = [], prefills = [], doors = [], confirmations = [];
@@ -160,6 +198,11 @@ async function mounted(responses, confirmed = true) {
     addEventListener(event, handler) { this.handlers[event] = handler; }, setAttribute() {}, querySelectorAll() { return []; } });
   const selectors = ['.ul-search', '.ul-offer', '.ul-list', '.ul-card', '.ul-error', '.ul-counts', '.ul-classic', '.ul-panes', '.ul-proposed'];
   const nodes = Object.fromEntries(selectors.map(selector => [selector, node()]));
+  for (const selector of ['.ul-card', '.ul-proposed']) {
+    let html = '', forms = [];
+    Object.defineProperty(nodes[selector], 'innerHTML', { get: () => html, set(value) { html = value; forms = inlineForms(value); } });
+    nodes[selector].querySelector = query => query === '.ul-inline-form' ? forms[0] || null : null;
+  }
   const select = nodes['.ul-offer'];
   let optionsHTML = '';
   Object.defineProperties(select, {
@@ -171,10 +214,20 @@ async function mounted(responses, confirmed = true) {
     } }
   });
   const root = node();
-  root.querySelector = selector => nodes[selector];
+  root.querySelector = selector => selector === '.ul-inline-form'
+    ? nodes['.ul-card'].querySelector(selector) || nodes['.ul-proposed'].querySelector(selector) : nodes[selector];
   root.contains = () => true;
   const composer = { value: '', focus() {}, setSelectionRange() {} };
   const nativePrefill = vm.runInNewContext(nativePrefillSource + '\nprefill', { input: composer, autoGrowInput() {} });
+  const conversationPath = { hidden: true, children: [], replaceChildren() { this.children = []; }, appendChild(child) { this.children.push(child); } };
+  const open = { leads: true };
+  const nativeWorkConversation = vm.runInNewContext(nativeWorkConversationSource + '\nworkConversation', {
+    open, WORK_LABELS: {},
+    minimizeTerm: key => { open[key] = false; root.hidden = true; },
+    $: selector => selector === '#comms-workpath' ? conversationPath : selector === '#chat-input' ? composer : null,
+    mkEl: (tag, className, textContent) => ({ tag, className, textContent, setAttribute() {} }),
+    openTerm: key => doors.push(key)
+  });
   let bodyHTML = '';
   const body = { querySelector: () => root };
   Object.defineProperty(body, 'innerHTML', { get: () => bodyHTML, set(html) {
@@ -191,7 +244,7 @@ async function mounted(responses, confirmed = true) {
     document: { getElementById: id => id === 'chat-input' ? composer : null },
     StationUI: { registerWindow: (key, title, build) => { builder = build; }, h: {
       esc: value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
-      openTerm: key => doors.push(key)
+      openTerm: key => doors.push(key), workConversation: nativeWorkConversation
     } },
     App: { persist: () => persisted.push(JSON.parse(JSON.stringify(context.Workstreams.serialize()))),
       openWorkstream: id => { opened.push(id); context.Workstreams.switch(id); } },
@@ -215,7 +268,7 @@ async function mounted(responses, confirmed = true) {
     dataset: { ulForm: kind, leadId: 'b', id },
     elements: Object.fromEntries(Object.entries(data).map(([key, value]) => [key, { value }]))
   } });
-  return { nodes, body, requests, opened, persisted, prefills, doors, composer, context, click, tab, submit, confirmations, sends: () => sends };
+  return { nodes, body, root, form: () => root.querySelector('.ul-inline-form'), conversationPath, requests, opened, persisted, prefills, doors, composer, context, click, tab, submit, confirmations, sends: () => sends };
 }
 
 test('the native board loads authenticated campaign data and the classic link opens its registered window', async () => {
@@ -256,6 +309,17 @@ test('Ask ULTRA preserves composer text when the exact outreach prompt is alread
   assert.equal(ui.sends(), 0);
 });
 
+test('Ask ULTRA steps LEADS aside through the native conversation seam and exposes its return shortcut', async () => {
+  const ui = await mounted([{ body: workspace }, { body: campaign }]);
+  ui.click('outreach');
+  assert.equal(ui.root.hidden, true, 'LEADS steps aside');
+  assert.equal(ui.conversationPath.hidden, false);
+  assert.equal(ui.conversationPath.children[0].textContent, '‹ BACK TO LEADS');
+  assert.match(ui.composer.value, /campaign\.lead/);
+  ui.conversationPath.children[0].onclick();
+  assert.deepEqual(ui.doors, ['leads']);
+});
+
 test('Ask ULTRA appends a missing prompt through native Chat.prefill while preserving the owner note', async () => {
   const ui = await mounted([{ body: workspace }, { body: campaign }]);
   ui.composer.value = 'Adem has a question.';
@@ -285,6 +349,22 @@ test('Ask ULTRA creates distinct conversations for long company names and reuses
   assert.notEqual(ui.opened[0], ui.opened[1]);
   assert.equal(ui.opened[0], ui.opened[2]);
   assert.equal(ui.persisted.length, 2);
+});
+
+test('Ask ULTRA reopens the same conversation after the company is renamed', async () => {
+  const renamed = { ...workspace, hunt: { ...workspace.hunt,
+    leads: [W.hunt.leads[0], { ...W.hunt.leads[1], company: 'Beta Data SARL' }] } };
+  const ui = await mounted([{ body: workspace }, { body: campaign }, { body: renamed }, { body: campaign }]);
+  ui.click('outreach');
+  ui.nodes['.ul-offer'].value = 'cleanup';
+  ui.nodes['.ul-offer'].handlers.change(); await settle();
+  ui.click('outreach');
+  const streams = ui.context.Workstreams.list().filter(s => s.title?.endsWith(' · b'));
+  assert.equal(streams.length, 1);
+  assert.equal(streams[0].title, 'Outreach · Beta Data · b');
+  assert.deepEqual(ui.opened, [streams[0].id, streams[0].id]);
+  assert.equal(ui.persisted.length, 1);
+  assert.match(ui.composer.value, /Beta Data SARL/);
 });
 
 test('shortlist conflicts reload fresh facts and require another owner save with the new version', async () => {
@@ -430,6 +510,37 @@ test('dismiss and owner review use their own version domains and the classic rev
 
 const proposal = { id: 'p1', company: 'New Company', location: 'Sfax', source_url: 'https://example.tn/source',
   observed_on: '2026-10-10', quote: 'Published <service>', agent_id: 'research', status: 'proposed' };
+
+for (const kind of ['adopt', 'reject', 'event']) {
+  test(kind + ' form keeps every typed value across search and offer renders', async () => {
+    const state = { ...withCrew, proposals: [proposal],
+      contacts: [{ id: 'c1', lead_id: 'b', name: 'Buyer' }],
+      experiments: [{ id: 'x1', name: 'Fixture', assignments: { b: 'A' } }] };
+    const ui = await mounted([{ body: withOwner }, { body: state }, { body: withOwner }, { body: state }]);
+    if (kind === 'reject') ui.tab('proposed');
+    ui.click(kind === 'event' ? 'event' : kind, kind === 'adopt' ? 'cd-1' : kind === 'reject' ? 'p1' : undefined);
+    const values = kind === 'adopt' ? { subject: 'Owner subject <edited>', body: 'Edited pitch\nKeep this wording.' }
+      : kind === 'reject' ? { reason: 'Owner reason <typed>\nNeeds a source check.' }
+      : { kind: 'reply', contact_id: 'c1', scope: 'contact', experiment_id: 'x1', on: '2026-10-10',
+        evidence: 'Mailbox thread 123', text: 'Original buyer wording\nPreserve it.' };
+    const original = ui.form();
+    for (const [key, value] of Object.entries(values)) original.elements[key].value = value;
+    ui.nodes['.ul-search'].value = kind === 'reject' ? 'New' : 'Beta';
+    ui.nodes['.ul-search'].handlers.input();
+    assert.notEqual(ui.form(), original, 'the form really was replaced');
+    for (const [key, value] of Object.entries(values)) assert.equal(ui.form().elements[key].value, value, 'search preserves ' + key);
+    ui.nodes['.ul-offer'].value = 'cleanup';
+    ui.nodes['.ul-offer'].handlers.change(); await settle();
+    for (const [key, value] of Object.entries(values)) assert.equal(ui.form().elements[key].value, value, 'offer preserves ' + key);
+    ui.nodes['.ul-search'].value = 'no match';
+    ui.nodes['.ul-search'].handlers.input();
+    assert.equal(ui.form(), null);
+    ui.nodes['.ul-search'].value = '';
+    ui.nodes['.ul-search'].handlers.input();
+    for (const [key, value] of Object.entries(values)) assert.equal(ui.form().elements[key].value, value, 'returning preserves ' + key);
+    assert.equal(posts(ui).length, 0, 'editing and filtering perform no business writes');
+  });
+}
 
 test('PROPOSED lists sourced open proposals and accepts with the exact owner confirmation', async () => {
   const proposed = { ...campaign, proposals: [proposal, { ...proposal, id: 'closed', company: 'Accepted Company', status: 'accepted' }] };

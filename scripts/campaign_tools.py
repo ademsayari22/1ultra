@@ -15,6 +15,33 @@ PACKET_FIELDS = ('id', 'company', 'country', 'location', 'industry', 'website', 
                  'checked_date', 'observed_fact', 'observed_text', 'need_hypothesis', 'pitch_hook',
                  'recommended_offer', 'status', 'shortlisted', 'exclusion_check', 'buyer_need_confirmed', 'contact_sent')
 
+# Structured identifiers, dates and enums are not free text. Preserve them so
+# redaction cannot break lead references, review hashes or source dates.
+MODEL_METADATA_FIELDS = {'id', 'lead_id', 'agent_id', 'source_version', 'created_at',
+                         'checked_date', 'checked_on', 'country', 'recommended_offer',
+                         'offer', 'status', 'stage', 'language', 'exclusion_check', 'channel', 'factor'}
+
+
+def redact_model_text(value, contact_names):
+    """Return a redacted model view; never mutate the stored record."""
+    if isinstance(value, dict):
+        return {key: item if key in MODEL_METADATA_FIELDS else redact_model_text(item, contact_names)
+                for key, item in value.items()}
+    if isinstance(value, list):
+        return [redact_model_text(item, contact_names) for item in value]
+    if not isinstance(value, str):
+        return value
+    value = re.sub(r'\b(?:https?://)?(?:www\.)?(?:linkedin\.com/in/|facebook\.com/|wa\.me/)[^\s<>"\';,)]+',
+                   '[profile]', value, flags=re.I)
+    value = re.sub(r'[\w.%+-]+@[\w.-]+\.[a-z]{2,}', '[email]', value, flags=re.I)
+    value = re.sub(r'(?<!\w)\+?(?:\( *)?\d(?:[ .\-()]*\d){7,}\)?(?!\w)', '[phone]', value)
+    names = sorted({name.strip() for name in contact_names if isinstance(name, str) and name.strip()},
+                   key=len, reverse=True)
+    if names:
+        value = re.sub(r'(?<!\w)(?:' + '|'.join(re.escape(name) for name in names) + r')(?!\w)',
+                       '[contact]', value, flags=re.I)
+    return value
+
 # A local preparation setting, not a sourced business rule.
 STALE_SOURCE_DAYS = 180
 CLAIM_RULES = [
@@ -52,7 +79,9 @@ def check_draft(store, args):
         flags = automation.audit_leads([lead], ultra.read_json(store.root, 'data/exclusions.json'))[0]['flags']
         if lead.get('exclusion_check') != 'not_excluded' or 'excluded' in flags:
             problems.append({'rule': 'excluded', 'text': 'Check company exclusions before preparing outreach.'})
-        if campaign.suppressed(state, lead['id']):
+        if lead.get('status') in {'declined', 'rejected'}:
+            problems.append({'rule': 'closed', 'text': 'Outreach is closed for this company.'})
+        if campaign.suppressed(state, lead['id']) or campaign.route_suppressed(state, lead):
             problems.append({'rule': 'suppressed', 'text': 'Outreach is suppressed for this company.'})
         try:
             checked = records.date_value(lead.get('checked_date'))
@@ -176,11 +205,12 @@ def leads(store, args):
         if lead is None or not any(query in (lead.get(key) or '').casefold()
                                    for key in ('company', 'location', 'industry')):
             continue
-        rows.append({'id': lead['id'], 'company': lead.get('company'), 'location': lead.get('location'),
+        names = [row.get('name') for row in snapshot['contacts'] if row['lead_id'] == lead['id']]
+        rows.append(redact_model_text({'id': lead['id'], 'company': lead.get('company'), 'location': lead.get('location'),
                      'industry': lead.get('industry'), 'stage': prospecting.stage(lead), 'score': ranking['score'],
                      'shortlisted': bool(lead.get('shortlisted')), 'suppressed': _suppressed(snapshot, lead['id']),
                      'has_draft': bool((lead.get('draft') or {}).get('body')),
-                     'crew_drafts': sum(draft['lead_id'] == lead['id'] for draft in snapshot.get('crew_drafts', []))})
+                     'crew_drafts': sum(draft['lead_id'] == lead['id'] for draft in snapshot.get('crew_drafts', []))}, names))
         if len(rows) == limit:
             break
     return {'offer': offer, 'count': len(rows), 'leads': rows}
@@ -200,7 +230,8 @@ def packet(store, args):
     draft = campaign.lead_view(lead, snapshot).get('draft')
     public_lead = _fields(lead, PACKET_FIELDS)
     public_lead['has_contact_route'] = bool(lead.get('contact_route'))
-    return {
+    names = [row.get('name') for row in snapshot['contacts'] if row['lead_id'] == lead['id']]
+    return redact_model_text({
         'lead': public_lead,
         'ranking': _fields(ranking, ('score', 'factors', 'unknowns')) if ranking is not None else None,
         'contacts': [{**_fields(row, ('role', 'source_url', 'checked_on')), 'channel': _channel(row.get('route'))}
@@ -213,4 +244,4 @@ def packet(store, args):
         'crew_drafts': [row for row in snapshot.get('crew_drafts', []) if row['lead_id'] == lead['id']],
         'suppressed': _suppressed(snapshot, lead['id']),
         'source_version': campaign.fingerprint(lead),
-    }
+    }, names)

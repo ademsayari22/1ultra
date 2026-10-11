@@ -54,6 +54,51 @@ class CampaignToolTests(unittest.TestCase):
         self.assertEqual(packet['contacts'], [{'role': 'Directeur', 'channel': 'email', 'source_url': 'https://example.tn/equipe', 'checked_on': '2026-10-05'}])
         self.assertEqual(packet['source_version'], campaign.fingerprint(self.lead))
 
+    def test_model_text_redacts_contact_details_without_changing_stored_drafts(self):
+        private = 'Sami Ben Ali sami@example.tn +216 20 000 000 https://www.linkedin.com/in/sami'
+        lead = {**self.lead, **{key: private for key in
+            ('observed_fact', 'observed_text', 'need_hypothesis', 'pitch_hook')},
+            'draft': {'subject': private, 'body': private, 'reviewed': False}}
+        path = self.root / 'data/leads.json'
+        path.write_text(json.dumps([lead, self.foreign], ensure_ascii=False))
+        self.store.action('signal', {'lead_id': 'tn', 'text': private, 'hypothesis': private,
+            'source_url': 'https://example.tn/news', 'checked_on': '2026-10-05'}, self.store.version())
+        campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'subject': private, 'body': private}, 'sales')
+        before = {path: path.read_bytes(), self.store.path: self.store.path.read_bytes()}
+
+        packet = campaign_tools.packet(self.store, {'id': 'tn'})
+        text = json.dumps(packet, ensure_ascii=False)
+        for secret in ('Sami Ben Ali', 'sami@example.tn', '+216 20 000 000', 'https://www.linkedin.com/in/sami'):
+            self.assertNotIn(secret, text)
+        expected = '[contact] [email] [phone] [profile]'
+        for key in ('observed_fact', 'observed_text', 'need_hypothesis', 'pitch_hook'):
+            self.assertEqual(packet['lead'][key], expected)
+        for row, keys in [(packet['draft'], ('subject', 'body')), (packet['signals'][0], ('text', 'hypothesis')),
+                          (packet['crew_drafts'][0], ('subject', 'body'))]:
+            for key in keys:
+                self.assertEqual(row[key], expected)
+        self.assertEqual(before, {p: p.read_bytes() for p in before}, 'stored owner and crew drafts stay byte-identical')
+
+    def test_redaction_covers_list_text_urls_phone_formats_and_company_contact_names(self):
+        text = ('sAmI bEn aLi; Sami Ben Alina; sami@example.tn; 20000000; (20) 000-000; '
+                '+216 (20) 000.000; https://facebook.com/sami; https://wa.me/21620000000')
+        lead = {**self.lead, 'location': text, 'industry': text,
+                'source_url': 'https://www.linkedin.com/in/sami'}
+        other = {**self.lead, 'id': 'other', 'company': 'Other ERP', 'location': 'Sami Ben Ali'}
+        (self.root / 'data/leads.json').write_text(json.dumps([lead, other]))
+        before = (self.root / 'data/leads.json').read_bytes()
+        expected = '[contact]; Sami Ben Alina; [email]; [phone]; [phone]; [phone]; [profile]; [profile]'
+        listing = {row['id']: row for row in campaign_tools.leads(self.store, {})['leads']}
+        self.assertEqual(listing['tn']['location'], expected)
+        self.assertEqual(listing['tn']['industry'], expected)
+        self.assertEqual(listing['other']['location'], 'Sami Ben Ali', 'names belong to their company')
+        packet = campaign_tools.packet(self.store, {'id': 'tn'})
+        self.assertEqual(packet['lead']['source_url'], '[profile]')
+        self.assertTrue(all(row['source_url'] == '[profile]' for row in packet['ranking']['factors']))
+        self.assertEqual(packet['lead']['checked_date'], '2026-10-05')
+        self.assertEqual(packet['source_version'], campaign.fingerprint(lead))
+        self.assertEqual((self.root / 'data/leads.json').read_bytes(), before)
+
     def test_packet_replaces_private_contact_routes_with_channel_labels(self):
         state = self.store.read()
         state['contacts'] = []
@@ -188,14 +233,36 @@ class CampaignToolTests(unittest.TestCase):
             with self.subTest(route=route), self.assertRaises(ValueError):
                 campaign_rpc.dispatch(workspace, {'route': route})
 
-    def test_worker_keeps_its_normal_400_answer_for_tool_value_errors(self):
-        request = {'id': 7, 'route': '/api/tools/lead?id=missing', 'method': 'GET', 'body': None, 'version': ''}
+    def rpc_response(self, request):
         output = io.StringIO()
         with patch.object(sys, 'argv', ['campaign_rpc.py', '--root', str(self.root), '--once']), \
                 patch.object(sys, 'stdin', io.StringIO(json.dumps(request) + '\n')), redirect_stdout(output):
             campaign_rpc.main()
-        self.assertEqual(json.loads(output.getvalue()), {'id': 7, 'status': 400,
-                                                        'value': {'error': 'Invalid campaign request.'}})
+        return json.loads(output.getvalue())
+
+    def test_worker_returns_deliberate_tool_value_error_in_400_envelope(self):
+        request = {'id': 7, 'route': '/api/tools/lead?id=missing', 'method': 'GET', 'body': None, 'version': ''}
+        self.assertEqual(self.rpc_response(request), {'id': 7, 'status': 400,
+                         'value': {'error': 'Unknown or out-of-scope company.'}})
+
+    def test_worker_explains_foreign_company_refusal_through_complete_rpc_path(self):
+        response = self.rpc_response({'id': 8, 'route': '/api/tools/propose-lead', 'method': 'POST',
+                                      'body': self.proposal_args(country='France')})
+        self.assertEqual((response['id'], response['status']), (8, 400))
+        self.assertIn('outside Tunisia', response['value']['error'])
+
+    def test_worker_keeps_unexpected_tool_exceptions_generic(self):
+        for error, status, message in [(RuntimeError('private detail'), 500, 'Campaign action failed. Inspect local files before retrying.'),
+                                       (KeyError('private detail'), 400, 'Invalid campaign request.'),
+                                       (TypeError('private detail'), 400, 'Invalid campaign request.')]:
+            with self.subTest(error=type(error).__name__), patch.object(campaign_tools, 'propose_lead', side_effect=error):
+                response = self.rpc_response({'id': 9, 'route': '/api/tools/propose-lead', 'method': 'POST', 'body': {}})
+                self.assertEqual(response, {'id': 9, 'status': status, 'value': {'error': message}})
+
+    def test_worker_keeps_non_tool_value_errors_generic(self):
+        with patch.object(Workspace, 'update_record', side_effect=ValueError('private detail')):
+            response = self.rpc_response({'id': 10, 'route': '/api/planning', 'method': 'POST', 'body': {}})
+        self.assertEqual(response, {'id': 10, 'status': 400, 'value': {'error': 'Invalid campaign request.'}})
 
     def test_check_draft_names_each_broken_rule(self):
         bad = ('Bonjour, pour 500 DT nous garantissons 99 % de précision en 48h, '
@@ -297,6 +364,32 @@ class CampaignToolTests(unittest.TestCase):
         (self.root / 'data/exclusions.json').write_text('{"companies":[]}')
         (self.root / 'data/leads.json').write_text(json.dumps([{**self.lead, 'exclusion_check': None}]))
         self.assertIn('excluded', {p['rule'] for p in campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'})['problems']})
+
+    def test_draft_checks_refuse_closed_leads_without_saving(self):
+        for status in ('declined', 'rejected'):
+            with self.subTest(status=status):
+                (self.root / 'data/leads.json').write_text(json.dumps([{**self.lead, 'status': status}]))
+                before = self.store.path.read_bytes()
+                checked = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'})
+                self.assertIn('closed', {p['rule'] for p in checked['problems']})
+                with self.assertRaisesRegex(ValueError, 'Fix these first:'):
+                    campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'}, 'sales')
+                self.assertEqual(self.store.path.read_bytes(), before)
+
+    def test_draft_checks_refuse_the_current_suppressed_contact_route_without_saving(self):
+        state = self.store.read()
+        state['contacts'][0]['route'] = 'ceo@example.tn'
+        state['events'].append({'lead_id': 'tn', 'kind': 'do_not_contact', 'confirmed': True,
+                                'scope': 'contact', 'contact_id': state['contacts'][0]['id']})
+        self.store.path.write_text(json.dumps(state))
+        self.assertFalse(campaign.suppressed(state, 'tn'), 'fixture is a contact-only opt-out')
+        self.assertTrue(campaign.route_suppressed(state, self.lead))
+        before = self.store.path.read_bytes()
+        checked = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'})
+        self.assertIn('suppressed', {p['rule'] for p in checked['problems']})
+        with self.assertRaisesRegex(ValueError, 'Fix these first:'):
+            campaign_tools.save_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'}, 'sales')
+        self.assertEqual(self.store.path.read_bytes(), before)
 
     def test_save_keeps_newest_five_per_lead_and_owner_reviews_with_version(self):
         other = {**self.lead, 'id': 'other', 'company': 'Other'}

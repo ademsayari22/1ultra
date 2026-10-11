@@ -57,6 +57,13 @@ async function waitForWindowShown(page,selector){
       assert.equal(await page.locator('.ultra-leads iframe').count(),0,'LEADS is native, not a framed page');
       await waitForWindowShown(page,'.ultra-leads-win');
       await page.screenshot({path:path.join(out,'starnet-leads-'+name+'.png')});
+      await page.locator('.ultra-leads [data-ul-action="outreach"]').click();
+      await page.locator('#chat-input').waitFor({state:'visible'});
+      assert.match(await page.locator('#chat-input').inputValue(),/campaign\.lead/,'Ask ULTRA prepares the composer');
+      await page.locator('.ultra-leads-win').waitFor({state:'hidden'});
+      assert.equal(await page.locator('.ultra-leads-win').isVisible(),false,'LEADS no longer covers COMMS');
+      await page.getByRole('button',{name:'‹ BACK TO LEADS',exact:true}).click();
+      await waitForWindowShown(page,'.ultra-leads-win');
       await page.locator('.ultra-leads [data-tab="proposed"]').click();
       await page.waitForSelector('.ultra-leads .ul-proposed');
       await page.evaluate(()=>document.querySelector('.bb[data-term="ultra-room-templates"]').click());
