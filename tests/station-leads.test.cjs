@@ -10,6 +10,40 @@ const W = { hunt: { leads: [
   { id: 'b', company: 'Beta Data', location: 'Tunis', industry: 'Archives', pipeline_stage: 'pitch', shortlisted: true }] } };
 const C = { rankings: [{ id: 'b', score: 80, factors: [], unknowns: [] }, { id: 'a', score: 40, factors: [], unknowns: [] }], events: [], suppressed_ids: [], crew_drafts: [] };
 
+test('crew drafts show newest first with who wrote them, and adopted or dismissed ones leave the queue', () => {
+  const C2 = { ...C, crew_drafts: [
+    { id: 'd1', lead_id: 'a', agent_id: 'sales', body: 'v1', status: 'proposed', created_at: '2026-10-11T08:00:00Z' },
+    { id: 'd2', lead_id: 'a', agent_id: 'sales', body: 'v2', status: 'proposed', created_at: '2026-10-11T09:00:00Z' },
+    { id: 'd3', lead_id: 'a', agent_id: 'sales', body: 'v0', status: 'dismissed', created_at: '2026-10-11T07:00:00Z' }] };
+  assert.deepEqual(V.cardModel(W.hunt.leads[0], C2).crewDrafts.map(d => d.id), ['d2', 'd1']);
+});
+
+test('proposed leads list only open proposals, with their source, date and quote', () => {
+  const rows = V.openProposals({ proposals: [
+    { id: 'p1', company: 'X', source_url: 'https://x.tn', observed_on: '2026-10-10', quote: 'Q', status: 'proposed', agent_id: 'research' },
+    { id: 'p2', company: 'Y', status: 'accepted' }] });
+  assert.deepEqual(rows.map(r => r.id), ['p1']);
+});
+
+test('the evidence form refuses evidence shorter than ten characters', () => {
+  assert.equal(V.evidenceOk('short'), false);
+  assert.equal(V.evidenceOk('2026-10-11 email to info@x.tn'), true);
+});
+
+test('adoption bootstraps only when the owner draft has no body', () => {
+  for (const lead of [{}, { draft: {} }, { draft: { body: '' } }]) {
+    assert.deepEqual(V.adoptionSteps(lead), ['draft', 'draft-edit', 'crew-draft-status']);
+  }
+  assert.deepEqual(V.adoptionSteps({ draft: { body: 'Owner pitch' } }), ['draft-edit', 'crew-draft-status']);
+});
+
+test('subjects require one to two hundred trimmed characters and evidence ignores padding', () => {
+  for (const value of ['', '   ', 'x'.repeat(201), null]) assert.equal(V.subjectOk(value), false);
+  for (const value of [' a ', 'x'.repeat(200)]) assert.equal(V.subjectOk(value), true);
+  assert.equal(V.evidenceOk('   short   '), false);
+  assert.equal(V.evidenceOk('  0123456789  '), true);
+});
+
 test('the board ranks by score and filters by company, place or industry', () => {
   assert.deepEqual(V.ranked(W, C, '').map(r => r.id), ['b', 'a']);
   assert.deepEqual(V.ranked(W, C, 'sfax').map(r => r.id), ['a']);
@@ -116,15 +150,15 @@ const nativePrefillSource = chatSource.slice(chatSource.indexOf('  function pref
 const workspace = { ...W, hunt: { ...W.hunt, offers: [
   { id: 'documents', name: 'Checked table' }, { id: 'cleanup', name: 'Spreadsheet cleanup' }
 ] }, record_versions: { leads: 'fixture-leads-v1' } };
-const campaign = { ...C, analytics: { counts: { sourced: 2, shortlisted: 1, contacted: 0, replied: 0 } } };
+const campaign = { ...C, version: 'fixture-campaign-v1', analytics: { counts: { sourced: 2, shortlisted: 1, contacted: 0, replied: 0 } } };
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
-async function mounted(responses) {
-  const requests = [], opened = [], persisted = [], prefills = [], doors = [];
+async function mounted(responses, confirmed = true) {
+  const requests = [], opened = [], persisted = [], prefills = [], doors = [], confirmations = [];
   let sends = 0;
   const node = () => ({ innerHTML: '', value: '', hidden: false, textContent: '', handlers: {},
     addEventListener(event, handler) { this.handlers[event] = handler; }, setAttribute() {}, querySelectorAll() { return []; } });
-  const selectors = ['.ul-search', '.ul-offer', '.ul-list', '.ul-card', '.ul-error', '.ul-counts', '.ul-classic'];
+  const selectors = ['.ul-search', '.ul-offer', '.ul-list', '.ul-card', '.ul-error', '.ul-counts', '.ul-classic', '.ul-panes', '.ul-proposed'];
   const nodes = Object.fromEntries(selectors.map(selector => [selector, node()]));
   const select = nodes['.ul-offer'];
   let optionsHTML = '';
@@ -138,6 +172,7 @@ async function mounted(responses) {
   });
   const root = node();
   root.querySelector = selector => nodes[selector];
+  root.contains = () => true;
   const composer = { value: '', focus() {}, setSelectionRange() {} };
   const nativePrefill = vm.runInNewContext(nativePrefillSource + '\nprefill', { input: composer, autoGrowInput() {} });
   let bodyHTML = '';
@@ -152,6 +187,7 @@ async function mounted(responses) {
   } });
   let builder;
   const context = vm.createContext({ URL, window: { __STARNET_API_TOKEN__: 'fixture-token' },
+    confirm: text => { confirmations.push(text); return confirmed; },
     document: { getElementById: id => id === 'chat-input' ? composer : null },
     StationUI: { registerWindow: (key, title, build) => { builder = build; }, h: {
       esc: value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
@@ -165,7 +201,7 @@ async function mounted(responses) {
       const response = responses.shift();
       assert.ok(response, 'Unexpected request: ' + url);
       const status = response.status || 200;
-      return { ok: status < 400, status, json: async () => response.body };
+      return { ok: status < 400, status, json: async () => JSON.parse(JSON.stringify(response.body)) };
     }
   });
   vm.runInContext(streamsSource, context);
@@ -173,8 +209,13 @@ async function mounted(responses) {
   vm.runInContext(leadsSource, context);
   builder(body);
   await settle();
-  const click = action => root.handlers.click({ target: { closest: selector => selector === '[data-ul-action]' ? { dataset: { ulAction: action } } : null } });
-  return { nodes, body, requests, opened, persisted, prefills, doors, composer, context, click, sends: () => sends };
+  const click = (action, id) => root.handlers.click({ target: { closest: selector => selector === '[data-ul-action]' ? { dataset: { ulAction: action, id } } : null } });
+  const tab = name => root.handlers.click({ target: { closest: selector => selector === '[data-tab]' ? { dataset: { tab: name } } : null } });
+  const submit = (kind, data, id) => root.handlers.submit({ preventDefault() {}, target: {
+    dataset: { ulForm: kind, leadId: 'b', id },
+    elements: Object.fromEntries(Object.entries(data).map(([key, value]) => [key, { value }]))
+  } });
+  return { nodes, body, requests, opened, persisted, prefills, doors, composer, context, click, tab, submit, confirmations, sends: () => sends };
 }
 
 test('the native board loads authenticated campaign data and the classic link opens its registered window', async () => {
@@ -283,4 +324,222 @@ test('an initial load failure shows an alert and clears the loading placeholder'
   assert.equal(ui.nodes['.ul-error'].hidden, false);
   assert.equal(ui.nodes['.ul-error'].textContent, 'Workspace unavailable');
   assert.doesNotMatch(ui.nodes['.ul-list'].innerHTML, /Loading/);
+});
+
+const crewDraft = { id: 'cd-1', lead_id: 'b', agent_id: 'sales', subject: '', body: 'Crew pitch <checked>',
+  status: 'proposed', source_version: 'source-old', created_at: '2026-10-11T09:00:00Z' };
+const withCrew = { ...campaign, rankings: [{ id: 'b', score: 80, source_version: 'source-new' }], crew_drafts: [crewDraft] };
+const withOwner = { ...workspace, hunt: { ...workspace.hunt, leads: [W.hunt.leads[0],
+  { ...W.hunt.leads[1], draft: { subject: 'Owner subject', body: 'Owner pitch', reviewed: false } }] } };
+const posts = ui => ui.requests.filter(r => r.method === 'POST');
+
+test('crew cards show author, time, saved check and changed source without exposing other companies', async () => {
+  const ui = await mounted([{ body: withOwner }, { body: { ...withCrew, crew_drafts: [crewDraft,
+    { ...crewDraft, id: 'old', status: 'adopted', body: 'Adopted copy' },
+    { ...crewDraft, id: 'other', lead_id: 'a', body: 'Other company copy' }] } }]);
+  const html = ui.nodes['.ul-card'].innerHTML;
+  assert.match(html, /Owner pitch/); assert.match(html, /Mark reviewed/);
+  assert.ok(html.indexOf('Owner pitch') < html.indexOf('Crew pitch'));
+  assert.match(html, /sales/); assert.match(html, /2026-10-11T09:00:00Z/);
+  assert.match(html, /Check passed at save/); assert.match(html, /Source changed/);
+  assert.match(html, /Crew pitch &lt;checked&gt;/);
+  assert.doesNotMatch(html, /Adopted copy|Other company copy/);
+  ui.click('adopt', 'cd-1');
+  assert.match(ui.nodes['.ul-card'].innerHTML, /data-ul-form="adopt"/);
+  assert.match(ui.nodes['.ul-card'].innerHTML, /name="subject"[^>]*required/);
+  assert.match(ui.nodes['.ul-card'].innerHTML, /Crew pitch &lt;checked&gt;/);
+  assert.ok(ui.nodes['.ul-card'].innerHTML.indexOf('data-ul-form="adopt"') < ui.nodes['.ul-card'].innerHTML.indexOf('Conversation room'), 'adoption form stays beside its crew draft');
+});
+
+test('first crew adoption creates the owner template, reloads versions, edits, then marks adopted', async () => {
+  const bootstrapped = { ...withOwner, record_versions: { leads: 'fixture-leads-v2' } };
+  const freshCampaign = { ...withCrew, version: 'fixture-campaign-v2' };
+  const ui = await mounted([{ body: workspace }, { body: withCrew }, { body: {} },
+    { body: bootstrapped }, { body: freshCampaign }, { body: {} }, { body: {} },
+    { body: bootstrapped }, { body: { ...freshCampaign, crew_drafts: [] } }]);
+  ui.click('adopt', 'cd-1');
+  ui.submit('adopt', { subject: '  Small pilot  ', body: 'Edited by Adem' }, 'cd-1'); await settle();
+  const saved = posts(ui);
+  assert.deepEqual(saved.map(r => r.url), ['/api/ultra/prospecting/draft', '/api/ultra/prospecting/draft-edit', '/api/ultra/campaign/crew-draft-status']);
+  assert.deepEqual(saved.map(r => r.headers['If-Match']), ['fixture-leads-v1', 'fixture-leads-v2', 'fixture-campaign-v2']);
+  assert.deepEqual(saved.map(r => JSON.parse(r.body)), [{ id: 'b', offer: 'documents' },
+    { id: 'b', subject: 'Small pilot', body: 'Edited by Adem' }, { id: 'cd-1', status: 'adopted' }]);
+  assert.doesNotMatch(ui.nodes['.ul-card'].innerHTML, /data-id="cd-1"/);
+});
+
+test('existing owner draft adoption skips the template and rejected subjects make no writes', async () => {
+  const ui = await mounted([{ body: withOwner }, { body: withCrew }, { body: {} }, { body: {} },
+    { body: withOwner }, { body: { ...withCrew, crew_drafts: [] } }]);
+  ui.click('adopt', 'cd-1');
+  for (const subject of ['', '   ', 'x'.repeat(201)]) {
+    ui.submit('adopt', { subject, body: 'Edited' }, 'cd-1'); await settle();
+    assert.equal(posts(ui).length, 0);
+  }
+  ui.submit('adopt', { subject: 'Chosen subject', body: 'Edited' }, 'cd-1'); await settle();
+  assert.deepEqual(posts(ui).map(r => r.url), ['/api/ultra/prospecting/draft-edit', '/api/ultra/campaign/crew-draft-status']);
+});
+
+test('a failed crew status save still shows the successfully saved owner draft', async () => {
+  const record = { ...withOwner.hunt.leads[1], draft: { subject: 'Updated subject', body: 'Saved by Adem', reviewed: false } };
+  const ui = await mounted([{ body: withOwner }, { body: withCrew },
+    { body: { record, record_version: 'fixture-leads-v2' } }, { status: 400, body: { error: 'Select an open draft.' } }]);
+  ui.click('adopt', 'cd-1'); ui.submit('adopt', { subject: 'Updated subject', body: 'Saved by Adem' }, 'cd-1'); await settle();
+  assert.match(ui.nodes['.ul-card'].innerHTML, /Saved by Adem/);
+  assert.match(ui.nodes['.ul-error'].textContent, /owner draft was saved/);
+  assert.match(ui.nodes['.ul-error'].textContent, /Select an open draft/);
+  assert.equal(posts(ui).length, 2);
+});
+
+for (const step of ['draft', 'draft-edit', 'crew-draft-status']) {
+  test('a 409 during adoption at ' + step + ' reloads and never retries a write', async () => {
+    const initial = step === 'draft' ? workspace : withOwner;
+    const responses = [{ body: initial }, { body: withCrew }];
+    if (step === 'crew-draft-status') responses.push({ body: {} });
+    responses.push({ status: 409, body: { error: 'Changed' } }, { body: withOwner }, { body: withCrew });
+    const ui = await mounted(responses);
+    ui.click('adopt', 'cd-1'); ui.submit('adopt', { subject: 'Subject', body: 'Edited' }, 'cd-1'); await settle();
+    assert.equal(posts(ui).at(-1).url, '/api/ultra/' + (step === 'crew-draft-status' ? 'campaign/' : 'prospecting/') + step);
+    assert.equal(posts(ui).length, step === 'crew-draft-status' ? 2 : 1);
+    assert.match(ui.nodes['.ul-error'].textContent, /reloaded; check and save again/);
+    assert.match(ui.nodes['.ul-card'].innerHTML, /data-id="cd-1"/);
+  });
+}
+
+for (const step of ['draft', 'draft-edit']) {
+  test('refusal of adoption ' + step + ' leaves the crew draft open', async () => {
+    const ui = await mounted([{ body: step === 'draft' ? workspace : withOwner }, { body: withCrew },
+      { status: 400, body: { error: 'Outreach preparation is suppressed.' } }]);
+    ui.click('adopt', 'cd-1'); ui.submit('adopt', { subject: 'Subject', body: 'Edited' }, 'cd-1'); await settle();
+    assert.equal(posts(ui).length, 1);
+    assert.equal(posts(ui)[0].url, '/api/ultra/prospecting/' + step);
+    assert.equal(ui.nodes['.ul-error'].textContent, 'Outreach preparation is suppressed.');
+  });
+}
+
+test('dismiss and owner review use their own version domains and the classic review confirmation', async () => {
+  const ui = await mounted([{ body: withOwner }, { body: withCrew }, { body: {} },
+    { body: withOwner }, { body: { ...withCrew, crew_drafts: [] } }, { body: {} }, { body: withOwner }, { body: withCrew }]);
+  ui.click('dismiss', 'cd-1'); await settle();
+  ui.click('review'); await settle();
+  assert.deepEqual(posts(ui).map(r => [r.url, r.headers['If-Match'], JSON.parse(r.body)]), [
+    ['/api/ultra/campaign/crew-draft-status', 'fixture-campaign-v1', { id: 'cd-1', status: 'dismissed' }],
+    ['/api/ultra/prospecting/review-draft', 'fixture-leads-v1', { id: 'b', confirmed: true }]
+  ]);
+  assert.deepEqual(ui.confirmations, ['I checked this company’s source, claim and small offer. Mark this unsent draft reviewed?']);
+});
+
+const proposal = { id: 'p1', company: 'New Company', location: 'Sfax', source_url: 'https://example.tn/source',
+  observed_on: '2026-10-10', quote: 'Published <service>', agent_id: 'research', status: 'proposed' };
+
+test('PROPOSED lists sourced open proposals and accepts with the exact owner confirmation', async () => {
+  const proposed = { ...campaign, proposals: [proposal, { ...proposal, id: 'closed', company: 'Accepted Company', status: 'accepted' }] };
+  const ui = await mounted([{ body: workspace }, { body: proposed }, { body: {} }, { body: workspace }, { body: campaign }]);
+  ui.tab('proposed');
+  const html = ui.nodes['.ul-proposed'].innerHTML;
+  for (const value of ['New Company', 'Sfax', 'https://example.tn/source', '2026-10-10', 'research', 'Published &lt;service&gt;']) assert.ok(html.includes(value));
+  assert.doesNotMatch(html, /Accepted Company/);
+  ui.click('accept', 'p1'); await settle();
+  assert.deepEqual(ui.confirmations, ['Add New Company to your leads? Its source still needs your own check.']);
+  assert.deepEqual(JSON.parse(posts(ui)[0].body), { id: 'p1' });
+  assert.equal(posts(ui)[0].url, '/api/ultra/campaign/accept-proposal');
+  assert.equal(posts(ui)[0].headers['If-Match'], 'fixture-campaign-v1');
+});
+
+test('proposal rejection validates a trimmed reason before posting', async () => {
+  const ui = await mounted([{ body: workspace }, { body: { ...campaign, proposals: [proposal] } },
+    { body: {} }, { body: workspace }, { body: campaign }]);
+  ui.tab('proposed'); ui.click('reject', 'p1');
+  assert.match(ui.nodes['.ul-proposed'].innerHTML, /data-ul-form="reject"/);
+  for (const reason of ['ab', '  a  ', 'x'.repeat(301)]) {
+    ui.submit('reject', { reason }, 'p1'); await settle(); assert.equal(posts(ui).length, 0);
+  }
+  ui.submit('reject', { reason: '  Outside scope  ' }, 'p1'); await settle();
+  assert.equal(posts(ui)[0].url, '/api/ultra/campaign/proposal-status');
+  assert.deepEqual(JSON.parse(posts(ui)[0].body), { id: 'p1', status: 'rejected', reason: 'Outside scope' });
+});
+
+test('conversation room shows owner contact details, evidence, signals and follow-ups only for this company', async () => {
+  const ui = await mounted([{ body: workspace }, { body: { ...campaign,
+    events: [{ lead_id: 'b', kind: 'reply', on: '2026-10-10', text: 'Original reply', evidence: 'Mailbox reference', confirmed: true }],
+    contacts: [{ id: 'c1', lead_id: 'b', name: 'Buyer Name', role: 'Director', route: 'buyer@example.tn', source_url: 'https://example.tn/contact' },
+      { id: 'c2', lead_id: 'a', name: 'Other Buyer', route: 'other@example.tn' }],
+    signals: [{ lead_id: 'b', checked_on: '2026-10-10', text: 'A sourced signal', hypothesis: 'Possible need', source_url: 'https://example.tn/signal' }],
+    followups: [{ lead_id: 'b', on: '2026-10-12', text: 'Follow-up proposal', needs_review: true }] } }]);
+  const html = ui.nodes['.ul-card'].innerHTML;
+  for (const value of ['Buyer Name', 'Director', 'buyer@example.tn', 'https://example.tn/contact', 'Original reply', 'Mailbox reference', 'A sourced signal', 'Follow-up proposal']) assert.ok(html.includes(value));
+  assert.doesNotMatch(html, /Other Buyer|other@example.tn/);
+});
+
+test('the outcome form rejects short evidence, then posts the classic event payload after confirmation', async () => {
+  const ui = await mounted([{ body: workspace }, { body: campaign }, { body: {} }, { body: workspace }, { body: campaign }]);
+  ui.click('event');
+  assert.match(ui.nodes['.ul-card'].innerHTML, /data-ul-form="event"/);
+  assert.ok(ui.nodes['.ul-card'].innerHTML.indexOf('data-ul-form="event"') < ui.nodes['.ul-card'].innerHTML.indexOf('Recorded events'), 'the evidence form opens next to its action');
+  const fields = { kind: 'reply', on: '2026-10-11', evidence: ' short ', text: 'Original reply', contact_id: '', scope: 'company', experiment_id: '' };
+  ui.submit('event', fields); await settle(); assert.equal(posts(ui).length, 0);
+  ui.submit('event', { ...fields, evidence: '2026-10-11 mailbox thread 123' }); await settle();
+  assert.deepEqual(JSON.parse(posts(ui)[0].body), { lead_id: 'b', kind: 'reply', on: '2026-10-11', evidence: '2026-10-11 mailbox thread 123', text: 'Original reply', confirmed: true, contact_id: null, scope: 'company' });
+  assert.equal(posts(ui)[0].url, '/api/ultra/campaign/event');
+  assert.equal(posts(ui)[0].headers['If-Match'], 'fixture-campaign-v1');
+  assert.deepEqual(ui.confirmations, ['I confirm this external event actually happened, with the date and evidence shown.']);
+});
+
+test('declining review, acceptance and outcome confirmation makes no writes', async () => {
+  const ui = await mounted([{ body: withOwner }, { body: { ...campaign, proposals: [proposal] } }], false);
+  ui.click('review'); ui.click('event');
+  ui.submit('event', { kind: 'sent', on: '2026-10-11', evidence: 'Mailbox reference', text: '', contact_id: '', scope: 'company', experiment_id: '' });
+  ui.tab('proposed'); ui.click('accept', 'p1'); await settle();
+  assert.equal(posts(ui).length, 0);
+  assert.equal(ui.confirmations.length, 3);
+});
+
+function mountedTemplates(presetsPresent = true) {
+  const builders = {}, opened = [], prefills = [];
+  const status = { textContent: '' }, root = { handlers: {}, addEventListener(kind, handler) { this.handlers[kind] = handler; } };
+  const body = { innerHTML: '', querySelector: selector => selector === '.ultra-rt-status' ? status : root };
+  let buildOpen = false, buildOpens = 0, presetClicks = 0;
+  const context = vm.createContext({ window: {},
+    document: { getElementById: id => id === 'refit-stations' && buildOpen && presetsPresent ? { click() { presetClicks++; } } : null },
+    StationUI: { registerWindow: (key, title, build) => { builders[key] = { title, build }; }, h: {
+      esc: text => String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
+      workConversation() {}
+    } },
+    Build: { isOpen: () => buildOpen, open: () => { buildOpen = true; buildOpens++; } },
+    App: { openWorkstream: id => { opened.push(id); context.Workstreams.switch(id); } },
+    Chat: { prefill: text => prefills.push(text) }
+  });
+  vm.runInContext(streamsSource, context); context.Workstreams.init();
+  vm.runInContext(fs.readFileSync(require.resolve('../station/frontend/ultra-templates.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(require.resolve('../station/frontend/ultra-window.js'), 'utf8'), context);
+  assert.ok(builders['ultra-room-templates'], 'the native ROOM TEMPLATES window is registered');
+  assert.equal(builders['ultra-room-templates'].title, 'ROOM TEMPLATES');
+  builders['ultra-room-templates'].build(body);
+  const click = (action, kit) => root.handlers.click({ target: { closest: () => ({ dataset: { ultraRtAction: action, kit } }) } });
+  return { body, status, context, opened, prefills, click, buildOpens: () => buildOpens, presetClicks: () => presetClicks };
+}
+
+test('ROOM TEMPLATES lists the real catalog and every kit, and asks ULTRA in its General session', () => {
+  const ui = mountedTemplates();
+  assert.match(ui.body.innerHTML, /1ULTRA COMMAND/);
+  assert.equal((ui.body.innerHTML.match(/class="ultra-rt-row"/g) || []).length, 7);
+  for (const name of ['CAMPAIGN', 'LEAD RESEARCH', 'DRAFT &amp; CHECK', 'DELIVERY LAB', 'CLIENT PILOT', 'RECORDS']) assert.ok(ui.body.innerHTML.includes(name));
+  ui.click('ask', 'ultraResearch');
+  assert.deepEqual(ui.opened, [ui.context.Workstreams.generalId()]);
+  assert.deepEqual(ui.prefills, ['Add the LEAD RESEARCH room template beside the station.']);
+  assert.equal(ui.context.Workstreams.active().agentId, 'agent');
+  assert.equal(ui.context.Workstreams.active().history.length, 0);
+});
+
+test('Open station presets opens BUILD MODE before clicking presets and never toggles it closed', () => {
+  const ui = mountedTemplates();
+  ui.click('presets'); ui.click('presets');
+  assert.equal(ui.buildOpens(), 1);
+  assert.equal(ui.presetClicks(), 2);
+});
+
+test('missing presets give a visible route to the station preset library', () => {
+  const ui = mountedTemplates(false);
+  ui.click('presets');
+  assert.equal(ui.presetClicks(), 0);
+  assert.match(ui.status.textContent, /BUILD MODE/); assert.match(ui.status.textContent, /Presets/);
 });

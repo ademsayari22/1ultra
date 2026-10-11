@@ -1,4 +1,4 @@
-/* 1Ultra windows inside the station: the Tunisia campaign (its own page, framed) and the owner switches. */
+/* 1Ultra's classic campaign, owner switches and future room templates. */
 'use strict';
 (() => {
   if (typeof StationUI === 'undefined' || !StationUI.registerWindow) return;
@@ -6,6 +6,42 @@
   StationUI.registerWindow('campaign', 'CAMPAIGN', body => {
     body.innerHTML = '<iframe class="ultra-frame" src="/campaign/#campaign" title="1Ultra Tunisia campaign"></iframe>';
   }, { console: true, className: 'ultra-campaign-win' });
+
+  StationUI.registerWindow('ultra-room-templates', 'ROOM TEMPLATES', body => {
+    if (typeof UltraTemplates === 'undefined') {
+      body.innerHTML = '<div class="ultra-rt"><p class="dim">Room templates are unavailable. Reopen the station.</p></div>';
+      return;
+    }
+    body.innerHTML = '<div class="ultra-rt"><p class="dim">Station presets and rooms ULTRA can add for future work.</p>'
+      + UltraTemplates.catalog.map(p => '<section class="ultra-rt-row"><h3>' + esc(p.name) + '</h3><p>' + esc(p.description)
+        + '</p><button type="button" class="bb sm" data-ultra-rt-action="presets">Open station presets</button></section>').join('')
+      + Object.entries(UltraTemplates.rooms).map(([key, kit]) => '<section class="ultra-rt-row"><h3>' + esc(kit.name)
+        + '</h3><p class="dim">' + esc(UltraTemplates.kitAbout[key] || '') + '</p><button type="button" class="bb sm"'
+        + ' data-ultra-rt-action="ask" data-kit="' + esc(key) + '">Ask ULTRA to add</button></section>').join('')
+      + '<p class="dim ultra-rt-status" role="status" aria-live="polite"></p></div>';
+    const root = body.querySelector('.ultra-rt'), status = body.querySelector('.ultra-rt-status');
+    root.addEventListener('click', event => {
+      const action = event.target.closest('[data-ultra-rt-action]');
+      if (!action) return;
+      try {
+        if (action.dataset.ultraRtAction === 'presets') {
+          if (typeof Build !== 'undefined' && Build.open && Build.isOpen && !Build.isOpen()) Build.open();
+          const presets = document.getElementById('refit-stations');
+          if (presets) { presets.click(); status.textContent = ''; }
+          else status.textContent = 'Open BUILD → BUILD MODE → Presets, then choose 1ULTRA COMMAND.';
+        } else if (action.dataset.ultraRtAction === 'ask') {
+          const kit = UltraTemplates.rooms[action.dataset.kit];
+          if (!kit) return;
+          if (typeof Workstreams === 'undefined' || !Workstreams.generalId || !Workstreams.generalId()
+            || typeof App === 'undefined' || !App.openWorkstream || typeof Chat === 'undefined' || !Chat.prefill)
+            throw new Error('ULTRA’s General session is unavailable. Reopen the station.');
+          App.openWorkstream(Workstreams.generalId());
+          if (StationUI.h.workConversation) StationUI.h.workConversation('ultra-room-templates');
+          Chat.prefill('Add the ' + kit.name + ' room template beside the station.');
+        }
+      } catch (e) { status.textContent = e.message; }
+    });
+  }, { console: true, className: 'ultra-room-templates-win' });
 
   async function api(method, payload, version) {
     const headers = { 'X-Starnet-Token': window.__STARNET_API_TOKEN__ || '' };

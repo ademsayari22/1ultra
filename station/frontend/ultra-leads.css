@@ -3,7 +3,8 @@
 .ultra-leads, .ultra-leads * { box-sizing: border-box; }
 .ultra-leads .ul-header { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
 .ultra-leads .ul-field { display: grid; gap: 5px; flex: 1 1 160px; min-width: 0; color: var(--ph-dim); }
-.ultra-leads :is(input, select) { width: 100%; min-width: 0; max-width: 100%; padding: 9px 10px; border: 1px solid rgba(var(--ph-rgb), .25); border-radius: var(--r-sm); background: var(--panel2); color: var(--text); font: inherit; }
+.ultra-leads :is(input, select, textarea) { width: 100%; min-width: 0; max-width: 100%; padding: 9px 10px; border: 1px solid rgba(var(--ph-rgb), .25); border-radius: var(--r-sm); background: var(--panel2); color: var(--text); font: inherit; }
+.ultra-leads textarea { resize: vertical; }
 .ultra-leads .ul-counts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; flex: 2 1 280px; min-width: 0; }
 .ultra-leads .ul-counts > div { display: grid; gap: 4px; }
 .ultra-leads .ul-counts small { font-size: 11px; }
@@ -29,10 +30,25 @@
 .ultra-leads .ul-ranking ul { padding-left: 18px; }
 .ultra-leads .ul-ranking li + li { margin-top: 8px; }
 .ultra-leads .ul-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-.ultra-leads .ul-actions .bb { max-width: 100%; white-space: normal; text-align: left; font: inherit; }
+.ultra-leads .bb, .ultra-rt .bb { max-width: 100%; white-space: normal; text-align: left; font: inherit; }
+.ultra-leads .ul-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.ultra-leads .ul-tabs [aria-pressed="true"] { color: var(--gold); border-color: var(--gold); }
+.ultra-leads .ul-section { margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(var(--ph-rgb), .25); }
+.ultra-leads h5 { margin: 16px 0 8px; color: var(--ph-dim); font-size: inherit; }
+.ultra-leads .ul-record { margin-top: 12px; padding: 12px; min-width: 0; border: 1px solid rgba(var(--ph-rgb), .25); border-radius: var(--r-sm); background: var(--panel); overflow-wrap: anywhere; }
+.ultra-leads .ul-message { white-space: pre-wrap; overflow-wrap: anywhere; }
+.ultra-leads .ul-inline-form { display: grid; gap: 12px; min-width: 0; margin-top: 16px; padding: 12px; border: 1px solid var(--ph-dim); border-radius: var(--r-sm); background: var(--panel2); }
+.ultra-leads .ul-proposed { min-width: 0; overflow-wrap: anywhere; }
+.ultra-leads [hidden] { display: none !important; }
+.ultra-rt { display: grid; gap: 14px; min-width: 0; max-width: 100%; color: var(--text); font: inherit; font-size: 13px; line-height: 1.5; }
+.ultra-rt, .ultra-rt * { box-sizing: border-box; }
+.ultra-rt-row { min-width: 0; padding: 12px; border: 1px solid rgba(var(--ph-rgb), .25); border-radius: var(--r-sm); background: var(--panel2); overflow-wrap: anywhere; }
+.ultra-rt h3 { margin: 0; color: var(--ph); font-size: 15px; }
+.ultra-rt-status { margin: 0; overflow-wrap: anywhere; }
+.ultra-rt button:focus-visible { outline: 2px solid var(--ph); outline-offset: -2px; }
 .ultra-leads a { color: var(--ph); overflow-wrap: anywhere; }
 .ultra-leads .ul-error { margin: 0; padding: 10px; border: 1px solid var(--bad); border-radius: var(--r-sm); color: var(--bad); }
-.ultra-leads :is(button, input, select, a, .ul-card):focus-visible { outline: 2px solid var(--ph); outline-offset: -2px; }
+.ultra-leads :is(button, input, select, textarea, a, .ul-card):focus-visible { outline: 2px solid var(--ph); outline-offset: -2px; }
 .ultra-leads [disabled] { opacity: .55; cursor: wait; }
 .ultra-leads footer { padding-top: 10px; border-top: 1px solid rgba(var(--ph-rgb), .25); }
 @media (max-width: 720px) {

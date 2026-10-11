@@ -433,5 +433,8 @@
  "replace": "    if (resolved.tools.includes('team.health')) teamNote += '\\n' + ultraHost.crew.leadBrief();\n    if (resolved.tools.includes('campaign.lead')) teamNote += '\\n' + ultraHost.campaignBrief();\n"},
 {"id": "ultra-leads-assets", "file": "frontend/index.html",
  "find": "<script src=\"ultra-window.js\"></script>",
- "replace": "<link rel=\"stylesheet\" href=\"ultra-leads.css\">\n<script src=\"ultra-window.js\"></script>\n<script src=\"ultra-leads.js\"></script>"}
+ "replace": "<link rel=\"stylesheet\" href=\"ultra-leads.css\">\n<script src=\"ultra-window.js\"></script>\n<script src=\"ultra-leads.js\"></script>"},
+{"id": "ultra-room-templates-dock", "file": "frontend/index.html",
+ "find": "        <button class=\"bb\" id=\"bb-build\" data-hint=\"refit\"><span class=\"bb-i\">⌂</span><span class=\"bb-tx\"><b>BUILD MODE</b><small>rooms, corridors, gear &amp; workflow lines</small></span></button>",
+ "replace": "        <button class=\"bb\" id=\"bb-build\" data-hint=\"refit\"><span class=\"bb-i\">⌂</span><span class=\"bb-tx\"><b>BUILD MODE</b><small>rooms, corridors, gear &amp; workflow lines</small></span></button>\n        <button class=\"bb\" data-term=\"ultra-room-templates\"><span class=\"bb-i\">▤</span><span class=\"bb-tx\"><b>ROOM TEMPLATES</b><small>1Ultra rooms ULTRA can add for future work</small></span></button>"}
 ]

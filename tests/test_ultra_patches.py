@@ -204,8 +204,18 @@ class PatchAnchorsTest(unittest.TestCase):
         self.assertTrue(U.owned('frontend/ultra-leads.js'))
         self.assertTrue(U.owned('frontend/ultra-leads.css'))
         ids = [p['id'] for p in json.loads((ROOT / 'station/ultra-patches.json').read_text())]
-        self.assertEqual(ids[-1], 'ultra-leads-assets')
+        self.assertGreater(ids.index('ultra-room-templates-dock'), ids.index('ultra-leads-assets'))
         self.assertGreater(ids.index('ultra-leads-assets'), ids.index('ultra-window-script'))
+
+    def test_room_templates_dock_is_appended_after_the_build_button(self):
+        patches = json.loads((ROOT / 'station/ultra-patches.json').read_text())
+        self.assertEqual(patches[-1]['id'], 'ultra-room-templates-dock')
+        index = (ROOT / 'station/frontend/index.html').read_text()
+        build_line = next(line for line in index.splitlines() if 'id="bb-build"' in line)
+        self.assertEqual(index.count(build_line), 1)
+        button = '<button class="bb" data-term="ultra-room-templates"><span class="bb-i">▤</span><span class="bb-tx"><b>ROOM TEMPLATES</b><small>1Ultra rooms ULTRA can add for future work</small></span></button>'
+        self.assertIn(build_line + '\n        ' + button, index)
+        self.assertEqual(index.count('data-term="ultra-room-templates"'), 1)
 
     def test_campaign_tool_http_routes_are_refused_before_body_or_bridge(self):
         host = (ROOT / 'station/ultra-host.js').read_text()
