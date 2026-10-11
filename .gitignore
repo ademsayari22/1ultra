@@ -18,3 +18,5 @@ station/node_modules
 .aws
 station/.dogfood/
 .worktrees/
+services/freellmapi/app/
+services/freellmapi/state/
