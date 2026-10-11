@@ -421,6 +421,14 @@
  "replace": "(item.group === 'work' ? 'work' : item.group === 'ultra' ? 'ultra' : 'look')"},
 {"id": "ultra-templates-script", "file": "frontend/index.html",
  "find": "<script src=\"app/stationtemplates.js\"></script>",
- "replace": "<script src=\"ultra-templates.js\"></script>\n<script src=\"app/stationtemplates.js\"></script>"}
-
+ "replace": "<script src=\"ultra-templates.js\"></script>\n<script src=\"app/stationtemplates.js\"></script>"},
+{"id": "campaign-tools-register", "file": "sidecar/index.js",
+ "find": "  ultraHost.crew.registerTools(registry);\n",
+ "replace": "  ultraHost.crew.registerTools(registry);\n  ultraHost.registerCampaignTools(registry);\n"},
+{"id": "campaign-tools-capability", "file": "sidecar/capability/registry.js",
+ "find": "      { capId: 'compute', tool: 'model.chat', scope: 'execute', requiresConsent: false, network: true },\n",
+ "replace": "      { capId: 'compute', tool: 'model.chat', scope: 'execute', requiresConsent: false, network: true },\n      // 1Ultra: the campaign tools ride compute, like quest.update, so ULTRA and every crew member can read the campaign.\n      { capId: 'campaign', tool: 'campaign.leads', scope: 'read', requiresConsent: false, network: false },\n      { capId: 'campaign', tool: 'campaign.lead', scope: 'read', requiresConsent: false, network: false },\n"},
+{"id": "campaign-tools-brief", "file": "sidecar/index.js",
+ "find": "    if (resolved.tools.includes('team.health')) teamNote += '\\n' + ultraHost.crew.leadBrief();\n",
+ "replace": "    if (resolved.tools.includes('team.health')) teamNote += '\\n' + ultraHost.crew.leadBrief();\n    if (resolved.tools.includes('campaign.lead')) teamNote += '\\n' + ultraHost.campaignBrief();\n"}
 ]

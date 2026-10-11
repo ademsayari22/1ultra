@@ -19328,6 +19328,7 @@ async function runOnceCore(o) {
     }
   }).register(registry);
   ultraHost.crew.registerTools(registry);
+  ultraHost.registerCampaignTools(registry);
   // session.list/create/focus: the LEAD's session verbs, over the same station bridge dispatch's resolver
   // uses. Same 'orchestrator' capability gate as team.* — conferred on the lead run only, so a delegated
   // worker can never open or steal the Commander's sessions. Only visual actions require a live page.
@@ -20908,6 +20909,7 @@ async function runOnceCore(o) {
     }
     teamNote = '\n\n[ORCHESTRATION] You are the lead orchestrator. You can build and direct a crew for the Commander:';
     if (resolved.tools.includes('team.health')) teamNote += '\n' + ultraHost.crew.leadBrief();
+    if (resolved.tools.includes('campaign.lead')) teamNote += '\n' + ultraHost.campaignBrief();
     if (require('./overseer.js').isCoordinatorRun({ ...o, agentId, surface })) teamNote += '\nCoordinate the Commander\'s existing station crew from this conversation. Handle simple work directly. '
       + 'Use the agents the Commander has already created, choosing by their roles and instructions. '
       + 'Do not create a replacement crew or require a special General session. '

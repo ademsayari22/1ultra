@@ -16477,10 +16477,10 @@
     },
     {
       "path": "sidecar/capability/registry.js",
-      "current_sha256": "707d801537fb3b66f02012466c6b0e943a7be0aaf73baf6e484ff6e0f912b103",
+      "current_sha256": "4c2be9ff8c04cf1b41d0d123c39637d461a58d67b8da1524fa5467ed058aa8ba",
       "reasons": [
         "brand",
-        "patch:crew-health-capability"
+        "patch:crew-health-capability,campaign-tools-capability"
       ]
     },
     {
@@ -16660,10 +16660,10 @@
     },
     {
       "path": "sidecar/index.js",
-      "current_sha256": "1ca4085a2ae2d6212f4c68c067bb015ac8adadc84894abd26cfda9dd429fcb1c",
+      "current_sha256": "cc05a011265dbcb18b8c5adf0861110d499e36b481a251e1cab1a21897b24a3b",
       "reasons": [
         "brand",
-        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty,bless-refusal,model-request-gate,codex-token-gate,codex-refresh-gate,crew-provider-config,crew-free-tier-cost,crew-run-receipts,crew-run-record,crew-dispatch-deps,crew-health-tool,crew-health-brief,crew-lead-start,crew-lead-notice,crew-lead-fallbacks,crew-fallback-receipts,crew-codex-state,crew-lead-token-retry,crew-lead-token-failure"
+        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty,bless-refusal,model-request-gate,codex-token-gate,codex-refresh-gate,crew-provider-config,crew-free-tier-cost,crew-run-receipts,crew-run-record,crew-dispatch-deps,crew-health-tool,crew-health-brief,crew-lead-start,crew-lead-notice,crew-lead-fallbacks,crew-fallback-receipts,crew-codex-state,crew-lead-token-retry,crew-lead-token-failure,campaign-tools-register,campaign-tools-brief"
       ]
     },
     {

@@ -17,6 +17,9 @@
   const CAP_REGISTRY = {
     computer: [
       { capId: 'compute', tool: 'model.chat', scope: 'execute', requiresConsent: false, network: true },
+      // 1Ultra: the campaign tools ride compute, like quest.update, so ULTRA and every crew member can read the campaign.
+      { capId: 'campaign', tool: 'campaign.leads', scope: 'read', requiresConsent: false, network: false },
+      { capId: 'campaign', tool: 'campaign.lead', scope: 'read', requiresConsent: false, network: false },
       // QUEST V2 §B: quest.update rides the `computer` object — the ONE object in BOTH the interactive baseline
       // (compute-only) office AND fullOffice, so EVERY task surface gets it (the interactive surface has no placed
       // notebook, which is why granting this under `notebook` left the tool ABSENT while the STATION QUESTS prompt

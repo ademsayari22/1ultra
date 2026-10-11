@@ -7,6 +7,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 from ultra_ui import Workspace, RequestError
 from campaign import Campaign, focus_plan
+import campaign_tools
 
 
 def dispatch(workspace, request):
@@ -14,6 +15,8 @@ def dispatch(workspace, request):
     body = request.get('body', {}); version = request.get('version', '')
     path = route.path; store = Campaign(workspace)
     if method == 'GET':
+        if path == '/api/tools/leads': return campaign_tools.leads(store, {k: v[0] for k, v in parse_qs(route.query).items()})
+        if path == '/api/tools/lead': return campaign_tools.packet(store, {k: v[0] for k, v in parse_qs(route.query).items()})
         if path == '/api/agents/readiness':
             from station_agents import readiness
             return readiness()

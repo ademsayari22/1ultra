@@ -156,6 +156,41 @@ class PatchAnchorsTest(unittest.TestCase):
         index = (ROOT / 'station/frontend/index.html').read_text()
         self.assertLess(index.index('<script src="ultra-templates.js"></script>'), index.index('<script src="app/stationtemplates.js"></script>'))
 
+    def test_campaign_tools_register_after_crew_tools(self):
+        index = (ROOT / 'station/sidecar/index.js').read_text()
+        fragment = '  ultraHost.crew.registerTools(registry);\n  ultraHost.registerCampaignTools(registry);\n'
+        self.assertTrue(fragment in index, 'campaign registration must follow crew registration')
+
+    def test_campaign_tools_ride_computer_with_their_own_capability(self):
+        registry = (ROOT / 'station/sidecar/capability/registry.js').read_text()
+        fragment = ("      { capId: 'compute', tool: 'model.chat', scope: 'execute', requiresConsent: false, network: true },\n"
+                    '      // 1Ultra: the campaign tools ride compute, like quest.update, so ULTRA and every crew member can read the campaign.\n'
+                    "      { capId: 'campaign', tool: 'campaign.leads', scope: 'read', requiresConsent: false, network: false },\n"
+                    "      { capId: 'campaign', tool: 'campaign.lead', scope: 'read', requiresConsent: false, network: false },\n")
+        self.assertTrue(fragment in registry, 'campaign read grants must ride computer with their own capId')
+
+    def test_campaign_brief_follows_crew_brief_only_when_tool_is_available(self):
+        index = (ROOT / 'station/sidecar/index.js').read_text()
+        fragment = ("    if (resolved.tools.includes('team.health')) teamNote += '\\n' + ultraHost.crew.leadBrief();\n"
+                    "    if (resolved.tools.includes('campaign.lead')) teamNote += '\\n' + ultraHost.campaignBrief();\n")
+        self.assertTrue(fragment in index, 'campaign brief must follow crew brief and check tool availability')
+
+    def test_campaign_tool_patches_are_appended_after_templates(self):
+        ids = [p['id'] for p in json.loads((ROOT / 'station/ultra-patches.json').read_text())]
+        self.assertEqual(ids[-3:], ['campaign-tools-register', 'campaign-tools-capability', 'campaign-tools-brief'])
+        self.assertGreater(ids.index('campaign-tools-register'), ids.index('ultra-templates-script'))
+
+    def test_campaign_tool_http_routes_are_refused_before_body_or_bridge(self):
+        host = (ROOT / 'station/ultra-host.js').read_text()
+        handler = host[host.index('async function handle(req,res){'):]
+        refusal = "if(p.startsWith('/api/ultra/tools/'))return json(res,404,{error:'Not found.'});"
+        self.assertTrue(refusal in handler, 'private tool routes must be refused by the HTTP handler')
+        self.assertLess(handler.index(refusal), handler.index('const body='))
+        self.assertLess(handler.index(refusal), handler.index('const response=await call(request);'))
+        self.assertIn("const campaignTools=require('./ultra-campaign-tools.js').makeCampaignTools({call,isHalted});", host)
+        self.assertIn('registerCampaignTools:registry=>campaignTools.register(registry)', host)
+        self.assertIn('campaignBrief:()=>campaignTools.brief()', host)
+
 
 if __name__ == '__main__':
     unittest.main()
