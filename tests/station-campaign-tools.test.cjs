@@ -141,8 +141,18 @@ test('drafting tools pass the calling agent and use the right scopes', async () 
   assert.equal(reg.tools.get('campaign.propose_lead').scope, 'write');
   await reg.tools.get('campaign.save_draft').run({ lead_id: 'tn', body: 'Bonjour', agent_id: 'forged' }, { agentId: 'sales' });
   assert.deepEqual(calls[0], { route: '/api/tools/save-draft', method: 'POST', body: { lead_id: 'tn', body: 'Bonjour', agent_id: 'sales' }, version: '' });
-  await reg.tools.get('campaign.propose_lead').run({ company: 'X' }, {});
+  await reg.tools.get('campaign.propose_lead').run({ company: 'Company', country: 'TN', source_url: 'https://company.tn',
+    observed_on: '2026-10-10', quote: 'Des services ERP.' }, {});
   assert.equal(calls[1].body.agent_id, 'unknown');
+});
+
+test('a proposal missing quote is refused before calling the worker', async () => {
+  let called = false;
+  const reg = fakeRegistry();
+  makeCampaignTools({ call: async () => { called = true; return {}; }, isHalted: () => false }).register(reg);
+  await assert.rejects(reg.tools.get('campaign.propose_lead').run({ company: 'Company', country: 'TN',
+    source_url: 'https://company.tn', observed_on: '2026-10-10' }, {}), /Campaign tool error: invalid arguments: .*quote: required/);
+  assert.equal(called, false);
 });
 
 
@@ -179,7 +189,8 @@ test('drafting tools reject invalid arguments and worker refusals', async () => 
   ]) await assert.rejects(reg.tools.get(name).run(args, {}), /Campaign tool error: invalid arguments/);
   assert.equal(calls, 0);
   for (const name of ['campaign.check_draft', 'campaign.save_draft', 'campaign.propose_lead']) {
-    const args = name === 'campaign.propose_lead' ? { company: 'Company' } : { lead_id: 'tn', body: 'Bonjour' };
+    const args = name === 'campaign.propose_lead' ? { company: 'Company', country: 'TN', source_url: 'https://company.tn',
+      observed_on: '2026-10-10', quote: 'Des services ERP.' } : { lead_id: 'tn', body: 'Bonjour' };
     await assert.rejects(reg.tools.get(name).run(args, {}), /Campaign tool error: Fix these first: guarantee/);
   }
   assert.equal(calls, 3);

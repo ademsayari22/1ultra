@@ -40,7 +40,7 @@ def check_new_company(country, company, website, leads, exclusions, proposals=()
     def website_key(value):
         return value.strip().rstrip('/') if isinstance(value, str) else ''
     key = website_key(website)
-    known = {website_key(row.get('website', row.get('source_url', ''))) for row in leads}
+    known = {website_key(row.get('website') or row.get('source_url') or '') for row in leads}
     if key and key in known:
         raise ValueError('Duplicate company website')
     if any(row.get('status') == 'proposed' and (automation.normalize_company(row.get('company')) == normalized or
@@ -328,6 +328,11 @@ class Campaign:
                 row.update(status='rejected', reason=reason)
             else:
                 leads = self.leads()
+                reference = 'Crew proposal ' + row['id'] + ' by ' + row['agent_id']
+                recovered = next((lead for lead in leads if lead.get('source_reference') == reference), None)
+                if recovered is not None:
+                    row.update(status='accepted', lead_id=recovered['id'])
+                    return row
                 check_new_company(row.get('country'), row['company'], row.get('website'), leads,
                                   ultra.read_json(self.root, 'data/exclusions.json'))
                 # Match the accepted CSV row shape and its journal, ID and atomic write path.
@@ -335,7 +340,7 @@ class Campaign:
                     'id': 'lead-' + secrets.token_hex(6), 'company': row['company'], 'kind': 'service_prospect',
                     'country': 'TN', 'location': row.get('location') or 'Tunisia', 'industry': row.get('industry'),
                     'website': row.get('website'), 'source_url': row['source_url'],
-                    'source_reference': 'Crew proposal ' + row['id'] + ' by ' + row['agent_id'],
+                    'source_reference': reference,
                     'observed_fact': row['quote'], 'observed_text': row['quote'], 'checked_date': row['observed_on'],
                     'source_type': 'crew_proposal', 'source_live_checked': False, 'contact_route': None,
                     'mode': 'real', 'status': 'discovered', 'contact_sent': False, 'buyer_need_confirmed': False,

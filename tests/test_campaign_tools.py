@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import campaign
 import campaign_tools
 import campaign_rpc
+import prospecting
 import records
 from ultra_ui import Workspace, RequestError
 
@@ -353,6 +354,7 @@ class CampaignToolTests(unittest.TestCase):
         (self.root / 'data/exclusions.json').write_text('{"companies":[{"company":"Nouvelle Data SARL"}]}')
         with self.assertRaises(RequestError):
             self.store.action('accept-proposal', {'id': made['id']}, self.store.version())
+
         (self.root / 'data/exclusions.json').write_text('{"companies":[]}')
         self.store.action('accept-proposal', {'id': made['id']}, self.store.version())
         added = json.loads((self.root / 'data/leads.json').read_text())[-1]
@@ -365,6 +367,57 @@ class CampaignToolTests(unittest.TestCase):
         self.assertEqual(added['history'][0]['after']['company'], 'Nouvelle Data SARL')
         with self.assertRaises(RequestError):
             self.store.action('accept-proposal', {'id': made['id']}, self.store.version())
+
+    def test_csv_preview_after_accepting_proposal_without_website(self):
+        made = campaign_tools.propose_lead(self.store, self.proposal_args(website=None), 'research')
+        self.store.action('accept-proposal', {'id': made['id']}, self.store.version())
+        path = self.root / 'data/leads.json'
+        before = path.read_bytes()
+        leads = json.loads(before)
+        self.assertIsNone(leads[-1]['website'])
+        out = prospecting.preview_import('Company Name,Company Country,Website\nFresh,Tunisia,https://fresh.tn\n',
+                                        leads, {'companies': []}, '2026-10-11')
+        self.assertEqual([row['company'] for row in out['accepted']], ['Fresh'])
+        self.assertEqual(out['rejected'], [])
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_proposal_duplicate_website_uses_source_when_known_website_is_none(self):
+        (self.root / 'data/leads.json').write_text(json.dumps([{**self.lead, 'website': None}]))
+        with self.assertRaisesRegex(ValueError, '^Duplicate company website$'):
+            campaign_tools.propose_lead(self.store, self.proposal_args(website='https://example.tn/services/'), 'research')
+
+    def test_acceptance_recovers_after_workbench_write_fails(self):
+        made = campaign_tools.propose_lead(self.store, self.proposal_args(), 'research')
+        workspace = self.store.workspace
+        atomic_json = workspace.atomic_json
+        failed = False
+
+        def fail_workbench_once(path, value, prefix):
+            nonlocal failed
+            if path == self.store.path and not failed:
+                failed = True
+                raise OSError('Injected workbench write failure')
+            return atomic_json(path, value, prefix)
+
+        with patch.object(workspace, 'atomic_json', side_effect=fail_workbench_once):
+            version = self.store.version()
+            with self.assertRaisesRegex(OSError, 'Injected workbench write failure'):
+                self.store.action('accept-proposal', {'id': made['id']}, version)
+            self.assertTrue(failed)
+            path = self.root / 'data/leads.json'
+            after_first_write = path.read_bytes()
+            matches = [row for row in json.loads(after_first_write) if row['company'] == made['company']]
+            self.assertEqual(len(matches), 1)
+            self.assertEqual(matches[0]['source_reference'], 'Crew proposal ' + made['id'] + ' by research')
+            self.assertEqual(self.store.read()['proposals'][0]['status'], 'proposed')
+            self.assertEqual(self.store.version(), version)
+            retried = self.store.action('accept-proposal', {'id': made['id']}, version)['record']
+
+        self.assertEqual((retried['status'], retried['lead_id']), ('accepted', matches[0]['id']))
+        self.assertEqual(self.store.read()['proposals'][0]['lead_id'], matches[0]['id'])
+        self.assertEqual(path.read_bytes(), after_first_write, 'recovery must not rewrite or append leads')
+        matches = [row for row in json.loads(path.read_text()) if row['company'] == made['company']]
+        self.assertEqual(len(matches), 1)
 
     def test_private_drafting_routes_use_host_agent_and_owner_status_is_bounded(self):
         workspace = self.store.workspace

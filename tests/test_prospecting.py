@@ -54,6 +54,15 @@ class ProspectingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             prospecting.preview_import('Company Name,Company Country\n' + 'A,Tunisia\n' * 501, [], {}, '2026-10-05')
 
+    def test_import_handles_null_websites_and_uses_source_url_for_duplicates(self):
+        existing = [lead(website=None), lead(id='unknown-source', company='Unknown Source', website=None, source_url=None)]
+        text = ('Company Name,Company Country,Website\n'
+                'Fresh,Tunisia,https://fresh.tn\n'
+                'Other,Tunisia,https://example.tn/\n')
+        result = prospecting.preview_import(text, existing, {'companies': []}, '2026-10-11')
+        self.assertEqual([row['company'] for row in result['accepted']], ['Fresh'])
+        self.assertEqual(result['rejected'], [{'row': 3, 'company': 'Other', 'reason': 'Duplicate company website'}])
+
     def test_draft_uses_observation_and_small_offer_without_claiming_a_sale(self):
         draft = prospecting.make_draft(lead(), 'catalogue', {}, '2026-10-05')
         self.assertIn('Publie un catalogue industriel.', draft['body'])

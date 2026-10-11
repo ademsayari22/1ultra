@@ -71,7 +71,7 @@ function makeCampaignTools({call, isHalted}) {
         company: {type: 'string', minLength: 2, maxLength: 200}, country: {type: 'string'},
         location: {type: 'string', maxLength: 100}, industry: {type: 'string'}, website: {type: 'string'},
         source_url: {type: 'string'}, observed_on: {type: 'string'}, quote: {type: 'string', minLength: 10, maxLength: 1000},
-      }, required: ['company']}, 'POST', 'write'),
+      }, required: ['company', 'country', 'source_url', 'observed_on', 'quote']}, 'POST', 'write'),
   ];
 
   return {register: registry => { for (const tool of tools) registry.register(tool); }, brief: () => BRIEF};

@@ -67,7 +67,7 @@ def preview_import(csv_text, existing, exclusions, today=None):
     def value(row, *keys):
         return next((row.get(names[key], '').strip() for key in keys if names.get(key) and row.get(names[key], '').strip()), '')
     known = {automation.normalize_company(row.get('company')) for row in existing if row.get('company')}
-    seen_urls = {row.get('website', row.get('source_url', '')).rstrip('/') for row in existing}
+    seen_urls = {(row.get('website') or row.get('source_url') or '').rstrip('/') for row in existing}
     excluded = {automation.normalize_company(name) for row in exclusions.get('companies', [])
                 for name in [row.get('company'), *row.get('aliases', [])] if name}
     accepted, rejected = [], []
