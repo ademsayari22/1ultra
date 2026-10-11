@@ -9,7 +9,7 @@
     "id": "run-admission",
     "file": "sidecar/index.js",
     "find": "async function runOnceCore(o) {\n  if (updatePreparation.isFrozen()) {\n    throw Object.assign(new Error('1Ultra is frozen at a verified pre-update recovery point.'), { code: 'UPDATE_MUTATIONS_FROZEN' });\n  }\n",
-    "replace": "async function runOnceCore(o) {\n  if (updatePreparation.isFrozen()) {\n    throw Object.assign(new Error('1Ultra is frozen at a verified pre-update recovery point.'), { code: 'UPDATE_MUTATIONS_FROZEN' });\n  }\n  ultraHost.beforeRun(o);\n"
+    "replace": "async function runOnceCore(o) {\n  if (updatePreparation.isFrozen()) {\n    throw Object.assign(new Error('1Ultra is frozen at a verified pre-update recovery point.'), { code: 'UPDATE_MUTATIONS_FROZEN' });\n  }\n  ultraHost.beforeRun(o, agentRoster.get(String(o.agentId || 'agent')) || null);\n"
   },
   {
     "id": "station-halt-hook",
@@ -320,9 +320,6 @@
 {"id": "crew-provider-config", "file": "sidecar/index.js",
  "find": "ultraHost.registerStationHalt(() => { handleHalt(null, { writeHead() {}, end() {} }); try { killAll(runStopHandles); } catch (e) { failNote('ultra.station-halt.killAll', e); } });\n",
  "replace": "ultraHost.registerStationHalt(() => { handleHalt(null, { writeHead() {}, end() {} }); try { killAll(runStopHandles); } catch (e) { failNote('ultra.station-halt.killAll', e); } });\nultraHost.registerProviderConfig(setProviderRuntimeConfig);\n"},
-{"id": "crew-codex-state", "file": "sidecar/index.js",
- "find": "ultraHost.registerProviderConfig(setProviderRuntimeConfig);\n",
- "replace": "ultraHost.registerProviderConfig(setProviderRuntimeConfig);\nultraHost.registerCodexState(() => !!(codexTokens && codexTokens.access_token) && !codexAuthDead);\n"},
 {"id": "crew-free-tier-cost", "file": "sidecar/index.js",
  "find": "    const finalUsd = effectiveRunUsd({ usd: (result && result.usd) || 0, mediaUsd, unmetered: runUnmetered, unpricedUsage: result && result.unpricedUsage, priceOf: provider && provider.priceOf });\n",
  "replace": "    // 1Ultra: a run on the local FreeLLMAPI service books only its paid media; the free model itself costs $0.\n    const finalUsd = require('../ultra-crew-wire.js').freeTierUsd(ultraHost.crew.isFreeTier(activeProviderId), mediaUsd, () => effectiveRunUsd({ usd: (result && result.usd) || 0, mediaUsd, unmetered: runUnmetered, unpricedUsage: result && result.unpricedUsage, priceOf: provider && provider.priceOf }));\n"},
@@ -382,5 +379,11 @@
  "replace": "  const rawProviderFallbacks = savedProviderFallbacks.concat(Array.isArray(o.fallbackProviders) ? o.fallbackProviders : [], ultraHost.crew.leadFallbacks(providerId, agentId));\n"},
 {"id": "crew-fallback-receipts", "file": "sidecar/index.js",
  "find": "      fbProvider = selectProvider({ provider: fbProviderId, fetch: globalThis.fetch, key: fbKey, baseUrl: fbBaseUrl, reasoningEffort });\n",
- "replace": "      fbProvider = selectProvider({ provider: fbProviderId, fetch: globalThis.fetch, key: fbKey, baseUrl: fbBaseUrl, reasoningEffort, ultraRunId: runId, ultraAgentId: agentId });\n"}
+ "replace": "      fbProvider = selectProvider({ provider: fbProviderId, fetch: globalThis.fetch, key: fbKey, baseUrl: fbBaseUrl, reasoningEffort, ultraRunId: runId, ultraAgentId: agentId });\n"},
+{"id": "crew-codex-state", "file": "sidecar/index.js",
+ "find": "ultraHost.registerProviderConfig(setProviderRuntimeConfig);\n",
+ "replace": "ultraHost.registerProviderConfig(setProviderRuntimeConfig);\nultraHost.registerCodexState(() => !!(codexTokens && codexTokens.access_token) && !codexAuthDead);\n"},
+{"id": "crew-relogin-auth", "file": "sidecar/providers/errorClass.js",
+ "find": "  function pickReason(status, code, low, err, ctx) {\n",
+ "replace": "  function pickReason(status, code, low, err, ctx) {\n    if (err && err.reloginRequired === true) return 'auth';\n"}
 ]

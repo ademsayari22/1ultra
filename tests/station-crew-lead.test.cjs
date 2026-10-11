@@ -35,9 +35,6 @@ test('a signed-out Codex lead run is rewritten to the free tier; anything else i
     assert.equal(t.crew.leadStartFallback('agent', 'codex'), true);
     t.crew.rewriteLeadRun(lead);
     assert.deepEqual([lead.provider, lead.model, lead.key, lead.baseUrl, lead.ultraLeadFreeTier], ['custom', 'auto:smart', KEY, 'http://127.0.0.1:3901/v1', { fromModel: 'gpt-6.1-sol' }]);
-    const implicit = { agentId: 'agent', model: 'gpt-6.1-sol' };
-    t.crew.rewriteLeadRun(implicit);
-    assert.equal(implicit.provider, 'custom', 'the lead with no explicit provider is the Codex lead');
     const worker = { agentId: 'research', provider: 'custom', model: 'auto:smart' };
     t.crew.rewriteLeadRun(worker);
     assert.equal(worker.ultraLeadFreeTier, undefined);
@@ -46,4 +43,37 @@ test('a signed-out Codex lead run is rewritten to the free tier; anything else i
     t.crew.rewriteLeadRun(signed);
     assert.deepEqual([signed.provider, t.crew.leadStartFallback('agent', 'codex')], ['codex', false]);
   } finally { fs.rmSync(t.rt, { recursive: true, force: true }); }
+});
+
+for (const { name, provider, ident, rewritten } of [
+  { name: 'a providerless lead keeps its OpenRouter roster identity', ident: { provider: 'openrouter' }, rewritten: false },
+  { name: 'a providerless lead with a Codex roster identity uses the free tier', ident: { provider: 'codex' }, rewritten: true },
+  { name: 'an explicit Codex lead provider overrides an OpenRouter roster identity', provider: 'codex', ident: { provider: 'openrouter' }, rewritten: true },
+  { name: 'a providerless lead without a roster identity is left alone', ident: null, rewritten: false },
+]) {
+  test(name, () => {
+    const t = setup();
+    try {
+      t.crew.registerCodexState(() => false);
+      const run = { agentId: 'agent', model: 'gpt-6.1-sol', ...(provider ? { provider } : {}) };
+      const original = { ...run };
+      t.crew.rewriteLeadRun(run, ident);
+      if (rewritten) {
+        assert.deepEqual(run, { agentId: 'agent', provider: 'custom', model: 'auto:smart', key: KEY,
+          baseUrl: 'http://127.0.0.1:3901/v1', ultraLeadFreeTier: { fromModel: 'gpt-6.1-sol' } });
+      } else {
+        assert.deepEqual(run, original, 'a non-Codex run must retain all its options');
+      }
+    } finally { fs.rmSync(t.rt, { recursive: true, force: true }); }
+  });
+}
+
+test('a relogin-required Codex error is auth while the same error without the flag stays unknown', () => {
+  const { classifyApiError } = require('../station/sidecar/providers/errorClass.js');
+  const error = () => Object.assign(new Error('Not signed in to ChatGPT — connect a ChatGPT subscription first.'),
+    { code: 'codex_not_connected' });
+  assert.equal(classifyApiError(error()).reason, 'unknown');
+  assert.equal(classifyApiError(Object.assign(error(), { reloginRequired: true })).reason, 'auth');
+  assert.equal(classifyApiError(Object.assign(error(), { reloginRequired: false })).reason, 'unknown');
+  assert.equal(classifyApiError(Object.assign(error(), { reloginRequired: 'true' })).reason, 'unknown');
 });

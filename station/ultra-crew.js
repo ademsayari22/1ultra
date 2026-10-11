@@ -9,6 +9,7 @@ const {makeReceipts}=require('./ultra-crew-receipts.js');
 const {makeRoster}=require('./ultra-crew-roster.js');
 const {makeSupervisor}=require('./ultra-crew-supervisor.js');
 const {parseVerdict}=require('./sidecar/routing/verdict.js');
+const {normalizeProviderId}=require('./sidecar/providers/registry.js');
 const READY_TTL_MS=30000;
 const LEAD='agent';
 const LEAD_BRIEF='[CREW HEALTH] Your crew runs on free FreeLLMAPI models whose quality changes during the day. Call team.health before you plan crew assignments. When a crew result is downgraded, fails its checks, or its member is benched, the station retries it, reassigns it or hands the subtask back to you; team.dispatch rows list these moves in crewMoves. Tell the Commander about every move and every failed subtask.';
@@ -88,9 +89,9 @@ function makeCrew({fs,path,runtime,switches,port,durable,isHalted=()=>false,fetc
     let signedIn=true;try{signedIn=!!codexSignedIn();}catch(_){signedIn=false;}
     return String(providerId||'')==='codex'&&String(agentId||LEAD)===LEAD&&!signedIn&&freeTierOpen();
   }
-  function rewriteLeadRun(o){
+  function rewriteLeadRun(o,rosterIdent){
     if(!o)return;
-    const agentId=String(o.agentId||LEAD),providerId=String(o.provider||(agentId===LEAD?'codex':'')).toLowerCase();
+    const agentId=String(o.agentId||LEAD),providerId=normalizeProviderId(o.provider||(rosterIdent&&rosterIdent.provider)||'','openrouter');
     if(!leadStartFallback(agentId,providerId))return;
     const w=wire.get();
     o.ultraLeadFreeTier={fromModel:String(o.model||'gpt-6.1-sol')};

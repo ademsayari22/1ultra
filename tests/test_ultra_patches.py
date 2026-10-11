@@ -103,7 +103,17 @@ class PatchAnchorsTest(unittest.TestCase):
                        'ultraHost.crew.leadFallbacks(providerId, agentId));',
                        'key: fbKey, baseUrl: fbBaseUrl, reasoningEffort, ultraRunId: runId, ultraAgentId: agentId });'):
             self.assertIn(needle, index)
-        self.assertIn('crew.rewriteLeadRun(o);', (ROOT / 'station/ultra-host.js').read_text())
+        self.assertIn("ultraHost.beforeRun(o, agentRoster.get(String(o.agentId || 'agent')) || null);", index)
+        self.assertIn('crew.rewriteLeadRun(o,ident);', (ROOT / 'station/ultra-host.js').read_text())
+
+    def test_relogin_required_errors_enter_the_auth_recovery_class(self):
+        error_class = (ROOT / 'station/sidecar/providers/errorClass.js').read_text()
+        self.assertIn("if (err && err.reloginRequired === true) return 'auth';", error_class)
+
+    def test_codex_state_patch_is_appended_after_the_original_crew_patches(self):
+        ids = [p['id'] for p in json.loads((ROOT / 'station/ultra-patches.json').read_text())]
+        self.assertGreater(ids.index('crew-codex-state'), ids.index('crew-provider-config'))
+        self.assertGreater(ids.index('crew-codex-state'), ids.index('crew-fallback-receipts'))
 
 
 if __name__ == '__main__':

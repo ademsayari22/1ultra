@@ -302,6 +302,7 @@
   function isQuotaExhausted(low) { return QUOTA_EXHAUSTED_RE.test(low) && !SHORT_WINDOW_RE.test(low); }
 
   function pickReason(status, code, low, err, ctx) {
+    if (err && err.reloginRequired === true) return 'auth';
     // 0. errors that never reached an API: a certificate the machine rejects, or a crash in our own code. First,
     //    because neither carries a status or a body — so no later rule can be describing the provider's intent.
     if (!status && isTlsFailure(err, low)) return 'tls_certificate';

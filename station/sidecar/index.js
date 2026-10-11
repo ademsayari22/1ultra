@@ -18594,7 +18594,7 @@ async function runOnceCore(o) {
   if (updatePreparation.isFrozen()) {
     throw Object.assign(new Error('1Ultra is frozen at a verified pre-update recovery point.'), { code: 'UPDATE_MUTATIONS_FROZEN' });
   }
-  ultraHost.beforeRun(o);
+  ultraHost.beforeRun(o, agentRoster.get(String(o.agentId || 'agent')) || null);
   // Only host-routed workflow runs carry this origin; /api/run never accepts it.
   // (multi-bay) the entry routine names its dock: an agent crewing two lines answers for the bay it fires at
   const workflowLine = o.runsLine === true ? router.lineOfAgent(o.agentId, o.dockId ? router.dockOf(o.agentId, o.dockId) : undefined) : o.lineId;
