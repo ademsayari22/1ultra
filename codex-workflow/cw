@@ -1,0 +1,226 @@
+#!/usr/bin/env bash
+# cw — drive Codex through a written plan, one task at a time:
+#   init → run (implement in a worktree) → verify (you) → commit → review → fix → rereview → merge … → final
+# Run `cw help` for the commands. Settings live in config.sh next to this file.
+set -euo pipefail
+
+CW_HOME="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+ROOT="$(cd "$(git -C "$CW_HOME" rev-parse --path-format=absolute --git-common-dir)/.." && pwd)"
+# shellcheck source=config.sh
+source "$CW_HOME/config.sh"
+# An optional second settings file (for another project, or the self-test) overrides config.sh.
+if [ -n "${CW_CONFIG:-}" ]; then source "$CW_CONFIG"; fi
+WS_ROOT="$ROOT/$WORKSPACE_ROOT"
+
+die() { echo "cw: $*" >&2; exit 1; }
+files() { local f; for f in "$@"; do [ -e "$f" ] && echo "$f"; done; return 0; }   # existing paths only, version-sorted by callers
+say() { echo "cw: $*"; }
+
+# ---------- the current plan and its workspace ----------
+plan_rel() { [ -f "$WS_ROOT/current" ] || die "no plan yet — run: cw init <plan.md>"; cat "$WS_ROOT/current"; }
+slug_of() { basename "$1" .md; }
+wsd() { echo "$WS_ROOT/$(slug_of "$(plan_rel)")"; }
+meta() { grep -m1 "^$1=" "$(wsd)/meta" | cut -d= -f2-; }
+base_branch() { meta BASE_BRANCH; }
+short() { local s; s="$(slug_of "$(plan_rel)")"; echo "${s:0:28}"; }
+wt_of() { echo "$ROOT/$WORKTREE_ROOT/$(short)-t$1"; }
+branch_of() { echo "cw/$(short)-t$1"; }
+ledger() { echo "$(date '+%F %T')  $*" >> "$(wsd)/ledger.md"; }
+need_wt() { [ -d "$(wt_of "$1")" ] || die "task $1 has no worktree — run: cw run $1"; }
+
+launch() {   # launch NAME CWD CMD... — start one Codex job in the background (it survives closing the terminal)
+  local name="$1" cwd="$2"; shift 2
+  local d; d="$(wsd)"
+  ( cd "$cwd" && setsid nohup "$CW_HOME/lib/job.sh" "$d/$name.status" "$d/$name.log" "$@" > /dev/null 2>&1 < /dev/null & )
+  sleep 1
+  say "started $name in the background — follow it with: cw wait ${name#task-}"
+}
+
+package() {  # package BASE HEAD OUT DIR — the whole change in one file, so a reviewer reads it once
+  local base="$1" head="$2" out="$3" dir="$4"
+  { echo "# Change $base..$head"; echo; echo '## Commits'; git -C "$dir" log --oneline "$base..$head"; echo
+    echo '## Files'; git -C "$dir" diff --stat "$base" "$head"; echo; echo '## Diff'; git -C "$dir" diff -U10 "$base" "$head"; } > "$out"
+}
+
+snapshot() { (cd "$ROOT" && for f in "${RECORDS[@]}"; do [ -f "$f" ] && sha256sum "$f"; done) || true; }
+
+# ---------- commands ----------
+cmd_init() {
+  local plan="${1:?usage: cw init <plan.md>}"
+  [ -f "$ROOT/$plan" ] || [ -f "$plan" ] || die "plan not found: $plan"
+  plan="$(realpath --relative-to="$ROOT" "$(readlink -f "$plan")")"
+  mkdir -p "$WS_ROOT"; echo "$plan" > "$WS_ROOT/current"
+  local d; d="$(wsd)"; mkdir -p "$d"
+  if [ ! -f "$d/meta" ]; then
+    local b="${BASE_BRANCH:-$(git -C "$ROOT" branch --show-current)}"
+    [ -n "$b" ] || die "the main checkout is not on a branch; set BASE_BRANCH"
+    { echo "PLAN=$plan"; echo "BASE_BRANCH=$b"; echo "PLAN_BASE=$(git -C "$ROOT" rev-parse "$b")"; } > "$d/meta"
+    echo "# Ledger — $plan" > "$d/ledger.md"
+    ledger "init: base branch $b @ $(git -C "$ROOT" rev-parse --short "$b")"
+  fi
+  python3 "$CW_HOME/lib/plan.py" constraints "$ROOT/$plan" > "$d/global-constraints.md"
+  say "plan $plan · base branch $(base_branch) · workspace ${d#$ROOT/}"
+  python3 "$CW_HOME/lib/plan.py" tasks "$ROOT/$plan" | sed 's/^/  task /'
+}
+
+cmd_brief() {
+  local n="${1:?usage: cw brief <N>}" d; d="$(wsd)"
+  python3 "$CW_HOME/lib/plan.py" task "$ROOT/$(plan_rel)" "$n" > "$d/task-$n-brief.md"
+  echo "$d/task-$n-brief.md"
+}
+
+cmd_run() {
+  local n="${1:?usage: cw run <N> [context.md]}" ctx="${2:-}" d wt br brief
+  d="$(wsd)"; wt="$(wt_of "$n")"; br="$(branch_of "$n")"; brief="$(cmd_brief "$n")"
+  [ -z "$ctx" ] && [ -f "$d/task-$n-context.md" ] && ctx="$d/task-$n-context.md"
+  [ -n "$ctx" ] && [ ! -f "$ctx" ] && die "context file not found: $ctx"
+  if [ ! -d "$wt" ]; then
+    git -C "$ROOT" worktree add -q -b "$br" "$wt" "$(base_branch)"
+    git -C "$ROOT" rev-parse "$(base_branch)" > "$d/task-$n.base"
+  fi
+  for l in "${LINKS[@]}"; do [ -e "$ROOT/$l" ] && [ ! -e "$wt/$l" ] && ln -s "$ROOT/$l" "$wt/$l"; done
+  python3 "$CW_HOME/lib/fill.py" "$CW_HOME/templates/implementer.md" TASK="$n" BRIEF="$brief" GLOBAL="$d/global-constraints.md" \
+    CONTEXT="@${ctx:-/nonexistent}" WORKTREE="$wt" BRANCH="$br" REPORT="$d/task-$n-report.md" > "$d/task-$n-prompt.md"
+  ledger "task $n: implementer started in ${wt#$ROOT/} (effort $EFFORT)"
+  launch "task-$n" "$wt" codex exec -m "$MODEL" -c model_reasoning_effort="$EFFORT" -s workspace-write -C "$wt" \
+    --add-dir "$d" -o "$d/task-$n-final.md" "$(cat "$d/task-$n-prompt.md")"
+}
+
+job_name() {  # job_name N [run|review|rereview|fix] / final
+  local n="$1" kind="${2:-run}" d; d="$(wsd)"
+  case "$n:$kind" in
+    final:*) echo final-review ;;
+    *:run) echo "task-$n" ;;
+    *:review) echo "task-$n-review" ;;
+    *:rereview) echo "task-$n-rereview" ;;
+    *:fix) local last; last="$(files "$d"/task-"$n"-fix*.status | sort -V | tail -1)"; [ -n "$last" ] || die "task $n has no fix round"; basename "$last" .status ;;
+    *) die "unknown job kind: $kind" ;;
+  esac
+}
+
+cmd_wait() {
+  local name d out; name="$(job_name "${1:?usage: cw wait <N|final> [run|review|rereview|fix]}" "${2:-run}")"; d="$(wsd)"
+  [ -f "$d/$name.status" ] || die "no job $name"
+  while ! grep -q '^exit' "$d/$name.status"; do
+    [ -f "$d/$name.log.wait" ] && tail -1 "$d/$name.log.wait"
+    sleep "${WAIT_POLL:-15}"
+  done
+  cat "$d/$name.status"
+  for out in "$d/$name-final.md" "$d/$name.md"; do [ -f "$out" ] && { echo "----- ${out#$ROOT/}"; cat "$out"; }; done
+  return 0
+}
+
+cmd_verify() {
+  local n="${1:?usage: cw verify <N>}" wt d log before after failed=0; need_wt "$n"
+  wt="$(wt_of "$n")"; d="$(wsd)"; log="$d/task-$n-verify.log"; : > "$log"
+  before="$(snapshot)"
+  for c in "${VERIFY[@]}"; do
+    echo "== $c" >> "$log"
+    if (cd "$wt" && bash -c "$c") >> "$log" 2>&1; then echo "PASS  $c"; else echo "FAIL  $c"; failed=1; fi
+  done
+  after="$(snapshot)"
+  if [ "$before" = "$after" ]; then echo "PASS  records unchanged during the checks"; else echo "FAIL  records changed during the checks:"; diff <(echo "$before") <(echo "$after") | grep '^[<>]' || true; failed=1; fi
+  echo "full output: ${log#$ROOT/}"
+  ledger "task $n: verify $([ $failed = 0 ] && echo passed || echo FAILED)"
+  return $failed
+}
+
+cmd_commit() {
+  local n="${1:?usage: cw commit <N> \"message\"}" msg="${2:?usage: cw commit <N> \"message\"}" wt; need_wt "$n"; wt="$(wt_of "$n")"
+  git -C "$wt" add -A
+  git -C "$wt" diff --cached --quiet && die "nothing to commit in task $n"
+  if [ -n "$COMMIT_TRAILER" ]; then git -C "$wt" commit -q -m "$msg" -m "$COMMIT_TRAILER"; else git -C "$wt" commit -q -m "$msg"; fi
+  ledger "task $n: commit $(git -C "$wt" rev-parse --short HEAD) — $msg"
+  say "committed $(git -C "$wt" rev-parse --short HEAD)"
+}
+
+cmd_review() {
+  local n="${1:?usage: cw review <N>}" wt d base head; need_wt "$n"; wt="$(wt_of "$n")"; d="$(wsd)"
+  base="$(cat "$d/task-$n.base")"; head="$(git -C "$wt" rev-parse HEAD)"
+  [ "$base" != "$head" ] || die "task $n has no commits yet — run: cw commit $n \"message\""
+  git -C "$wt" diff --quiet || say "note: task $n has uncommitted changes; the review sees commits only"
+  package "$base" "$head" "$d/task-$n-review.diff" "$wt"
+  python3 "$CW_HOME/lib/fill.py" "$CW_HOME/templates/reviewer.md" BRIEF="$d/task-$n-brief.md" REPORT="$d/task-$n-report.md" \
+    DIFF="$d/task-$n-review.diff" GLOBAL="$d/global-constraints.md" WORKTREE="$wt" > "$d/task-$n-review-prompt.md"
+  ledger "task $n: review of $(git -C "$wt" rev-parse --short "$base")..$(git -C "$wt" rev-parse --short "$head")"
+  launch "task-$n-review" "$wt" codex exec -m "$MODEL" -c model_reasoning_effort="$REVIEW_EFFORT" -s read-only -C "$wt" \
+    -o "$d/task-$n-review.md" "$(cat "$d/task-$n-review-prompt.md")"
+}
+
+cmd_fix() {
+  local n="${1:?usage: cw fix <N> <fix.md>}" file="${2:?usage: cw fix <N> <fix.md>}" wt d sid k; need_wt "$n"
+  [ -f "$file" ] || die "fix file not found: $file"
+  wt="$(wt_of "$n")"; d="$(wsd)"
+  sid="$(grep -m1 '^session ' "$d/task-$n.status" | awk '{print $2}')"; [ -n "$sid" ] || die "no Codex session recorded for task $n"
+  k=$(( $(files "$d"/task-"$n"-fix*.status | wc -l) + 1 ))
+  cp "$file" "$d/task-$n-fix$k.md"
+  git -C "$wt" rev-parse HEAD > "$d/task-$n.fixbase"
+  ledger "task $n: fix round $k (resumes session $sid) — ${file#$ROOT/}"
+  launch "task-$n-fix$k" "$wt" codex exec resume "$sid" -m "$MODEL" -c model_reasoning_effort="$EFFORT" \
+    -c sandbox_mode=workspace-write -c "sandbox_workspace_write.writable_roots=[\"$d\"]" \
+    -o "$d/task-$n-fix$k-final.md" "$(cat "$file")"
+}
+
+cmd_rereview() {
+  local n="${1:?usage: cw rereview <N> [findings.md]}" findings="${2:-}" wt d base head; need_wt "$n"; wt="$(wt_of "$n")"; d="$(wsd)"
+  [ -n "$findings" ] || findings="$(files "$d"/task-"$n"-fix[0-9].md "$d"/task-"$n"-fix[0-9][0-9].md | sort -V | tail -1)"
+  [ -f "$findings" ] || die "no findings file — pass one: cw rereview $n findings.md"
+  base="$(cat "$d/task-$n.fixbase")"; head="$(git -C "$wt" rev-parse HEAD)"
+  [ "$base" != "$head" ] || die "the fix is not committed yet — run: cw commit $n \"message\""
+  package "$base" "$head" "$d/task-$n-rereview.diff" "$wt"
+  python3 "$CW_HOME/lib/fill.py" "$CW_HOME/templates/rereview.md" FINDINGS="@$findings" DIFF="$d/task-$n-rereview.diff" \
+    BRIEF="$d/task-$n-brief.md" REPORT="$d/task-$n-report.md" WORKTREE="$wt" > "$d/task-$n-rereview-prompt.md"
+  ledger "task $n: re-review of the fix (effort $REREVIEW_EFFORT)"
+  launch "task-$n-rereview" "$wt" codex exec -m "$MODEL" -c model_reasoning_effort="$REREVIEW_EFFORT" -s read-only -C "$wt" \
+    -o "$d/task-$n-rereview.md" "$(cat "$d/task-$n-rereview-prompt.md")"
+}
+
+cmd_merge() {
+  local n="${1:?usage: cw merge <N> [--push] [--clean]}" push=0 clean=0 b wt br; shift
+  for a in "$@"; do case "$a" in --push) push=1 ;; --clean) clean=1 ;; *) die "unknown option $a" ;; esac; done
+  b="$(base_branch)"; wt="$(wt_of "$n")"; br="$(branch_of "$n")"
+  [ "$(git -C "$ROOT" branch --show-current)" = "$b" ] || die "the main checkout must be on $b"
+  git -C "$ROOT" merge --ff-only -q "$br" || die "cannot fast-forward $b to $br (rebase the task branch first)"
+  git -C "$ROOT" rev-parse --short HEAD > "$(wsd)/task-$n.merged"
+  ledger "task $n: merged into $b @ $(git -C "$ROOT" rev-parse --short HEAD)"
+  say "merged $br into $b @ $(git -C "$ROOT" rev-parse --short HEAD)"
+  if [ $push = 1 ]; then git -C "$ROOT" push -q origin "$b"; ledger "task $n: pushed $b"; say "pushed $b"; fi
+  if [ $clean = 1 ] && [ -d "$wt" ]; then
+    for l in "${LINKS[@]}"; do [ -L "$wt/$l" ] && rm "$wt/$l"; done
+    git -C "$ROOT" worktree remove "$wt" && git -C "$ROOT" branch -q -d "$br" && say "removed ${wt#$ROOT/} and $br"
+  fi
+}
+
+cmd_final() {
+  local d base head; d="$(wsd)"; base="$(meta PLAN_BASE)"; head="$(git -C "$ROOT" rev-parse "$(base_branch)")"
+  package "$base" "$head" "$d/final-review.diff" "$ROOT"
+  python3 "$CW_HOME/lib/fill.py" "$CW_HOME/templates/final-review.md" PLAN="$ROOT/$(plan_rel)" LEDGER="$d/ledger.md" \
+    DIFF="$d/final-review.diff" WORKTREE="$ROOT" > "$d/final-review-prompt.md"
+  ledger "final review of $(git -C "$ROOT" rev-parse --short "$base")..$(git -C "$ROOT" rev-parse --short "$head")"
+  launch final-review "$ROOT" codex exec -m "$MODEL" -c model_reasoning_effort="$REVIEW_EFFORT" -s read-only -C "$ROOT" \
+    -o "$d/final-review.md" "$(cat "$d/final-review-prompt.md")"
+}
+
+cmd_status() {
+  local d n title f; d="$(wsd)"
+  say "plan $(plan_rel) · base $(base_branch) · workspace ${d#$ROOT/}"
+  while IFS=$'\t' read -r n title; do
+    [ -n "$n" ] || continue
+    printf '  task %-3s %s\n' "$n" "$title"
+    for f in "$d"/task-"$n".status "$d"/task-"$n"-review.status "$d"/task-"$n"-fix*.status "$d"/task-"$n"-rereview.status; do
+      [ -f "$f" ] && printf '      %-22s %s\n' "$(basename "$f" .status)" "$(tail -1 "$f")"
+    done
+    if [ -f "$d/task-$n.merged" ]; then echo "      merged @ $(cat "$d/task-$n.merged")"; fi
+  done < <(python3 "$CW_HOME/lib/plan.py" tasks "$ROOT/$(plan_rel)")
+  [ -f "$d/final-review.status" ] && echo "  final review: $(tail -1 "$d/final-review.status")"
+  return 0
+}
+
+cmd_log() { ledger "${*:?usage: cw log \"text\"}"; say "logged"; }
+
+cmd_help() { sed -n '/^## Commands/,/^## /p' "$CW_HOME/README.md" | sed '$d'; }
+
+case "${1:-help}" in
+  init|brief|run|wait|verify|commit|review|fix|rereview|merge|final|status|log|help) c="$1"; shift || true; "cmd_$c" "$@" ;;
+  *) die "unknown command '$1' — see: cw help" ;;
+esac
