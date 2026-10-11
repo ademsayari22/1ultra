@@ -7,6 +7,8 @@ const { makeOrchestrationTools } = require('../station/sidecar/tools/builtin/orc
 const { parseVerdict } = require('../station/sidecar/routing/verdict.js');
 const { makeCrew } = require('../station/ultra-crew.js');
 const { makeRunStore } = require('../station/sidecar/runstore.js');
+const { makeSubagentManager } = require('../station/sidecar/subagents.js');
+const policy = require('../station/ultra-policy.js');
 const seed = require('../station/ultra-seed.js');
 
 const TIERS = { models: { 'p/smart': { canonicalId: 'smart', tier: 'smart', tools: true }, 'p/fast': { canonicalId: 'fast', tier: 'fast', tools: true } } };
@@ -14,20 +16,22 @@ const IDS = ['research', 'delivery', 'sales', 'qa'];
 const PROFILES = Object.fromEntries(IDS.map(id => [id, H.normalizeProfile(H.DEFAULT_PROFILES[id])]));
 const IDENT = Object.fromEntries(IDS.map(id => [id, { provider: 'custom', model: H.ROUTING[PROFILES[id].minTier], system: id }]));
 
-function harness({ ready = () => true, on = ['crew.freellmapi', 'crew.escalate_to_lead', 'lead.codex'], halted = () => false } = {}) {
+const isCrewProvider = provider => policy.providerSwitch(provider) === 'crew.freellmapi';
+
+function harness({ ready = () => true, on = ['crew.freellmapi', 'crew.escalate_to_lead', 'lead.codex'], halted = () => false, now = () => 1000 } = {}) {
   const receipts = new Map(), state = { value: H.emptyState() }, calls = [];
   const sup = makeSupervisor({
-    profileFor: id => PROFILES[id] || null, memberIds: () => IDS,
+    profileFor: id => PROFILES[id] || null, memberIds: () => IDS, isCrewProvider,
     readiness: async profile => (ready(profile) ? { ready: true, reason: '' } : { ready: false, reason: 'no ready ' + profile.minTier + ' model' }),
     receiptsFor: id => receipts.get(id) || [], tiers: () => TIERS,
     switches: { isOn: id => on.includes(id) }, isHalted: halted,
     store: { load: () => JSON.parse(JSON.stringify(state.value)), save: s => { state.value = s; } },
-    parseVerdict, now: () => 1000 });
+    parseVerdict, now });
   // Each scripted reply { via, reason, text } becomes one worker row whose run FreeLLMAPI routed via `via`.
   const worker = script => async (job, o2) => {
     const reply = script[Math.min(calls.length, script.length - 1)];
     const runId = 'w' + calls.length;
-    calls.push({ agentId: job.agentId, model: job.ident.model, runId: o2 && o2.runId });
+    calls.push({ agentId: job.agentId, model: job.ident.model, runId: o2 && o2.runId, wallMs: o2 && o2.wallMs });
     receipts.set(runId, reply.via ? [{ status: 200, routedVia: reply.via }] : []);
     const row = { agentId: job.agentId, reason: reply.reason || 'done', result: reply.text || 'result ' + calls.length, usd: 0, runId };
     if (row.reason === 'done' && !sup.accept(job, row)) row.crewHeld = true;
@@ -201,4 +205,189 @@ test('the run store keeps the sanitized crew moves on the lead run', () => {
   const store = makeRunStore({ io: { readAll: () => [], append: () => {} }, clock: { now: () => 1 } });
   store.record({ runId: 'lead', agentId: 'agent', ultraMoves: [{ step: 'retry', from: 'delivery', to: 'delivery', outcome: 'downgraded', detail: 'p/fast is fast', extra: 'drop' }] });
   assert.deepEqual(store.all()[0].ultraMoves, [{ step: 'retry', from: 'delivery', to: 'delivery', outcome: 'downgraded', detail: 'p/fast is fast' }]);
+});
+
+test('a crew member deliberately moved to another live identity provider runs once unsupervised', async () => {
+  for (const provider of ['codex', 'openrouter']) {
+    const t = harness();
+    const job = Object.assign({}, t.job(), { ident: { provider, model: 'owner-selected-model' } });
+    const row = await t.sup.supervise(job, { runId: 'first' }, t.h([{ via: 'p/fast' }]));
+    assert.equal(t.calls.length, 1, provider);
+    assert.equal(t.calls[0].model, 'owner-selected-model');
+    assert.equal(row.crewMoves, undefined);
+    assert.equal(row.crewOutcome, undefined);
+    assert.equal(row.crewHeld, undefined);
+    assert.deepEqual(t.state.value.members, {});
+    const unchecked = { reason: 'done', result: 'owner-selected output', runId: 'no-receipt' };
+    assert.equal(t.sup.accept(job, unchecked), true);
+    assert.equal(unchecked.crewOutcome, undefined);
+  }
+});
+
+test('reassignment skips a covering member deliberately moved off the crew provider', async () => {
+  const t = harness();
+  const h = t.h([{ reason: 'timeout' }]);
+  h.crew.set('qa', Object.assign({}, IDENT.qa, { provider: 'codex', model: 'owner-selected-model' }));
+  const row = await t.sup.supervise(t.job(), {}, h);
+  assert.deepEqual(t.calls.map(c => c.agentId), ['research']);
+  assert.equal(row.reason, 'escalated');
+  assert.deepEqual(row.crewMoves.map(m => m.step), ['lead']);
+});
+
+test('the facade exposes the policy crew-provider predicate', () => {
+  const rt = fs.mkdtempSync(path.join(os.tmpdir(), 'ultra-provider-'));
+  try {
+    const crew = makeCrew({ fs, path, runtime: rt, switches: { isOn: () => false }, port: 3901, durable: () => {} });
+    assert.equal(typeof crew.isCrewProvider, 'function');
+    for (const provider of ['custom', 'codex', 'openrouter', '', undefined]) {
+      assert.equal(crew.isCrewProvider(provider), isCrewProvider(provider));
+    }
+  } finally { fs.rmSync(rt, { recursive: true, force: true }); }
+});
+
+test('missing crew credentials never run the lead model and follow the unavailable ladder', async () => {
+  for (const variant of ['escalate', 'fail', 'custom-lead']) {
+    const t = harness(variant === 'fail' ? { on: ['crew.freellmapi', 'lead.codex'] } : {});
+    const runs = [];
+    let n = 0;
+    const { dispatchTool } = makeOrchestrationTools({
+      runOnce: async o => {
+        runs.push(o.provider);
+        t.receipts.set(o.runId, [{ status: 200, routedVia: 'p/smart' }]);
+        return { reason: 'done', messages: [{ role: 'assistant', content: 'wrong provider\nVERDICT: approved' }], usd: 0, runId: o.runId };
+      },
+      roster: () => new Map(IDS.map(id => [id, IDENT[id]])), key: 'lead-key', model: 'lead-model',
+      provider: variant === 'custom-lead' ? 'custom' : 'codex', newId: () => 'no-key-' + (++n),
+      providerAuth: () => null, crewSupervisor: Object.assign({ isCrewProvider }, t.sup)
+    });
+    const out = await dispatchTool.run({ workers: [{ agentId: 'research', prompt: 'check this company' }] }, { agentId: 'agent', runId: 'lead-run', emit: () => {} });
+    const row = JSON.parse(out.content)[0];
+    assert.deepEqual(runs, [], variant + ': no model call without the crew credential');
+    assert.equal(row.reason, variant === 'escalate' ? 'escalated' : 'error');
+    assert.deepEqual(row.crewMoves.map(m => m.step), ['reassign', variant === 'escalate' ? 'lead' : 'fail']);
+    assert.deepEqual(row.crewMoves.map(m => m.outcome), ['unavailable', 'unavailable']);
+    assert.match(row.crewMoves[0].detail, /no FreeLLMAPI credential/);
+    assert.match(row.result, /never falls back/);
+  }
+});
+
+test('team.resume refuses a missing crew credential before any model call', async () => {
+  const t = harness(), runs = [];
+  const record = { id: 'background', leadId: 'agent', agentId: 'research', prompt: 'check this company' };
+  let completed;
+  const subagents = {
+    get: () => record,
+    resume: (id, runner) => {
+      completed = runner({ record, runId: 'resumed', emit: () => {} });
+      return { ok: true, record };
+    }
+  };
+  const { resumeTool } = makeOrchestrationTools({
+    runOnce: async o => { runs.push(o.provider); return { reason: 'done', messages: [{ role: 'assistant', content: 'wrong provider' }] }; },
+    roster: () => new Map(IDS.map(id => [id, IDENT[id]])), key: 'lead-key', model: 'lead-model', provider: 'codex',
+    providerAuth: () => null, crewSupervisor: Object.assign({ isCrewProvider }, t.sup), subagents
+  });
+  await resumeTool.run({ id: 'background' }, { agentId: 'agent', runId: 'new-lead' });
+  const row = await completed;
+  assert.deepEqual(runs, []);
+  assert.deepEqual([row.status, row.reason], ['error', 'error']);
+  assert.match(row.result, /no FreeLLMAPI credential/);
+});
+
+test('repaired output is classified against the repair run routing receipt', () => {
+  const t = harness();
+  t.receipts.set('original', [{ status: 200, routedVia: 'p/smart' }]);
+  t.receipts.set('repair', [{ status: 200, routedVia: 'p/fast' }]);
+  const row = { reason: 'done', result: 'repaired output', runId: 'original', repairRunId: 'repair' };
+  assert.equal(t.sup.accept(t.job(), row), false);
+  assert.equal(row.crewOutcome.kind, 'downgraded');
+  assert.equal(row.crewOutcome.routedVia, 'p/fast');
+  for (const repairRunId of ['', undefined, 42]) {
+    assert.equal(t.sup.accept(t.job(), { reason: 'done', result: 'original output', runId: 'original', repairRunId }), true);
+  }
+});
+
+test('background retry moves survive in durable completion after the parent run is recorded', { timeout: 2000 }, async () => {
+  const rt = fs.mkdtempSync(path.join(os.tmpdir(), 'ultra-background-'));
+  try {
+    const t = harness(), file = path.join(rt, 'subagents.json');
+    let release, finish, completion, n = 0, attempts = 0;
+    const gate = new Promise(resolve => { release = resolve; });
+    const settled = new Promise(resolve => { finish = resolve; });
+    const manager = makeSubagentManager({ fs, pathMod: path, file, clock: { now: () => 1000 },
+      emit: (name, payload) => { if (name === 'task' && payload.status !== 'running') finish(); } });
+    const subagents = Object.assign({}, manager, {
+      start: (meta, runner) => manager.start(meta, async h => { completion = await runner(h); return completion; })
+    });
+    const { dispatchTool } = makeOrchestrationTools({
+      runOnce: async o => {
+        attempts++;
+        if (attempts === 1) await gate;
+        t.receipts.set(o.runId, [{ status: 200, routedVia: attempts === 1 ? 'p/fast' : 'p/smart' }]);
+        return { reason: 'done', messages: [{ role: 'assistant', content: 'answer ' + attempts }], usd: 0, runId: o.runId };
+      },
+      roster: () => new Map(IDS.map(id => [id, IDENT[id]])), key: 'lead-key', model: 'lead-model', provider: 'codex',
+      newId: () => 'background-run-' + (++n), providerAuth: () => ({ provider: 'custom', key: 'crew-key' }),
+      crewSupervisor: Object.assign({ isCrewProvider }, t.sup), subagents
+    });
+    const out = await dispatchTool.run({ background: true, workers: [{ agentId: 'delivery', prompt: 'build this proof pack' }] }, { agentId: 'agent', runId: 'lead-run', emit: () => {} });
+    const id = JSON.parse(out.content)[0].id;
+    const parent = makeRunStore({ io: { readAll: () => [], append: () => {} }, clock: { now: () => 1000 } });
+    parent.record({ runId: 'lead-run', agentId: 'agent', ultraMoves: t.sup.movesFor('lead-run') });
+    release();
+    await settled;
+    const durable = JSON.parse(fs.readFileSync(file, 'utf8')).records.find(r => r.id === id);
+    assert.equal(durable.status, 'done');
+    assert.match(durable.result, /answer 2\n\n\[1Ultra crew moves: .*retry/);
+    assert.deepEqual(completion.crewMoves.map(m => m.step), ['retry']);
+    assert.match(completion.note, /1Ultra crew moves/);
+    assert.equal(parent.all()[0].ultraMoves, undefined, 'late moves do not rewrite the finished parent record');
+  } finally { fs.rmSync(rt, { recursive: true, force: true }); }
+});
+
+test('retry and reassignment share one dispatch wall clock', async () => {
+  for (const firstReason of ['done', 'timeout']) {
+    let clock = 1000;
+    const t = harness({ now: () => clock });
+    const h = t.h([{ reason: firstReason, via: 'p/fast' }, { via: 'p/smart', text: 'checked\nVERDICT: approved' }]);
+    const once = h.runWorkerOnce;
+    h.runWorkerOnce = async (job, opts) => {
+      const row = await once(job, opts);
+      if (t.calls.length === 1) clock += 400000;
+      return row;
+    };
+    const row = await t.sup.supervise(t.job(), { wallMs: 600000 }, h);
+    assert.equal(row.reason, 'done');
+    assert.deepEqual(t.calls.map(c => c.wallMs), [600000, 200000]);
+    assert.deepEqual(row.crewMoves.map(m => m.step), [firstReason === 'done' ? 'retry' : 'reassign']);
+  }
+});
+
+test('an exhausted dispatch wall clock stops the ladder before another worker call', async () => {
+  let clock = 1000;
+  const t = harness({ now: () => clock });
+  const h = t.h([{ via: 'p/fast' }]);
+  const once = h.runWorkerOnce;
+  h.runWorkerOnce = async (job, opts) => { const row = await once(job, opts); clock += 600000; return row; };
+  const row = await t.sup.supervise(t.job(), { wallMs: 600000 }, h);
+  assert.equal(t.calls.length, 1);
+  assert.equal(row.reason, 'error');
+  assert.match(row.result, /FAILED.*dispatch wall clock.*ran out/);
+});
+
+test('a ready benched covering member is unbenched before reassignment', async () => {
+  const t = harness();
+  for (let i = 0; i < 3; i++) t.state.value = H.recordOutcome(t.state.value, 'qa', 'unavailable', 1000);
+  assert.equal(t.state.value.members.qa.benched, true);
+  const h = t.h([{ reason: 'timeout' }, { via: 'p/smart', text: 'recovered\nVERDICT: approved' }]);
+  const once = h.runWorkerOnce;
+  h.runWorkerOnce = async (job, opts) => {
+    if (job.agentId === 'qa') assert.equal(t.state.value.members.qa.benched, false, 'cleared before the worker runs');
+    return once(job, opts);
+  };
+  const row = await t.sup.supervise(t.job(), {}, h);
+  assert.deepEqual(t.calls.map(c => c.agentId), ['research', 'qa']);
+  assert.equal(row.reason, 'done');
+  assert.deepEqual(row.crewMoves.map(m => m.step), ['reassign']);
+  assert.equal(t.state.value.members.qa.benched, false);
 });

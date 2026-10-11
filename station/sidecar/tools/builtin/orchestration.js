@@ -431,11 +431,13 @@
     function workerWire(ident) {
       const wanted = (ident && ident.provider) ? String(ident.provider) : '';
       const ownModel = (ident && ident.model) ? String(ident.model) : '';
-      if (!wanted || wanted === provider || !ownModel) {
+      const crewProvider = deps.crewSupervisor && deps.crewSupervisor.isCrewProvider(wanted);
+      if (!crewProvider && (!wanted || wanted === provider || !ownModel)) {
         return { provider, key, baseUrl, model: ownModel || model, note: '' };
       }
       const auth = providerAuth ? providerAuth(wanted) : null;
       if (auth) return { provider: auth.provider || wanted, key: auth.key || '', baseUrl: auth.baseUrl || '', model: ownModel, note: '' };
+      if (crewProvider) return { refused: 'the crew provider has no FreeLLMAPI credential on this station (run python3 scripts/freellmapi.py key); a crew member never falls back onto the lead\'s model' };
       return { provider, key, baseUrl, model, note: 'worker provider "' + wanted + '" has no credential on this station — ran on the lead\'s model instead' };
     }
     // Opt-in ceiling only. Omitted/zero means dispatch every requested worker.
@@ -628,6 +630,7 @@
           o2 = o2 || {};
           if (job.error) return { agentId: job.agentId, reason: 'error', result: job.error, usd: 0 };
           const wire = workerWire(job.ident);   // the worker's OWN provider+model when resolvable (see workerWire)
+          if (wire.refused) return { agentId: job.agentId, reason: 'error', result: wire.refused, usd: 0 };
           // PER-WORKER WALL CLOCK (2026-07-26 audit finding A). Before this, the ONLY clock was the registry's
           // tool timeout over the WHOLE dispatch: one slow worker ate the shared budget, the registry rejected, and
           // every ALREADY-COMPLETED worker's result was thrown away — the lead received the string "team.dispatch
@@ -796,7 +799,9 @@
             // normally leaves it running — outliving the call is what background:true is for.
             return subagents.start({ ...projectOptions(job.sessionContext || ctx), leadId, parentRunId: (ctx && ctx.runId) || '', parentStreamId: deps.coordinateResults === true && ctx && ctx.streamId !== 'global' ? ctx.streamId : '', streamId: job.streamId || '', agentId: job.agentId, prompt: job.prompt, context: job.context, runId: newId(), resultSchema: job.resultSchema, originLimits: originLimitsOf(ctx) }, async (h) => {
               const r = await runWorker(job, { runId: h.runId, signal: h.signal, emit: h.emit, steer: h.steer });
-              return { status: r.reason === 'done' ? 'done' : 'error', reason: r.reason, result: r.result, usd: r.usd || 0,
+              return { status: r.reason === 'done' ? 'done' : 'error', reason: r.reason,
+                result: r.result + (Array.isArray(r.crewMoves) && r.crewMoves.length && r.note ? '\n\n[' + r.note + ']' : ''), usd: r.usd || 0,
+                crewMoves: r.crewMoves, note: r.note,
                 structuredResult: r.structuredResult, validation: r.validation, repairRunId: r.repairRunId, artifacts: r.artifacts,
                 taintedBy: r.taintedBy || '' };
             });
@@ -1163,6 +1168,7 @@
         const ident = crew.get(rec.agentId);
         if (!ident) return { status: 'error', reason: 'error', result: 'worker is no longer in the live roster', usd: 0 };
         const wire = workerWire(ident);   // same cross-provider resolution as a fresh dispatch
+        if (wire.refused) return { status: 'error', reason: 'error', result: wire.refused, usd: 0 };
         let result;
         const bounded = boundedDomainTask(rec.prompt || '');
         // The durable record carries the lead's handoff `context`, so a resumed worker rebuilds the SAME

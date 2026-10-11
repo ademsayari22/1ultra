@@ -4,7 +4,7 @@
 // the lead. At most three moves; every move goes back to the lead and into the lead's run receipt; nothing is dropped.
 const Health=require('./ultra-crew-health.js');
 const MOVES_RUNS=300,MOVES_PER_RUN=10;
-function makeSupervisor({profileFor,memberIds,readiness,receiptsFor,tiers,switches,isHalted,store,parseVerdict,now=()=>Date.now()}){
+function makeSupervisor({profileFor,memberIds,isCrewProvider,readiness,receiptsFor,tiers,switches,isHalted,store,parseVerdict,now=()=>Date.now()}){
   const moves=new Map();
   function remember(parentRunId,move){
     if(!parentRunId)return;
@@ -13,7 +13,8 @@ function makeSupervisor({profileFor,memberIds,readiness,receiptsFor,tiers,switch
     if(list.length<MOVES_PER_RUN)list.push(Object.assign({},move));
   }
   function classifyRow(agentId,row){
-    return Health.classify({row,receipts:row&&row.runId?receiptsFor(row.runId):[],profile:profileFor(agentId),tiers:tiers(),parseVerdict});
+    const runId=row&&(typeof row.repairRunId==='string'&&row.repairRunId?row.repairRunId:row.runId);
+    return Health.classify({row,receipts:runId?receiptsFor(runId):[],profile:profileFor(agentId),tiers:tiers(),parseVerdict});
   }
   async function memberReady(agentId){
     const profile=profileFor(agentId);
@@ -27,33 +28,44 @@ function makeSupervisor({profileFor,memberIds,readiness,receiptsFor,tiers,switch
     return r;
   }
   async function candidates(crewMap){
-    const state=store.load(),out=[];
+    const out=[];
     for(const agentId of memberIds()){
       const profile=profileFor(agentId);
-      if(!profile||!(crewMap&&crewMap.has(agentId)))continue;
+      const ident=crewMap&&crewMap.get(agentId);
+      if(!profile||!ident||!isCrewProvider(ident.provider))continue;
       const r=await readiness(profile);
-      out.push({agentId,profile,ready:r.ready,benched:!!(state.members[agentId]&&state.members[agentId].benched)});
+      const state=store.load();
+      let benched=!!(state.members[agentId]&&state.members[agentId].benched);
+      if(benched&&r.ready){store.save(Health.unbench(state,agentId));benched=false;}
+      out.push({agentId,profile,ready:r.ready,benched});
     }
     return out;
   }
   const describe=list=>list.map(m=>m.from+' '+m.outcome+(m.detail?' ('+m.detail+')':'')+' → '+m.step+(m.to!==m.from?' '+m.to:'')).join('; ');
   // team.dispatch asks this before delivering a completed row: a held row is redone by supervise(), never shown as done.
   function accept(job,row){
-    if(!job||!profileFor(job.agentId))return true;
+    if(!job||!isCrewProvider(job.ident&&job.ident.provider)||!profileFor(job.agentId))return true;
     const outcome=classifyRow(job.agentId,row);
     row.crewOutcome=outcome;
     return outcome.kind==='ok';
   }
   async function supervise(job,o2,h){
-    const needs=job&&!job.error?profileFor(job.agentId):null;
+    const needs=job&&!job.error&&isCrewProvider(job.ident&&job.ident.provider)?profileFor(job.agentId):null;
     if(!needs)return h.runWorkerOnce(job,o2);
+    const deadline=o2&&typeof o2.wallMs==='number'&&Number.isFinite(o2.wallMs)&&o2.wallMs>0?now()+o2.wallMs:null;
     const trail=[],tried=new Set([job.agentId]);
     let current=job,retried=false,opts=o2,usd=0,lastText='';
     const failed=why=>({agentId:job.agentId,reason:'error',usd,crewMoves:trail,
       result:'FAILED — '+why+(trail.length?' Moves: '+describe(trail)+'.':'')+' Tell the Commander this subtask did not complete; nothing was dropped silently.'});
     for(;;){
       if(isHalted())return failed('the emergency stop is on, so this crew subtask stopped.');
+      if(deadline!==null&&now()>=deadline)return failed('the dispatch wall clock for this subtask ran out.');
       const ready=await memberReady(current.agentId);
+      if(deadline!==null){
+        const remaining=deadline-now();
+        if(remaining<=0)return failed('the dispatch wall clock for this subtask ran out.');
+        opts=Object.assign({},opts,{wallMs:remaining});
+      }
       let row=null,outcome;
       if(!ready.ready)outcome={kind:'unavailable',detail:ready.reason,routedVia:''};
       else{
@@ -86,6 +98,6 @@ function makeSupervisor({profileFor,memberIds,readiness,receiptsFor,tiers,switch
       return failed('every free crew option failed.');
     }
   }
-  return {accept,supervise,movesFor:id=>(moves.get(id)||[]).map(m=>Object.assign({},m))};
+  return {isCrewProvider,accept,supervise,movesFor:id=>(moves.get(id)||[]).map(m=>Object.assign({},m))};
 }
 module.exports={makeSupervisor};

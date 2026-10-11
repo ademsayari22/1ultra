@@ -46,7 +46,7 @@ function makeCrew({fs,path,runtime,switches,port,durable,isHalted=()=>false,fetc
     return Health.tierReady(profile,r.ids,tiers)?{ready:true,reason:''}
       :{ready:false,reason:'no ready '+profile.minTier+' model'+(profile.tools?' with tools':'')+(profile.vision?' with vision':'')};
   }
-  const supervisor=makeSupervisor({profileFor:id=>roster.profileFor(id),memberIds:()=>roster.memberIds(),readiness,
+  const supervisor=makeSupervisor({profileFor:id=>roster.profileFor(id),memberIds:()=>roster.memberIds(),isCrewProvider:crewProvider,readiness,
     receiptsFor:id=>receipts.get(id),tiers:readTiers,switches,isHalted,store,parseVerdict,now});
   // selectProvider's options for one adapter: crew requests record FreeLLMAPI's routing headers for their run and tell
   // FreeLLMAPI the member's task type.
@@ -84,7 +84,7 @@ function makeCrew({fs,path,runtime,switches,port,durable,isHalted=()=>false,fetc
   };
   return {
     registerProviderConfig:fn=>wire.register(fn),isFreeTier:id=>wire.isFreeTier(id),adapterOptions,receiptsFor:id=>receipts.get(id),
-    seedRoster:()=>roster.seed(),profileFor:id=>roster.profileFor(id),status,
+    seedRoster:()=>roster.seed(),profileFor:id=>roster.profileFor(id),isCrewProvider:crewProvider,status,
     accept:(job,row)=>supervisor.accept(job,row),supervise:(job,o2,h)=>supervisor.supervise(job,o2,h),movesFor:id=>supervisor.movesFor(id),
     registerTools:registry=>registry.register(healthTool),leadBrief:()=>LEAD_BRIEF,
   };

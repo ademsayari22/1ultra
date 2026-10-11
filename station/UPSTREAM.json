@@ -17219,9 +17219,9 @@
     },
     {
       "path": "sidecar/tools/builtin/orchestration.js",
-      "current_sha256": "a22b65f6ee62ffb64c6743bf2a53608e710ff5c4ceef2e1ea24312c4b8d2c933",
+      "current_sha256": "1aff997eed339e4e9c7a4646ea9fe1ee520b96718ad6daeba6ffa078e8f293fc",
       "reasons": [
-        "patch:crew-dispatch-once,crew-dispatch-hold,crew-dispatch-supervise"
+        "patch:crew-dispatch-once,crew-dispatch-hold,crew-dispatch-supervise,crew-worker-provider-gate,crew-worker-refusal,crew-resume-refusal,crew-background-moves"
       ]
     },
     {

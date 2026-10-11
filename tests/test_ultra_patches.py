@@ -83,6 +83,18 @@ class PatchAnchorsTest(unittest.TestCase):
         self.assertIn("tool: 'team.health', scope: 'read', requiresConsent: false, network: false", (ROOT / 'station/sidecar/capability/registry.js').read_text())
         self.assertIn('entry.ultraMoves = ', (ROOT / 'station/sidecar/runstore.js').read_text())
 
+    def test_crew_credentials_never_fall_back_in_dispatch_or_resume(self):
+        orchestration = (ROOT / 'station/sidecar/tools/builtin/orchestration.js').read_text()
+        self.assertIn('const crewProvider = deps.crewSupervisor && deps.crewSupervisor.isCrewProvider(wanted);', orchestration)
+        self.assertIn("if (crewProvider) return { refused: 'the crew provider has no FreeLLMAPI credential", orchestration)
+        self.assertIn("if (wire.refused) return { agentId: job.agentId, reason: 'error', result: wire.refused, usd: 0 };", orchestration)
+        self.assertIn("if (wire.refused) return { status: 'error', reason: 'error', result: wire.refused, usd: 0 };", orchestration)
+
+    def test_background_crew_completion_keeps_moves_and_note_in_result(self):
+        orchestration = (ROOT / 'station/sidecar/tools/builtin/orchestration.js').read_text()
+        self.assertIn('crewMoves: r.crewMoves, note: r.note,', orchestration)
+        self.assertIn("result: r.result + (Array.isArray(r.crewMoves) && r.crewMoves.length && r.note ? '\\n\\n[' + r.note + ']' : ''),", orchestration)
+
 
 if __name__ == '__main__':
     unittest.main()
