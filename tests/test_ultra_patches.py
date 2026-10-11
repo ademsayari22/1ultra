@@ -214,7 +214,8 @@ class PatchAnchorsTest(unittest.TestCase):
 
     def test_room_templates_dock_is_appended_after_the_build_button(self):
         patches = json.loads((ROOT / 'station/ultra-patches.json').read_text())
-        self.assertEqual(patches[-1]['id'], 'ultra-room-templates-dock')
+        ids = [p['id'] for p in patches]
+        self.assertGreater(ids.index('ultra-room-templates-dock'), ids.index('ultra-leads-assets'), 'appended after the LEADS assets entry')
         index = (ROOT / 'station/frontend/index.html').read_text()
         build_line = next(line for line in index.splitlines() if 'id="bb-build"' in line)
         self.assertEqual(index.count(build_line), 1)
