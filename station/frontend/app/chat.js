@@ -2998,6 +2998,14 @@ const Chat = (() => {
     const head = document.createElement('div'); head.className = 'rt-run-head';
     head.textContent = [role, entry.agentId || '', entry.model && entry.model !== '(unknown)' ? entry.model : '', (entry.reasoningEffort && entry.reasoningEffort !== 'none') ? entry.reasoningEffort : '', Number(entry.durationMs) > 0 ? fmtMs(Number(entry.durationMs)) : '', calls + (calls === 1 ? ' call' : ' calls')].filter(Boolean).join(' · ');
     wrap.appendChild(head);
+    if (Array.isArray(entry.ultraRouting) && entry.ultraRouting.length) {   // 1Ultra: the model FreeLLMAPI actually routed to
+      const answered = Array.from(new Set(entry.ultraRouting.map(r => r && r.routedVia).filter(Boolean)));
+      const via = document.createElement('div'); via.className = 'rt-tool';
+      via.textContent = '⤳ answered by ' + (answered.length ? answered.join(', ') : 'no model (every request failed)');
+      const trail = entry.ultraRouting.map(r => r && r.fallbackTrail).filter(Boolean);
+      if (trail.length) via.title = 'FreeLLMAPI fallbacks: ' + trail.join(' | ');
+      wrap.appendChild(via);
+    }
     for (const t of (skipTools ? [] : (Array.isArray(entry.toolTrace) ? entry.toolTrace : []))) {
       const line = document.createElement('div'); line.className = 'rt-tool' + (t.isError ? ' err' : '');
       line.textContent = '↳ ' + String(t.name || 'unknown') + ' · ' + fmtMs(Math.max(0, Number(t.ms) || 0)) + ' · ' + (t.isError ? 'failed' : 'ok');

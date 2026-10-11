@@ -1,0 +1,53 @@
+'use strict';
+const assert = require('node:assert/strict'), test = require('node:test');
+const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
+const { makeReceipts } = require('../station/ultra-crew-receipts.js');
+const { makeCrew } = require('../station/ultra-crew.js');
+const { makeRunStore } = require('../station/sidecar/runstore.js');
+const response = (status, headers = {}) => ({ status, headers: { get: name => headers[name.toLowerCase()] || null } });
+
+test('only chat completions are recorded, with the routing headers FreeLLMAPI returned', async () => {
+  const r = makeReceipts({ now: () => 7 });
+  const upstream = async url => url.endsWith('/models') ? response(200) : response(200, { 'x-routed-via': 'groq/llama-3.3-70b', 'x-fallback-attempts': '1', 'x-fallback-trail': 'ovh/x key1=rate_limited' });
+  const f = r.observe(upstream, 'run-1');
+  await f('http://127.0.0.1:3901/v1/models');
+  await f('http://127.0.0.1:3901/v1/chat/completions', { method: 'POST' });
+  assert.deepEqual(r.get('run-1'), [{ at: 7, status: 200, routedVia: 'groq/llama-3.3-70b', fallbackAttempts: 1, fallbackTrail: 'ovh/x key1=rate_limited' }]);
+  const copy = r.get('run-1'); copy[0].status = 0;
+  assert.equal(r.get('run-1')[0].status, 200, 'get returns copies');
+  assert.deepEqual(r.get('other'), []);
+});
+
+test('a failed connection is recorded and still thrown; a run keeps at most 20 receipts', async () => {
+  const r = makeReceipts({ now: () => 1 });
+  const refused = r.observe(async () => { throw Object.assign(new Error('refused'), { code: 'ECONNREFUSED' }); }, 'run-2');
+  await assert.rejects(refused('http://127.0.0.1:3901/v1/chat/completions'), /refused/);
+  assert.deepEqual(r.get('run-2'), [{ at: 1, status: 0, routedVia: '', fallbackAttempts: 0, fallbackTrail: '', error: 'ECONNREFUSED' }]);
+  const busy = r.observe(async () => response(429), 'run-3');
+  for (let i = 0; i < 25; i++) await busy('http://127.0.0.1:3901/v1/chat/completions');
+  assert.equal(r.get('run-3').length, 20);
+});
+
+test('adapterOptions wraps fetch only for crew providers with a run id', async () => {
+  const rt = fs.mkdtempSync(path.join(os.tmpdir(), 'ultra-receipts-'));
+  try {
+    const crew = makeCrew({ fs, path, runtime: rt, switches: { isOn: () => false }, port: 3901, durable: () => {}, now: () => 3 });
+    const upstream = async () => response(200, { 'x-routed-via': 'ovh/m' });
+    const wrapped = crew.adapterOptions({ provider: 'custom', fetch: upstream, ultraRunId: 'run-4' });
+    await wrapped.fetch('http://127.0.0.1:3901/v1/chat/completions');
+    assert.equal(crew.receiptsFor('run-4')[0].routedVia, 'ovh/m');
+    const codex = { provider: 'codex', fetch: upstream, ultraRunId: 'run-5' };
+    assert.equal(crew.adapterOptions(codex), codex);
+    assert.equal(crew.adapterOptions({ provider: 'custom', fetch: upstream }).fetch, upstream, 'no run id, nothing to attribute');
+  } finally { fs.rmSync(rt, { recursive: true, force: true }); }
+});
+
+test('the run store keeps a sanitized routing receipt', () => {
+  const appended = [];
+  const store = makeRunStore({ io: { readAll: () => [], append: e => appended.push(e) }, clock: { now: () => 1 } });
+  store.record({ runId: 'run-6', agentId: 'sales', ultraRouting: [{ status: 200, routedVia: 'ovh/m', fallbackAttempts: 1, fallbackTrail: 'groq/x key1=timeout', secret: 'drop me' }] });
+  store.record({ runId: 'run-7', agentId: 'agent' });
+  const rows = store.all();
+  assert.deepEqual(rows.find(r => r.runId === 'run-6').ultraRouting, [{ status: 200, routedVia: 'ovh/m', fallbackAttempts: 1, fallbackTrail: 'groq/x key1=timeout' }]);
+  assert.equal('ultraRouting' in rows.find(r => r.runId === 'run-7'), false, 'other runs keep their shape');
+});

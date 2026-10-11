@@ -63,6 +63,14 @@ class PatchAnchorsTest(unittest.TestCase):
         self.assertIn('ultraHost.registerProviderConfig(setProviderRuntimeConfig);', text)
         self.assertIn("require('../ultra-crew-wire.js').freeTierUsd(ultraHost.crew.isFreeTier(activeProviderId), mediaUsd, () => effectiveRunUsd(", text)
 
+    def test_crew_receipts_reach_the_run_record_and_run_details(self):
+        index = (ROOT / 'station/sidecar/index.js').read_text()
+        self.assertIn('selectProviderRaw(ultraHost.crew.adapterOptions(Object.assign({}, opts, { fetch: ultraHost.policy.gateFetch(', index)
+        self.assertIn('key: runKey, baseUrl, reasoningEffort, ultraRunId: runId, ultraAgentId: agentId });', index)
+        self.assertIn('ultraRouting: ultraHost.crew.receiptsFor(runId), ', index)
+        self.assertIn('entry.ultraRouting = ', (ROOT / 'station/sidecar/runstore.js').read_text())
+        self.assertIn("'⤳ answered by '", (ROOT / 'station/frontend/app/chat.js').read_text())
+
 
 if __name__ == '__main__':
     unittest.main()

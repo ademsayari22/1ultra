@@ -297,7 +297,7 @@
     "id": "model-request-gate",
     "file": "sidecar/index.js",
     "find": "  const built = selectProviderRaw(opts);\n  return opts && normalizeProvider(opts.provider) === 'starnet' ? googleRelayGuard().guardProvider(built) : built;\n}\n",
-    "replace": "  const ultraCheck = () => ultraHost.assertModelRequest(opts);\n  // 1Ultra: every request the adapter makes (retries, catalog, renewals) re-checks the stop and switch and listens to the stop.\n  const built = selectProviderRaw(Object.assign({}, opts, { fetch: ultraHost.policy.gateFetch(opts && opts.fetch, ultraCheck, ultraHost.stopSignal) }));\n  const ultraBuilt = opts && normalizeProvider(opts.provider) === 'starnet' ? googleRelayGuard().guardProvider(built) : built;\n  return ultraHost.policy.guardAdapter(ultraBuilt, ultraCheck);\n}\n"
+    "replace": "  const ultraCheck = () => ultraHost.assertModelRequest(opts);\n  // 1Ultra: every request the adapter makes (retries, catalog, renewals) re-checks the stop and switch and listens to the stop.\n  const built = selectProviderRaw(ultraHost.crew.adapterOptions(Object.assign({}, opts, { fetch: ultraHost.policy.gateFetch(opts && opts.fetch, ultraCheck, ultraHost.stopSignal) })));\n  const ultraBuilt = opts && normalizeProvider(opts.provider) === 'starnet' ? googleRelayGuard().guardProvider(built) : built;\n  return ultraHost.policy.guardAdapter(ultraBuilt, ultraCheck);\n}\n"
   },
   {
     "id": "codex-token-gate",
@@ -322,5 +322,17 @@
  "replace": "ultraHost.registerStationHalt(() => { handleHalt(null, { writeHead() {}, end() {} }); try { killAll(runStopHandles); } catch (e) { failNote('ultra.station-halt.killAll', e); } });\nultraHost.registerProviderConfig(setProviderRuntimeConfig);\n"},
 {"id": "crew-free-tier-cost", "file": "sidecar/index.js",
  "find": "    const finalUsd = effectiveRunUsd({ usd: (result && result.usd) || 0, mediaUsd, unmetered: runUnmetered, unpricedUsage: result && result.unpricedUsage, priceOf: provider && provider.priceOf });\n",
- "replace": "    // 1Ultra: a run on the local FreeLLMAPI service books only its paid media; the free model itself costs $0.\n    const finalUsd = require('../ultra-crew-wire.js').freeTierUsd(ultraHost.crew.isFreeTier(activeProviderId), mediaUsd, () => effectiveRunUsd({ usd: (result && result.usd) || 0, mediaUsd, unmetered: runUnmetered, unpricedUsage: result && result.unpricedUsage, priceOf: provider && provider.priceOf }));\n"}
+ "replace": "    // 1Ultra: a run on the local FreeLLMAPI service books only its paid media; the free model itself costs $0.\n    const finalUsd = require('../ultra-crew-wire.js').freeTierUsd(ultraHost.crew.isFreeTier(activeProviderId), mediaUsd, () => effectiveRunUsd({ usd: (result && result.usd) || 0, mediaUsd, unmetered: runUnmetered, unpricedUsage: result && result.unpricedUsage, priceOf: provider && provider.priceOf }));\n"},
+{"id": "crew-run-receipts", "file": "sidecar/index.js",
+ "find": "    provider = selectProvider({ provider: providerId, fetch: globalThis.fetch, key: runKey, baseUrl, reasoningEffort });\n",
+ "replace": "    provider = selectProvider({ provider: providerId, fetch: globalThis.fetch, key: runKey, baseUrl, reasoningEffort, ultraRunId: runId, ultraAgentId: agentId });\n"},
+{"id": "crew-run-record", "file": "sidecar/index.js",
+ "find": "      runStore.record({ runId, parentRunId: o.parentRunId || '', delegatedBy: o.delegatedBy || '', agentId, provider: activeProviderId, ",
+ "replace": "      runStore.record({ runId, parentRunId: o.parentRunId || '', delegatedBy: o.delegatedBy || '', agentId, provider: activeProviderId, ultraRouting: ultraHost.crew.receiptsFor(runId), "},
+{"id": "crew-runstore-routing", "file": "sidecar/runstore.js",
+ "find": "      if (error) entry.error = error;\n      rows.push(entry);\n",
+ "replace": "      if (error) entry.error = error;\n      // 1Ultra (additive): which model FreeLLMAPI actually routed each request to. Present only on crew runs.\n      if (Array.isArray(e.ultraRouting) && e.ultraRouting.length) entry.ultraRouting = e.ultraRouting.slice(0, 20).map(r => Object.assign({ status: num(r && r.status), routedVia: str(r && r.routedVia).slice(0, 256), fallbackAttempts: num(r && r.fallbackAttempts), fallbackTrail: str(r && r.fallbackTrail).slice(0, 1024) }, str(r && r.error) ? { error: str(r.error).slice(0, 60) } : {}));\n      rows.push(entry);\n"},
+{"id": "crew-run-detail", "file": "frontend/app/chat.js",
+ "find": "    wrap.appendChild(head);\n    for (const t of (skipTools ? [] : (Array.isArray(entry.toolTrace) ? entry.toolTrace : []))) {\n",
+ "replace": "    wrap.appendChild(head);\n    if (Array.isArray(entry.ultraRouting) && entry.ultraRouting.length) {   // 1Ultra: the model FreeLLMAPI actually routed to\n      const answered = Array.from(new Set(entry.ultraRouting.map(r => r && r.routedVia).filter(Boolean)));\n      const via = document.createElement('div'); via.className = 'rt-tool';\n      via.textContent = '⤳ answered by ' + (answered.length ? answered.join(', ') : 'no model (every request failed)');\n      const trail = entry.ultraRouting.map(r => r && r.fallbackTrail).filter(Boolean);\n      if (trail.length) via.title = 'FreeLLMAPI fallbacks: ' + trail.join(' | ');\n      wrap.appendChild(via);\n    }\n    for (const t of (skipTools ? [] : (Array.isArray(entry.toolTrace) ? entry.toolTrace : []))) {\n"}
 ]

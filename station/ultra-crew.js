@@ -1,8 +1,19 @@
 'use strict';
 // 1Ultra crew on FreeLLMAPI: the one facade ultra-host.js and the Starnet patches call.
+const policy=require('./ultra-policy.js');
 const {makeWire}=require('./ultra-crew-wire.js');
+const {makeReceipts}=require('./ultra-crew-receipts.js');
 function makeCrew({fs,path,runtime,switches,port,durable,isHalted=()=>false,fetchFn=(...a)=>globalThis.fetch(...a),now=()=>Date.now()}){
   const wire=makeWire({fs,path,runtime,port});
+  const receipts=makeReceipts({now});
+  const crewProvider=id=>policy.providerSwitch(id)==='crew.freellmapi';
+  // selectProvider's options for one adapter: crew requests record FreeLLMAPI's routing headers for their run.
+  function adapterOptions(o){
+    if(!o||!crewProvider(o.provider))return o;
+    const out=Object.assign({},o);
+    if(o.ultraRunId&&typeof o.fetch==='function')out.fetch=receipts.observe(o.fetch,o.ultraRunId);
+    return out;
+  }
   async function status(){
     const w=wire.refresh(),out={switch:switches.isOn('crew.freellmapi'),wire:wire.status(),reachable:false,keyAccepted:false,readyModels:0};
     if(!w||!out.switch)return out;
@@ -13,6 +24,6 @@ function makeCrew({fs,path,runtime,switches,port,durable,isHalted=()=>false,fetc
     }catch(_){/* FreeLLMAPI is not reachable */}
     return out;
   }
-  return {registerProviderConfig:fn=>wire.register(fn),isFreeTier:id=>wire.isFreeTier(id),status};
+  return {registerProviderConfig:fn=>wire.register(fn),isFreeTier:id=>wire.isFreeTier(id),adapterOptions,receiptsFor:id=>receipts.get(id),status};
 }
 module.exports={makeCrew};

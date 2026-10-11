@@ -14898,9 +14898,10 @@
     },
     {
       "path": "frontend/app/chat.js",
-      "current_sha256": "87b099a1d39829ffdd0e8ff544b2b60407c8ab03b27d22114d5604f3f8fd9643",
+      "current_sha256": "632ac237febc262cd0b0c8506e03b729c271acc5fe12c884c152a224da3d0c41",
       "reasons": [
-        "brand"
+        "brand",
+        "patch:crew-run-detail"
       ]
     },
     {
@@ -16650,10 +16651,10 @@
     },
     {
       "path": "sidecar/index.js",
-      "current_sha256": "451d4b947e611fd00734e6dff816ec6c16574b9202920493865ba17973efc052",
+      "current_sha256": "b2a47e4ea3d86f5307c0c48b3d3007f5237bc08f41d531751c6ae8c649fdc731",
       "reasons": [
         "brand",
-        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty,bless-refusal,model-request-gate,codex-token-gate,codex-refresh-gate,crew-provider-config,crew-free-tier-cost"
+        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty,bless-refusal,model-request-gate,codex-token-gate,codex-refresh-gate,crew-provider-config,crew-free-tier-cost,crew-run-receipts,crew-run-record"
       ]
     },
     {
@@ -16994,6 +16995,13 @@
       "current_sha256": "4f3d38260a2ae0c9308d8387a3c6dc76b62c4451db42e257b6f84ad227cde29e",
       "reasons": [
         "brand"
+      ]
+    },
+    {
+      "path": "sidecar/runstore.js",
+      "current_sha256": "1a9c039ba975c6ce6f3c44eaefc52c6dc9dd855a57997c4fbaeb95c1663f42ef",
+      "reasons": [
+        "patch:crew-runstore-routing"
       ]
     },
     {
