@@ -21,13 +21,29 @@ def main():
     with tempfile.TemporaryDirectory(prefix='1ultra-station-smoke-') as temporary:
         root = Path(temporary)
         for relative in ['STATE.md', 'data/leads.json', 'data/tasks.json', 'data/budget.json', 'data/payments.json',
-                         'data/exclusions.json', 'data/game.json', 'simulations/scenarios.json']:
+                         'data/exclusions.json', 'data/game.json', 'simulations/scenarios.json', 'sales/pitch-kit.json']:
             source = project / relative
             if source.exists():
                 target = root / relative; target.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(source, target)
         original_leads = json.loads((root / 'data/leads.json').read_text())
         (root / 'runs').mkdir()
         runtime = root / 'runtime'; runtime.mkdir()
+        # Start with the literal first-generation texts so boot must migrate an existing save.
+        agent_texts = json.loads(subprocess.check_output(['node', '-e',
+            "const fs=require('node:fs'),path=require('node:path'); const runtime=process.argv[1]; "
+            "const {oldTexts,newTexts}=require('./tests/fixtures/station-agent-texts.cjs'); "
+            "const durable=(file,value)=>fs.writeFileSync(file,JSON.stringify(value)); "
+            "const read=name=>JSON.parse(fs.readFileSync(path.join(runtime,name),'utf8')); "
+            "for(const [name,value] of Object.entries(require('./station/ultra-seed.js').files(1000))) "
+            "durable(path.join(runtime,name),value); "
+            "require('./station/ultra-crew-roster.js').makeRoster({fs,path,runtime,durable,now:()=>1000}).seed(); "
+            "const save=read('agent.save.json'); for(const agent of [save.doc.agent,...save.doc.agents]) { "
+            "agent.docs={...oldTexts[agent.id]}; agent.purpose=oldTexts[agent.id].purpose; } "
+            "durable(path.join(runtime,'agent.save.json'),save); "
+            "const roster=read('agent.roster.json'); for(const row of roster.agents) "
+            "row.system=Object.values(oldTexts[row.agentId]).join('\\n\\n'); "
+            "durable(path.join(runtime,'agent.roster.json'),roster); "
+            "console.log(JSON.stringify(newTexts));", str(runtime)], cwd=project, text=True, timeout=20))
         import base64
         b64 = lambda d: base64.urlsafe_b64encode(json.dumps(d).encode()).decode().rstrip('=')
         (runtime / 'codex').mkdir()
@@ -119,6 +135,15 @@ def main():
             assert (runtime / 'agent.save.json').is_file() and json.loads((runtime / 'agent.save.json').read_text())['doc']['agent']['name'] == 'ULTRA'
             request('/api/ultra/control', {'action': 'resume'})
             checks.append('existing runtime kept (stop, state); seed added only missing files')
+            doc = json.loads((runtime / 'agent.save.json').read_text())['doc']
+            agents = [doc['agent'], *doc['agents']]
+            assert {agent['id'] for agent in agents} == set(agent_texts)
+            for agent in agents:
+                assert agent['docs'] == agent_texts[agent['id']], agent['id']
+                assert agent['purpose'] == agent_texts[agent['id']]['purpose'], agent['id']
+                assert 'nothing leaves the station without Adem' in agent['docs']['manual'], agent['id']
+            assert json.loads((runtime / 'ultra-crew.json').read_text())['textsVersion'] == 2
+            checks.append('Agent text migration: old ULTRA and crew texts become lenient defaults at boot; textsVersion 2')
             workspace = request('/api/ultra/workspace'); campaign = request('/api/ultra/campaign')
             page = request('/campaign/', authenticated=False)
             assert '1Ultra' in page and 'window.__STARNET_API_TOKEN__=' in page and '/campaign/ultra-app.js' in page
@@ -231,6 +256,10 @@ def main():
                 request('/api/ultra/tools/' + route, {}, expected=404)
             assert json.loads((root / 'data/leads.json').read_text()) == original_leads
             checks.append('Campaign tools: ULTRA and the crew get campaign.* tools; a crew packet carries no contact route or names; /api/ultra/tools/ answers 404')
+            kit = fixture_python('print(json.dumps(campaign_tools.pitch_kit(store, args)))', {})
+            assert kit['sender']['fr'] == 'Adem Sayari, ingénieur IA et data science, basé à Sousse'
+            request('/api/ultra/tools/pitch-kit', expected=404)
+            checks.append("Pitch kit: copied-root campaign tool returns Adem's sender line; /api/ultra/tools/pitch-kit GET answers 404")
             campaign = request('/api/ultra/campaign')
             assert campaign['crew_drafts'] == [] and campaign['proposals'] == []
             proposal = fixture_python('print(json.dumps(campaign_tools.propose_lead(store, args, "research")))',
