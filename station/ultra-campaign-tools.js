@@ -1,5 +1,7 @@
 'use strict';
 
+const {validate} = require('./shared/schema.js');
+
 const BRIEF = "[CAMPAIGN] Campaign tools read Adem's Tunisia campaign: campaign.leads lists companies and campaign.lead gives one company's checked packet. Hand the crew the packet, never your own guesses. Nothing is ever sent: Adem reviews every draft and proposed lead in LEADS.";
 
 function makeCampaignTools({call, isHalted}) {
@@ -7,16 +9,26 @@ function makeCampaignTools({call, isHalted}) {
     return {
       name, capability: 'campaign', scope: 'read', requiresConsent: false, description, schema,
       async run(args, ctx) {
-        if (isHalted()) return {content: 'The emergency stop is on: campaign tools are paused.', summary: 'error'};
+        if (isHalted()) throw new Error('The emergency stop is on: campaign tools are paused.');
         try {
+          const input = args && typeof args === 'object' && !Array.isArray(args)
+            ? Object.fromEntries(keys.filter(key => args[key] !== undefined).map(key => [key, args[key]])) : args;
+          const checked = validate(schema, input);
+          if (!checked.ok) throw new Error('invalid arguments: ' + checked.errors.join('; '));
+          if (input.query !== undefined && Array.from(input.query).length > 100)
+            throw new Error('invalid arguments: query must be at most 100 characters.');
+          if (input.limit !== undefined && (input.limit < 1 || input.limit > 50))
+            throw new Error('invalid arguments: limit must be an integer from 1 to 50.');
           const params = new URLSearchParams();
-          for (const key of keys) if (args[key] !== undefined) params.set(key, args[key]);
+          for (const key of keys) if (input[key] !== undefined) params.set(key, input[key]);
           const query = params.toString();
           const route = path + (query ? '?' + query : '');
           const result = await call({route, method: 'GET', body: null, version: ''});
-          return {content: JSON.stringify(result), summary: result && result.status >= 400 ? 'error' : name};
+          if (result && result.status >= 400)
+            throw new Error((result.value && result.value.error) || 'Campaign worker refused the request (status ' + result.status + ').');
+          return {content: JSON.stringify(result), summary: name};
         } catch (error) {
-          return {content: 'Campaign tool error: ' + ((error && error.message) || String(error)), summary: 'error'};
+          throw new Error('Campaign tool error: ' + ((error && error.message) || String(error)));
         }
       },
     };

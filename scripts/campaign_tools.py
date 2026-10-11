@@ -1,6 +1,10 @@
 """Read-only, field-filtered campaign packets for station agents."""
+from urllib.parse import urlsplit
+
+import automation
 import campaign
 import prospecting
+import ultra
 
 
 PACKET_FIELDS = ('id', 'company', 'country', 'location', 'industry', 'website', 'source_url', 'source_type',
@@ -14,6 +18,27 @@ def _fields(row, keys):
 
 def _suppressed(snapshot, lead_id):
     return lead_id in snapshot['suppressed_ids'] or lead_id in snapshot['route_suppressed_ids']
+
+
+def _channel(route):
+    route = str(route or '').strip().casefold()
+    if '@' in route or route == 'email':
+        return 'email'
+    if route in {'phone', 'téléphone', 'tel'} or (
+            sum(char.isdigit() for char in route) > len(route) / 2 and
+            all(char.isdigit() or char in '+()- ' for char in route)):
+        return 'phone'
+    if 'linkedin' in route:
+        return 'linkedin'
+    if route in {'form', 'website'}:
+        return 'website'
+    try:
+        url = urlsplit(route)
+        if url.scheme in {'http', 'https'} and url.hostname:
+            return 'website'
+    except ValueError:
+        pass
+    return 'other'
 
 
 def leads(store, args):
@@ -54,6 +79,11 @@ def packet(store, args):
     lead = next((row for row in prospecting.in_scope(store.leads()) if row['id'] == args.get('id')), None)
     if lead is None:
         raise ValueError('Unknown or out-of-scope company.')
+    flags = set(automation.audit_leads([lead], ultra.read_json(store.root, 'data/exclusions.json'))[0]['flags'])
+    if 'excluded' in flags:
+        raise ValueError('Company excluded.')
+    if flags & {'unknown_company', 'simulation'}:
+        raise ValueError('Unknown or out-of-scope company.')
     snapshot = store.snapshot()
     ranking = next((row for row in snapshot['rankings'] if row['id'] == lead['id']), None)
     draft = campaign.lead_view(lead, snapshot).get('draft')
@@ -62,7 +92,7 @@ def packet(store, args):
     return {
         'lead': public_lead,
         'ranking': _fields(ranking, ('score', 'factors', 'unknowns')) if ranking is not None else None,
-        'contacts': [_fields(row, ('role', 'route', 'source_url', 'checked_on'))
+        'contacts': [{**_fields(row, ('role', 'source_url', 'checked_on')), 'channel': _channel(row.get('route'))}
                      for row in snapshot['contacts'] if row['lead_id'] == lead['id']],
         'signals': [_fields(row, ('text', 'source_url', 'checked_on', 'hypothesis'))
                     for row in snapshot['signals'] if row['lead_id'] == lead['id']],

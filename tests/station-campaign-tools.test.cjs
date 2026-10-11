@@ -2,6 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { makeCampaignTools } = require('../station/ultra-campaign-tools.js');
+const { makeRegistry } = require('../station/sidecar/tools/registry.js');
 
 function fakeRegistry() { const tools = new Map(); return { tools, register: t => tools.set(t.name, t) }; }
 
@@ -26,21 +27,18 @@ test('campaign tools register as read tools on the campaign capability and call 
   assert.match(tools.brief(), /campaign\.lead/);
 });
 
-test('a worker refusal comes back as a readable tool error, never a crash', async () => {
+test('a worker refusal rejects with a readable tool error', async () => {
   const tools = makeCampaignTools({ call: async () => { throw new Error('Unknown or out-of-scope company.'); }, isHalted: () => false });
   const reg = fakeRegistry(); tools.register(reg);
-  const out = await reg.tools.get('campaign.lead').run({ id: 'x' }, {});
-  assert.equal(out.summary, 'error');
-  assert.match(out.content, /Unknown or out-of-scope company/);
+  await assert.rejects(reg.tools.get('campaign.lead').run({ id: 'x' }, {}), /Campaign tool error: Unknown or out-of-scope company/);
 });
 
 test('the emergency stop refuses every campaign tool before the worker is called', async () => {
   let called = false;
   const tools = makeCampaignTools({ call: async () => { called = true; return {}; }, isHalted: () => true });
   const reg = fakeRegistry(); tools.register(reg);
-  const out = await reg.tools.get('campaign.leads').run({}, {});
+  await assert.rejects(reg.tools.get('campaign.leads').run({}, {}), /The emergency stop is on: campaign tools are paused\./);
   assert.equal(called, false);
-  assert.match(out.content, /emergency stop/i);
 });
 
 test('campaign tools forward only allowed arguments and the fixed read request shape', async () => {
@@ -60,7 +58,7 @@ test('every registered tool stops and can resume without invoking the worker whi
   const tools = makeCampaignTools({ call: async () => { called++; return {}; }, isHalted: () => halted });
   const reg = fakeRegistry(); tools.register(reg);
   for (const tool of reg.tools.values()) {
-    assert.deepEqual(await tool.run({ id: 'tn' }, {}), { content: 'The emergency stop is on: campaign tools are paused.', summary: 'error' });
+    await assert.rejects(tool.run({ id: 'tn' }, {}), /The emergency stop is on: campaign tools are paused\./);
   }
   assert.equal(called, 0);
   halted = false;
@@ -68,11 +66,68 @@ test('every registered tool stops and can resume without invoking the worker whi
   assert.equal(called, 1);
 });
 
-test('a normal worker 400 envelope is marked as a tool error', async () => {
+test('a normal worker 400 envelope rejects with its readable error', async () => {
   const result = { id: 1, status: 400, value: { error: 'Invalid campaign request.' } };
   const tools = makeCampaignTools({ call: async () => result, isHalted: () => false });
   const reg = fakeRegistry(); tools.register(reg);
-  const out = await reg.tools.get('campaign.lead').run({ id: 'missing' }, {});
-  assert.equal(out.summary, 'error');
-  assert.deepEqual(JSON.parse(out.content), result);
+  await assert.rejects(reg.tools.get('campaign.lead').run({ id: 'missing' }, {}), /Campaign tool error: Invalid campaign request\./);
+});
+
+test('bad arguments reject before calling the worker', async () => {
+  let called = false;
+  const tools = makeCampaignTools({ call: async () => { called = true; return {}; }, isHalted: () => false });
+  const reg = fakeRegistry(); tools.register(reg);
+  const cases = [
+    ['campaign.lead', null], ['campaign.lead', {}], ['campaign.lead', { id: 3 }],
+    ['campaign.leads', { offer: 'missing' }], ['campaign.leads', { query: 'x'.repeat(101) }],
+    ['campaign.leads', { limit: 0 }], ['campaign.leads', { limit: 51 }], ['campaign.leads', { limit: 1.5 }],
+  ];
+  for (const [name, args] of cases) {
+    await assert.rejects(reg.tools.get(name).run(args, {}), /Campaign tool error: invalid arguments/);
+  }
+  assert.equal(called, false);
+});
+
+test('the real dispatcher marks campaign failures as errors and successful packets as success', async () => {
+  let halted = true, failure = null, called = 0;
+  const packet = { lead: { id: 'tn', company: 'Local ERP' } };
+  const tools = makeCampaignTools({ call: async () => {
+    called++;
+    if (failure instanceof Error) throw failure;
+    return failure || { status: 200, value: packet };
+  }, isHalted: () => halted });
+  const registry = makeRegistry(); tools.register(registry);
+  const ctx = { agentId: 'crew', canUse: (call, tool) => ({ ok: tool.capability === 'campaign' && tool.scope === 'read' }) };
+  const call = { name: 'campaign.lead', args: { id: 'tn' } };
+  const stopped = await registry.dispatch(call, ctx);
+  assert.equal(stopped.ok, false);
+  assert.equal(stopped.isError, true);
+  assert.match(stopped.content, /The emergency stop is on: campaign tools are paused\./);
+  assert.equal(called, 0);
+
+  halted = false;
+  failure = new Error('Company excluded.');
+  const thrown = await registry.dispatch(call, ctx);
+  assert.equal(thrown.ok, false);
+  assert.equal(thrown.isError, true);
+  assert.match(thrown.content, /Campaign tool error: Company excluded\./);
+
+  failure = { status: 400, value: { error: 'Invalid campaign request.' } };
+  const refused = await registry.dispatch(call, ctx);
+  assert.equal(refused.ok, false);
+  assert.equal(refused.isError, true);
+  assert.match(refused.content, /Campaign tool error: Invalid campaign request\./);
+
+  failure = null;
+  const successful = await registry.dispatch(call, ctx);
+  assert.equal(successful.ok, true);
+  assert.equal(successful.isError, false);
+  assert.deepEqual(JSON.parse(successful.content), { status: 200, value: packet });
+  assert.equal(called, 3);
+
+  const invalid = await registry.dispatch({ name: 'campaign.lead', args: {} }, ctx);
+  assert.equal(invalid.ok, false);
+  assert.equal(invalid.isError, true);
+  assert.match(invalid.content, /invalid arguments/);
+  assert.equal(called, 3);
 });

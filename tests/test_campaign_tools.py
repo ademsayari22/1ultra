@@ -48,8 +48,38 @@ class CampaignToolTests(unittest.TestCase):
             self.assertNotIn(secret, text)
         self.assertEqual(set(packet['lead']), set(campaign_tools.PACKET_FIELDS) & set(self.lead) | {'has_contact_route'})
         self.assertIs(packet['lead']['has_contact_route'], True)
-        self.assertEqual(packet['contacts'], [{'role': 'Directeur', 'route': 'email', 'source_url': 'https://example.tn/equipe', 'checked_on': '2026-10-05'}])
+        self.assertEqual(packet['contacts'], [{'role': 'Directeur', 'channel': 'email', 'source_url': 'https://example.tn/equipe', 'checked_on': '2026-10-05'}])
         self.assertEqual(packet['source_version'], campaign.fingerprint(self.lead))
+
+    def test_packet_replaces_private_contact_routes_with_channel_labels(self):
+        state = self.store.read()
+        state['contacts'] = []
+        self.store.path.write_text(json.dumps(state))
+        routes = ['sami@example.tn', '+216 20 000 000', 'https://www.linkedin.com/in/sami']
+        for route in routes:
+            self.store.action('contact', {'lead_id': 'tn', 'name': 'Sami Ben Ali', 'role': 'Directeur',
+                'route': route, 'source_url': 'https://example.tn/equipe', 'checked_on': '2026-10-05'},
+                self.store.version())
+        packet = campaign_tools.packet(self.store, {'id': 'tn'})
+        text = json.dumps(packet, ensure_ascii=False)
+        for route in routes:
+            self.assertNotIn(route, text)
+        self.assertEqual([contact['channel'] for contact in packet['contacts']], ['email', 'phone', 'linkedin'])
+        for contact in packet['contacts']:
+            self.assertEqual(set(contact), {'role', 'channel', 'source_url', 'checked_on'})
+
+    def test_packet_classifies_route_labels_without_echoing_unknown_text(self):
+        cases = [('EMAIL', 'email'), ('phone', 'phone'), ('Téléphone', 'phone'), ('TEL', 'phone'),
+                 ('+216 (20) 000-000', 'phone'), ('linkedin', 'linkedin'),
+                 ('https://example.tn/contact', 'website'), ('http://example.tn', 'website'),
+                 ('form', 'website'), ('WEBSITE', 'website'), ('Ask Sami privately', 'other')]
+        for route, channel in cases:
+            self.store.action('contact', {'lead_id': 'tn', 'name': 'Sami', 'route': route,
+                'source_url': 'https://example.tn/equipe', 'checked_on': '2026-10-05'}, self.store.version())
+        contacts = campaign_tools.packet(self.store, {'id': 'tn'})['contacts'][1:]
+        self.assertEqual([contact['channel'] for contact in contacts], [channel for _, channel in cases])
+        self.assertTrue(all('route' not in contact for contact in contacts))
+        self.assertNotIn('Ask Sami privately', json.dumps(contacts))
 
     def test_packet_refuses_unknown_and_out_of_scope_companies(self):
         with self.assertRaises(ValueError): campaign_tools.packet(self.store, {'id': 'missing'})
@@ -109,12 +139,38 @@ class CampaignToolTests(unittest.TestCase):
         self.assertEqual(listing['crew_drafts'], 0)
         self.assertEqual(before, {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob('*') if p.is_file()})
 
-    def test_packet_missing_optional_data_and_ranking(self):
+    def test_packet_refuses_excluded_company(self):
         (self.root / 'data/exclusions.json').write_text('{"companies":[{"company":"Local ERP"}]}')
+        self.assertEqual(campaign_tools.leads(self.store, {})['leads'], [])
+        with self.assertRaisesRegex(ValueError, r'^Company excluded\.$'):
+            campaign_tools.packet(self.store, {'id': 'tn'})
+
+    def test_company_name_exclusion_is_normalized_for_listing_and_packet(self):
+        exclusions = {'companies': [{'company': ' LÓCAL-ERP '}]}
+        (self.root / 'data/exclusions.json').write_text(json.dumps(exclusions))
+        self.assertEqual(campaign_tools.leads(self.store, {}), {'offer': 'documents', 'count': 0, 'leads': []})
+        with self.assertRaisesRegex(ValueError, r'^Company excluded\.$'):
+            campaign_tools.packet(self.store, {'id': 'tn'})
+
+    def test_company_alias_exclusion_is_normalized_for_listing_and_packet(self):
+        exclusions = {'companies': [{'company': 'Parent Company', 'aliases': [' Lócal.E R P ']}]}
+        (self.root / 'data/exclusions.json').write_text(json.dumps(exclusions))
+        self.assertEqual(campaign_tools.leads(self.store, {}), {'offer': 'documents', 'count': 0, 'leads': []})
+        with self.assertRaisesRegex(ValueError, r'^Company excluded\.$'):
+            campaign_tools.packet(self.store, {'id': 'tn'})
+
+    def test_unknown_company_is_ineligible_for_listing_and_packet(self):
+        lead = {**self.lead, 'company': ' '}
+        (self.root / 'data/leads.json').write_text(json.dumps([lead]))
+        self.assertEqual(campaign_tools.leads(self.store, {})['leads'], [])
+        with self.assertRaisesRegex(ValueError, r'^Unknown or out-of-scope company\.$'):
+            campaign_tools.packet(self.store, {'id': 'tn'})
+
+    def test_packet_missing_optional_data(self):
         lead = {k: v for k, v in self.lead.items() if k != 'contact_route'}
         (self.root / 'data/leads.json').write_text(json.dumps([lead]))
         packet = campaign_tools.packet(self.store, {'id': 'tn'})
-        self.assertIsNone(packet['ranking'])
+        self.assertIsNotNone(packet['ranking'])
         self.assertIsNone(packet['draft'])
         self.assertIs(packet['lead']['has_contact_route'], False)
         self.assertIs(packet['suppressed'], False)
