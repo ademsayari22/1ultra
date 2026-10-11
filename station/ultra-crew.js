@@ -16,7 +16,8 @@ function makeCrew({fs,path,runtime,switches,port,durable,isHalted=()=>false,fetc
     const out=Object.assign({},o);
     if(o.ultraRunId&&typeof o.fetch==='function')out.fetch=receipts.observe(o.fetch,o.ultraRunId);
     const profile=o.ultraAgentId?roster.profileFor(o.ultraAgentId):null;
-    if(profile)out.headers=Object.assign({'X-FreeLLM-Task-Type':profile.taskType},o.headers||{});
+    if(profile&&!Object.keys(o.headers||{}).some(key=>key.toLowerCase()==='x-freellm-task-type'))
+      out.headers=Object.assign({'X-FreeLLM-Task-Type':profile.taskType},o.headers||{});
     return out;
   }
   async function status(){

@@ -23,7 +23,7 @@ function makeRoster({fs,path,runtime,durable,now=()=>Date.now()}){
   function readJson(file,fallback){try{return JSON.parse(fs.readFileSync(file,'utf8'));}catch(e){if(e&&e.code==='ENOENT')return fallback;throw e;}}
   function readCrew(){
     const c=readJson(crewFile,null);
-    return c&&c.version===1?{version:1,seeded:Array.isArray(c.seeded)?c.seeded.slice():[],profiles:c.profiles&&typeof c.profiles==='object'?c.profiles:{}}:{version:1,seeded:[],profiles:{}};
+    return c&&c.version===1?{version:1,seeded:Array.isArray(c.seeded)?c.seeded.slice():[],pending:Array.isArray(c.pending)?c.pending.slice():[],profiles:c.profiles&&typeof c.profiles==='object'?c.profiles:{}}:{version:1,seeded:[],pending:[],profiles:{}};
   }
   function profileFor(agentId){
     const raw=readCrew().profiles[String(agentId||'')];
@@ -42,26 +42,40 @@ function makeRoster({fs,path,runtime,durable,now=()=>Date.now()}){
     const at=now(),doc=env.doc,agents=Array.isArray(doc.agents)?doc.agents.slice():[];
     const roster=readJson(rosterFile,{version:1,agents:[]}),rows=Array.isArray(roster.agents)?roster.agents.slice():[];
     const added=[];
+    let saveChanged=false,rosterChanged=false;
     for(const m of todo){
       const profile=Health.normalizeProfile(Health.DEFAULT_PROFILES[m.id]);
       if(!crew.profiles[m.id])crew.profiles[m.id]=profile;
-      crew.seeded.push(m.id);
-      if(agents.some(a=>a&&a.id===m.id)||rows.some(r=>r&&r.agentId===m.id))continue;   // Adem already has an agent with this id
+      const hasAgent=agents.some(a=>a&&a.id===m.id),hasRow=rows.some(r=>r&&r.agentId===m.id);
+      if(!crew.pending.includes(m.id)&&(hasAgent||hasRow))continue;   // Adem already has an agent with this id
       const model=Health.ROUTING[profile.minTier];
-      agents.push({id:m.id,name:m.name,color:m.color,model,provider:'custom',reasoningEffort:null,personaId:'worker-homie',role:'specialist',
-        voiceTraits:null,customVoice:'',approvalMode:'ask',workshop:false,purpose:m.purpose,specialtyId:null,
-        docs:{identity:m.identity,purpose:m.purpose,manual:RULES,context:CONTEXT},skills:[],stats:stats(),createdAt:at});
-      rows.push({agentId:m.id,name:m.name,system:systemFor(m),model,provider:'custom',reasoningEffort:null,role:'specialist',skills:[]});
-      added.push(m.id);
+      if(!hasAgent){
+        agents.push({id:m.id,name:m.name,color:m.color,model,provider:'custom',reasoningEffort:null,personaId:'worker-homie',role:'specialist',
+          voiceTraits:null,customVoice:'',approvalMode:'ask',workshop:false,purpose:m.purpose,specialtyId:null,
+          docs:{identity:m.identity,purpose:m.purpose,manual:RULES,context:CONTEXT},skills:[],stats:stats(),createdAt:at});
+        saveChanged=true;
+      }
+      if(!hasRow){
+        rows.push({agentId:m.id,name:m.name,system:systemFor(m),model,provider:'custom',reasoningEffort:null,role:'specialist',skills:[]});
+        rosterChanged=true;
+      }
+      if(!hasAgent||!hasRow)added.push(m.id);
     }
     if(added.length){
-      const stamp=Math.max(at,num(env.updatedAt)+1,num(doc.updatedAt)+1);
-      doc.agents=agents;doc.updatedAt=stamp;doc._saveRevision=num(doc._saveRevision)+1;doc._saveDirty=false;
-      env.updatedAt=stamp;env.savedAt=at;
-      if(Object.prototype.hasOwnProperty.call(env,'requestUpdatedAt'))env.requestUpdatedAt=stamp;
-      durable(saveFile,env);
-      durable(rosterFile,{version:1,updatedAt:Math.max(at,num(roster.updatedAt)+1),agents:rows});
+      // Record ownership before either agent file changes, so an interrupted seed can repair the missing side.
+      crew.pending=[...new Set(crew.pending.concat(added))];
+      durable(crewFile,crew);
+      if(saveChanged){
+        const stamp=Math.max(at,num(env.updatedAt)+1,num(doc.updatedAt)+1);
+        doc.agents=agents;doc.updatedAt=stamp;doc._saveRevision=num(doc._saveRevision)+1;doc._saveDirty=false;
+        env.updatedAt=stamp;env.savedAt=at;
+        if(Object.prototype.hasOwnProperty.call(env,'requestUpdatedAt'))env.requestUpdatedAt=stamp;
+        durable(saveFile,env);
+      }
+      if(rosterChanged)durable(rosterFile,{version:1,updatedAt:Math.max(at,num(roster.updatedAt)+1),agents:rows});
     }
+    crew.seeded.push(...todo.map(m=>m.id));
+    crew.pending=[];
     durable(crewFile,crew);
     return {added};
   }

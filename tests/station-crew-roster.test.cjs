@@ -77,3 +77,51 @@ test("crew requests carry the member's task type; other providers and agents are
     assert.equal(crew.profileFor('qa'), null, 'a broken profile is ignored, never guessed');
   } finally { fs.rmSync(rt, { recursive: true, force: true }); }
 });
+
+test('an interrupted roster write is retried without duplicating saved crew members', () => {
+  const rt = seededRuntime();
+  try {
+    const ids = ['research', 'delivery', 'sales', 'qa'];
+    let failRoster = true;
+    const interruptedDurable = (file, value) => {
+      if (path.basename(file) === 'agent.roster.json' && failRoster) {
+        failRoster = false;
+        throw new Error('interrupted roster write');
+      }
+      durable(file, value);
+    };
+    const first = makeRoster({ fs, path, runtime: rt, durable: interruptedDurable, now: () => 5000 });
+    assert.throws(() => first.seed(), /interrupted roster write/);
+    assert.ok(fs.existsSync(path.join(rt, 'ultra-crew.json')), 'the pending journal must precede the save and roster writes');
+    const pending = read(rt, 'ultra-crew.json');
+    assert.deepEqual(pending.pending, ids);
+    assert.deepEqual(pending.seeded, []);
+    assert.deepEqual(Object.keys(pending.profiles), ids);
+    assert.deepEqual(read(rt, 'agent.save.json').doc.agents.map(a => a.id), ids);
+    assert.deepEqual(read(rt, 'agent.roster.json').agents.map(a => a.agentId), ['agent']);
+
+    const retry = makeRoster({ fs, path, runtime: rt, durable, now: () => 6000 });
+    assert.deepEqual(retry.seed().added, ids, 'repairing only the roster still counts as adding the members');
+    const saved = read(rt, 'agent.save.json').doc.agents;
+    assert.deepEqual(saved.map(a => a.id), ids);
+    for (const id of ids) assert.equal(saved.filter(a => a.id === id).length, 1);
+    assert.deepEqual(read(rt, 'agent.roster.json').agents.map(a => a.agentId), ['agent', ...ids]);
+    const completed = read(rt, 'ultra-crew.json');
+    assert.deepEqual(completed.seeded, ids);
+    assert.deepEqual(completed.pending, []);
+    assert.deepEqual(retry.seed().added, []);
+  } finally { fs.rmSync(rt, { recursive: true, force: true }); }
+});
+
+test('an explicit task-type header wins regardless of key casing and is kept unchanged', () => {
+  const rt = seededRuntime();
+  try {
+    const crew = makeCrew({ fs, path, runtime: rt, switches: { isOn: () => false }, port: 3901, durable, now: () => 5000 });
+    crew.seedRoster();
+    const f = async () => ({ status: 200, headers: { get: () => '' } });
+    const headers = { 'x-freellm-task-type': 'chat' };
+    const options = crew.adapterOptions({ provider: 'custom', fetch: f, ultraAgentId: 'delivery', headers });
+    assert.deepEqual(options.headers, { 'x-freellm-task-type': 'chat' });
+    assert.equal(options.headers, headers, 'an explicit header object is passed through unchanged');
+  } finally { fs.rmSync(rt, { recursive: true, force: true }); }
+});
