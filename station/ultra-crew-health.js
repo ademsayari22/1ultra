@@ -48,9 +48,9 @@ function classify({row,receipts,profile,tiers,parseVerdict}){
   if(reason!=='done')return {kind:'failed_check',detail:'the worker ended with '+reason,routedVia};
   if(failed&&(UNAVAILABLE_STATUS.has(failed.status)||failed.status===0||failed.status>=500))
     return {kind:'unavailable',detail:'FreeLLMAPI answered '+(failed.status||failed.error||'nothing'),routedVia};
-  if(routedVia&&routedVia!=='cache'&&routedVia!=='idempotency'){
-    const tier=tierOf(routedVia,tiers);
-    if(rank(tier)<rank(profile.minTier))return {kind:'downgraded',detail:routedVia+' is '+tier+', below '+profile.minTier,routedVia};
+  if(routedVia!=='cache'&&routedVia!=='idempotency'){
+    const tier=routedVia?tierOf(routedVia,tiers):'fast';
+    if(rank(tier)<rank(profile.minTier))return {kind:'downgraded',detail:routedVia?routedVia+' is '+tier+', below '+profile.minTier:'no routing evidence (no X-Routed-Via), counted as fast, below '+profile.minTier,routedVia};
   }
   if(profile.requiresVerdict&&!(typeof parseVerdict==='function'&&parseVerdict(String(row.result||''))))return {kind:'failed_check',detail:'no VERDICT line',routedVia};
   return {kind:'ok',detail:'',routedVia};

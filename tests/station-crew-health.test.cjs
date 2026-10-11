@@ -42,6 +42,9 @@ test('results are classified as the spec lists', () => {
   assert.equal(c(done('x'), [{ status: 429 }, { status: 200, routedVia: 'p/smart' }]), 'ok', 'a later success clears an earlier 429');
   assert.equal(c({ reason: 'invalid-result', result: 'x' }, []), 'failed_check');
   assert.equal(c({ reason: 'max_iters', result: 'x' }, []), 'failed_check');
+  assert.equal(c(done('x'), []), 'downgraded', 'no receipts: counted as fast');
+  assert.equal(c(done('x'), [{ status: 200, routedVia: '' }]), 'downgraded', 'a success without X-Routed-Via counts as fast');
+  assert.equal(c(done('x'), [], 'delivery'), 'downgraded');
   assert.equal(c(done('x'), served('p/fast')), 'downgraded');
   assert.equal(c(done('x'), served('p/unlisted')), 'downgraded');
   assert.equal(c(done('x'), served('p/mid'), 'delivery'), 'ok');
