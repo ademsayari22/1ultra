@@ -3,15 +3,20 @@
 const policy=require('./ultra-policy.js');
 const {makeWire}=require('./ultra-crew-wire.js');
 const {makeReceipts}=require('./ultra-crew-receipts.js');
+const {makeRoster}=require('./ultra-crew-roster.js');
 function makeCrew({fs,path,runtime,switches,port,durable,isHalted=()=>false,fetchFn=(...a)=>globalThis.fetch(...a),now=()=>Date.now()}){
   const wire=makeWire({fs,path,runtime,port});
   const receipts=makeReceipts({now});
+  const roster=makeRoster({fs,path,runtime,durable,now});
   const crewProvider=id=>policy.providerSwitch(id)==='crew.freellmapi';
-  // selectProvider's options for one adapter: crew requests record FreeLLMAPI's routing headers for their run.
+  // selectProvider's options for one adapter: crew requests record FreeLLMAPI's routing headers for their run and tell
+  // FreeLLMAPI the member's task type.
   function adapterOptions(o){
     if(!o||!crewProvider(o.provider))return o;
     const out=Object.assign({},o);
     if(o.ultraRunId&&typeof o.fetch==='function')out.fetch=receipts.observe(o.fetch,o.ultraRunId);
+    const profile=o.ultraAgentId?roster.profileFor(o.ultraAgentId):null;
+    if(profile)out.headers=Object.assign({'X-FreeLLM-Task-Type':profile.taskType},o.headers||{});
     return out;
   }
   async function status(){
@@ -24,6 +29,7 @@ function makeCrew({fs,path,runtime,switches,port,durable,isHalted=()=>false,fetc
     }catch(_){/* FreeLLMAPI is not reachable */}
     return out;
   }
-  return {registerProviderConfig:fn=>wire.register(fn),isFreeTier:id=>wire.isFreeTier(id),adapterOptions,receiptsFor:id=>receipts.get(id),status};
+  return {registerProviderConfig:fn=>wire.register(fn),isFreeTier:id=>wire.isFreeTier(id),adapterOptions,receiptsFor:id=>receipts.get(id),
+    seedRoster:()=>roster.seed(),profileFor:id=>roster.profileFor(id),status};
 }
 module.exports={makeCrew};

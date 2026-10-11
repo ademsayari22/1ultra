@@ -40,6 +40,8 @@ function ensureRpc(){if(rpc)return;rpc=child();
 // Crew on FreeLLMAPI (Stage 1b): unified-key wire, routing receipts, crew roster, capability ladder, lead fallback.
 const crewPort=require('./ultra-crew-wire.js').portFrom(process.env);
 const crew=require('./ultra-crew.js').makeCrew({fs,path,runtime,switches,port:crewPort,durable,isHalted:()=>halted});
+try{const seeded=crew.seedRoster();if(seeded.added.length)console.warn('1Ultra: crew added ('+seeded.added.join(', ')+'). Close and reopen any station tab before working with them.');}
+catch(e){console.warn('1Ultra: could not add the crew: '+String((e&&e.message)||e));}
 function call(request){ensureRpc();const id=++seq;return new Promise((resolve,reject)=>{
   const timer=setTimeout(()=>{pending.delete(id);reject(new Error('Campaign request timed out. Refresh before retrying a save.'));},20000);
   pending.set(id,{resolve,reject,timer});rpc.stdin.write(JSON.stringify({...request,id})+'\n');
