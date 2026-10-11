@@ -18587,12 +18587,16 @@ async function runOnceTrackedInner(o) {
 let coreRunsLive = 0;
 async function runOnceCoreCounted(o) {
   coreRunsLive++;
-  try { return await runOnceCore(o); }
-  catch (e) {
-    // 1Ultra: only the initial Codex token failure can restart, after the core's finally releases its slot.
-    // The second call is outside this catch: no repeated retries, and no restart after inference begins.
-    if (!e || e.code !== 'ULTRA_CODEX_START_FALLBACK') throw e;
-    return await runOnceCore(e.ultraFallback);
+  try {
+    // 1Ultra: only the initial Codex token failure can restart, once, after the core's finally releases its slot;
+    // it is thrown before inference begins. One call site keeps every runOnceCore caller counted.
+    for (let next = o, restarted = false; ;) {
+      try { return await runOnceCore(next); }
+      catch (e) {
+        if (restarted || !e || e.code !== 'ULTRA_CODEX_START_FALLBACK') throw e;
+        next = e.ultraFallback; restarted = true;
+      }
+    }
   }
   finally { coreRunsLive--; }
 }

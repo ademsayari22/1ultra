@@ -396,7 +396,7 @@
   "id": "crew-lead-token-retry",
   "file": "sidecar/index.js",
   "find": "async function runOnceCoreCounted(o) {\n  coreRunsLive++;\n  try { return await runOnceCore(o); }\n  finally { coreRunsLive--; }\n}\n",
-  "replace": "async function runOnceCoreCounted(o) {\n  coreRunsLive++;\n  try { return await runOnceCore(o); }\n  catch (e) {\n    // 1Ultra: only the initial Codex token failure can restart, after the core's finally releases its slot.\n    // The second call is outside this catch: no repeated retries, and no restart after inference begins.\n    if (!e || e.code !== 'ULTRA_CODEX_START_FALLBACK') throw e;\n    return await runOnceCore(e.ultraFallback);\n  }\n  finally { coreRunsLive--; }\n}\n"
+  "replace": "async function runOnceCoreCounted(o) {\n  coreRunsLive++;\n  try {\n    // 1Ultra: only the initial Codex token failure can restart, once, after the core's finally releases its slot;\n    // it is thrown before inference begins. One call site keeps every runOnceCore caller counted.\n    for (let next = o, restarted = false; ;) {\n      try { return await runOnceCore(next); }\n      catch (e) {\n        if (restarted || !e || e.code !== 'ULTRA_CODEX_START_FALLBACK') throw e;\n        next = e.ultraFallback; restarted = true;\n      }\n    }\n  }\n  finally { coreRunsLive--; }\n}\n"
 },
 {
   "id": "crew-lead-token-failure",

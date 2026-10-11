@@ -131,7 +131,9 @@ class PatchAnchorsTest(unittest.TestCase):
         text = (ROOT / 'station/sidecar/index.js').read_text()
         counted = text[text.index('async function runOnceCoreCounted(o)'):text.index('async function runOnceCore(o)')]
         self.assertIn("e.code !== 'ULTRA_CODEX_START_FALLBACK'", counted)
-        self.assertIn('return await runOnceCore(e.ultraFallback);', counted)
+        self.assertIn('if (restarted || !e', counted)
+        self.assertIn('next = e.ultraFallback; restarted = true;', counted)
+        self.assertEqual(counted.count('runOnceCore('), 1, 'one counted call site (upstream update-drain-wiring guard)')
         token = text[text.index('try { codexToken = await ensureCodexAccessToken(); }'):]
         token = token[:token.index('provider = selectProvider(')]
         self.assertIn('ultraHost.crew.rewriteLeadAuthFailure(ultraFallback)', token)
