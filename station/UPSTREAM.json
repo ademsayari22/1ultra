@@ -16357,10 +16357,10 @@
     },
     {
       "path": "frontend/index.html",
-      "current_sha256": "475f8b853e971168ea7326b37d4e2b94090204fc10e5c59ac226c6db76cd755f",
+      "current_sha256": "3beca32ce9d639afcc6883c64c7ab9e8cdf112de474083859c28afd6e8d1ccb2",
       "reasons": [
         "brand",
-        "patch:dock-campaign,dock-switches,ultra-window-script,ultra-brand-css,label-title-logo,label-console-wordmark,label-provider-wordmark,label-logo-img,ultra-templates-script"
+        "patch:dock-campaign,dock-switches,ultra-window-script,ultra-brand-css,label-title-logo,label-console-wordmark,label-provider-wordmark,label-logo-img,ultra-templates-script,ultra-leads-assets"
       ]
     },
     {

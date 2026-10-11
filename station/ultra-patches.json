@@ -147,7 +147,7 @@
     "id": "dock-campaign",
     "file": "frontend/index.html",
     "find": "      </div>\n    </div>\n    <div class=\"bb-group\" data-group=\"build\">",
-    "replace": "        <button class=\"bb\" data-term=\"campaign\"><span class=\"bb-i\">◆</span><span class=\"bb-tx\"><b>CAMPAIGN</b><small>Tunisia leads, pitches &amp; your recorded outcomes</small></span></button>\n      </div>\n    </div>\n    <div class=\"bb-group\" data-group=\"build\">"
+    "replace": "        <button class=\"bb\" data-term=\"leads\"><span class=\"bb-i\">◆</span><span class=\"bb-tx\"><b>LEADS</b><small>Tunisia companies, pitches &amp; your recorded outcomes</small></span></button>\n      </div>\n    </div>\n    <div class=\"bb-group\" data-group=\"build\">"
   },
   {
     "id": "dock-switches",
@@ -430,5 +430,8 @@
  "replace": "      { capId: 'compute', tool: 'model.chat', scope: 'execute', requiresConsent: false, network: true },\n      // 1Ultra: the campaign tools ride compute, like quest.update, so ULTRA and every crew member can read the campaign.\n      { capId: 'campaign', tool: 'campaign.leads', scope: 'read', requiresConsent: false, network: false },\n      { capId: 'campaign', tool: 'campaign.lead', scope: 'read', requiresConsent: false, network: false },\n      { capId: 'campaign', tool: 'campaign.check_draft', scope: 'read', requiresConsent: false, network: false },\n      { capId: 'campaign', tool: 'campaign.save_draft', scope: 'write', requiresConsent: false, network: false },\n      { capId: 'campaign', tool: 'campaign.propose_lead', scope: 'write', requiresConsent: false, network: false },\n"},
 {"id": "campaign-tools-brief", "file": "sidecar/index.js",
  "find": "    if (resolved.tools.includes('team.health')) teamNote += '\\n' + ultraHost.crew.leadBrief();\n",
- "replace": "    if (resolved.tools.includes('team.health')) teamNote += '\\n' + ultraHost.crew.leadBrief();\n    if (resolved.tools.includes('campaign.lead')) teamNote += '\\n' + ultraHost.campaignBrief();\n"}
+ "replace": "    if (resolved.tools.includes('team.health')) teamNote += '\\n' + ultraHost.crew.leadBrief();\n    if (resolved.tools.includes('campaign.lead')) teamNote += '\\n' + ultraHost.campaignBrief();\n"},
+{"id": "ultra-leads-assets", "file": "frontend/index.html",
+ "find": "<script src=\"ultra-window.js\"></script>",
+ "replace": "<link rel=\"stylesheet\" href=\"ultra-leads.css\">\n<script src=\"ultra-window.js\"></script>\n<script src=\"ultra-leads.js\"></script>"}
 ]

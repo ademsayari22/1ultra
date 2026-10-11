@@ -180,8 +180,32 @@ class PatchAnchorsTest(unittest.TestCase):
 
     def test_campaign_tool_patches_are_appended_after_templates(self):
         ids = [p['id'] for p in json.loads((ROOT / 'station/ultra-patches.json').read_text())]
-        self.assertEqual(ids[-3:], ['campaign-tools-register', 'campaign-tools-capability', 'campaign-tools-brief'])
+        start = ids.index('campaign-tools-register')
+        self.assertEqual(ids[start:start + 3], ['campaign-tools-register', 'campaign-tools-capability', 'campaign-tools-brief'])
         self.assertGreater(ids.index('campaign-tools-register'), ids.index('ultra-templates-script'))
+
+    def test_leads_dock_and_assets_use_the_registered_native_window(self):
+        index = (ROOT / 'station/frontend/index.html').read_text()
+        self.assertEqual(index.count('data-term="leads"'), 1)
+        self.assertIn('<b>LEADS</b><small>Tunisia companies, pitches &amp; your recorded outcomes</small>', index)
+        self.assertNotIn('data-term="campaign"', index)
+        self.assertEqual(index.count('<script src="ultra-window.js"></script>'), 1)
+        self.assertEqual(index.count('<script src="ultra-leads.js"></script>'), 1)
+        self.assertEqual(index.count('<link rel="stylesheet" href="ultra-leads.css">'), 1)
+        self.assertLess(index.index('<script src="ultra-window.js"></script>'), index.index('<script src="ultra-leads.js"></script>'))
+        leads = (ROOT / 'station/frontend/ultra-leads.js').read_text()
+        self.assertIn("StationUI.registerWindow('leads', 'LEADS', build, { console: true, className: 'ultra-leads-win' })", leads)
+        stationui = (ROOT / 'station/frontend/app/stationui.js').read_text()
+        self.assertIn("document.querySelectorAll('.bb[data-term]')", stationui)
+        self.assertIn('const k = b.dataset.term, def = BUILDERS[k];', stationui)
+        self.assertIn("StationUI.registerWindow('campaign', 'CAMPAIGN'", (ROOT / 'station/frontend/ultra-window.js').read_text())
+
+    def test_leads_assets_are_owned_and_the_patch_is_appended(self):
+        self.assertTrue(U.owned('frontend/ultra-leads.js'))
+        self.assertTrue(U.owned('frontend/ultra-leads.css'))
+        ids = [p['id'] for p in json.loads((ROOT / 'station/ultra-patches.json').read_text())]
+        self.assertEqual(ids[-1], 'ultra-leads-assets')
+        self.assertGreater(ids.index('ultra-leads-assets'), ids.index('ultra-window-script'))
 
     def test_campaign_tool_http_routes_are_refused_before_body_or_bridge(self):
         host = (ROOT / 'station/ultra-host.js').read_text()
