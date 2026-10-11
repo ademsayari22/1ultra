@@ -57,6 +57,10 @@ test('the six 1Ultra room kits are offered to the station builder and each one b
     const nr = st.rooms().find(x => x.name === kit.name);
     assert.ok(nr, kit.id + ': a new room of that name');
     assert.ok(st.props().filter(p => st.roomAt(p.x, p.y) === nr.id).every(p => !p.agentId), kit.id + ': a kit never seats an agent');
+    if (kit.line) {
+      const briefs = st.props().filter(p => p.t === 'bay' && st.roomAt(p.x, p.y) === nr.id).map(p => p.brief).sort();
+      assert.deepEqual(briefs, Object.values(kit.line.briefs).sort(), kit.id + ': each step gets its written instructions');
+    }
     assert.equal(st.undo().ok, true);
   }
   const research = T.kits().find(k => k.id === 'ultraResearch');

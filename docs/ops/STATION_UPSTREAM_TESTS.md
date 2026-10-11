@@ -140,7 +140,7 @@ Two real defects were found by this run and fixed before recording it: test-star
 | `test/sprite-assets.test.js` | `excluded-art` |  |
 | `test/sprite-walk-motion.test.js` | `excluded-art` |  |
 | `test/sprite-detached-prop.test.js` | `excluded-art` |  |
-| `test/station-builder.test.js` | `brand` | passes on an unbranded copy of the same build |
+| `test/station-builder.test.js` | `brand` | the refusal wording says 1Ultra; since Stage 2 its preset-menu assertion also sees the added 1ULTRA COMMAND preset. Every kit invariant, including the six 1Ultra room kits, passes |
 | `test/free-path-ollama.test.js` | `brand` | expects "LINK STARNET"; also reads the unimported README.md |
 | `test/keycta-recovery.test.js` | `brand` | passes on an unbranded copy of the same build |
 | `test/process-fault.test.js` | `patch` | no-trigger-poll: the folder-trigger timer is off until the cron switch |
