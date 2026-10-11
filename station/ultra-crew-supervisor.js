@@ -4,7 +4,9 @@
 // the lead. At most three moves; every move goes back to the lead and into the lead's run receipt; nothing is dropped.
 const Health=require('./ultra-crew-health.js');
 const MOVES_RUNS=300,MOVES_PER_RUN=10;
-function makeSupervisor({profileFor,memberIds,isCrewProvider,readiness,receiptsFor,tiers,switches,isHalted,store,parseVerdict,now=()=>Date.now()}){
+const STOP_REASON='the emergency stop is on, so this crew subtask stopped.';
+const INVALID_PROFILE_REASON='invalid capability profile in ultra-crew.json — fix or reset it';
+function makeSupervisor({profileFor,memberIds,isKnownMember=id=>memberIds().includes(String(id)),isCrewProvider,readiness,receiptsFor,tiers,switches,isHalted,store,parseVerdict,now=()=>Date.now()}){
   const moves=new Map();
   function remember(parentRunId,move){
     if(!parentRunId)return;
@@ -12,14 +14,23 @@ function makeSupervisor({profileFor,memberIds,isCrewProvider,readiness,receiptsF
     if(!list){list=[];moves.set(parentRunId,list);if(moves.size>MOVES_RUNS)moves.delete(moves.keys().next().value);}
     if(list.length<MOVES_PER_RUN)list.push(Object.assign({},move));
   }
-  function classifyRow(agentId,row){
+  function effectiveProfile(job){
+    const profile=profileFor(job.agentId),needs=job.ultraNeeds;
+    if(!profile||!needs)return profile;
+    return Object.assign({},profile,{minTier:Health.rank(needs.minTier)>Health.rank(profile.minTier)?needs.minTier:profile.minTier,
+      tools:profile.tools||needs.tools,vision:profile.vision||needs.vision,requiresVerdict:profile.requiresVerdict||needs.requiresVerdict});
+  }
+  function classifyRow(job,row){
+    const profile=effectiveProfile(job);
+    if(!profile)return {kind:'unavailable',detail:INVALID_PROFILE_REASON,routedVia:''};
     const runId=row&&(typeof row.repairRunId==='string'&&row.repairRunId?row.repairRunId:row.runId);
-    return Health.classify({row,receipts:runId?receiptsFor(runId):[],profile:profileFor(agentId),tiers:tiers(),parseVerdict});
+    return Health.classify({row,receipts:runId?receiptsFor(runId):[],profile,tiers:tiers(),parseVerdict});
   }
   async function memberReady(agentId){
     const profile=profileFor(agentId);
-    if(!profile)return {ready:false,reason:'not a crew member'};
+    if(!profile)return {ready:false,reason:isKnownMember(agentId)?INVALID_PROFILE_REASON:'not a crew member'};
     const r=await readiness(profile);
+    if(isHalted())return {ready:false,reason:STOP_REASON};
     const member=store.load().members[agentId];
     if(member&&member.benched){
       if(!r.ready)return {ready:false,reason:'benched: no capable model ('+r.reason+')'};
@@ -30,10 +41,12 @@ function makeSupervisor({profileFor,memberIds,isCrewProvider,readiness,receiptsF
   async function candidates(crewMap){
     const out=[];
     for(const agentId of memberIds()){
+      if(isHalted())return [];
       const profile=profileFor(agentId);
       const ident=crewMap&&crewMap.get(agentId);
       if(!profile||!ident||!isCrewProvider(ident.provider))continue;
       const r=await readiness(profile);
+      if(isHalted())return [];
       const state=store.load();
       let benched=!!(state.members[agentId]&&state.members[agentId].benched);
       if(benched&&r.ready){store.save(Health.unbench(state,agentId));benched=false;}
@@ -44,23 +57,24 @@ function makeSupervisor({profileFor,memberIds,isCrewProvider,readiness,receiptsF
   const describe=list=>list.map(m=>m.from+' '+m.outcome+(m.detail?' ('+m.detail+')':'')+' → '+m.step+(m.to!==m.from?' '+m.to:'')).join('; ');
   // team.dispatch asks this before delivering a completed row: a held row is redone by supervise(), never shown as done.
   function accept(job,row){
-    if(!job||!isCrewProvider(job.ident&&job.ident.provider)||!profileFor(job.agentId))return true;
-    const outcome=classifyRow(job.agentId,row);
+    if(!job||!isCrewProvider(job.ident&&job.ident.provider)||!isKnownMember(job.agentId))return true;
+    const outcome=classifyRow(job,row);
     row.crewOutcome=outcome;
     return outcome.kind==='ok';
   }
   async function supervise(job,o2,h){
-    const needs=job&&!job.error&&isCrewProvider(job.ident&&job.ident.provider)?profileFor(job.agentId):null;
-    if(!needs)return h.runWorkerOnce(job,o2);
+    if(!job||job.error||!isCrewProvider(job.ident&&job.ident.provider)||!isKnownMember(job.agentId))return h.runWorkerOnce(job,o2);
+    const needs=effectiveProfile(job);
     const deadline=o2&&typeof o2.wallMs==='number'&&Number.isFinite(o2.wallMs)&&o2.wallMs>0?now()+o2.wallMs:null;
     const trail=[],tried=new Set([job.agentId]);
     let current=job,retried=false,opts=o2,usd=0,lastText='';
     const failed=why=>({agentId:job.agentId,reason:'error',usd,crewMoves:trail,
       result:'FAILED — '+why+(trail.length?' Moves: '+describe(trail)+'.':'')+' Tell the Commander this subtask did not complete; nothing was dropped silently.'});
     for(;;){
-      if(isHalted())return failed('the emergency stop is on, so this crew subtask stopped.');
+      if(isHalted())return failed(STOP_REASON);
       if(deadline!==null&&now()>=deadline)return failed('the dispatch wall clock for this subtask ran out.');
       const ready=await memberReady(current.agentId);
+      if(isHalted())return failed(STOP_REASON);
       if(deadline!==null){
         const remaining=deadline-now();
         if(remaining<=0)return failed('the dispatch wall clock for this subtask ran out.');
@@ -71,7 +85,8 @@ function makeSupervisor({profileFor,memberIds,isCrewProvider,readiness,receiptsF
       else{
         row=await h.runWorkerOnce(current,opts);
         usd+=Number(row&&row.usd)||0;
-        outcome=row&&row.crewOutcome?row.crewOutcome:classifyRow(current.agentId,row);
+        if(isHalted())return failed(STOP_REASON);
+        outcome=row&&row.crewOutcome?row.crewOutcome:classifyRow(current,row);
         if(row&&row.result&&outcome.kind!=='unavailable')lastText=String(row.result);
         store.save(Health.recordOutcome(store.load(),current.agentId,outcome.kind,now()));
       }
@@ -82,18 +97,20 @@ function makeSupervisor({profileFor,memberIds,isCrewProvider,readiness,receiptsF
       }
       if(trail.length>=Health.MAX_MOVES)return failed('every free crew option failed within '+Health.MAX_MOVES+' moves.');
       const escalate=switches.isOn('crew.escalate_to_lead')&&switches.isOn('lead.codex')&&h.leadProvider==='codex';
-      const available=deadline!==null&&now()>=deadline?[]:await candidates(h.crew);
+      const available=!needs||(deadline!==null&&now()>=deadline)?[]:await candidates(h.crew);
+      if(isHalted())return failed(STOP_REASON);
       const expired=deadline!==null&&now()>=deadline;
       if(expired&&!escalate)return failed('the dispatch wall clock for this subtask ran out.');
       // A hand-back to the lead costs no crew time; expiry never starts another crew attempt.
-      const step=expired?{action:'lead'}:Health.nextStep({outcome,needs,retried,tried,candidates:available,escalate});
+      const step=expired?{action:'lead'}:needs?Health.nextStep({outcome,needs,retried,tried,candidates:available,escalate}):{action:escalate?'lead':'fail'};
       const to=step.action==='reassign'?step.agentId:step.action==='lead'?String(h.leadId||'lead'):current.agentId;
       const detail=expired?'the dispatch wall clock for this subtask ran out':outcome.detail;
       const move={step:step.action,from:current.agentId,to,outcome:outcome.kind,detail:String(detail||'').slice(0,200)};
+      if(isHalted())return failed(STOP_REASON);
       trail.push(move);remember(h.parentRunId,move);
       opts=Object.assign({},o2,{runId:undefined});
       if(step.action==='retry'){current=Object.assign({},current,{ident:Object.assign({},current.ident,{model:step.model})});retried=true;continue;}
-      if(step.action==='reassign'){current=Object.assign({},job,{agentId:step.agentId,ident:h.crew.get(step.agentId)});tried.add(step.agentId);continue;}
+      if(step.action==='reassign'){current=Object.assign({},job,{agentId:step.agentId,ident:h.crew.get(step.agentId),ultraNeeds:needs});tried.add(step.agentId);continue;}
       if(step.action==='lead'){
         const state=store.load();state.escalations=(Number(state.escalations)||0)+1;store.save(state);
         return {agentId:job.agentId,reason:'escalated',usd,crewMoves:trail,
@@ -103,6 +120,6 @@ function makeSupervisor({profileFor,memberIds,isCrewProvider,readiness,receiptsF
       return failed('every free crew option failed.');
     }
   }
-  return {isCrewProvider,accept,supervise,movesFor:id=>(moves.get(id)||[]).map(m=>Object.assign({},m))};
+  return {isCrewProvider,accept,supervise,resumeCheck:memberReady,movesFor:id=>(moves.get(id)||[]).map(m=>Object.assign({},m))};
 }
-module.exports={makeSupervisor};
+module.exports={makeSupervisor,INVALID_PROFILE_REASON};

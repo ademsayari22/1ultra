@@ -11,7 +11,7 @@ const { makeSubagentManager } = require('../station/sidecar/subagents.js');
 const policy = require('../station/ultra-policy.js');
 const seed = require('../station/ultra-seed.js');
 
-const TIERS = { models: { 'p/smart': { canonicalId: 'smart', tier: 'smart', tools: true }, 'p/fast': { canonicalId: 'fast', tier: 'fast', tools: true } } };
+const TIERS = { models: { 'p/smart': { canonicalId: 'smart', tier: 'smart', tools: true }, 'p/mid': { canonicalId: 'mid', tier: 'standard', tools: true }, 'p/fast': { canonicalId: 'fast', tier: 'fast', tools: true } } };
 const IDS = ['research', 'delivery', 'sales', 'qa'];
 const PROFILES = Object.fromEntries(IDS.map(id => [id, H.normalizeProfile(H.DEFAULT_PROFILES[id])]));
 const IDENT = Object.fromEntries(IDS.map(id => [id, { provider: 'custom', model: H.ROUTING[PROFILES[id].minTier], system: id }]));
@@ -31,7 +31,7 @@ function harness({ ready = () => true, on = ['crew.freellmapi', 'crew.escalate_t
   const worker = script => async (job, o2) => {
     const reply = script[Math.min(calls.length, script.length - 1)];
     const runId = 'w' + calls.length;
-    calls.push({ agentId: job.agentId, model: job.ident.model, runId: o2 && o2.runId, wallMs: o2 && o2.wallMs });
+    calls.push({ agentId: job.agentId, model: job.ident.model, runId: o2 && o2.runId, wallMs: o2 && o2.wallMs, ultraNeeds: job.ultraNeeds });
     receipts.set(runId, reply.via ? [{ status: 200, routedVia: reply.via }] : []);
     const row = { agentId: job.agentId, reason: reply.reason || 'done', result: reply.text || 'result ' + calls.length, usd: 0, runId };
     if (row.reason === 'done' && !sup.accept(job, row)) row.crewHeld = true;
@@ -103,6 +103,42 @@ test('a subtask moves at most three times', async () => {
   assert.match(row.result, /within 3 moves/);
 });
 
+test('a reassigned QA subtask still requires a verdict from Research', async () => {
+  for (const verdict of [false, true]) {
+    for (const escalate of [false, true]) {
+      const t = harness(escalate ? {} : { on: ['crew.freellmapi', 'lead.codex'] });
+      const row = await t.sup.supervise(t.job('qa'), {}, t.h([
+        { via: 'p/smart', text: 'QA draft without verdict' },
+        { via: 'p/smart', text: 'QA draft still without verdict' },
+        { via: 'p/smart', text: 'Research draft' + (verdict ? '\nVERDICT: approved' : '') }
+      ]));
+      assert.deepEqual(t.calls.map(c => c.agentId), ['qa', 'qa', 'research']);
+      assert.equal(row.reason, verdict ? 'done' : escalate ? 'escalated' : 'error');
+      assert.deepEqual(t.calls[2].ultraNeeds, PROFILES.qa);
+      if (!verdict) {
+        assert.equal(row.crewMoves.at(-1).outcome, 'failed_check');
+        assert.match(row.crewMoves.at(-1).detail, /no VERDICT/);
+      }
+    }
+  }
+});
+
+test('acceptance combines the replacement profile with the original minimum tier and verdict', () => {
+  const t = harness();
+  t.receipts.set('mid', [{ status: 200, routedVia: 'p/mid' }]);
+  t.receipts.set('smart', [{ status: 200, routedVia: 'p/smart' }]);
+  const job = { ...t.job('delivery'), ultraNeeds: PROFILES.qa };
+  const weak = { runId: 'mid', reason: 'done', result: 'checked\nVERDICT: approved' };
+  assert.equal(t.sup.accept(job, weak), false);
+  assert.equal(weak.crewOutcome.kind, 'downgraded');
+  const unchecked = { runId: 'smart', reason: 'done', result: 'unchecked' };
+  assert.equal(t.sup.accept(job, unchecked), false);
+  assert.equal(unchecked.crewOutcome.kind, 'failed_check');
+  assert.equal(t.sup.accept(job, { runId: 'smart', reason: 'done', result: 'checked\nVERDICT: approved' }), true);
+  assert.equal(t.sup.accept({ ...t.job('qa'), ultraNeeds: PROFILES.delivery },
+    { runId: 'smart', reason: 'done', result: 'unchecked' }), false, 'the replacement also keeps its own stricter verdict check');
+});
+
 test('the emergency stop ends a ladder: nothing more runs', async () => {
   let stop = false;
   const t = harness({ halted: () => stop });
@@ -113,6 +149,50 @@ test('the emergency stop ends a ladder: nothing more runs', async () => {
   assert.equal(t.calls.length, 1);
   assert.equal(row.reason, 'error');
   assert.match(row.result, /emergency stop/i);
+});
+
+test('a stop during the worker prevents success, moves and lead escalation', async () => {
+  for (const reply of [{ reason: 'timeout' }, { via: 'p/smart' }, { via: 'p/fast' }]) {
+    let stop = false;
+    const t = harness({ halted: () => stop });
+    const h = t.h([reply]), once = h.runWorkerOnce;
+    h.crew.delete('qa'); // no covering candidate: without the stop check this would hand back to the lead
+    h.runWorkerOnce = async (job, opts) => { const row = await once(job, opts); stop = true; return row; };
+    const row = await t.sup.supervise(t.job(), {}, h);
+    assert.equal(row.reason, 'error');
+    assert.match(row.result, /FAILED.*emergency stop/);
+    assert.equal(t.calls.length, 1);
+    assert.deepEqual(row.crewMoves, []);
+    assert.deepEqual(t.sup.movesFor('lead-run'), []);
+    assert.equal(t.state.value.escalations, 0);
+  }
+});
+
+test('a stop during candidate readiness prevents moves and lead escalation', async () => {
+  let stop = false, checks = 0;
+  const t = harness({ halted: () => stop, ready: () => {
+    if (++checks === 2) stop = true;
+    return checks === 1;
+  } });
+  const row = await t.sup.supervise(t.job(), {}, t.h([{ reason: 'timeout' }]));
+  assert.equal(row.reason, 'error');
+  assert.match(row.result, /FAILED.*emergency stop/);
+  assert.equal(t.calls.length, 1);
+  assert.deepEqual(row.crewMoves, []);
+  assert.deepEqual(t.sup.movesFor('lead-run'), []);
+  assert.equal(t.state.value.escalations, 0);
+  assert.equal(checks, 2, 'no further candidate readiness calls after the stop');
+});
+
+test('a stop during member readiness prevents the first worker and any moves', async () => {
+  let stop = false;
+  const t = harness({ halted: () => stop, ready: () => { stop = true; return true; } });
+  const row = await t.sup.supervise(t.job(), {}, t.h([{ via: 'p/smart' }]));
+  assert.equal(row.reason, 'error');
+  assert.match(row.result, /FAILED.*emergency stop/);
+  assert.equal(t.calls.length, 0);
+  assert.deepEqual(row.crewMoves, []);
+  assert.equal(t.state.value.escalations, 0);
 });
 
 test("a member that is not ready never runs, and nothing runs on the lead's model", async () => {
@@ -292,6 +372,44 @@ test('team.resume refuses a missing crew credential before any model call', asyn
   assert.deepEqual(runs, []);
   assert.deepEqual([row.status, row.reason], ['error', 'error']);
   assert.match(row.result, /no FreeLLMAPI credential/);
+});
+
+test('the real team.resume checks readiness and holds a QA reply without a verdict', async () => {
+  for (const variant of ['unchecked', 'checked', 'not-ready', 'non-crew']) {
+    const t = harness({ ready: () => variant !== 'not-ready' }), runs = [], authCalls = [];
+    const record = { id: 'background', leadId: 'agent', agentId: 'qa', prompt: 'review this company' };
+    let completed;
+    const subagents = { get: () => record, resume: (id, runner) => {
+      completed = runner({ record, runId: 'resumed', emit: () => {} });
+      return { ok: true, record };
+    } };
+    const text = variant === 'checked' ? 'Review done\nVERDICT: approved' : 'Unchecked review ' + 'x'.repeat(2100);
+    const { resumeTool } = makeOrchestrationTools({
+      runOnce: async o => {
+        runs.push(o.provider);
+        t.receipts.set(o.runId, [{ status: 200, routedVia: 'p/smart' }]);
+        return { reason: 'done', messages: [{ role: 'assistant', content: text }], usd: 0, runId: o.runId };
+      },
+      roster: () => new Map([['qa', { ...IDENT.qa, provider: variant === 'non-crew' ? 'openrouter' : 'custom' }]]),
+      key: 'lead-key', model: 'lead-model', provider: 'codex', providerAuth: id => { authCalls.push(id); return { provider: id, key: 'fixture' }; },
+      crewSupervisor: t.sup, subagents
+    });
+    await resumeTool.run({ id: 'background' }, { agentId: 'agent', runId: 'new-lead' });
+    const row = await completed;
+    if (variant === 'not-ready') {
+      assert.deepEqual(runs, []);
+      assert.deepEqual(authCalls, [], 'readiness is checked before resolving provider credentials');
+      assert.equal(row.status, 'error');
+      assert.match(row.result, /no ready smart model/);
+    } else if (variant === 'unchecked') {
+      assert.deepEqual([row.status, row.reason], ['error', 'error']);
+      assert.match(row.result, /^FAILED — the resumed crew result did not pass its capability check \(failed_check: no VERDICT line\)\. Re-dispatch this subtask so the crew ladder can retry or reassign it\./);
+      assert.equal(row.result.split('\n\nUnchecked crew draft (never checked work):\n')[1], text.slice(0, 2000));
+    } else {
+      assert.deepEqual([row.status, row.reason, row.result], ['done', 'done', text]);
+      assert.deepEqual(runs, [variant === 'non-crew' ? 'openrouter' : 'custom']);
+    }
+  }
 });
 
 test('repaired output is classified against the repair run routing receipt', () => {

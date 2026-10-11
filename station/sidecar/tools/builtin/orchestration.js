@@ -1167,6 +1167,10 @@
         const crew = roster() || new Map();
         const ident = crew.get(rec.agentId);
         if (!ident) return { status: 'error', reason: 'error', result: 'worker is no longer in the live roster', usd: 0 };
+        if (deps.crewSupervisor && deps.crewSupervisor.isCrewProvider(ident.provider)) {
+          const check = await deps.crewSupervisor.resumeCheck(rec.agentId);
+          if (!check.ready) return { status: 'error', reason: 'error', result: check.reason, usd: 0 };
+        }
         const wire = workerWire(ident);   // same cross-provider resolution as a fresh dispatch
         if (wire.refused) return { status: 'error', reason: 'error', result: wire.refused, usd: 0 };
         let result;
@@ -1226,6 +1230,17 @@
         const repaired = contract.repairResult || null;
         const artifacts = [].concat(Array.isArray(result.artifacts) ? result.artifacts : [], Array.isArray(repaired && repaired.artifacts) ? repaired.artifacts : []);
         const invalid = !!(rec.resultSchema && !contract.ok);
+        if (deps.crewSupervisor && deps.crewSupervisor.isCrewProvider(ident.provider)) {
+          const row = { runId: h.runId, repairRunId: contract.repairRunId || '', result: contract.text,
+            reason: invalid ? 'invalid-result' : ((repaired || result).reason || 'done') };
+          if (!deps.crewSupervisor.accept({ agentId: rec.agentId, ident }, row)) {
+            const outcome = row.crewOutcome || { kind: 'failed_check', detail: 'unchecked result' };
+            return { status: 'error', reason: 'error',
+              result: 'FAILED — the resumed crew result did not pass its capability check (' + outcome.kind + ': ' + outcome.detail + '). Re-dispatch this subtask so the crew ladder can retry or reassign it.'
+                + '\n\nUnchecked crew draft (never checked work):\n' + String(contract.text || '').trim().slice(0, 2000),
+              usd: (Number(result.usd) || 0) + (Number(repaired && repaired.usd) || 0), taintedBy: taintOfRun(result, repaired) };
+          }
+        }
         return {
           status: invalid ? 'error' : (((repaired || result).reason || 'done') === 'done' ? 'done' : 'error'),
           reason: invalid ? 'invalid-result' : ((repaired || result).reason || 'done'),

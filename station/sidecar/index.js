@@ -18588,6 +18588,12 @@ let coreRunsLive = 0;
 async function runOnceCoreCounted(o) {
   coreRunsLive++;
   try { return await runOnceCore(o); }
+  catch (e) {
+    // 1Ultra: only the initial Codex token failure can restart, after the core's finally releases its slot.
+    // The second call is outside this catch: no repeated retries, and no restart after inference begins.
+    if (!e || e.code !== 'ULTRA_CODEX_START_FALLBACK') throw e;
+    return await runOnceCore(e.ultraFallback);
+  }
   finally { coreRunsLive--; }
 }
 async function runOnceCore(o) {
@@ -20028,6 +20034,10 @@ async function runOnceCore(o) {
     let codexToken;
     try { codexToken = await ensureCodexAccessToken(); }
     catch (e) {
+      const ultraFallback = Object.assign({}, o, { provider: providerId, model });
+      if (ultraHost.crew.rewriteLeadAuthFailure(ultraFallback)) {
+        throw Object.assign(new Error('Codex startup token acquisition failed; continuing on the free tier.'), { code: 'ULTRA_CODEX_START_FALLBACK', ultraFallback });
+      }
       emit('agent.run.start', { agentId, runId, trigger: trigger, model, ...runStartExtra });
       emit('agent.run.error', { agentId, runId, transient: !(e && e.reloginRequired), message: 'ChatGPT sign-in needed: ' + ((e && e.message) || e) });
       emit('agent.run.end', { agentId, runId, reason: 'error', turns: 0, usd: 0 });

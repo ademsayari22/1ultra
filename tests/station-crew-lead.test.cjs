@@ -45,6 +45,31 @@ test('a signed-out Codex lead run is rewritten to the free tier; anything else i
   } finally { fs.rmSync(t.rt, { recursive: true, force: true }); }
 });
 
+test('a lead token-acquisition failure rewrites once even if Codex looked signed in', () => {
+  for (const options of [{}, { on: false }, { wire: false }]) {
+    const t = setup(options);
+    try {
+      t.crew.registerCodexState(() => true);
+      const run = { agentId: 'agent', provider: 'codex', model: 'gpt-6.1-sol', runId: 'same-run' };
+      const original = { ...run };
+      const open = options.on !== false && options.wire !== false;
+      assert.equal(t.crew.rewriteLeadAuthFailure(run), open);
+      if (open) {
+        assert.deepEqual(run, { agentId: 'agent', provider: 'custom', model: 'auto:smart', runId: 'same-run', key: KEY,
+          baseUrl: 'http://127.0.0.1:3901/v1', ultraLeadFreeTier: { fromModel: 'gpt-6.1-sol' } });
+        const once = { ...run };
+        assert.equal(t.crew.rewriteLeadAuthFailure(run), false, 'never retries twice');
+        assert.deepEqual(run, once);
+      } else assert.deepEqual(run, original);
+      for (const worker of [{ agentId: 'qa', provider: 'codex' }, { agentId: 'agent', provider: 'openrouter' }]) {
+        const originalWorker = { ...worker };
+        assert.equal(t.crew.rewriteLeadAuthFailure(worker), false);
+        assert.deepEqual(worker, originalWorker);
+      }
+    } finally { fs.rmSync(t.rt, { recursive: true, force: true }); }
+  }
+});
+
 for (const { name, provider, ident, rewritten } of [
   { name: 'a providerless lead keeps its OpenRouter roster identity', ident: { provider: 'openrouter' }, rewritten: false },
   { name: 'a providerless lead with a Codex roster identity uses the free tier', ident: { provider: 'codex' }, rewritten: true },

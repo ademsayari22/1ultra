@@ -31,8 +31,12 @@ function makeRoster({fs,path,runtime,durable,now=()=>Date.now()}){
     try{return Health.normalizeProfile(raw);}catch(_){return null;}
   }
   function memberIds(){
-    const ids=Object.keys(readCrew().profiles);
+    const crew=readCrew(),ids=[...new Set(crew.seeded.concat(Object.keys(crew.profiles)))];
     return MEMBERS.map(m=>m.id).filter(id=>ids.includes(id)).concat(ids.filter(id=>!MEMBERS.some(m=>m.id===id)));
+  }
+  function isKnownMember(agentId){
+    const crew=readCrew(),id=String(agentId||'');
+    return crew.seeded.includes(id)||Object.prototype.hasOwnProperty.call(crew.profiles,id);
   }
   function seed(){
     const crew=readCrew(),todo=MEMBERS.filter(m=>!crew.seeded.includes(m.id));
@@ -79,6 +83,6 @@ function makeRoster({fs,path,runtime,durable,now=()=>Date.now()}){
     durable(crewFile,crew);
     return {added};
   }
-  return {seed,profileFor,memberIds,readCrew,file:crewFile};
+  return {seed,profileFor,memberIds,isKnownMember,readCrew,file:crewFile};
 }
 module.exports={makeRoster,MEMBERS};

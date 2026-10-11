@@ -40,6 +40,7 @@
     input.closest('label').after(line);
     try {
       const r = await fetch('/api/ultra/crew', { headers: { 'X-Starnet-Token': window.__STARNET_API_TOKEN__ || '' } });
+      if (!r.ok) { line.textContent = 'FreeLLMAPI: status unavailable (HTTP ' + r.status + ')'; return; }
       line.textContent = 'FreeLLMAPI: ' + crewText(await r.json());
     } catch (e) { line.textContent = 'FreeLLMAPI: status unavailable (' + e.message + ')'; }
   }

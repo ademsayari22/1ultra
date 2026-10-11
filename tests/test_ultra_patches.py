@@ -71,6 +71,13 @@ class PatchAnchorsTest(unittest.TestCase):
         self.assertIn('entry.ultraRouting = ', (ROOT / 'station/sidecar/runstore.js').read_text())
         self.assertIn("'⤳ answered by '", (ROOT / 'station/frontend/app/chat.js').read_text())
 
+    def test_crew_run_detail_preserves_the_upstream_telemetry_guard(self):
+        text = (ROOT / 'station/frontend/app/chat.js').read_text()
+        start = text.index('function telemetryRun')
+        self.assertLess(text.index('t.ms', start) - start, 1300)
+        self.assertLess(text.index('function telemetryCrewRouting'), start)
+        self.assertIn('telemetryCrewRouting(entry, wrap);', text[start:start + 1300])
+
     def test_team_dispatch_runs_through_the_crew_supervisor(self):
         orchestration = (ROOT / 'station/sidecar/tools/builtin/orchestration.js').read_text()
         self.assertIn('const runWorkerOnce = async (job, o2) => {', orchestration)
@@ -95,6 +102,16 @@ class PatchAnchorsTest(unittest.TestCase):
         self.assertIn('crewMoves: r.crewMoves, note: r.note,', orchestration)
         self.assertIn("result: r.result + (Array.isArray(r.crewMoves) && r.crewMoves.length && r.note ? '\\n\\n[' + r.note + ']' : ''),", orchestration)
 
+    def test_resumed_crew_workers_check_readiness_and_acceptance(self):
+        text = (ROOT / 'station/sidecar/tools/builtin/orchestration.js').read_text()
+        resume = text[text.index('function resumeRunnerFor(ctx)'):text.index('const interruptTool =')]
+        self.assertIn('await deps.crewSupervisor.resumeCheck(rec.agentId)', resume)
+        self.assertLess(resume.index('resumeCheck(rec.agentId)'), resume.index('workerWire(ident)'))
+        self.assertIn("if (!check.ready) return { status: 'error', reason: 'error', result: check.reason, usd: 0 };", resume)
+        self.assertIn('deps.crewSupervisor.accept({ agentId: rec.agentId, ident }, row)', resume)
+        self.assertIn('FAILED — the resumed crew result did not pass its capability check (', resume)
+        self.assertIn('Unchecked crew draft (never checked work):', resume)
+
     def test_codex_lead_falls_back_to_the_free_tier(self):
         index = (ROOT / 'station/sidecar/index.js').read_text()
         for needle in ('ultraHost.registerCodexState(() => !!(codexTokens && codexTokens.access_token) && !codexAuthDead);',
@@ -109,6 +126,17 @@ class PatchAnchorsTest(unittest.TestCase):
     def test_relogin_required_errors_enter_the_auth_recovery_class(self):
         error_class = (ROOT / 'station/sidecar/providers/errorClass.js').read_text()
         self.assertIn("if (err && err.reloginRequired === true) return 'auth';", error_class)
+
+    def test_startup_token_failure_retries_only_before_inference(self):
+        text = (ROOT / 'station/sidecar/index.js').read_text()
+        counted = text[text.index('async function runOnceCoreCounted(o)'):text.index('async function runOnceCore(o)')]
+        self.assertIn("e.code !== 'ULTRA_CODEX_START_FALLBACK'", counted)
+        self.assertIn('return await runOnceCore(e.ultraFallback);', counted)
+        token = text[text.index('try { codexToken = await ensureCodexAccessToken(); }'):]
+        token = token[:token.index('provider = selectProvider(')]
+        self.assertIn('ultraHost.crew.rewriteLeadAuthFailure(ultraFallback)', token)
+        self.assertIn("code: 'ULTRA_CODEX_START_FALLBACK', ultraFallback", token)
+        self.assertLess(token.index('rewriteLeadAuthFailure'), token.index("emit('agent.run.error'"))
 
     def test_codex_state_patch_is_appended_after_the_original_crew_patches(self):
         ids = [p['id'] for p in json.loads((ROOT / 'station/ultra-patches.json').read_text())]

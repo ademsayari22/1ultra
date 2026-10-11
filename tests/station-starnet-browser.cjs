@@ -23,7 +23,13 @@ const {chromium}=require(process.env.ULTRA_PLAYWRIGHT_MODULE);
       assert.equal(await page.locator('[data-switch="crew.freellmapi"]').isDisabled(),false);
       assert.equal(await page.locator('[data-switch="lead.codex"]').isDisabled(),false);
       await page.locator('.ultra-crew-status').waitFor();
-      assert.match(await page.locator('.ultra-crew-status').textContent(),/FreeLLMAPI:/);
+      await page.waitForFunction(() => {
+        const line=document.querySelector('.ultra-crew-status');
+        return line && line.textContent !== 'FreeLLMAPI: checking…';
+      });
+      const crewStatus=await page.locator('.ultra-crew-status').textContent();
+      assert.match(crewStatus,/^FreeLLMAPI:/);
+      assert.notEqual(crewStatus,'FreeLLMAPI: checking…');
       assert.equal(await page.locator('[data-switch="concurrency"]').isDisabled(),false);
       assert.match(await page.locator('.ultra-credit').innerText(),/not affiliated/);
       await page.screenshot({path:path.join(out,'starnet-switches-'+name+'.png')});

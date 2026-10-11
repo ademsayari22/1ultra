@@ -2992,20 +2992,22 @@ const Chat = (() => {
      always the duplicate — but a fold without chips still gets the full listing rather than losing the
      record. (Do not read this as a reload guarantee: the fold and its telemetry are DOM-only and do not
      survive a reload or a stream switch at all — replayChannel rebuilds the chips, nothing rebuilds these.) */
+  function telemetryCrewRouting(entry, wrap) {
+    if (!Array.isArray(entry.ultraRouting) || !entry.ultraRouting.length) return;
+    const answered = Array.from(new Set(entry.ultraRouting.map(r => r && r.routedVia).filter(Boolean)));
+    const via = document.createElement('div'); via.className = 'rt-tool';
+    via.textContent = '⤳ answered by ' + (answered.length ? answered.join(', ') : 'no model (every request failed)');
+    const trail = entry.ultraRouting.map(r => r && r.fallbackTrail).filter(Boolean);
+    if (trail.length) via.title = 'FreeLLMAPI fallbacks: ' + trail.join(' | ');
+    wrap.appendChild(via);
+  }
   function telemetryRun(entry, role, skipTools) {
     const wrap = document.createElement('div'); wrap.className = 'rt-run';
     const calls = runCallCount(entry);
     const head = document.createElement('div'); head.className = 'rt-run-head';
     head.textContent = [role, entry.agentId || '', entry.model && entry.model !== '(unknown)' ? entry.model : '', (entry.reasoningEffort && entry.reasoningEffort !== 'none') ? entry.reasoningEffort : '', Number(entry.durationMs) > 0 ? fmtMs(Number(entry.durationMs)) : '', calls + (calls === 1 ? ' call' : ' calls')].filter(Boolean).join(' · ');
     wrap.appendChild(head);
-    if (Array.isArray(entry.ultraRouting) && entry.ultraRouting.length) {   // 1Ultra: the model FreeLLMAPI actually routed to
-      const answered = Array.from(new Set(entry.ultraRouting.map(r => r && r.routedVia).filter(Boolean)));
-      const via = document.createElement('div'); via.className = 'rt-tool';
-      via.textContent = '⤳ answered by ' + (answered.length ? answered.join(', ') : 'no model (every request failed)');
-      const trail = entry.ultraRouting.map(r => r && r.fallbackTrail).filter(Boolean);
-      if (trail.length) via.title = 'FreeLLMAPI fallbacks: ' + trail.join(' | ');
-      wrap.appendChild(via);
-    }
+    telemetryCrewRouting(entry, wrap);
     for (const t of (skipTools ? [] : (Array.isArray(entry.toolTrace) ? entry.toolTrace : []))) {
       const line = document.createElement('div'); line.className = 'rt-tool' + (t.isError ? ' err' : '');
       line.textContent = '↳ ' + String(t.name || 'unknown') + ' · ' + fmtMs(Math.max(0, Number(t.ms) || 0)) + ' · ' + (t.isError ? 'failed' : 'ok');

@@ -1,5 +1,33 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const {test}=require('node:test');
+test('the crew status line leaves checking and reports HTTP errors without parsing them as setup state',async()=>{
+  const source=fs.readFileSync(path.join(__dirname,'../station/frontend/ultra-window.js'),'utf8');
+  const snippet=source.slice(source.indexOf('  function crewText('),source.indexOf('  async function build('));
+  for(const status of [503,401,200]){
+    let line,release,parsed=0;
+    const response=new Promise(resolve=>{release=resolve;});
+    const context=vm.createContext({window:{},document:{createElement:()=>({})},
+      body:{querySelector:()=>({closest:()=>({after:value=>{line=value;}})})},fetch:()=>response});
+    const completed=vm.runInContext(snippet+'\ncrewLine(body)',context);
+    assert.equal(line.textContent,'FreeLLMAPI: checking…');
+    release({ok:status===200,status,json:async()=>{parsed++;return {};}});
+    await completed;
+    assert.match(line.textContent,/^FreeLLMAPI:/);
+    assert.notEqual(line.textContent,'FreeLLMAPI: checking…');
+    if(status!==200){
+      assert.equal(line.textContent,'FreeLLMAPI: status unavailable (HTTP '+status+')');
+      assert.equal(parsed,0,'an HTTP error body is never interpreted as a missing setup');
+    }else assert.match(line.textContent,/not set up/);
+  }
+});
+
+test('the station browser journey waits for the loaded crew status before asserting it',()=>{
+  const source=fs.readFileSync(path.join(__dirname,'station-starnet-browser.cjs'),'utf8');
+  assert.ok(source.includes("await page.waitForFunction(() =>"));
+  assert.ok(source.includes("line.textContent !== 'FreeLLMAPI: checking…'"));
+  assert.ok(source.includes("assert.notEqual(crewStatus,'FreeLLMAPI: checking…')"));
+});
+
 test('campaign station renders sourced lead and tabs from the imported world/session modules',async()=>{
   const elements=new Map();function el(id){if(!elements.has(id))elements.set(id,{innerHTML:'',textContent:'',style:{},dataset:{},classList:{remove(){},toggle(){}},addEventListener(){},querySelectorAll(){return [];},close(){this.open=false;},showModal(){this.open=true;},onclick:null});return elements.get(id);}
   const W={hunt:{leads:[{id:'local',company:'Local ERP',country:'TN',location:'Sousse',industry:'ERP',pipeline_stage:'scout',source_url:'https://example.tn',observed_fact:'Published ERP services',checked_date:'2026-10-05',contact_route:'info@example.tn'}],offers:[{id:'documents',name:'Document to checked table'}]},record_versions:{leads:'v1'},tasks:[],runs:[],automations:[{id:'validate-records',name:'Record sentinel',description:'Check records'},{id:'csv-workbench',name:'CSV workbench',description:'Check supplied CSV'}],scenarios:[],progression:{xp:0},local_date:'2026-10-05'};

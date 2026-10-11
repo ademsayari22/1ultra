@@ -7,7 +7,7 @@ const Health=require('./ultra-crew-health.js');
 const {makeWire}=require('./ultra-crew-wire.js');
 const {makeReceipts}=require('./ultra-crew-receipts.js');
 const {makeRoster}=require('./ultra-crew-roster.js');
-const {makeSupervisor}=require('./ultra-crew-supervisor.js');
+const {makeSupervisor,INVALID_PROFILE_REASON}=require('./ultra-crew-supervisor.js');
 const {parseVerdict}=require('./sidecar/routing/verdict.js');
 const {normalizeProviderId}=require('./sidecar/providers/registry.js');
 const READY_TTL_MS=30000;
@@ -48,13 +48,15 @@ function makeCrew({fs,path,runtime,switches,port,durable,isHalted=()=>false,fetc
     return Health.tierReady(profile,r.ids,tiers)?{ready:true,reason:''}
       :{ready:false,reason:'no ready '+profile.minTier+' model'+(profile.tools?' with tools':'')+(profile.vision?' with vision':'')};
   }
-  const supervisor=makeSupervisor({profileFor:id=>roster.profileFor(id),memberIds:()=>roster.memberIds(),isCrewProvider:crewProvider,readiness,
+  const supervisor=makeSupervisor({profileFor:id=>roster.profileFor(id),memberIds:()=>roster.memberIds(),isKnownMember:id=>roster.isKnownMember(id),isCrewProvider:crewProvider,readiness,
     receiptsFor:id=>receipts.get(id),tiers:readTiers,switches,isHalted,store,parseVerdict,now});
   // selectProvider's options for one adapter: crew requests record FreeLLMAPI's routing headers for their run and tell
   // FreeLLMAPI the member's task type.
   function adapterOptions(o){
     if(!o||!crewProvider(o.provider))return o;
-    const out=Object.assign({},o);
+    const w=wire.refresh();
+    if(!w)throw Object.assign(new Error('FreeLLMAPI key not loaded: run python3 scripts/freellmapi.py key'),{code:'ULTRA_CREW_NO_WIRE'});
+    const out=Object.assign({},o,{baseUrl:w.baseUrl,key:w.key});
     if(o.ultraRunId&&typeof o.fetch==='function')out.fetch=receipts.observe(o.fetch,o.ultraRunId);
     const profile=o.ultraAgentId?roster.profileFor(o.ultraAgentId):null;
     if(profile&&!Object.keys(o.headers||{}).some(key=>key.toLowerCase()==='x-freellm-task-type'))
@@ -72,8 +74,7 @@ function makeCrew({fs,path,runtime,switches,port,durable,isHalted=()=>false,fetc
     }
     for(const agentId of roster.memberIds()){
       const profile=roster.profileFor(agentId);
-      if(!profile)continue;
-      const r=await readiness(profile),m=state.members[agentId]||{recent:[],benched:false};
+      const r=profile?await readiness(profile):{ready:false,reason:INVALID_PROFILE_REASON},m=state.members[agentId]||{recent:[],benched:false};
       out.members.push({agentId,profile,ready:r.ready,reason:r.reason,benched:!!m.benched,recent:(m.recent||[]).slice(-5).map(x=>x.kind)});
     }
     return out;
@@ -93,9 +94,16 @@ function makeCrew({fs,path,runtime,switches,port,durable,isHalted=()=>false,fetc
     if(!o)return;
     const agentId=String(o.agentId||LEAD),providerId=normalizeProviderId(o.provider||(rosterIdent&&rosterIdent.provider)||'','openrouter');
     if(!leadStartFallback(agentId,providerId))return;
+    rewriteLeadAuthFailure(o,rosterIdent);
+  }
+  function rewriteLeadAuthFailure(o,rosterIdent){
+    if(!o||o.ultraLeadFreeTier)return false;
+    const agentId=String(o.agentId||LEAD),providerId=normalizeProviderId(o.provider||(rosterIdent&&rosterIdent.provider)||'','openrouter');
+    if(providerId!=='codex'||agentId!==LEAD||!freeTierOpen())return false;
     const w=wire.get();
     o.ultraLeadFreeTier={fromModel:String(o.model||'gpt-6.1-sol')};
     o.provider='custom';o.model=Health.ROUTING.smart;o.key=w.key;o.baseUrl=w.baseUrl;
+    return true;
   }
   const healthTool={
     name:'team.health',capability:'orchestrator',scope:'read',requiresConsent:false,
@@ -107,8 +115,9 @@ function makeCrew({fs,path,runtime,switches,port,durable,isHalted=()=>false,fetc
     registerProviderConfig:fn=>wire.register(fn),isFreeTier:id=>wire.isFreeTier(id),adapterOptions,receiptsFor:id=>receipts.get(id),
     seedRoster:()=>roster.seed(),profileFor:id=>roster.profileFor(id),isCrewProvider:crewProvider,status,
     accept:(job,row)=>supervisor.accept(job,row),supervise:(job,o2,h)=>supervisor.supervise(job,o2,h),movesFor:id=>supervisor.movesFor(id),
+    resumeCheck:id=>roster.isKnownMember(id)?supervisor.resumeCheck(id):Promise.resolve({ready:true,reason:''}),
     registerTools:registry=>registry.register(healthTool),leadBrief:()=>LEAD_BRIEF,
-    registerCodexState:fn=>{codexSignedIn=typeof fn==='function'?fn:()=>true;},leadFallbacks,leadStartFallback,rewriteLeadRun,
+    registerCodexState:fn=>{codexSignedIn=typeof fn==='function'?fn:()=>true;},leadFallbacks,leadStartFallback,rewriteLeadRun,rewriteLeadAuthFailure,
   };
 }
 module.exports={makeCrew};

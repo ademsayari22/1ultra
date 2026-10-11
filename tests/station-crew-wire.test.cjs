@@ -11,6 +11,33 @@ function writeWire(rt, value) {
   fs.writeFileSync(path.join(rt, '.secrets', 'freellmapi.json'), JSON.stringify(value));
 }
 
+test('every crew adapter uses the local wire even when the caller overrides endpoint and key', () => {
+  const rt = runtime();
+  try {
+    writeWire(rt, { baseUrl: 'http://127.0.0.1:3901/v1', key: KEY });
+    const crew = makeCrew({ fs, path, runtime: rt, switches: { isOn: () => true }, port: 3901, durable });
+    for (const ultraAgentId of ['qa', 'agent', undefined]) {
+      const input = { provider: 'custom', baseUrl: 'https://example.com/v1', key: 'sk-other', ultraAgentId };
+      const output = crew.adapterOptions(input);
+      assert.deepEqual([output.baseUrl, output.key], ['http://127.0.0.1:3901/v1', KEY]);
+      assert.equal(input.baseUrl, 'https://example.com/v1', 'caller options are not mutated');
+    }
+    const input = { provider: 'codex', baseUrl: 'https://example.com/v1', key: 'sk-other' };
+    assert.equal(crew.adapterOptions(input), input);
+  } finally { fs.rmSync(rt, { recursive: true, force: true }); }
+});
+
+test('a crew adapter without a loaded wire refuses every endpoint override', () => {
+  const rt = runtime();
+  try {
+    const crew = makeCrew({ fs, path, runtime: rt, switches: { isOn: () => true }, port: 3901, durable });
+    assert.throws(() => crew.adapterOptions({ provider: 'custom', baseUrl: 'https://example.com/v1', key: 'sk-other' }),
+      error => error.code === 'ULTRA_CREW_NO_WIRE' && error.message.includes('python3 scripts/freellmapi.py key'));
+    const input = { provider: 'openrouter', key: 'sk-other' };
+    assert.equal(crew.adapterOptions(input), input);
+  } finally { fs.rmSync(rt, { recursive: true, force: true }); }
+});
+
 test('the FreeLLMAPI port comes from ULTRA_FREELLMAPI_PORT and defaults to 3001', () => {
   assert.equal(portFrom({}), 3001);
   assert.equal(portFrom({ ULTRA_FREELLMAPI_PORT: '3901' }), 3901);

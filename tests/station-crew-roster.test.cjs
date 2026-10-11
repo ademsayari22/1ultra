@@ -11,6 +11,10 @@ function seededRuntime() {
   for (const [name, value] of Object.entries(seed.files(1000))) durable(path.join(rt, name), value);
   return rt;
 }
+function writeWire(rt) {
+  fs.mkdirSync(path.join(rt, '.secrets'), { recursive: true });
+  durable(path.join(rt, '.secrets', 'freellmapi.json'), { baseUrl: 'http://127.0.0.1:3901/v1', key: 'freellmapi-' + 'ab'.repeat(24) });
+}
 
 test('the four crew members are added once, to the save and the roster, on the free tier', () => {
   const rt = seededRuntime();
@@ -63,6 +67,7 @@ test('without a station save nothing is written, so the next boot tries again', 
 test("crew requests carry the member's task type; other providers and agents are untouched", () => {
   const rt = seededRuntime();
   try {
+    writeWire(rt);
     const crew = makeCrew({ fs, path, runtime: rt, switches: { isOn: () => false }, port: 3901, durable, now: () => 5000 });
     crew.seedRoster();
     const f = async () => ({ status: 200, headers: { get: () => '' } });
@@ -116,6 +121,7 @@ test('an interrupted roster write is retried without duplicating saved crew memb
 test('an explicit task-type header wins regardless of key casing and is kept unchanged', () => {
   const rt = seededRuntime();
   try {
+    writeWire(rt);
     const crew = makeCrew({ fs, path, runtime: rt, switches: { isOn: () => false }, port: 3901, durable, now: () => 5000 });
     crew.seedRoster();
     const f = async () => ({ status: 200, headers: { get: () => '' } });
@@ -123,5 +129,52 @@ test('an explicit task-type header wins regardless of key casing and is kept unc
     const options = crew.adapterOptions({ provider: 'custom', fetch: f, ultraAgentId: 'delivery', headers });
     assert.deepEqual(options.headers, { 'x-freellm-task-type': 'chat' });
     assert.equal(options.headers, headers, 'an explicit header object is passed through unchanged');
+  } finally { fs.rmSync(rt, { recursive: true, force: true }); }
+});
+
+test('known crew membership survives a broken or removed profile and includes profile-only members', () => {
+  const rt = seededRuntime();
+  try {
+    const roster = makeRoster({ fs, path, runtime: rt, durable });
+    roster.seed();
+    const raw = read(rt, 'ultra-crew.json');
+    raw.profiles.qa.minTier = 'Smart';
+    delete raw.profiles.sales;
+    raw.profiles.extra = { minTier: 'broken' };
+    durable(path.join(rt, 'ultra-crew.json'), raw);
+    assert.equal(roster.profileFor('qa'), null, 'broken profiles remain null');
+    assert.equal(roster.profileFor('sales'), null);
+    for (const id of ['qa', 'sales', 'extra']) assert.equal(roster.isKnownMember(id), true, id);
+    assert.equal(roster.isKnownMember('ordinary'), false);
+    assert.deepEqual(roster.memberIds(), ['research', 'delivery', 'sales', 'qa', 'extra']);
+  } finally { fs.rmSync(rt, { recursive: true, force: true }); }
+});
+
+test('a known crew member with an invalid profile stays supervised and cannot deliver a done result', async () => {
+  const rt = seededRuntime();
+  try {
+    const crew = makeCrew({ fs, path, runtime: rt, switches: { isOn: () => true }, port: 3901, durable });
+    crew.seedRoster();
+    const raw = read(rt, 'ultra-crew.json');
+    raw.profiles.qa.minTier = 'Smart';
+    durable(path.join(rt, 'ultra-crew.json'), raw);
+    const job = { agentId: 'qa', prompt: 'check the draft', ident: { provider: 'custom', model: 'auto:smart' } };
+    const row = { reason: 'done', result: 'unchecked draft', runId: 'no-receipts' };
+    assert.equal(crew.accept(job, row), false);
+    assert.deepEqual(row.crewOutcome, { kind: 'unavailable', detail: 'invalid capability profile in ultra-crew.json — fix or reset it', routedVia: '' });
+    assert.deepEqual(await crew.resumeCheck('qa'), { ready: false, reason: row.crewOutcome.detail });
+    const member = (await crew.status()).members.find(m => m.agentId === 'qa');
+    assert.deepEqual([member.profile, member.ready, member.reason], [null, false, row.crewOutcome.detail]);
+    let calls = 0;
+    const hooks = { runWorkerOnce: async () => { calls++; return { ...row }; }, crew: new Map(), leadProvider: 'codex', leadId: 'agent' };
+    const result = await crew.supervise(job, {}, hooks);
+    assert.equal(calls, 0);
+    assert.notEqual(result.reason, 'done');
+    assert.match(result.result, /invalid capability profile in ultra-crew.json — fix or reset it/);
+    const ordinary = { ...job, agentId: 'ordinary' };
+    assert.equal(crew.accept(ordinary, { reason: 'done', result: 'ordinary draft' }), true);
+    assert.deepEqual(await crew.resumeCheck('ordinary'), { ready: true, reason: '' });
+    assert.equal((await crew.supervise(ordinary, {}, hooks)).reason, 'done');
+    assert.equal(calls, 1);
   } finally { fs.rmSync(rt, { recursive: true, force: true }); }
 });
