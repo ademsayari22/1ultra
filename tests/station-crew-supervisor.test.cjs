@@ -365,7 +365,7 @@ test('retry and reassignment share one dispatch wall clock', async () => {
 
 test('an exhausted dispatch wall clock stops the ladder before another worker call', async () => {
   let clock = 1000;
-  const t = harness({ now: () => clock });
+  const t = harness({ now: () => clock, on: ['crew.freellmapi', 'lead.codex'] });
   const h = t.h([{ via: 'p/fast' }]);
   const once = h.runWorkerOnce;
   h.runWorkerOnce = async (job, opts) => { const row = await once(job, opts); clock += 600000; return row; };
@@ -390,4 +390,57 @@ test('a ready benched covering member is unbenched before reassignment', async (
   assert.equal(row.reason, 'done');
   assert.deepEqual(row.crewMoves.map(m => m.step), ['reassign']);
   assert.equal(t.state.value.members.qa.benched, false);
+});
+
+test('deadline expiry after an attempt hands back to the lead despite a covering candidate', async () => {
+  for (const reason of ['done', 'timeout']) {
+    let clock = 1000;
+    const t = harness({ now: () => clock });
+    const h = t.h([{ reason, via: 'p/fast', text: 'unchecked draft' }]);
+    const once = h.runWorkerOnce;
+    h.runWorkerOnce = async (job, opts) => { const row = await once(job, opts); clock += 600000; return row; };
+    const row = await t.sup.supervise(t.job(), { wallMs: 600000 }, h);
+    assert.equal(t.calls.length, 1);
+    assert.equal(row.reason, 'escalated');
+    assert.deepEqual(row.crewMoves, [{ step: 'lead', from: 'research', to: 'agent',
+      outcome: reason === 'done' ? 'downgraded' : 'unavailable', detail: 'the dispatch wall clock for this subtask ran out' }]);
+    assert.deepEqual(t.sup.movesFor('lead-run'), row.crewMoves);
+    assert.equal(t.state.value.escalations, 1);
+    assert.match(row.result, /ESCALATED TO YOU/);
+    assert.match(row.result, /find two Tunisian logistics companies/);
+    if (reason === 'done') assert.match(row.result, /Unchecked crew draft.*\nunchecked draft/);
+  }
+});
+
+test('deadline expiry after an attempt fails without planning another crew move when escalation is off', async () => {
+  let clock = 1000;
+  const t = harness({ now: () => clock, on: ['crew.freellmapi', 'lead.codex'] });
+  const h = t.h([{ via: 'p/fast' }]);
+  const once = h.runWorkerOnce;
+  h.runWorkerOnce = async (job, opts) => { const row = await once(job, opts); clock += 600000; return row; };
+  const row = await t.sup.supervise(t.job(), { wallMs: 600000 }, h);
+  assert.equal(t.calls.length, 1);
+  assert.equal(row.reason, 'error');
+  assert.match(row.result, /FAILED.*dispatch wall clock.*ran out/);
+  assert.deepEqual(row.crewMoves, []);
+  assert.deepEqual(t.sup.movesFor('lead-run'), []);
+  assert.equal(t.state.value.escalations, 0);
+});
+
+test('deadline expiry during candidates keeps the wall-clock reason on the lead hand-back', async () => {
+  let clock = 1000, checks = 0;
+  const t = harness({ now: () => clock, ready: () => {
+    checks++;
+    if (checks === 2) clock += 600001;
+    return checks === 1;
+  } });
+  const row = await t.sup.supervise(t.job(), { wallMs: 600000 }, t.h([{ reason: 'timeout' }]));
+  assert.equal(t.calls.length, 1);
+  assert.ok(checks > 1, 'candidate readiness consumed the remaining time');
+  assert.equal(row.reason, 'escalated');
+  assert.deepEqual(row.crewMoves, [{ step: 'lead', from: 'research', to: 'agent', outcome: 'unavailable',
+    detail: 'the dispatch wall clock for this subtask ran out' }]);
+  assert.deepEqual(t.sup.movesFor('lead-run'), row.crewMoves);
+  assert.match(row.result, /dispatch wall clock.*ran out/);
+  assert.equal(t.state.value.escalations, 1);
 });

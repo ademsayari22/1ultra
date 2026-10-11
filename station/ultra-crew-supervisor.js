@@ -82,9 +82,14 @@ function makeSupervisor({profileFor,memberIds,isCrewProvider,readiness,receiptsF
       }
       if(trail.length>=Health.MAX_MOVES)return failed('every free crew option failed within '+Health.MAX_MOVES+' moves.');
       const escalate=switches.isOn('crew.escalate_to_lead')&&switches.isOn('lead.codex')&&h.leadProvider==='codex';
-      const step=Health.nextStep({outcome,needs,retried,tried,candidates:await candidates(h.crew),escalate});
+      const available=deadline!==null&&now()>=deadline?[]:await candidates(h.crew);
+      const expired=deadline!==null&&now()>=deadline;
+      if(expired&&!escalate)return failed('the dispatch wall clock for this subtask ran out.');
+      // A hand-back to the lead costs no crew time; expiry never starts another crew attempt.
+      const step=expired?{action:'lead'}:Health.nextStep({outcome,needs,retried,tried,candidates:available,escalate});
       const to=step.action==='reassign'?step.agentId:step.action==='lead'?String(h.leadId||'lead'):current.agentId;
-      const move={step:step.action,from:current.agentId,to,outcome:outcome.kind,detail:String(outcome.detail||'').slice(0,200)};
+      const detail=expired?'the dispatch wall clock for this subtask ran out':outcome.detail;
+      const move={step:step.action,from:current.agentId,to,outcome:outcome.kind,detail:String(detail||'').slice(0,200)};
       trail.push(move);remember(h.parentRunId,move);
       opts=Object.assign({},o2,{runId:undefined});
       if(step.action==='retry'){current=Object.assign({},current,{ident:Object.assign({},current.ident,{model:step.model})});retried=true;continue;}
