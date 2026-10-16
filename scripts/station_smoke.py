@@ -382,6 +382,24 @@ def main():
             assert 'loadWorkspace' in request('/classic/game-app.js', authenticated=False)
             checks.append('Classic interface and namespaced assets served')
             assert json.loads((root / 'data/leads.json').read_text()) == [*original_leads, accepted_lead]
+            # Stage 2b: an owner-reported Send pitch quest records exactly one real contact, through the worker.
+            copied = json.loads((root / 'data/leads.json').read_text())
+            copied[-1]['draft'] = {'subject': 'FICTIONAL HTTP TEST', 'body': 'Bonjour, un petit lot à vérifier ensemble ?', 'reviewed': True}
+            (root / 'data/leads.json').write_text(json.dumps(copied, ensure_ascii=False, indent=2) + '\n')
+            campaign = request('/api/ultra/campaign')
+            key = 'ultra:send:' + accepted_lead['id'] + ':' + campaign['draft_versions'][accepted_lead['id']]
+            qid = request('/api/quests/mint', {'title': 'Send pitch to ' + accepted_lead['company'], 'kind': 'user',
+                'executionMode': 'commander', 'contract': {'type': 'attest', 'key': key}})['id']
+            refused = request('/api/quests/report', {'id': qid, 'evidence': 'too short'}, expected=400)
+            assert 'date, channel, recipient' in refused['error']
+            assert next(q for q in request('/api/quests')['quests'] if q['id'] == qid)['status'] == 'open'
+            assert request('/api/quests/report', {'id': qid, 'evidence': 'FICTIONAL HTTP TEST: email to smoke@example.invalid'})['ok'] is True
+            sent = lambda: [e for e in json.loads((root / 'data/campaign-workbench.json').read_text())['events'] if e.get('quest_id') == qid]
+            assert len(sent()) == 1 and sent()[0]['kind'] == 'sent' and sent()[0]['confirmed'] is True
+            request('/api/quests/report', {'id': qid, 'evidence': 'FICTIONAL HTTP TEST: reported twice'}, expected=400)
+            assert len(sent()) == 1, 'a second report never records a second contact'
+            request('/api/ultra/hooks/quest-event', {'quest_id': qid, 'key': key, 'evidence': 'FICTIONAL HTTP TEST'}, expected=404)
+            checks.append('Owner quests: a Send pitch quest refuses short evidence, records one sent event on the owner report, never twice; the hook route answers 404 over HTTP')
             for relative, digest in baseline.items(): assert hashlib.sha256((project / relative).read_bytes()).hexdigest() == digest
             checks.append('Project business records unchanged by fixture tests')
             print(json.dumps({'passed': len(checks), 'checks': checks, 'browser_rendered': False, 'live_provider_tested': False}, indent=2))
