@@ -72,4 +72,8 @@ $CW log "Ruling: keep it simple" > /dev/null; grep -q 'Ruling: keep it simple' r
 $CW final > /dev/null; $CW wait final | grep '^exit 0' > /dev/null || fail "final review job"
 grep -q 'hello.txt' runs/codex-workflow/plan/final-review.diff || fail "final diff"
 $CW help | grep 'cw run' > /dev/null || fail "help"
+# retry.sh reads the reset time from the real error line, never from an example quoted in the prompt echo
+printf '%s\n' 'user' 'On "You have hit your usage limit ... try again at 3:58 PM" it waits.' \
+  'ERROR: You have hit your usage limit. Upgrade to Pro or try again at 8:59 PM.' > limit.log
+[ "$(./codex-workflow/lib/retry.sh --when limit.log)" = "8:59 PM" ] || fail "retry reads the real reset time"
 echo "selftest passed"
