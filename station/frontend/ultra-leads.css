@@ -57,3 +57,6 @@
   .ultra-leads .ul-list { max-height: 34vh; }
   .ultra-leads .ul-card { scroll-margin-top: 12px; }
 }
+/* Stage 2b: the send quest under a reviewed draft */
+.ultra-leads .ul-send { margin: 6px 0 0; }
+.ultra-leads .ul-stale { color: var(--warn); margin: 6px 0 0; }

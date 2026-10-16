@@ -208,8 +208,8 @@ function inlineForms(html) {
   });
 }
 
-async function mounted(responses, confirmed = true) {
-  const requests = [], opened = [], persisted = [], prefills = [], doors = [], confirmations = [];
+async function mounted(responses, confirmed = true, quests = []) {
+  const requests = [], opened = [], persisted = [], prefills = [], doors = [], confirmations = [], mints = [];
   let sends = 0;
   const node = () => ({ innerHTML: '', value: '', hidden: false, textContent: '', handlers: {},
     addEventListener(event, handler) { this.handlers[event] = handler; }, setAttribute() {}, querySelectorAll() { return []; } });
@@ -267,6 +267,13 @@ async function mounted(responses, confirmed = true) {
       openWorkstream: id => { opened.push(id); context.Workstreams.switch(id); } },
     Chat: { prefill: text => { prefills.push(text); nativePrefill(text); }, send: () => { sends++; } },
     fetch: async (url, options) => {
+      // Starnet's own quest routes answer outside the ultra-route queue, so existing request orders stay as they were.
+      if (url === '/api/quests') return { ok: true, status: 200, json: async () => ({ ok: true, quests: JSON.parse(JSON.stringify(quests)) }) };
+      if (url === '/api/quests/mint') {
+        const q = JSON.parse(options.body); mints.push({ body: q, headers: options.headers });
+        quests.push({ id: 'q:' + (quests.length + 1), status: 'open', ...q });
+        return { ok: true, status: 200, json: async () => ({ ok: true, id: 'q:' + quests.length }) };
+      }
       requests.push({ url, ...options });
       const response = responses.shift();
       assert.ok(response, 'Unexpected request: ' + url);
@@ -285,7 +292,7 @@ async function mounted(responses, confirmed = true) {
     dataset: { ulForm: kind, leadId: 'b', id },
     elements: Object.fromEntries(Object.entries(data).map(([key, value]) => [key, { value }]))
   } });
-  return { nodes, body, root, form: () => root.querySelector('.ul-inline-form'), conversationPath, requests, opened, persisted, prefills, doors, composer, context, click, tab, submit, confirmations, sends: () => sends };
+  return { nodes, body, root, form: () => root.querySelector('.ul-inline-form'), conversationPath, requests, opened, persisted, prefills, doors, composer, context, click, tab, submit, confirmations, mints, sends: () => sends };
 }
 
 test('the native board loads authenticated campaign data and the classic link opens its registered window', async () => {
@@ -684,4 +691,56 @@ test('missing presets give a visible route to the station preset library', () =>
   ui.click('presets');
   assert.equal(ui.presetClicks(), 0);
   assert.match(ui.status.textContent, /BUILD MODE/); assert.match(ui.status.textContent, /Presets/);
+});
+
+test('a send quest key binds the company and the approved draft version', () => {
+  const lead = { id: 'lead-1', company: 'Alpha SARL' };
+  assert.equal(V.sendQuestKey(lead, '0123456789abcdef'), 'ultra:send:lead-1:0123456789abcdef');
+  const quests = [
+    { id: 'q:1', status: 'open', contract: { type: 'attest', key: 'ultra:send:lead-1:0123456789abcdef' } },
+    { id: 'q:2', status: 'open', contract: { type: 'attest', key: 'ultra:send:lead-2:0123456789abcdef' } },
+    { id: 'q:3', status: 'open', contract: { type: 'attest', key: 'ultra:send:lead-1:fedcba9876543210' } },
+    { id: 'q:4', status: 'dismissed', contract: { type: 'attest', key: 'ultra:send:lead-1:aaaaaaaaaaaaaaaa' } }];
+  assert.equal(V.sendQuestFor(quests, lead, '0123456789abcdef').id, 'q:1');
+  assert.equal(V.sendQuestFor(quests, { id: 'lead-3' }, '0123456789abcdef'), null);
+  assert.deepEqual(V.staleSendQuests(quests, lead, '0123456789abcdef').map(q => q.id), ['q:3']);
+  assert.equal(V.sendQuestFor([{ ...quests[0], status: 'dismissed' }], lead, '0123456789abcdef'), null, 'a dismissed quest does not count');
+});
+
+test('the send quest Adem mints carries the draft, the instruction and the attest contract', () => {
+  const lead = { id: 'lead-1', company: 'Alpha SARL', draft: { subject: 'Petit lot', body: 'Bonjour …' } };
+  const q = V.sendQuestDraft(lead, '0123456789abcdef');
+  assert.equal(q.title, 'Send pitch to Alpha SARL');
+  assert.deepEqual(q.contract, { type: 'attest', key: 'ultra:send:lead-1:0123456789abcdef' });
+  assert.equal(q.executionMode, 'commander');
+  assert.match(q.desc, /Petit lot/);
+  assert.match(q.desc, /date, channel and recipient/);
+});
+
+test('the card knows its draft version and its send quest, including an older approval', () => {
+  const lead = { id: 'lead-1', company: 'Alpha SARL', draft: { subject: 'S', body: 'B', reviewed: true } };
+  const C3 = { draft_versions: { 'lead-1': '0123456789abcdef' }, quests: [
+    { id: 'q:1', status: 'done', contract: { type: 'attest', key: 'ultra:send:lead-1:0123456789abcdef' } },
+    { id: 'q:2', status: 'open', contract: { type: 'attest', key: 'ultra:send:lead-1:fedcba9876543210' } }] };
+  const card = V.cardModel(lead, C3);
+  assert.equal(card.send.version, '0123456789abcdef');
+  assert.equal(card.send.quest.id, 'q:1');
+  assert.deepEqual(card.send.stale.map(q => q.id), ['q:2']);
+  assert.deepEqual(V.cardModel(lead, {}).send, { version: null, quest: null, stale: [] });
+});
+
+test('Approve draft mints one Send pitch quest for the selected company and the card then shows it open', async () => {
+  const reviewed = { ...workspace, hunt: { ...workspace.hunt, leads: workspace.hunt.leads.map(l => l.id === 'b'
+    ? { ...l, draft: { subject: 'Petit lot', body: 'Bonjour, un petit lot ?', reviewed: true } } : l) } };
+  const withVersion = { ...campaign, draft_versions: { b: '0123456789abcdef' } };
+  const ui = await mounted([{ body: reviewed }, { body: withVersion }, { body: reviewed }, { body: withVersion }]);
+  assert.match(ui.nodes['.ul-card'].innerHTML, /data-ul-action="approve"/);
+  ui.click('approve');
+  await settle(); await settle();
+  assert.equal(ui.mints.length, 1);
+  assert.equal(ui.mints[0].headers['X-Starnet-Token'], 'fixture-token');
+  assert.deepEqual(ui.mints[0].body.contract, { type: 'attest', key: 'ultra:send:b:0123456789abcdef' });
+  assert.equal(ui.mints[0].body.title, 'Send pitch to Beta Data');
+  assert.match(ui.nodes['.ul-card'].innerHTML, /Send quest open/);
+  assert.doesNotMatch(ui.nodes['.ul-card'].innerHTML, /data-ul-action="approve"/);
 });

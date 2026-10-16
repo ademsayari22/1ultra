@@ -67,7 +67,13 @@
       sourceVersion: ranking ? ranking.source_version : null,
       crewDrafts: (C.crew_drafts || []).filter(d => d.lead_id === lead.id && d.status === 'proposed')
         .map(d => ({ ...d, notes: d.notes || [] }))
-        .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || ''))) };
+        .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || ''))),
+      send: sendState(lead, C) };
+  }
+  function sendState(lead, C) {
+    const version = (C.draft_versions || {})[lead.id] || null;
+    if (!version) return { version: null, quest: null, stale: [] };
+    return { version, quest: sendQuestFor(C.quests, lead, version), stale: staleSendQuests(C.quests, lead, version) };
   }
 
   function ranked(W, C, query) {
@@ -78,8 +84,28 @@
       .sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
   }
 
+  // Stage 2b: approving a reviewed draft mints a "Send pitch" quest bound to the draft version; Adem reports it done
+  // with evidence, and the station records the contact through the campaign worker (the owner quest gate).
+  function sendQuestKey(lead, version) { return 'ultra:send:' + lead.id + ':' + version; }
+  const liveQuest = q => q && (q.status === 'open' || q.status === 'done') && q.contract && typeof q.contract.key === 'string';
+  function sendQuestFor(quests, lead, version) {
+    const key = sendQuestKey(lead, version);
+    return (quests || []).find(q => liveQuest(q) && q.contract.key === key) || null;
+  }
+  function staleSendQuests(quests, lead, version) {
+    const prefix = 'ultra:send:' + lead.id + ':', key = sendQuestKey(lead, version);
+    return (quests || []).filter(q => liveQuest(q) && q.status === 'open' && q.contract.key.startsWith(prefix) && q.contract.key !== key);
+  }
+  function sendQuestDraft(lead, version) {
+    const draft = lead.draft || {};
+    return { title: 'Send pitch to ' + lead.company, kind: 'user', executionMode: 'commander', createdBy: 'commander',
+      contract: { type: 'attest', key: sendQuestKey(lead, version) },
+      desc: (draft.subject ? draft.subject + '\n\n' : '') + (draft.body || '')
+        + '\n\nSend it yourself, then report this quest done with the date, channel and recipient.' };
+  }
+
   window.UltraLeads = { view: { ranked, stageOf, outreachPrompt, cardModel, sessionTitle, sessionFor, shouldPrefill,
-    openProposals, evidenceOk, adoptionSteps, subjectOk, noteText } };
+    openProposals, evidenceOk, adoptionSteps, subjectOk, noteText, sendQuestKey, sendQuestFor, staleSendQuests, sendQuestDraft } };
   if (typeof StationUI === 'undefined' || !StationUI.registerWindow) return;
   const esc = value => StationUI.h.esc(String(value ?? ''));
 
@@ -94,12 +120,26 @@
       : '<span class="dim">No HTTP source link saved.</span>';
   }
 
+  // The reviewed draft's next step: approve it into a Send pitch quest, then report that quest done in Quests.
+  function sendHTML(card) {
+    const send = card.send || {};
+    if (!send.version) return '';
+    const state = send.quest
+      ? '<p class="ul-send"><span class="ul-chip ' + (send.quest.status === 'done' ? 'ul-ok">Sent — recorded'
+        : 'ul-warn">Send quest open — report it in Quests once you have sent it') + '</span></p>'
+      : '<div class="ul-actions">' + button('approve', 'Approve draft') + '</div><p class="dim">Creates a “Send pitch to '
+        + esc(card.company) + '” quest. Send the email yourself, then report the quest done with the date, channel and recipient.</p>';
+    const stale = send.stale && send.stale.length
+      ? '<p class="ul-stale">An older approval exists and the draft changed since; dismiss that quest in Quests.</p>' : '';
+    return state + stale;
+  }
+
   function draftsHTML(card, editing, inlineForm) {
     const draft = card.draft;
     const own = draft && draft.body ? '<p><span class="ul-chip ' + (draft.reviewed ? 'ul-ok' : 'ul-warn') + '">'
       + (draft.reviewed ? 'Reviewed draft' : 'Unreviewed draft') + '</span></p><b>' + esc(draft.subject || 'Subject needed')
       + '</b><div class="ul-message">' + esc(draft.body) + '</div>'
-      + (!draft.reviewed ? '<div class="ul-actions">' + button('review', 'Mark reviewed') + '</div>' : '')
+      + (!draft.reviewed ? '<div class="ul-actions">' + button('review', 'Mark reviewed') + '</div>' : sendHTML(card))
       : '<p class="dim">No owner draft yet.</p>';
     const crew = card.crewDrafts.map(d => {
       const compared = !!(d.source_version && card.sourceVersion);
@@ -139,6 +179,22 @@
       + '<h5>Contacts</h5>' + (contacts || '<p class="dim">No contacts recorded.</p>')
       + '<h5>Signals</h5>' + (signals || '<p class="dim">No signals recorded.</p>')
       + '<h5>Follow-ups</h5>' + (followups || '<p class="dim">No follow-ups proposed.</p>') + '</section>';
+  }
+
+  // Starnet's own quest routes (same token): the list LEADS shows states from, and mint for an approved draft.
+  async function questList() {
+    try {
+      const response = await fetch('/api/quests', { headers: { 'X-Starnet-Token': window.__STARNET_API_TOKEN__ || '' } });
+      const result = await response.json().catch(() => ({}));
+      return response.ok && Array.isArray(result.quests) ? result.quests : [];
+    } catch (_) { return []; }
+  }
+  async function mintQuest(quest) {
+    const response = await fetch('/api/quests/mint', { method: 'POST', body: JSON.stringify(quest),
+      headers: { 'X-Starnet-Token': window.__STARNET_API_TOKEN__ || '', 'Content-Type': 'application/json' } });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok) throw new Error(result.error || ('HTTP ' + response.status));
+    return result;
   }
 
   async function api(path, body, version) {
@@ -312,6 +368,7 @@
         const offers = (workspace.hunt && workspace.hunt.offers) || [];
         const nextOffer = offers.some(row => row.id === requestedOffer) ? requestedOffer : (offers[0] ? offers[0].id : 'documents');
         const campaign = await api('campaign?offer=' + encodeURIComponent(nextOffer));
+        campaign.quests = await questList();
         W = workspace; C = campaign; offer = nextOffer;
         offerSelect.innerHTML = offers.map(row => '<option value="' + esc(row.id) + '"' + (row.id === offer ? ' selected' : '') + '>' + esc(row.name) + '</option>').join('');
         const counts = (C.analytics && C.analytics.counts) || {};
@@ -372,6 +429,10 @@
       if (name === 'shortlist') save(() => api('prospecting/shortlist', { id: lead.id, selected: !lead.shortlisted }, W.record_versions.leads));
       if (name === 'outreach') {
         try { prepareOutreach(lead); } catch (e) { showError(e); }
+      }
+      if (name === 'approve' && lead.draft && lead.draft.reviewed) {
+        const version = (C.draft_versions || {})[lead.id];
+        if (version) save(() => mintQuest(sendQuestDraft(lead, version)));
       }
       if (name === 'review' && lead.draft && lead.draft.body) {
         if (confirm('I checked this company’s source, claim and small offer. Mark this unsent draft reviewed?'))
