@@ -12,6 +12,8 @@ Rerun on 11 October 2026 after Stage 2 (the 1ULTRA COMMAND layout, room template
 
 Rerun on 11 October 2026 after Stage 2c (the pitch kit, lenient agent rules and the station cat): 1101 steps, 951 passed and the same 150 failed; the real `runs/station-runtime` was unchanged. The cat's patches to `propsprites.js` and `world.js` added no failure.
 
+Rerun on 16 October 2026 after Stage 2b (owner actions through quests): 1101 steps, 951 passed and the same 150 failed; the real `runs/station-runtime` was unchanged. The quest gate patches to `handleQuestsReport` and `handleQuestsConfirm` added no failure.
+
 | Reason | Failures | Meaning |
 |---|---|---|
 | `excluded-tooling` | 89 | reads website/, src-tauri/, .github/, qa/, dev/, relay/, bin/, release or eval files that are not imported |

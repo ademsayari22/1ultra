@@ -71,6 +71,7 @@ After the first start with this update, close and reopen any station tab, so the
 - **Ask ULTRA to prepare outreach** opens that company's own conversation with ULTRA, with a prepared request: read the packet with `campaign.lead`, have Sales write and check a French pitch and QA give a verdict. Nothing is sent; the draft comes back to LEADS.
 - **Crew drafts:** each saved crew draft shows who wrote it and whether the company's source changed since. **Use this draft** makes it your own unreviewed draft (subject and body editable); **Dismiss** removes it from the queue. **Mark reviewed** stays your own step.
 - **PROPOSED:** companies the crew proposed, with source link, date and quote. **Accept** adds one to your leads (its source still needs your own check); **Reject** records why.
+- **Approve draft** (under your reviewed draft) creates a **Send pitch to <company>** quest in the station's quest log, bound to that exact draft. Send the email yourself, then report the quest done in Quests with the date, channel and recipient (at least ten characters). The station then records the contact once, through the campaign worker. Reporting it twice never records a second contact. If the draft changed after you approved it, the report is refused and the quest stays open; approve the current draft again. Agents can propose that a quest is done, but only your report or confirmation records anything.
 - **Record real outcome** saves an actual send or reply with its date and at least ten characters of evidence, exactly as before.
 
 1. Inspect sourced Tunisian company cards and the contribution behind each ranking factor. Adjust the offer or versioned weights. Choose your offer/capacity and shortlist five companies.
@@ -148,6 +149,10 @@ python3 scripts/station_browser_smoke.py --starnet --playwright-module /path/to/
 python3 scripts/station_browser_smoke.py --playwright-module /path/to/playwright --browser /path/to/chromium
 python3 scripts/station_browser_smoke.py --agents --playwright-module /path/to/playwright --browser /path/to/chromium
 ```
+
+### Verification history (16 October 2026, Stage 2b: owner actions through quests)
+
+Local checks on copied records: 246 Python tests, 241 station Node tests, `check_station.py`, 27 HTTP smoke checks and the three browser journeys (desktop and 390px) pass; business records are unchanged by the checks. The new smoke check mints a Send pitch quest over HTTP for a copied lead with a reviewed draft. A report with nine characters of evidence is refused and the quest stays open; a proper report records exactly one `sent` event carrying the quest id in the copied workbench; a second report records nothing; and `/api/ultra/hooks/quest-event` answers 404 over HTTP. Worker tests also cover a changed draft, a suppressed company, an unknown company or key, and the worker process reporting why a quest was refused. The upstream fast suite matches the Stage 2c record (see `STATION_UPSTREAM_TESTS.md`). Built inline by Claude at Adem's request; the whole-branch review was a self-review, with no separate reviewer. No live check yet: it happens when Adem sends a real approved email himself and reports its quest.
 
 ### Verification history (11 October 2026, Stage 2c: the pitch kit, lenient agent rules and the station cat)
 
