@@ -16065,6 +16065,11 @@ async function handleQuestsConfirm(req, res) {
   const id = String(body.id || '');
   if (!id) return json(400, { ok: false, error: 'which quest?' });
   const ok = body.ok === true || body.ok === 'true';
+  // 1Ultra: confirming an agent's attest on an ultra: quest needs Adem's own note as the evidence, recorded first.
+  if (ok) {
+    let gate; try { gate = await ultraHost.questGate(questStore.get(id), body.note, { attest: true }); } catch (e) { gate = { ok: false, error: 'could not check that quest' }; }
+    if (!gate.ok) return json(400, Object.assign({ ok: false }, gate));
+  }
   let did; try { did = await questStore.confirmAttest(id, ok, body.note, Date.now()); } catch (e) { return json(500, { ok: false, error: 'could not record that verdict' }); }
   if (did && ok) {
     await completeQuestRecommendationIds([id]);
@@ -16102,6 +16107,9 @@ async function handleQuestsReport(req, res) {
   const json = (code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)); };
   let body; try { body = JSON.parse(await readBody(req, 4096)) || {}; } catch (_) { return json(400, { ok: false, error: 'bad request' }); }
   try {
+    // 1Ultra: an ultra: quest records its real outcome through the campaign worker first; a refusal keeps it open.
+    const gate = await ultraHost.questGate(questStore.get(body.id), body.evidence);
+    if (!gate.ok) return json(400, gate);
     const result = await questStore.reportCompletion(body.id, body.evidence, Date.now());
     if (result.ok) { await completeQuestRecommendationIds([String(body.id)]); questRefreshTick(); }
     return json(result.ok ? 200 : 400, result);

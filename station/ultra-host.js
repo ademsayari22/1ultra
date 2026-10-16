@@ -49,6 +49,7 @@ function call(request){ensureRpc();const id=++seq;return new Promise((resolve,re
   pending.set(id,{resolve,reject,timer});rpc.stdin.write(JSON.stringify({...request,id})+'\n');
 });}
 const campaignTools=require('./ultra-campaign-tools.js').makeCampaignTools({call,isHalted});
+const questGate=require('./ultra-quest-gate.js').makeQuestGate({call,isHalted});
 function readState(){const saved=readJsonResilient({fs},stateFile);if(saved.status==='absent')return {version:1,world:null,workstreams:null,companySessions:{},crew:{},memory:[],tasks:[],workflows:[],workflowRuns:{},focus:null,settings:{theme:'dark',text:16,reducedMotion:false},history:[]};
   if(!['ok','recovered'].includes(saved.status))throw Error('Station state is '+saved.status+'. Preserve its files and inspect before retrying.');return saved.value;}
 function version(){return crypto.createHash('sha256').update(fs.existsSync(stateFile)?fs.readFileSync(stateFile):'').digest('hex');}
@@ -139,7 +140,7 @@ async function bodyOf(req){
 async function handle(req,res){
   try{
     const url=new URL(req.url,'http://127.0.0.1'),p=url.pathname;
-    if(p.startsWith('/api/ultra/tools/'))return json(res,404,{error:'Not found.'});
+    if(p.startsWith('/api/ultra/tools/')||p.startsWith('/api/ultra/hooks/'))return json(res,404,{error:'Not found.'});
     const body=req.method==='POST'?await bodyOf(req):{};
     if(req.method==='POST'&&req.headers.origin!=='http://'+req.headers.host)return json(res,403,{error:'Same-origin owner action required.'});
     if(p==='/api/ultra/runtime'){
@@ -268,6 +269,6 @@ function registerRoutes(routes){routeTable=routes;}
 const preGate=(method,url)=>policy.preGate(method,url,switches);
 const routeGate=r=>policy.routeGate(r,switches);
 process.on('exit',()=>{if(rpc)rpc.kill('SIGTERM');for(const job of jobs.values())terminateJob(job);});
-module.exports={root,runtime,policy,handle,classic,campaign,switches,preGate,routeGate,registerRoutes,beforeRun,assertProviderAllowed,assertModelRequest,stopSignal,onStationHalt,onStationResume,registerStationHalt,isHalted,crew,registerCampaignTools:registry=>campaignTools.register(registry),campaignBrief:()=>campaignTools.brief(),registerProviderConfig:fn=>crew.registerProviderConfig(fn),registerCodexState:fn=>crew.registerCodexState(fn)};
+module.exports={root,runtime,policy,handle,classic,campaign,switches,preGate,routeGate,registerRoutes,beforeRun,assertProviderAllowed,assertModelRequest,stopSignal,onStationHalt,onStationResume,registerStationHalt,isHalted,crew,registerCampaignTools:registry=>campaignTools.register(registry),questGate,campaignBrief:()=>campaignTools.brief(),registerProviderConfig:fn=>crew.registerProviderConfig(fn),registerCodexState:fn=>crew.registerCodexState(fn)};
 policy.setProtectedRoots({root,runtime});
 policy.install(runtime,switches,{freellmapiPort:crewPort});

@@ -155,6 +155,15 @@ class PatchAnchorsTest(unittest.TestCase):
         self.assertGreater(ids.index('crew-codex-state'), ids.index('crew-provider-config'))
         self.assertGreater(ids.index('crew-codex-state'), ids.index('crew-fallback-receipts'))
 
+    def test_owner_quest_completion_runs_the_ultra_gate_first(self):
+        index = (ROOT / 'station/sidecar/index.js').read_text()
+        report = index[index.index('async function handleQuestsReport('):]
+        self.assertLess(report.index('ultraHost.questGate(questStore.get(body.id), body.evidence)'), report.index('questStore.reportCompletion('))
+        confirm = index[index.index('async function handleQuestsConfirm('):index.index('async function handleQuestsDismiss(')]
+        self.assertLess(confirm.index('ultraHost.questGate(questStore.get(id), body.note, { attest: true })'), confirm.index('questStore.confirmAttest('))
+        host = (ROOT / 'station/ultra-host.js').read_text()
+        self.assertIn("p.startsWith('/api/ultra/hooks/')", host)
+
     def test_campaign_tools_are_a_toggleable_toolset(self):
         toolsets = (ROOT / 'station/sidecar/capability/toolsets.js').read_text()
         self.assertIn("{ id: 'campaign',     label: '1ULTRA CAMPAIGN',", toolsets)
@@ -237,7 +246,7 @@ class PatchAnchorsTest(unittest.TestCase):
     def test_campaign_tool_http_routes_are_refused_before_body_or_bridge(self):
         host = (ROOT / 'station/ultra-host.js').read_text()
         handler = host[host.index('async function handle(req,res){'):]
-        refusal = "if(p.startsWith('/api/ultra/tools/'))return json(res,404,{error:'Not found.'});"
+        refusal = "if(p.startsWith('/api/ultra/tools/')||p.startsWith('/api/ultra/hooks/'))return json(res,404,{error:'Not found.'});"
         self.assertTrue(refusal in handler, 'private tool routes must be refused by the HTTP handler')
         self.assertLess(handler.index(refusal), handler.index('const body='))
         self.assertLess(handler.index(refusal), handler.index('const response=await call(request);'))

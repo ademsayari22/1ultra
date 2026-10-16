@@ -16669,10 +16669,10 @@
     },
     {
       "path": "sidecar/index.js",
-      "current_sha256": "cc05a011265dbcb18b8c5adf0861110d499e36b481a251e1cab1a21897b24a3b",
+      "current_sha256": "e796c51307cdb7a41f60256e7b5a032180acfda432584e9dcbd9363ec994f35f",
       "reasons": [
         "brand",
-        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty,bless-refusal,model-request-gate,codex-token-gate,codex-refresh-gate,crew-provider-config,crew-free-tier-cost,crew-run-receipts,crew-run-record,crew-dispatch-deps,crew-health-tool,crew-health-brief,crew-lead-start,crew-lead-notice,crew-lead-fallbacks,crew-fallback-receipts,crew-codex-state,crew-lead-token-retry,crew-lead-token-failure,campaign-tools-register,campaign-tools-brief"
+        "patch:ultra-host-require,run-admission,station-halt-hook,station-resume-hook,halt-status-ultra,model-gate,runtime-workspace,no-legacy-recovery-roots,no-startup-recovery,no-skill-market-pull,no-shell-hooks,no-codex-token-load,no-discovery,no-nightshift,no-cron,no-loops,no-quest-refresh,no-trigger-poll,route-pre-gate,route-registry,route-gate,ultra-routes,quiet-boot,quiet-pty,bless-refusal,model-request-gate,codex-token-gate,codex-refresh-gate,crew-provider-config,crew-free-tier-cost,crew-run-receipts,crew-run-record,crew-dispatch-deps,crew-health-tool,crew-health-brief,crew-lead-start,crew-lead-notice,crew-lead-fallbacks,crew-fallback-receipts,crew-codex-state,crew-lead-token-retry,crew-lead-token-failure,campaign-tools-register,campaign-tools-brief,ultra-quest-gate-report,ultra-quest-gate-confirm"
       ]
     },
     {
