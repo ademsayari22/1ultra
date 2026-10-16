@@ -42,6 +42,7 @@ def dispatch(workspace, request):
         from station_agents import adopt
         return adopt(workspace, body, version)
     if path=='/api/workflow-check': return store.preflight(body)
+    if path == '/api/hooks/quest-event' and method == 'POST': return store.record_quest_event(body)   # owner quest gate only
     if path.startswith('/api/campaign/'):
         return store.action(path.split('/')[-1], body, version)
     if path.startswith('/api/prospecting/'):
@@ -80,7 +81,7 @@ def main():
         except RequestError as error:
             result = {'id': request.get('id') if isinstance(request, dict) else None, 'status': error.status, 'value': {'error': error.message}}
         except ValueError as error:
-            message = str(error) if path.startswith('/api/tools/') or request.get('route') == '/api/agents/run' else 'Invalid campaign request.'
+            message = str(error) if path.startswith(('/api/tools/', '/api/hooks/')) or request.get('route') == '/api/agents/run' else 'Invalid campaign request.'
             result = {'id': request.get('id'), 'status': 400, 'value': {'error': message}}
         except (KeyError, TypeError):
             result = {'id': request.get('id') if isinstance(request, dict) else None, 'status': 400, 'value': {'error': 'Invalid campaign request.'}}

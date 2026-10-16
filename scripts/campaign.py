@@ -55,6 +55,11 @@ def fingerprint(lead, draft=False):
     return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
 
+def draft_version(lead):
+    """The version an owner approval binds to: the draft and the company facts it was written from."""
+    return fingerprint(lead, True)[:16] if (lead.get('draft') or {}).get('body') else None
+
+
 def guess_intent(text):
     lowered = text.casefold()
     terms = [('do_not_contact', ['do not contact', 'stop contacting', 'unsubscribe', 'ne me contactez', 'désinscri']),
@@ -248,6 +253,7 @@ class Campaign:
                 f['needs_review'] = f.get('reply_version',reply_version(EMPTY,f['lead_id'])) != reply_version(state,f['lead_id'])
                 f['suppressed'] = suppressed(state,f['lead_id'],f.get('contact_id'))
             result['route_suppressed_ids'] = [r['id'] for r in leads if route_suppressed(state,r)]
+            result['draft_versions'] = {r['id']: v for r in leads if (v := draft_version(r))}
             result['suppressed_ids'] = [r['id'] for r in leads if suppressed(state, r['id']) or r.get('status') in {'declined', 'rejected'}]
             result['experiment_results'] = [self.experiment_result(e, state['events']) for e in state['experiments']]
             result['stalled'] = [{'lead_id': r['id'], 'reason': 'No reviewed next action'} for r in prospecting.in_scope(leads)
@@ -287,6 +293,29 @@ class Campaign:
                              'replied': len(replies), 'pending': len(sent_ids - replies), 'rate': len(replies) / len(sent_ids) if sent_ids else None})
         return {'id': experiment['id'], 'variants': variants, 'conclusion': 'Descriptive counts only; no reliable winner established.'}
 
+    def record_quest_event(self, body):
+        """Record the real outcome an owner confirmed on a station quest (ultra:send:<lead id>:<draft version>), once."""
+        if not isinstance(body, dict) or set(body) - {'quest_id', 'key', 'evidence'}: raise ValueError('Send quest_id, key and evidence.')
+        quest_id = str(body.get('quest_id') or '').strip(); parts = str(body.get('key') or '').split(':')
+        evidence = str(body.get('evidence') or '').strip()
+        if not quest_id or len(quest_id) > 80: raise ValueError('Name the quest.')
+        if len(parts) != 4 or parts[:2] != ['ultra', 'send'] or not re.fullmatch(r'[0-9a-f]{16}', parts[3]):
+            raise ValueError('Unsupported quest contract.')
+        if len(evidence) < 10: raise ValueError('Describe what you did (at least 10 characters): date, channel, recipient.')
+        with self.workspace.lock:
+            state = self.read()
+            done = next((e for e in state['events'] if e.get('quest_id') == quest_id), None)
+            if done: return {'event': done, 'recorded': False}
+            lead = self.lead(parts[2])
+            if draft_version(lead) != parts[3]: raise ValueError('The draft changed since you approved it. Approve the current draft again.')
+            value = self.mutate(state, 'event', {'lead_id': lead['id'], 'kind': 'sent', 'on': records.local_today().isoformat(),
+                'evidence': evidence, 'text': (lead.get('draft') or {}).get('subject') or '', 'confirmed': True, 'scope': 'company',
+                'quest_id': quest_id})
+            state['history'].append({'at': datetime.datetime.now(datetime.timezone.utc).isoformat(), 'action': 'quest-event',
+                'id': value['id'], 'before_version': self.version()})
+            self.workspace.atomic_json(self.path, state, '.campaign-')
+            return {'event': value, 'recorded': True}
+
     def action(self, name, body, expected):
         with self.workspace.lock:
             if expected.strip('"') != self.version(): raise RequestError(409, 'Campaign changed. Refresh before saving.')
@@ -306,7 +335,7 @@ class Campaign:
         allowed = {
             'weights': {'weights'}, 'contact': {'lead_id', 'name', 'role', 'route', 'source_url', 'checked_on', 'relationship'},
             'signal': {'lead_id', 'text', 'source_url', 'checked_on', 'event_on', 'hypothesis'},
-            'event': {'lead_id', 'contact_id', 'kind', 'text', 'on', 'evidence', 'confirmed', 'scope', 'experiment_id'},
+            'event': {'lead_id', 'contact_id', 'kind', 'text', 'on', 'evidence', 'confirmed', 'scope', 'experiment_id', 'quest_id'},
             'interpret': {'id', 'intent', 'confirmed'}, 'followup': {'lead_id', 'contact_id', 'on', 'text'},
             'proof': {'lead_id', 'offer'}, 'review-proof': {'id', 'confirmed'},
             'variant': {'lead_id', 'language', 'channel'}, 'review-variant': {'id', 'confirmed'},
@@ -403,6 +432,7 @@ class Campaign:
             if kind == 'sent' and self.suppressed(lead['id'], contact_id): raise ValueError('Company/contact is suppressed.')
             row = {**base, 'kind': kind, 'on': date, 'evidence': evidence, 'confirmed': True, 'contact_id': contact_id,
                    'scope': body.get('scope', 'company'), 'text': records.text_value(body.get('text')) or ''}
+            if body.get('quest_id'): row['quest_id'] = records.text_value(body['quest_id'])
             if kind == 'reply':
                 required(row, 'text'); row.update(interpretation=guess_intent(row['text']), interpretation_confirmed=False)
             if body.get('experiment_id'):
