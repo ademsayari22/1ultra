@@ -3337,7 +3337,7 @@ const World = (() => {
      now reachable from the drive that actually fires. FUN_KINDS is what "entertainment" means: the
      things a person crosses a room for. Decorative/passive `use` rows remain available to explicit
      systems, but the ambient idle picker does not turn them into staring destinations. */
-  const FUN_KINDS = { arcade: 1, pinball: 1, pool: 1, poker: 1, juke: 1, dj: 1, bar: 1, gacha: 1 };
+  const FUN_KINDS = { arcade: 1, pinball: 1, pool: 1, poker: 1, juke: 1, dj: 1, bar: 1, gacha: 1, cat: 1 };
   /* Relative pull. The couch+TV lounge is the single most comfortable thing in the room and it also
      holds the longest dwell, so left equal-weighted it swallows the floor: the first build of this
      just called planProp, whose tryLounge short-circuit meant the measured result was BOTH bodies on

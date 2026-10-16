@@ -16190,10 +16190,10 @@
     },
     {
       "path": "frontend/app/world.js",
-      "current_sha256": "b86aa008642bc6d3b5a4458acb0197fde331b6ce10ecf14f52e51e33e6139f0f",
+      "current_sha256": "8105f365571e9e3595dd4d5d4127cd1e3a4289345dd61eb4e3a8a0507c23215e",
       "reasons": [
         "brand",
-        "patch:ultra-cat-use-line,ultra-cat-use-beat"
+        "patch:ultra-cat-use-line,ultra-cat-use-beat,ultra-cat-idle-selection"
       ]
     },
     {

@@ -66,6 +66,33 @@ class CampaignToolTests(unittest.TestCase):
         self.assertEqual(saved['status'], 'proposed')
         self.assertEqual({n['rule'] for n in saved['notes']}, {'price', 'percentage', 'time_promise', 'guarantee', 'invented_clients'})
 
+    def test_check_draft_claim_notes_describe_mentions_for_adems_review(self):
+        cases = [
+            ('price', '500 DT', 'Mentions a price (500 DT); Adem usually agrees prices after seeing a sample.'),
+            ('percentage', '99 %', 'Mentions a percentage (99 %); source results do not establish accuracy for this company.'),
+            ('time_promise', 'en 48h', 'Mentions a delivery timeframe (en 48h); Adem usually agrees delivery dates after reviewing the scope.'),
+            ('guarantee', 'garanti', 'Contains guarantee wording (garanti); supporting evidence is for Adem to review.'),
+            ('invented_clients', 'nos clients', 'Mentions clients or prior work (nos clients); supporting references are for Adem to review.'),
+        ]
+        for rule, mention, observation in cases:
+            with self.subTest(rule=rule):
+                args = {'lead_id': 'tn', 'subject': mention, 'body': 'Bonjour'}
+                checked = campaign_tools.check_draft(self.store, args)
+                self.assertEqual(checked['notes'], [{'rule': rule, 'text': observation}])
+                saved = campaign_tools.save_draft(self.store, args, 'sales')
+                self.assertEqual(saved['notes'], checked['notes'])
+                self.assertEqual(saved['subject'], mention)
+                self.assertEqual(saved['status'], 'proposed')
+
+    def test_check_draft_source_and_exclusion_notes_are_observations(self):
+        self.lead.update(exclusion_check=None, checked_date='invalid')
+        (self.root / 'data/leads.json').write_text(json.dumps([self.lead]))
+        checked = campaign_tools.check_draft(self.store, {'lead_id': 'tn', 'body': 'Bonjour'})
+        self.assertEqual(checked['notes'], [
+            {'rule': 'excluded', 'text': "Company exclusion status is unchecked or matches an exclusion; for Adem's review."},
+            {'rule': 'stale_source', 'text': "Source observation is missing, invalid or older than 180 days; for Adem's review."},
+        ])
+
     def test_pitch_kit_private_rpc_reads_kit_without_writing_records(self):
         self.write_kit()
         before = {p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()}

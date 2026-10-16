@@ -47,16 +47,16 @@ def redact_model_text(value, contact_names):
 STALE_SOURCE_DAYS = 180
 CLAIM_RULES = [
     ('price', re.compile(r'\b\d+(?:[.,]\d+)?\s*(?:(?:DT|TND|dinars?|EUR|euros?|USD)\b|[€$])', re.I),
-     'Remove the price: prices are agreed with Adem, never promised in a first message.'),
+     'Mentions a price ({match}); Adem usually agrees prices after seeing a sample.'),
     ('percentage', re.compile(r'\b\d+(?:[.,]\d+)?\s*%', re.I),
-     'Remove the percentage: source results do not establish accuracy for this company.'),
+     'Mentions a percentage ({match}); source results do not establish accuracy for this company.'),
     ('time_promise', re.compile(r'\b(?:en|in|within|sous)\s+\d+(?:[.,]\d+)?\s*'
                                r'(?:h|heures?|hours?|hrs?|jours?|days?|semaines?|weeks?)\b|\b(?:24|48|72)\s*h\b', re.I),
-     'Remove the time promise: delivery dates must be agreed with Adem.'),
+     'Mentions a delivery timeframe ({match}); Adem usually agrees delivery dates after reviewing the scope.'),
     ('guarantee', re.compile(r'\b(?:garanti\w*|guarantee\w*)|\b100\s*%', re.I),
-     'Remove the guarantee: a first message cannot promise results.'),
+     'Contains guarantee wording ({match}); supporting evidence is for Adem to review.'),
     ('invented_clients', re.compile(r'\b(?:nos\s+clients|our\s+clients|déjà\s+travaillé\s+avec|already\s+worked\s+with|références\s+clients)\b', re.I),
-     'Remove client claims: do not invent clients, prior work or references.'),
+     'Mentions clients or prior work ({match}); supporting references are for Adem to review.'),
 ]
 
 
@@ -83,10 +83,11 @@ def check_draft(store, args):
         subject = _text(args, 'subject', 0, 200, '')
         state = store.read()
         text = subject + '\n' + body
-        notes = [{'rule': rule, 'text': message} for rule, regex, message in CLAIM_RULES if regex.search(text)]
+        notes = [{'rule': rule, 'text': message.format(match=match.group(0))}
+                 for rule, regex, message in CLAIM_RULES if (match := regex.search(text))]
         flags = automation.audit_leads([lead], ultra.read_json(store.root, 'data/exclusions.json'))[0]['flags']
         if lead.get('exclusion_check') != 'not_excluded' or 'excluded' in flags:
-            notes.append({'rule': 'excluded', 'text': 'Check company exclusions before preparing outreach.'})
+            notes.append({'rule': 'excluded', 'text': "Company exclusion status is unchecked or matches an exclusion; for Adem's review."})
         if lead.get('status') in {'declined', 'rejected'}:
             notes.append({'rule': 'closed', 'text': 'Outreach is closed for this company.'})
         if campaign.suppressed(state, lead['id']) or campaign.route_suppressed(state, lead):
@@ -97,7 +98,7 @@ def check_draft(store, args):
         except ValueError:
             stale = True
         if stale:
-            notes.append({'rule': 'stale_source', 'text': 'Refresh the source observation before preparing outreach.'})
+            notes.append({'rule': 'stale_source', 'text': f"Source observation is missing, invalid or older than {STALE_SOURCE_DAYS} days; for Adem's review."})
         return {'ok': not notes, 'notes': notes, 'lead_id': lead['id'], 'source_version': campaign.fingerprint(lead)}
 
 

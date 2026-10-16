@@ -11,6 +11,39 @@ global.U = new Function('window', 'document', fs.readFileSync(path.join(app, '..
 const P = require(path.join(app, 'propsprites.js'));
 const M = require(path.join(app, 'worldmodel.js'));
 const T = require(path.join(app, 'stationtemplates.js'));
+const PropAnchor = require(path.join(app, 'propanchor.js'));
+const Zones = require(path.join(app, 'zones.js'));
+
+function leisurePlanner(type = 'ultra_cat') {
+  const doc = T.build('ultra-command', M, P);
+  doc.props = doc.props.filter(p => p.t === 'ultra_cat');
+  doc.props[0].t = type;
+  const station = M.create(doc);
+  const geo = station.projectGeometry();
+  const prop = geo.props[0];
+  const source = fs.readFileSync(path.join(app, 'world.js'), 'utf8');
+  const marker = '  return { init, rebake,';
+  assert.equal(source.split(marker).length, 2, 'the test exposes the world closure at its public return');
+  // Expose only test access in memory: all selection, anchors, pathing, movement and arrival stay real.
+  const context = vm.createContext({
+    U: { ...global.U, rnd: lo => lo, irnd: lo => lo, chance: () => false },
+    PropSprites: P, PropAnchor, Zones, window: windowStub, document: documentStub
+  });
+  vm.runInContext(source.replace(marker, `
+    globalThis.planner = {
+      setup(st, geometry, x, y) {
+        station = st; geo = geometry; T = geo.TILE;
+        self = makeCrewBody('idle-crew', 'Idle crew', '#ffffff', x, y, {});
+        crew = [self]; activity = 'idle'; fnow = 1000;
+        return self;
+      },
+      play: planPlay, idle: planProp,
+      step(now) { fnow = now; crewEngineStep(50, now); }
+    };
+${marker}`), context);
+  const body = context.planner.setup(station, geo, (prop.x - 4 + 0.5) * P.TILE, (prop.y + 2) * P.TILE - 1);
+  return { planner: context.planner, body, geo, prop };
+}
 
 function frame(at, tx = 3, ty = 4) {
   const pixels = new Map();
@@ -91,3 +124,34 @@ test('cat speech is grounded in a real cat and its idle beat follows pet trackin
   assert.deepEqual(JSON.parse(JSON.stringify(tables.USE_BEAT.cat || null)), JSON.parse(JSON.stringify(tables.USE_BEAT.pet)));
   assert.equal(tables.USE_BEAT.cat.track, true);
 });
+
+for (const mode of ['play', 'idle']) {
+  test(`${mode} planner walks idle crew to the only leisure prop, ultra_cat, and starts petting`, () => {
+    const { planner, body, geo, prop } = leisurePlanner();
+    assert.equal(geo.props.length, 1);
+    assert.equal(body.working, false);
+    assert.equal(planner[mode](1000), true, 'the reachable cat is selected');
+    assert.equal(body.goal, 'use');
+    assert.equal(body.usingProp, prop.id);
+    assert.equal(body.state, 'walk');
+    assert.ok(body.target, 'a distant idle crew member gets a real path');
+    assert.deepEqual(JSON.parse(JSON.stringify(body.pathPts.at(-1))), { x: prop.x, y: prop.y + 1 });
+    for (let now = 1050; body.target && now <= 16000; now += 50) planner.step(now);
+    assert.equal(body.target, null, 'crew actually arrives through the normal movement stepper');
+    assert.equal(body.state, 'idle');
+    assert.equal(body.usingProp, prop.id);
+    assert.equal(body.goal, 'use');
+    assert.equal(body.dir, 'north', 'crew faces the cat from its approach tile');
+    assert.equal(body.sitting, false);
+    assert.deepEqual([body.px, body.py], [(prop.x + 0.5) * P.TILE, (prop.y + 2) * P.TILE - 1]);
+    assert.equal(body.useBeat.track, true);
+    assert.ok(body.useUntil > 1000, 'arrival starts the cat interaction dwell');
+  });
+
+  test(`${mode} planner keeps the holo pet out of deliberate leisure as before`, () => {
+    const { planner, body } = leisurePlanner('holopet');
+    assert.equal(planner[mode](1000), false);
+    assert.equal(body.usingProp, null);
+    assert.equal(body.target, null);
+  });
+}
